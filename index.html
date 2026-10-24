@@ -1091,6 +1091,18 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 #dashboardListView .dash-pagination span{color:#7a8b7d;padding:0 3px}
 @media(max-width:650px){#dashboardListView #dashListPageItems ul.dash-two-columns{columns:1}}
 </style>
+<style>
+/* V6.51 — badges pratiques sobres */
+.memo-practical-badges{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:9px 0 5px}
+.memo-practical-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:8px;font-size:.77rem;font-weight:600;line-height:1.3;border:1px solid #d5e2ea;background:#f0f7fb;color:#426a86;white-space:nowrap}
+.memo-practical-badge.memo-light{background:#fff8e9;border-color:#f0dfbb;color:#8c6b30}
+.memo-practical-badge.memo-duration{background:#f4f5f7;border-color:#dce0e5;color:#596776}
+.memo-practical-editor{grid-column:1/-1;border:1px solid #e1e8e3;border-radius:10px;background:#f9fbf9;padding:12px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
+.memo-practical-editor label{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:.88rem}
+.memo-practical-editor input[type=checkbox]{width:auto;flex:none}
+.memo-practical-editor input[type=text]{width:145px;max-width:100%;padding:7px 9px}
+.memo-practical-editor .hint{flex-basis:100%;margin:0}
+</style>
 </head>
 <body>
 <header><div class="wrap">
@@ -2049,7 +2061,7 @@ function previewSearchResult(item){
  const activeIngredients=!isGroup(m)&&m.entry_type!=="dci"?splitDci(m.dci||m.parent_dci):[];
  const ingredientEntries=info?.entries?.length?info.entries:activeIngredients.map(name=>({name,dose:"",salt:"",saltDose:""}));
  const activeIngredientsHtml=ingredientEntries.length?`<div class="detail-dci"><span class="detail-dci-label">DCI / substances actives :</span> ${ingredientEntries.map(e=>`<span class="detail-dci-item">${esc(e.name||"")}${e.dose?` — <strong>${esc(e.dose)}</strong>`:""}</span>`).join(" · ")}${ingredientEntries.filter(e=>e.salt||e.saltDose).map(e=>`<div class="ingredient-salt">${esc(e.name||"Substance active")} : ${esc(e.salt||"Sel non précisé")}${e.saltDose?` — ${esc(e.saltDose)}`:""}</div>`).join("")}</div>`:"";
- const headerHtml=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche médicament"}</div><h2><button type="button" class="search-preview-title-link" data-preview-open-title title="Ouvrir la fiche complète">${esc(displayMedName(m))}</button></h2><div class="tags"><span class="tag tag-category">${esc(m.category||"Famille à définir")}</span>${formBadge}${indicationTags(m).map(t=>`<span class="tag tag-indication">${esc(t)}</span>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}</div></div>`;
+ const headerHtml=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche médicament"}</div><h2><button type="button" class="search-preview-title-link" data-preview-open-title title="Ouvrir la fiche complète">${esc(displayMedName(m))}</button></h2><div class="tags"><span class="tag tag-category">${esc(m.category||"Famille à définir")}</span>${formBadge}${indicationTags(m).map(t=>`<span class="tag tag-indication">${esc(t)}</span>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${practicalBadges(m)}</div></div>`;
  const sections=sec&&!isDocumentationSection(sec)?[sec]:(m.sections||[]).filter(x=>x.enabled!==false&&!isDocumentationSection(x)&&String(x.content||'').trim()).slice(0,7);
  // Les encarts prioritaires de l'aperçu utilisent exactement le rendu de la fiche complète.
  const safeSection=section=>{
@@ -2243,7 +2255,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  const activeIngredientsHtml=ingredientEntries.length?`<div class="detail-dci"><span class="detail-dci-label">DCI / substances actives :</span> ${ingredientEntries.map(e=>`<span class="detail-dci-item">${esc(e.name||"")}${e.dose?` — <strong>${esc(e.dose)}</strong>`:""}</span>`).join(" · ")}${ingredientEntries.filter(e=>e.salt||e.saltDose).map(e=>`<div class="ingredient-salt">${esc(e.name||"Substance active")} : ${esc(e.salt||"Sel non précisé")}${e.saltDose?` — ${esc(e.saltDose)}`:""}</div>`).join("")}</div>`:"";
  const formBadge=!isGroup(m)&&presentationForms.length
    ? presentationForms.length===1?`<button type="button" class="tag tag-form" data-fiche-form="${esc(presentationForms[0])}" title="Explorer cette forme">${esc(presentationForms[0])}</button>`:`<span class="tag tag-form">Plusieurs formes</span>`:"";
- $("detail").innerHTML=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche médicament"}</div><h2>${esc(displayMedName(m))}</h2><div class="tags"><button type="button" class="tag tag-category" data-fiche-category="${esc(m.category||"")}" title="Explorer cette classe thérapeutique">${esc(m.category||"Famille à définir")}</button>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}</div><div class="header-actions" id="detailPublicActions" style="align-items:center"><button id="copyFicheLink" class="soft" type="button">🔗 Copier le lien</button><button class="primary" id="editBtn" type="button">Modifier la fiche</button></div></div>
+ $("detail").innerHTML=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche médicament"}</div><h2>${esc(displayMedName(m))}</h2><div class="tags"><button type="button" class="tag tag-category" data-fiche-category="${esc(m.category||"")}" title="Explorer cette classe thérapeutique">${esc(m.category||"Famille à définir")}</button>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${practicalBadges(m)}</div><div class="header-actions" id="detailPublicActions" style="align-items:center"><button id="copyFicheLink" class="soft" type="button">🔗 Copier le lien</button><button class="primary" id="editBtn" type="button">Modifier la fiche</button></div></div>
  ${alertSection&&String(alertSection.content||"").trim()?`<div class="priority-card priority-alert">${renderPrioritySection(alertSection,targetSectionId)}</div>`:""}
  ${prioritySection&&String(prioritySection.content||"").trim()?`<div class="group-glance">${renderPrioritySection(prioritySection,targetSectionId)}</div>`:""}
  ${adviceSection&&String(adviceSection.content||"").trim()?`<div class="priority-card priority-advice">${renderPrioritySection(adviceSection,targetSectionId)}</div>`:""}
@@ -2279,7 +2291,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
   catch(e){window.prompt("Copie ce lien :",ficheUrl(m.id))}
  };
  $("editBtn").onclick=()=>{if(!admin){toast("Connecte-toi en administratrice pour modifier cette fiche.");showLogin();return;}renderEditor(m.id);};
- $("detail").querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=$("presentation-info");if(!target)return;const index=sel.value===""?null:Number(sel.value);target.innerHTML=index!==null&&m.presentations?.[index]?presentationInfo(m.presentations[index]):""});
+ $("detail").querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=$("presentation-info");if(!target)return;const index=sel.value===""?null:Number(sel.value);target.innerHTML=index!==null&&m.presentations?.[index]?presentationInfo(m.presentations[index],m):""});
  if(targetPresentationIndex!==null&&!targetSectionId){const details=$("presentations-details");if(details){details.open=true;const choice=$("presentation-choice");if(choice&&m.presentations?.[targetPresentationIndex]){choice.value=String(targetPresentationIndex);$("presentation-info").innerHTML=presentationInfo(m.presentations[targetPresentationIndex])}requestAnimationFrame(()=>details.scrollIntoView({behavior:"smooth",block:"start"}))}}
  if(targetSectionId){
    // La restauration de défilement de la vue se fait sur plusieurs frames.
@@ -2335,7 +2347,22 @@ document.addEventListener("copy",event=>{
 });
 function formatDateFR(raw){const m=String(raw||"").match(/^(\d{4})-(\d{2})-(\d{2})/);return m?`${m[3]}/${m[2]}/${m[1]}`:String(raw||"")}
 function safeHttp(url){try{const u=new URL(url);return ["https:","http:"].includes(u.protocol)?u.href:""}catch{return ""}}
-function presentationInfo(p){
+function practicalFlags(m){return m?.sections?.[0]?.practicalFlags||{}}
+function moleculeForDosage(m){return meds.find(x=>String(x.id)===String(moleculeParentId(m)))||null}
+function practicalPhotosensitive(m,p=null){
+ const root=isMolecule(m)?m:moleculeForDosage(m);
+ const inherited=!!practicalFlags(root).photosensitizing;
+ if(p)return p.photosensitizingOverride===true?true:p.photosensitizingOverride===false?false:inherited;
+ return !!practicalFlags(m).photosensitizing||inherited;
+}
+function practicalBadges(m,p=null){
+ const flags=p||practicalFlags(m),out=[];
+ if(p&&p.coldStorage===true)out.push('<span class="memo-practical-badge" title="Consulter les conditions exactes dans le RCP">❄ Conservation au froid</span>');
+ if(practicalPhotosensitive(m,p))out.push('<span class="memo-practical-badge memo-light" title="Photosensibilisation : vérifier les précautions selon la forme et la voie">☀ Photosensibilisant</span>');
+ if(p&&p.afterOpening===true){const duration=String(p.afterOpeningDuration||'').trim();out.push(`<span class="memo-practical-badge memo-duration" title="Durée de conservation après ouverture : vérifier les conditions exactes dans le RCP">◷ ${duration?esc(duration):'Après ouverture'}</span>`)}
+ return out.length?`<div class="memo-practical-badges">${out.join('')}</div>`:'';
+}
+function presentationInfo(p,m=null){
  if(!p)return '<p class="muted">Aucune présentation documentée.</p>';
  const img=safeHttp(p.imageUrl||"");
  const line=(key,label,value)=>p[key]===true?`<p><strong>${label} :</strong> ${esc(value)}</p>`:"";
@@ -2350,7 +2377,7 @@ function presentationInfo(p){
   p.showOpen===true?`<p><strong>Ouverture de la gélule :</strong> <span class="${p.cannotOpen===true?"presentation-status-note":""}">${p.cannotOpen===true?"Impossible":p.canOpen===true?"Possible selon vérification":"Non confirmé — vérifier"}${p.openReason?` — ${esc(p.openReason)}`:""}</span></p>`:"",
   p.showPhoto===true&&img?`<figure class="section-image"><img src="${esc(img)}" alt="Photographie documentée de la présentation"><figcaption>Vérifier la concordance avec la présentation exacte.</figcaption></figure>`:""
  ].filter(Boolean);
- return rows.length?rows.join("")+'<p class="hint">L’aspect seul ne permet pas d’identifier avec certitude un médicament. Vérifier les informations pour la présentation exacte.</p>':'<p class="muted">Aucun critère de présentation affiché pour le moment.</p>';
+ return (rows.length||(m&&practicalBadges(m,p)))?(m?practicalBadges(m,p):"")+rows.join("")+'<p class="hint">L’aspect seul ne permet pas d’identifier avec certitude un médicament. Vérifier les informations pour la présentation exacte.</p>':'<p class="muted">Aucun critère de présentation affiché pour le moment.</p>';
 }
 function presentationLabel(p,m,i){
  const name=(p.name||m.name||"").trim();
@@ -2360,7 +2387,7 @@ function presentationLabel(p,m,i){
  const dosage=(p.dosage||m.dosage||"").trim();
  return [name,showLab&&lab?lab:"",dosage,form].filter(Boolean).join(" · ")||"Présentation "+(i+1);
 }
-function renderPresentations(m,targetPresentationIndex=null){const ps=m.presentations||[];const chosen=targetPresentationIndex!==null&&ps[targetPresentationIndex]?targetPresentationIndex:null;return `<section class="section presentation-fixed" id="presentations-details"><h3>💊 Présentation</h3>${ps.length?`${ps.length>1?`<label class="label" for="presentation-choice">Choisir une présentation</label><select id="presentation-choice" data-presentation-select><option value="" ${chosen===null?"selected":""}>— Choisir une présentation —</option>${ps.map((p,i)=>`<option value="${i}" ${i===chosen?"selected":""}>${esc(presentationLabel(p,m,i))}</option>`).join("")}</select>`:""}<div id="presentation-info" style="margin-top:12px">${chosen!==null?presentationInfo(ps[chosen]):ps.length===1?presentationInfo(ps[0]):""}</div>`:'<p class="muted">Aucune présentation renseignée.</p>'}</section>`}
+function renderPresentations(m,targetPresentationIndex=null){const ps=m.presentations||[];const chosen=targetPresentationIndex!==null&&ps[targetPresentationIndex]?targetPresentationIndex:null;return `<section class="section presentation-fixed" id="presentations-details"><h3>💊 Présentation</h3>${ps.length?`${ps.length>1?`<label class="label" for="presentation-choice">Choisir une présentation</label><select id="presentation-choice" data-presentation-select><option value="" ${chosen===null?"selected":""}>— Choisir une présentation —</option>${ps.map((p,i)=>`<option value="${i}" ${i===chosen?"selected":""}>${esc(presentationLabel(p,m,i))}</option>`).join("")}</select>`:""}<div id="presentation-info" style="margin-top:12px">${chosen!==null?presentationInfo(ps[chosen],m):ps.length===1?presentationInfo(ps[0],m):""}</div>`:'<p class="muted">Aucune présentation renseignée.</p>'}</section>`}
 
 const MEMO_CHOICES_KEY="memofficine_field_choices_v1";
 function memoChoices(kind){
@@ -2389,6 +2416,14 @@ function presentationEditor(p,i){
  const field=(key,label,showKey)=>`<div class="full presentation-edit-row">${check(showKey,label)}<input aria-label="${label}" data-pfield="${key}" ${key==="lab"?'data-memo-kind="lab" list="memo-labs"':""} value="${esc(p[key]||"")}" placeholder="${label}"></div>`;
  return `<div class="presentation-card" data-presentation="${i}"><div class="section-editor-head"><strong>Présentation ${i+1}</strong><button type="button" data-remove-presentation="${i}" class="danger">Retirer</button></div>
  <div class="presentation-kind-row"><span>Statut de la présentation :</span><label><input type="checkbox" data-pkind="princeps" ${p.presentationKind==="princeps"?"checked":""}> Princeps</label><label><input type="checkbox" data-pkind="generic" ${p.presentationKind==="generic"?"checked":""}> Générique</label><span class="hint">Laisser les deux décochées si non vérifié.</span></div>
+ <div class="memo-practical-editor">
+ <label><input type="checkbox" data-practical-cold ${p.coldStorage===true?"checked":""}> ❄ Conservation au froid</label>
+ <label><input type="checkbox" data-practical-after ${p.afterOpening===true?"checked":""}> ◷ Durée après ouverture</label>
+ <input type="text" data-practical-duration value="${esc(p.afterOpeningDuration||"")}" placeholder="Ex. : 4 semaines" aria-label="Durée après ouverture, texte court" maxlength="45">
+ <label for="presentation-photo-${i}">☀ Photosensibilisant</label>
+ <select id="presentation-photo-${i}" data-practical-photo aria-label="Photosensibilisant pour cette présentation"><option value="inherit" ${p.photosensitizingOverride!==true&&p.photosensitizingOverride!==false?"selected":""}>Hériter de la molécule</option><option value="yes" ${p.photosensitizingOverride===true?"selected":""}>Oui</option><option value="no" ${p.photosensitizingOverride===false?"selected":""}>Non</option></select>
+ <span class="hint">La durée est un résumé facultatif (ex. 4 semaines) : les conditions exactes restent à préciser dans la rubrique Conservation et dans le RCP.</span>
+ </div>
  <p class="hint">Coche les critères à afficher sur la fiche. Aucun n'est visible par défaut ; les informations masquées restent enregistrées.</p>
  <div class="presentation-fields">
  ${field("name","Nom","showName")}
@@ -2630,6 +2665,7 @@ function renderEditor(id){
   <div><label id="f-name-label" for="f-name">Nom de la spécialité</label><input id="f-name" value="${esc(m.name)}" placeholder="Ex. : Tardyferon"></div><div id="f-dci-form-wrap"><label class="field-label-inline" for="f-dci-form">Forme pharmaceutique <span class="field-inline-choice"><input type="checkbox" data-explorer-visibility="forms" ${explorerBadgeVisible(m,"forms")?"checked":""} aria-label="Afficher la forme pharmaceutique dans Explorer"> <span>Afficher dans Explorer</span></span></label><input id="f-dci-form" data-memo-kind="form" list="memo-forms" value="${esc(m.sections?.[0]?.dciForm||m.form||"")}" placeholder="Ex. : Comprimé, gélule, solution buvable"></div><div id="f-dose-title-wrap" class="full"></div><div id="f-dosage-wrap"><label class="field-label-inline" for="f-dosage">Dosage <span class="field-inline-choice"><input type="checkbox" id="f-dose-in-title"> <span>Afficher dans le titre</span></span></label><div class="dosage-fields"><input id="f-dosage" value="${esc(dosageParts(m.dosage).value)}" placeholder="Ex. : 80"><select id="f-dosage-unit" aria-label="Unité de dosage">${["mg","g","µg","mL","UI","mg/mL","µg/mL","g/L","%","autre"].map(u=>`<option value="${u}" ${dosageParts(m.dosage).unit===u?"selected":""}>${u}</option>`).join("")}</select></div></div><div id="f-dci-wrap" class="full"><label>DCI / substances actives et dosages</label><div id="dciEntries"></div><button type="button" id="addDciEntry" class="soft" style="margin-top:8px">+ Ajouter une DCI</button><p class="muted">Une ligne par substance active. Le sel et sa quantité sont facultatifs et apparaîtront en gris conseil. Ne pas confondre la quantité de sel et celle de substance active.</p></div>
  <div class="full explorer-class-custom" id="princeps-editor-wrap"><label for="f-princeps">Princeps</label><input id="f-princeps" list="princeps-suggestions" value="${esc((m.sections?.[0]?.princepsNames||[]).join(', '))}" placeholder="Ex. : Nom de spécialité 1, Nom de spécialité 2" autocomplete="off"><datalist id="princeps-suggestions">${[...new Set(meds.flatMap(x=>x.sections?.[0]?.princepsNames||[]))].sort((a,b)=>a.localeCompare(b,'fr')).map(x=>`<option value="${esc(x)}"></option>`).join('')}</datalist><p class="muted">Sépare les noms de spécialités par des virgules. Plusieurs noms peuvent être renseignés pour une même DCI. Vérifier le statut de princeps de chaque spécialité.</p></div>
  <div class="full explorer-class-custom"><label class="explorer-section-heading" for="f-extra-classes">Classe·s thérapeutique·s</label><input id="f-extra-classes" list="class-suggestions" value="${esc(explorerClasses(m).filter(t=>t!=="Autres"||explorerClasses(m).length===1).join(", "))}" placeholder="Ex. : Antibiotiques, Pénicillines" autocomplete="off"><datalist id="class-suggestions">${[...new Set(meds.flatMap(explorerClasses))].sort((a,b)=>a.localeCompare(b,"fr")).map(t=>`<option value="${esc(t)}"></option>`).join("")}</datalist><div id="explorer-class-choices" class="explorer-class-choices"></div><p class="muted">Sépare les étiquettes par des virgules. Coche uniquement les badges à afficher dans Explorer. Les autres restent enregistrés et utilisables dans les filtres.</p></div>
+ <div class="full memo-practical-editor" id="molecule-practical-flags"><label><input type="checkbox" id="f-photosensitizing" ${practicalFlags(m).photosensitizing===true?"checked":""}> ☀ Photosensibilisant</label><span class="hint">À renseigner sur la fiche molécule si pertinent ; chaque présentation peut ensuite conserver ou désactiver ce badge selon la voie d'administration.</span></div>
  <div class="full explorer-class-custom"><label class="explorer-section-heading" for="f-indications">Indication·s thérapeutique·s</label><input id="f-indications" list="indication-suggestions" value="${esc(indicationTags(m).join(", "))}" placeholder="Ex. : Infection bactérienne, Carence en fer" autocomplete="off"><datalist id="indication-suggestions">${[...new Set(meds.flatMap(indicationTags))].sort((a,b)=>a.localeCompare(b,"fr")).map(t=>`<option value="${esc(t)}"></option>`).join("")}</datalist><div id="explorer-indication-choices" class="explorer-class-choices"></div><p class="muted">Sépare les étiquettes par des virgules. Coche uniquement les badges à afficher dans Explorer. Les autres restent enregistrés et utilisables dans les filtres.</p></div>
  
  
@@ -2749,7 +2785,7 @@ const toggleType = () => {
  $("editor").onchange=saveLocalDraft;
  $("saveMed").onclick=()=>saveEditor(m.id);$("duplicateMed").onclick=()=>duplicateMed(m.id);$("deleteMed").onclick=()=>deleteMed(m.id);
 }
-function readPresentationEditors(m){const cards=[...$("presentationEditors").querySelectorAll("[data-presentation]")];m.presentations=cards.map((card,i)=>{const p={imageUrl:m.presentations?.[i]?.imageUrl||"",presentationKind:card.querySelector("[data-pkind]:checked")?.dataset.pkind||"",canSplit:card.querySelector("[data-can-split]")?.checked===true,canCrush:card.querySelector("[data-can-crush]")?.checked===true,canOpen:card.querySelector("[data-can-open]")?.checked===true,cannotSplit:card.querySelector("[data-cannot-split]")?.checked===true,cannotCrush:card.querySelector("[data-cannot-crush]")?.checked===true,cannotOpen:card.querySelector("[data-cannot-open]")?.checked===true};card.querySelectorAll("[data-show-field]").forEach(input=>p[input.dataset.showField]=input.checked);card.querySelectorAll("[data-pfield]").forEach(input=>p[input.dataset.pfield]=input.value.trim());p.cipBoxes=[...card.querySelectorAll("[data-cip-pack-row]")].map(row=>({cip:row.querySelector("[data-cip-value]").value.trim(),pack:row.querySelector("[data-pack-value]").value.trim()})).filter(x=>x.cip||x.pack);p.cip=p.cipBoxes[0]?.cip||"";return p})}
+function readPresentationEditors(m){const cards=[...$("presentationEditors").querySelectorAll("[data-presentation]")];m.presentations=cards.map((card,i)=>{const p={imageUrl:m.presentations?.[i]?.imageUrl||"",presentationKind:card.querySelector("[data-pkind]:checked")?.dataset.pkind||"",canSplit:card.querySelector("[data-can-split]")?.checked===true,canCrush:card.querySelector("[data-can-crush]")?.checked===true,canOpen:card.querySelector("[data-can-open]")?.checked===true,cannotSplit:card.querySelector("[data-cannot-split]")?.checked===true,cannotCrush:card.querySelector("[data-cannot-crush]")?.checked===true,cannotOpen:card.querySelector("[data-cannot-open]")?.checked===true};p.coldStorage=!!card.querySelector("[data-practical-cold]")?.checked;p.afterOpening=!!card.querySelector("[data-practical-after]")?.checked;p.afterOpeningDuration=card.querySelector("[data-practical-duration]")?.value.trim()||"";const photoSetting=card.querySelector("[data-practical-photo]")?.value;p.photosensitizingOverride=photoSetting==="yes"?true:photoSetting==="no"?false:null;card.querySelectorAll("[data-show-field]").forEach(input=>p[input.dataset.showField]=input.checked);card.querySelectorAll("[data-pfield]").forEach(input=>p[input.dataset.pfield]=input.value.trim());p.cipBoxes=[...card.querySelectorAll("[data-cip-pack-row]")].map(row=>({cip:row.querySelector("[data-cip-value]").value.trim(),pack:row.querySelector("[data-pack-value]").value.trim()})).filter(x=>x.cip||x.pack);p.cip=p.cipBoxes[0]?.cip||"";return p})}
 function tableRows(content){
  const rows=String(content||"").split("\n").filter(line=>line.trim()).map(line=>line.split(/\s+\|\s+/).map(cell=>cell.trim()));
  if(!rows.length)return [["",""],["",""]];
@@ -2875,6 +2911,7 @@ function captureEditorFields(m){
   m.sections[0].dciForm=(get("f-dci-form")||"").trim();
   m.form=m.sections[0].dciForm;
  }
+ if(kind==="molecule")m.sections[0].practicalFlags={...practicalFlags(m),photosensitizing:!!$("f-photosensitizing")?.checked};
  if(kind==="dci"||kind==="molecule")m.sections[0].princepsNames=[...new Set((get("f-princeps")||"").split(",").map(x=>x.trim()).filter(Boolean))];
  m.sections[0].explorerVisibility=Object.fromEntries([...$("editor").querySelectorAll("[data-explorer-visibility]")].filter(input=>!input.closest(".hidden")).map(input=>[input.dataset.explorerVisibility,input.checked]));
  const classes=[...new Set((get("f-extra-classes")||"").split(",").map(t=>t.trim()).filter(Boolean))];
@@ -3104,10 +3141,11 @@ document.addEventListener("keydown",event=>{
 // Ne détourne pas le raccourci hors d'une fiche, ni quand l'éditeur est déjà ouvert.
 document.addEventListener("keydown",event=>{
  if(!(event.ctrlKey||event.metaKey)||event.altKey||event.shiftKey||event.key.toLowerCase()!=="m")return;
- if(event.repeat||editorId||!selectedId||$("detail").classList.contains("hidden")||!admin)return;
- const med=meds.find(m=>m.id===selectedId&&!isSourcesRecord(m));
+ if(event.repeat||editorId||!admin||currentView!=="home"||!selectedId||$("detail").classList.contains("hidden"))return;
+ const med=meds.find(m=>String(m.id)===String(selectedId)&&!isSourcesRecord(m));
  if(!med)return;
  event.preventDefault();
+ event.stopImmediatePropagation();
  renderEditor(med.id);
 });
 // Ctrl+A / Cmd+A : revenir à la fiche sans enregistrer depuis l'éditeur.
@@ -3535,6 +3573,8 @@ async function dashSaveSuggestions(){
 $("dashSuggestionsSave").onclick=dashSaveSuggestions;
 document.addEventListener("keydown",e=>{
  if(!admin||currentView!=="home"||!(e.ctrlKey||e.metaKey))return;
+ // Ctrl+M sur une fiche ouvre son éditeur ; sur l'accueil admin, édite la liste.
+ if(e.key.toLowerCase()==="m"&&(!$("detail").classList.contains("hidden")&&!!selectedId||!!editorId))return;
  if(e.key.toLowerCase()==="m"){
   e.preventDefault();e.stopPropagation();dashEditToggle();
  }else if(e.key.toLowerCase()==="s"&&document.activeElement===$("dashSuggestions")){
