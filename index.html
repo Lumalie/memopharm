@@ -942,6 +942,9 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 #exploreCards .search-pres-title,
 #exploreCards .explore-grouped-presentation-link{color:var(--memo-presentation-ink)!important}
 #exploreCards .explore-preview-direct{margin-top:7px}
+
+/* V6.52 : recherche compacte disponible sur le tableau de bord administrateur. */
+#homeView.admin-dashboard-only #adminDashboard{margin-top:8px}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -1366,6 +1369,7 @@ function showView(view){
 }
 function hierarchyMeta(m){return (m.sections||[]).find(s=>s.memofficineKind||s.memofficineParentGroup)||(m.sections||[]).find(s=>s.id==="indications")||(m.sections||[])[0]||{}}
 function isMolecule(m){return !isGroup(m)&&!!m.sections?.[0]?.moleculeRoot}
+function isDosageFiche(m){return !isGroup(m)&&!isMolecule(m)&&hierarchyMeta(m).memofficineKind!=="conseil"&&m.entry_type==="dci"}
 function moleculeParentId(m){return m.sections?.[0]?.moleculeParentId||""}
 function moleculeChildren(m){return publicMeds().filter(x=>!isGroup(x)&&moleculeParentId(x)===String(m.id)).sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),'fr'))}
 function moleculeDosageColumns(children){
@@ -2013,7 +2017,7 @@ function searchSectionPreview(sec){
 let openedSearchFiche=false;
 function updateSearchPlacement(){
  const detailMode=currentView==="home"&&openedSearchFiche&&!editorId;
- const compactMode=detailMode||currentView==="sources";
+ const compactMode=detailMode||currentView==="sources"||(admin&&currentView==="home"&&!editorId);
  document.body.classList.toggle("fiche-open",detailMode);
  document.body.classList.toggle("header-search-active",compactMode);
  const card=$("mainSearchCard");
@@ -3338,7 +3342,7 @@ function dashCategoryLists(){
   review:all.filter(m=>String(m.status||"").toLocaleLowerCase("fr")!=="vérifiée"),
   groups:all.filter(isGroup),
   molecules:all.filter(isMolecule),
-  dosages:all.filter(m=>!isGroup(m)&&!isMolecule(m)&&!!moleculeParentId(m)),
+  dosages:all.filter(isDosageFiche),
   conseils:all.filter(m=>hierarchyMeta(m).memofficineKind==="conseil")
  };
 }
@@ -3413,7 +3417,7 @@ function dashRender(){
  $("dashReview").textContent=list.filter(m=>String(m.status||"").toLocaleLowerCase("fr")!=="vérifiée").length;
  $("dashGroups").textContent=list.filter(isGroup).length;
  $("dashMolecules").textContent=list.filter(isMolecule).length;
- $("dashDosages").textContent=list.filter(m=>!isGroup(m)&&!isMolecule(m)&&!!moleculeParentId(m)).length;
+ $("dashDosages").textContent=list.filter(isDosageFiche).length;
  // Catégorie réservée aux futures fiches conseil : aucune fiche n'est présumée conseil sur la seule présence d'une rubrique.
  $("dashConseils").textContent=list.filter(m=>hierarchyMeta(m).memofficineKind==="conseil").length;
  $("dashPublished").textContent=list.filter(m=>m.published).length;
