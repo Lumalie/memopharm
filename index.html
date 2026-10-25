@@ -945,6 +945,16 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 
 /* V6.52 : recherche compacte disponible sur le tableau de bord administrateur. */
 #homeView.admin-dashboard-only #adminDashboard{margin-top:8px}
+
+/* V6.57 : commandes administrateur dans la bannière supérieure */
+.header-action-stack{display:flex;flex-direction:column;align-items:flex-end;gap:9px;flex:0 0 auto;margin-left:auto}
+.header-action-stack .header-actions{margin-left:0}
+.header-admin-actions{display:flex;justify-content:flex-end;width:100%}
+header .header-actions .header-logout{background:#a72f3b;color:#fff;border:1px solid #e5a4aa;font-weight:800;box-shadow:0 2px 8px #0002}
+header .header-actions .header-logout:hover{background:#87232f;color:#fff}
+header .header-new-fiche{background:#e7f3e9;color:#1d523d;border:1px solid #b6d7be;font-weight:800;padding:9px 17px;border-radius:10px;box-shadow:0 2px 7px #0002}
+header .header-new-fiche:hover{background:#d2e9d8}
+@media(max-width:740px){.header-action-stack{flex:1 1 100%;width:100%;margin-left:0;align-items:flex-start}.header-admin-actions{justify-content:flex-start}.header-action-stack .header-actions{justify-content:flex-start}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -1147,12 +1157,12 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
   </div>
 </a>
     <div id="headerSearchSlot" class="header-search-slot"></div>
-    <div class="header-actions"><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="loginBtn">Connexion administrateur</button></div>
+    <div class="header-action-stack"><div class="header-actions"><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="loginBtn">Connexion administrateur</button><button id="logoutBtn" type="button" class="header-logout hidden">Déconnexion</button></div><div class="header-admin-actions"><button id="addMedBtn" type="button" class="header-new-fiche hidden">+ Nouvelle fiche</button></div></div>
   </div>
   <p>Une base de repères pour retrouver rapidement les informations utiles sur les médicaments, leurs modalités de prise et les points de vigilance.</p>
 </div></header>
 <main>
-  <div id="adminBanner" class="admin-banner hidden"><div><strong>Administration Mémopharm</strong><div class="muted">Les modifications sont synchronisées avec la base en ligne.</div></div><div class="mini-actions"><button id="addMedBtn" class="primary">+ Nouvelle fiche</button><button id="addGroupBtn" class="soft">+ Nouveau groupe</button><button id="exportBtn">Exporter JSON</button><button id="importBtn">Importer JSON</button><button id="logoutBtn">Déconnexion</button><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
+  <div id="adminBanner" class="admin-banner hidden"><div><strong>Administration Mémopharm</strong><div class="muted">Les modifications sont synchronisées avec la base en ligne.</div></div><div class="mini-actions"><button id="exportBtn">Exporter JSON</button><button id="importBtn">Importer JSON</button><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
   <section id="dashboardListView" class="hidden" aria-label="Liste des fiches du tableau de bord"><div class="dash-list-page"><div class="dash-list-page-head"><button type="button" id="dashListBack" class="dash-back">← Retour au tableau de bord</button><h2 id="dashListPageTitle">Liste des fiches</h2></div><div id="dashListPageItems"></div></div></section><section id="homeView"><section id="adminDashboard" class="hidden" aria-label="Tableau de bord personnel">
  <div class="dash-heading"><div><h2>🌿 Mon espace Mémopharm</h2><div class="muted">Suivi de la bibliothèque et de mes projets</div></div></div>
  <div class="dash-stats dash-stats-general"><button type="button" class="dash-stat" data-dash-filter="all" aria-label="Afficher la liste : Fiches créées"><b id="dashTotal">0</b><span>Fiches créées</span></button><button type="button" class="dash-stat" data-dash-filter="published" aria-label="Afficher la liste : Fiches publiées"><b id="dashPublished">0</b><span>Fiches publiées</span></button><button type="button" class="dash-stat dash-stat-review" data-dash-filter="review" aria-label="Afficher la liste : À vérifier"><b id="dashReview">0</b><span>À vérifier</span></button></div>
@@ -1309,12 +1319,18 @@ async function syncMedication(m){
  if(error){console.error(error);toast("Enregistrement refusé par Supabase : vérifie les permissions et la structure SQL");throw error}
  const updated=rowToMed(data);const index=meds.findIndex(x=>x.id===updated.id);if(index>=0)meds[index]=updated;else meds.unshift(updated);selectedId=updated.id;renderFilters();renderResults();return updated;
 }
+function updateAdminHeader(){
+ $("loginBtn").classList.toggle("hidden",admin);
+ $("logoutBtn").classList.toggle("hidden",!admin);
+ $("addMedBtn").classList.toggle("hidden",!admin);
+ $("adminBanner").classList.toggle("hidden",!admin);
+}
 async function initCloud(){
  const {data:{session},error:sessionError}=await supabaseClient.auth.getSession();
  if(sessionError)console.error(sessionError);currentUser=session?.user||null;admin=await checkAdminAccess(currentUser);
- $("loginBtn").classList.toggle("hidden",admin);$("adminBanner").classList.toggle("hidden",!admin);
+ updateAdminHeader();
  await loadCloudMeds();dashSetUser();
- supabaseClient.auth.onAuthStateChange((_event,session)=>{setTimeout(async()=>{currentUser=session?.user||null;admin=await checkAdminAccess(currentUser);$("loginBtn").classList.toggle("hidden",admin);$("adminBanner").classList.toggle("hidden",!admin);await loadCloudMeds();dashSetUser();},0);});
+ supabaseClient.auth.onAuthStateChange((_event,session)=>{setTimeout(async()=>{currentUser=session?.user||null;admin=await checkAdminAccess(currentUser);updateAdminHeader();await loadCloudMeds();dashSetUser();},0);});
 }
 let currentView="home";
 const viewScrollPositions={home:0,explore:0,sources:0};
@@ -3282,7 +3298,7 @@ $("exploreSearch").addEventListener("input",()=>{explorerVisibleLimit=20;renderE
 $("clearExploreSearch").onclick=()=>{$("exploreSearch").value="";explorerVisibleLimit=20;renderExplorer();$("exploreSearch").focus()};
 $("exploreClass").onchange=$("exploreIndication").onchange=$("exploreForm").onchange=()=>{explorerVisibleLimit=20;renderExplorer()};
 $("resetExplore").onclick=()=>{explorerVisibleLimit=20;$("exploreClass").value="";$("exploreIndication").value="";$("exploreForm").value="";renderExplorer()};
-$("loginBtn").onclick=showLogin;$("logoutBtn").onclick=logout;$("addMedBtn").onclick=addMedication;$("addGroupBtn").onclick=addGroup;$("search").addEventListener("input",()=>{renderResults()});$("clearSearch").onclick=()=>{$("search").value="";renderResults()};
+$("loginBtn").onclick=showLogin;$("logoutBtn").onclick=logout;$("addMedBtn").onclick=addMedication;$("search").addEventListener("input",()=>{renderResults()});$("clearSearch").onclick=()=>{$("search").value="";renderResults()};
 $("exportBtn").onclick=()=>{const blob=new Blob([JSON.stringify(meds,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="memopharm-sauvegarde-cloud.json";a.click();URL.revokeObjectURL(a.href)};
 $("importBtn").onclick=()=>toast("Import JSON désactivé temporairement : nous le relierons à la base avec validation.");$("importFile").onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const parsed=JSON.parse(await file.text());if(!Array.isArray(parsed)||!parsed.every(m=>m.name&&Array.isArray(m.sections)))throw new Error("Format");if(!confirm("Remplacer les fiches locales par ce fichier ?"))return;toast("Import JSON non disponible dans cette version connectée : aucune donnée modifiée")}catch(err){toast("Fichier JSON non reconnu")}e.target.value=""};
 document.addEventListener("visibilitychange",()=>{
