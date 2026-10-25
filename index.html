@@ -955,6 +955,28 @@ header .header-actions .header-logout:hover{background:#87232f;color:#fff}
 header .header-new-fiche{background:#e7f3e9;color:#1d523d;border:1px solid #b6d7be;font-weight:800;padding:9px 17px;border-radius:10px;box-shadow:0 2px 7px #0002}
 header .header-new-fiche:hover{background:#d2e9d8}
 @media(max-width:740px){.header-action-stack{flex:1 1 100%;width:100%;margin-left:0;align-items:flex-start}.header-admin-actions{justify-content:flex-start}.header-action-stack .header-actions{justify-content:flex-start}}
+
+/* V6.58 — Barre d'administration compacte et cohérente */
+header .header-action-stack{gap:5px}
+header .header-actions{gap:7px}
+header .header-actions button,header .header-admin-actions .header-new-fiche,header .header-json-menu>summary{box-sizing:border-box;min-height:34px;padding:7px 12px;border-radius:9px;font:inherit;font-size:.85rem;font-weight:700;line-height:1.25;box-shadow:none;cursor:pointer}
+header .header-actions button{background:#f4f8f5;color:#234e3d;border:1px solid #d3e5d7}
+header .header-actions button:hover{background:#e4efe7}
+header .header-actions .header-logout{background:#a72f3b;color:#fff;border:1px solid #b94d59}
+header .header-admin-actions{display:flex;flex-direction:column;align-items:flex-end;gap:5px;width:auto;position:relative}
+header .header-admin-actions .header-new-fiche{background:#e7f3e9;color:#1d523d;border:1px solid #b6d7be;width:142px}
+header .header-json-menu{position:relative;width:142px;color:#1d523d}
+header .header-json-menu>summary{display:flex;align-items:center;justify-content:center;gap:7px;list-style:none;background:#f4f8f5;border:1px solid #d3e5d7;color:#234e3d;width:100%}
+header .header-json-menu>summary::-webkit-details-marker{display:none}
+header .header-json-menu>summary:hover{background:#e4efe7}
+header .header-json-items{position:absolute;z-index:30;right:0;top:calc(100% + 5px);min-width:175px;padding:5px;background:#fff;border:1px solid #c8d9cd;border-radius:10px;box-shadow:0 10px 25px #0003;display:grid;gap:3px}
+header .header-json-items button{width:100%;text-align:left;border:0;background:#fff;color:#234e3d;border-radius:7px;padding:9px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+header .header-json-items button:hover{background:#e7f3e9}
+header.admin-unused{display:none}
+body.admin-header-mode header{padding-top:12px;padding-bottom:12px}
+body.admin-header-mode header>.wrap>p{display:none}
+body.admin-header-mode header .header-action-stack{gap:4px}
+@media(max-width:740px){header .header-admin-actions{align-items:flex-start}body.admin-header-mode header{padding-top:14px;padding-bottom:14px}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -1157,12 +1179,12 @@ header .header-new-fiche:hover{background:#d2e9d8}
   </div>
 </a>
     <div id="headerSearchSlot" class="header-search-slot"></div>
-    <div class="header-action-stack"><div class="header-actions"><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="loginBtn">Connexion administrateur</button><button id="logoutBtn" type="button" class="header-logout hidden">Déconnexion</button></div><div class="header-admin-actions"><button id="addMedBtn" type="button" class="header-new-fiche hidden">+ Nouvelle fiche</button></div></div>
+    <div class="header-action-stack"><div class="header-actions"><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="loginBtn">Connexion administrateur</button><button id="logoutBtn" type="button" class="header-logout hidden">Déconnexion</button></div><div class="header-admin-actions hidden" id="headerAdminActions"><button id="addMedBtn" type="button" class="header-new-fiche hidden">+ Nouvelle fiche</button><details class="header-json-menu" id="headerJsonMenu"><summary>JSON <span aria-hidden="true">⌄</span></summary><div class="header-json-items"><button id="exportBtn" type="button">Exporter JSON</button><button id="importBtn" type="button">Importer JSON</button></div></details><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
   </div>
   <p>Une base de repères pour retrouver rapidement les informations utiles sur les médicaments, leurs modalités de prise et les points de vigilance.</p>
 </div></header>
 <main>
-  <div id="adminBanner" class="admin-banner hidden"><div><strong>Administration Mémopharm</strong><div class="muted">Les modifications sont synchronisées avec la base en ligne.</div></div><div class="mini-actions"><button id="exportBtn">Exporter JSON</button><button id="importBtn">Importer JSON</button><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
+  
   <section id="dashboardListView" class="hidden" aria-label="Liste des fiches du tableau de bord"><div class="dash-list-page"><div class="dash-list-page-head"><button type="button" id="dashListBack" class="dash-back">← Retour au tableau de bord</button><h2 id="dashListPageTitle">Liste des fiches</h2></div><div id="dashListPageItems"></div></div></section><section id="homeView"><section id="adminDashboard" class="hidden" aria-label="Tableau de bord personnel">
  <div class="dash-heading"><div><h2>🌿 Mon espace Mémopharm</h2><div class="muted">Suivi de la bibliothèque et de mes projets</div></div></div>
  <div class="dash-stats dash-stats-general"><button type="button" class="dash-stat" data-dash-filter="all" aria-label="Afficher la liste : Fiches créées"><b id="dashTotal">0</b><span>Fiches créées</span></button><button type="button" class="dash-stat" data-dash-filter="published" aria-label="Afficher la liste : Fiches publiées"><b id="dashPublished">0</b><span>Fiches publiées</span></button><button type="button" class="dash-stat dash-stat-review" data-dash-filter="review" aria-label="Afficher la liste : À vérifier"><b id="dashReview">0</b><span>À vérifier</span></button></div>
@@ -1323,7 +1345,7 @@ function updateAdminHeader(){
  $("loginBtn").classList.toggle("hidden",admin);
  $("logoutBtn").classList.toggle("hidden",!admin);
  $("addMedBtn").classList.toggle("hidden",!admin);
- $("adminBanner").classList.toggle("hidden",!admin);
+ document.body.classList.toggle("admin-header-mode",admin);$("headerAdminActions").classList.toggle("hidden",!admin);
 }
 async function initCloud(){
  const {data:{session},error:sessionError}=await supabaseClient.auth.getSession();
@@ -2629,7 +2651,7 @@ function renderSection(s,targetSectionId=null){
  const isConseil = (s.title || "").toLowerCase().includes("à dire au comptoir");  
  return `<section class="section ${isConseil ? 'conseil-comptoir' : ''} ${targetSectionId&&s.id===targetSectionId?'direct-target':''}" id="section-${esc(s.id)}"><h3>${esc(s.title)}</h3>${s.sharedSourceName?`<p class="shared-origin">🔗 Rubrique partagée depuis ${esc(s.sharedSourceName)}</p>`:""}${imageHtml}${content}</section>`;
 }
-function setAdmin(value){admin=!!value;dashSetUser();$("adminBanner").classList.toggle("hidden",!admin);$("loginBtn").classList.toggle("hidden",admin);renderResults();if(selectedId&&!editorId&&!$("detail").classList.contains("hidden"))renderDetail()}
+function setAdmin(value){admin=!!value;dashSetUser();document.body.classList.toggle("admin-header-mode",admin);$("headerAdminActions").classList.toggle("hidden",!admin);$("loginBtn").classList.toggle("hidden",admin);renderResults();if(selectedId&&!editorId&&!$("detail").classList.contains("hidden"))renderDetail()}
 function showLogin(){
  $("modalRoot").innerHTML=`<div class="modalback"><div class="modal"><h2>Connexion administrateur</h2><p>Connecte-toi avec le compte créé dans Supabase Authentication. Les inscriptions publiques doivent rester désactivées.</p><label class="label" for="loginEmail">Adresse e-mail</label><input id="loginEmail" type="email" autocomplete="username" placeholder="Ton adresse e-mail"><label class="label" for="loginPassword" style="margin-top:10px">Mot de passe</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Mot de passe"><div class="actions"><button id="cancelLogin">Annuler</button><button class="primary" id="confirmLogin">Se connecter</button></div></div></div>`;
  $("cancelLogin").onclick=()=>$("modalRoot").innerHTML="";
@@ -3299,8 +3321,8 @@ $("clearExploreSearch").onclick=()=>{$("exploreSearch").value="";explorerVisible
 $("exploreClass").onchange=$("exploreIndication").onchange=$("exploreForm").onchange=()=>{explorerVisibleLimit=20;renderExplorer()};
 $("resetExplore").onclick=()=>{explorerVisibleLimit=20;$("exploreClass").value="";$("exploreIndication").value="";$("exploreForm").value="";renderExplorer()};
 $("loginBtn").onclick=showLogin;$("logoutBtn").onclick=logout;$("addMedBtn").onclick=addMedication;$("search").addEventListener("input",()=>{renderResults()});$("clearSearch").onclick=()=>{$("search").value="";renderResults()};
-$("exportBtn").onclick=()=>{const blob=new Blob([JSON.stringify(meds,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="memopharm-sauvegarde-cloud.json";a.click();URL.revokeObjectURL(a.href)};
-$("importBtn").onclick=()=>toast("Import JSON désactivé temporairement : nous le relierons à la base avec validation.");$("importFile").onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const parsed=JSON.parse(await file.text());if(!Array.isArray(parsed)||!parsed.every(m=>m.name&&Array.isArray(m.sections)))throw new Error("Format");if(!confirm("Remplacer les fiches locales par ce fichier ?"))return;toast("Import JSON non disponible dans cette version connectée : aucune donnée modifiée")}catch(err){toast("Fichier JSON non reconnu")}e.target.value=""};
+$("exportBtn").onclick=()=>{$("headerJsonMenu").open=false;const blob=new Blob([JSON.stringify(meds,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="memopharm-sauvegarde-cloud.json";a.click();URL.revokeObjectURL(a.href)};
+$("importBtn").onclick=()=>{$("headerJsonMenu").open=false;toast("Import JSON désactivé temporairement : nous le relierons à la base avec validation.");};$("importFile").onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const parsed=JSON.parse(await file.text());if(!Array.isArray(parsed)||!parsed.every(m=>m.name&&Array.isArray(m.sections)))throw new Error("Format");if(!confirm("Remplacer les fiches locales par ce fichier ?"))return;toast("Import JSON non disponible dans cette version connectée : aucune donnée modifiée")}catch(err){toast("Fichier JSON non reconnu")}e.target.value=""};
 document.addEventListener("visibilitychange",()=>{
  if(document.visibilityState==="hidden"){
   rememberEditorFocus();
