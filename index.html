@@ -3416,17 +3416,6 @@ document.addEventListener("keydown",event=>{
  event.preventDefault();
  addMedication();
 });
-// Ctrl+M / Cmd+M : ouvre l'édition de la fiche actuellement consultée.
-// Ne détourne pas le raccourci hors d'une fiche, ni quand l'éditeur est déjà ouvert.
-document.addEventListener("keydown",event=>{
- if(!(event.ctrlKey||event.metaKey)||event.altKey||event.shiftKey||event.key.toLowerCase()!=="m")return;
- if(event.repeat||!admin||currentView!=="home"||!selectedId||$("detail").classList.contains("hidden")||!$("editor").classList.contains("hidden"))return;
- const med=meds.find(m=>String(m.id)===String(selectedId)&&!isSourcesRecord(m));
- if(!med)return;
- event.preventDefault();
- event.stopImmediatePropagation();
- renderEditor(med.id);
-},true);
 // Ctrl+A / Cmd+A : revenir à la fiche sans enregistrer depuis l'éditeur.
 // Hors édition, revenir à la page précédente de l'application. Dans les champs
 // de saisie hors éditeur, conserver le raccourci natif « tout sélectionner ».
@@ -3765,6 +3754,21 @@ function dashEditToggle(){
  const first=$("dashTaskTree").querySelector(".dash-edit-text");if(first)first.focus();
 }
 $("dashToggleEditor").onclick=dashEditToggle;
+// Ctrl+M / Cmd+M : modifier la fiche affichée, ou la liste sur le tableau de bord.
+document.addEventListener("keydown",event=>{
+ if(!(event.ctrlKey||event.metaKey)||event.altKey||event.shiftKey||event.key.toLowerCase()!=="m"||event.repeat)return;
+ if(!admin||currentView!=="home")return;
+ const target=event.target;
+ if(target?.closest?.('input,textarea,select,[contenteditable="true"]'))return;
+ // La fiche visible est prioritaire sur le tableau de bord.
+ if(openedSearchFiche&&selectedId&&!$("detail").classList.contains("hidden")&&!editorId){
+  event.preventDefault();event.stopImmediatePropagation();renderEditor(selectedId);return;
+ }
+ // Ne pas détourner le raccourci pendant qu'une fiche est déjà en édition.
+ if(editorId&&!$("editor").classList.contains("hidden"))return;
+ if($("adminDashboard").classList.contains("hidden"))return;
+ event.preventDefault();event.stopImmediatePropagation();dashEditToggle();
+},true);
 function dashEditItem(text="",after=null){
  const tree=$("dashTaskTree");let ul=after?.parentElement;
  if(!ul||ul.tagName!=="UL"){ul=tree.querySelector(":scope > ul");if(!ul){ul=document.createElement("ul");tree.replaceChildren(ul)}}
@@ -3859,7 +3863,7 @@ async function dashSaveSuggestions(){if(!requireAdmin())return;
 $("dashSuggestionsSave").onclick=dashSaveSuggestions;
 document.addEventListener("keydown",e=>{
  if(!admin||currentView!=="home"||!(e.ctrlKey||e.metaKey))return;
- // Ctrl+M est réservé à la modification de la fiche consultée.
+ // Ctrl+M gère la modification de la liste de suivi.
  if(e.key.toLowerCase()==="s"&&document.activeElement===$("dashSuggestions")){
   e.preventDefault();e.stopPropagation();dashSaveSuggestions();
  }else if(e.key.toLowerCase()==="s"&&dashInlineEditing){
