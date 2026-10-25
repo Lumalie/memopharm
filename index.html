@@ -1378,9 +1378,9 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
         <div><label for="contactSenderEmail">Adresse e-mail (facultative)</label><input id="contactSenderEmail" type="email" maxlength="254" autocomplete="email" placeholder="Pour recevoir une réponse"></div>
       </div>
       <label for="contactMailTitle">Titre de votre message</label>
-      <input id="contactMailTitle" type="text" maxlength="120" required placeholder="Ex. : Correction fiche Prégabaline" autocomplete="off">
+      <input id="contactMailTitle" type="text" minlength="3" maxlength="120" required placeholder="Ex. : Correction fiche Prégabaline" autocomplete="off">
       <label for="contactMailBody">Votre message</label>
-      <textarea id="contactMailBody" rows="7" maxlength="10000" required placeholder="Décrivez votre suggestion ou l'erreur constatée…"></textarea>
+      <textarea id="contactMailBody" rows="7" minlength="10" maxlength="5000" required placeholder="Décrivez votre suggestion ou l'erreur constatée…"></textarea>
       <div class="contact-trap" aria-hidden="true"><label for="contactWebsite">Ne pas remplir ce champ</label><input id="contactWebsite" type="text" tabindex="-1" autocomplete="off"></div>
       <button type="submit" id="contactSubmit" class="contact-send-button" disabled>✉ Envoyer le message</button>
       <p id="contactStatus" class="info-note" role="status" aria-live="polite">L'envoi direct sera disponible après activation du service d'envoi sécurisé.</p>
@@ -3918,7 +3918,7 @@ dashArea.addEventListener("keydown",e=>{
 
 // Adresse HTTPS publique de la fonction Supabase, à activer après son déploiement.
 // Ne jamais insérer ici une clé API d'envoi de mail ou un mot de passe.
-const MEMOPHARM_CONTACT_ENDPOINT = "";
+const MEMOPHARM_CONTACT_ENDPOINT = `${SUPABASE_URL}/functions/v1/memopharm-contact`;
 (function initContactForm(){
  const form=document.getElementById("contactMailForm");
  if(!form)return;
@@ -3933,14 +3933,19 @@ const MEMOPHARM_CONTACT_ENDPOINT = "";
   event.preventDefault();
   if(!endpoint || !/^https:\/\//i.test(endpoint) || !form.reportValidity())return;
   const category=form.querySelector('input[name="contactCategory"]:checked')?.value||"Autre demande";
-  const payload={category,title:document.getElementById("contactMailTitle").value.trim(),message:document.getElementById("contactMailBody").value.trim(),name:document.getElementById("contactSenderName").value.trim(),email:document.getElementById("contactSenderEmail").value.trim(),website:document.getElementById("contactWebsite").value};
-  if(!payload.title || !payload.message)return;
+  const payload={category,subject:document.getElementById("contactMailTitle").value.trim(),message:document.getElementById("contactMailBody").value.trim(),sender_name:document.getElementById("contactSenderName").value.trim(),sender_email:document.getElementById("contactSenderEmail").value.trim(),website:document.getElementById("contactWebsite").value};
+  if(!payload.subject || !payload.message)return;
   submit.disabled=true;status.textContent="Envoi en cours…";
   try{
    const response=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-   if(!response.ok)throw new Error("Envoi indisponible");
-   form.reset();status.textContent="Merci ! Votre message a bien été transmis.";
-  }catch(error){status.textContent="Le message n'a pas pu être envoyé. Vous pouvez écrire directement à contact.memopharm@etik.com.";}
+   const result=await response.json().catch(()=>({}));
+   if(!response.ok || result.success!==true){
+    if(response.status===429)throw new Error("Vous avez atteint la limite de messages. Réessayez dans une heure.");
+    if(response.status===400)throw new Error(result.error||"Vérifiez les informations saisies.");
+    throw new Error("Le message n'a pas pu être envoyé. Réessayez plus tard ou écrivez à contact.memopharm@etik.com.");
+   }
+   form.reset();status.textContent="Merci ! Votre message a bien été enregistré.";
+  }catch(error){status.textContent=error instanceof Error?error.message:"Une erreur est survenue pendant l'envoi.";}
   finally{submit.disabled=false;}
  });
 })();
