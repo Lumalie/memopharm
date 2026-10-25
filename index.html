@@ -1240,6 +1240,14 @@ const starter = [
 ];
 function clone(x){return JSON.parse(JSON.stringify(x))}
 let meds=[], selectedId=null, activeCategory="Toutes", admin=false, currentUser=null;
+async function checkAdminAccess(user){
+ if(!user)return false;
+ const {data,error}=await supabaseClient.from("memopharm_admins").select("user_id").eq("user_id",user.id).maybeSingle();
+ if(error){console.warn("Vérification des droits administrateur impossible :",error);return false}
+ return !!data;
+}
+function requireAdmin(){if(admin&&currentUser)return true;toast("Action réservée à l’administration.");return false}
+
 const $=id=>document.getElementById(id);
 // Brouillon temporaire propre à cet onglet et à ce compte administrateur.
 const draftKey=()=>currentUser?.id?"memofficine-editor-v3:"+currentUser.id:null;
@@ -1296,16 +1304,17 @@ async function loadCloudMeds(){
  }
 }
 async function syncMedication(m){
+ if(!requireAdmin())throw new Error("Accès administrateur requis");
  const {data,error}=await supabaseClient.from("medications").upsert(medToRow(m)).select().single();
  if(error){console.error(error);toast("Enregistrement refusé par Supabase : vérifie les permissions et la structure SQL");throw error}
  const updated=rowToMed(data);const index=meds.findIndex(x=>x.id===updated.id);if(index>=0)meds[index]=updated;else meds.unshift(updated);selectedId=updated.id;renderFilters();renderResults();return updated;
 }
 async function initCloud(){
  const {data:{session},error:sessionError}=await supabaseClient.auth.getSession();
- if(sessionError)console.error(sessionError);currentUser=session?.user||null;admin=!!currentUser;
+ if(sessionError)console.error(sessionError);currentUser=session?.user||null;admin=await checkAdminAccess(currentUser);
  $("loginBtn").classList.toggle("hidden",admin);$("adminBanner").classList.toggle("hidden",!admin);
  await loadCloudMeds();dashSetUser();
- supabaseClient.auth.onAuthStateChange((_event,session)=>{setTimeout(async()=>{currentUser=session?.user||null;admin=!!currentUser;$("loginBtn").classList.toggle("hidden",admin);$("adminBanner").classList.toggle("hidden",!admin);await loadCloudMeds();dashSetUser();},0);});
+ supabaseClient.auth.onAuthStateChange((_event,session)=>{setTimeout(async()=>{currentUser=session?.user||null;admin=await checkAdminAccess(currentUser);$("loginBtn").classList.toggle("hidden",admin);$("adminBanner").classList.toggle("hidden",!admin);await loadCloudMeds();dashSetUser();},0);});
 }
 let currentView="home";
 const viewScrollPositions={home:0,explore:0,sources:0};
@@ -2290,7 +2299,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  const activeIngredientsHtml=ingredientEntries.length?`<div class="detail-dci"><span class="detail-dci-label">DCI / substances actives :</span> ${ingredientEntries.map(e=>`<span class="detail-dci-item">${esc(e.name||"")}${e.dose?` — <strong>${esc(e.dose)}</strong>`:""}</span>`).join(" · ")}${ingredientEntries.filter(e=>e.salt||e.saltDose).map(e=>`<div class="ingredient-salt">${esc(e.name||"Substance active")} : ${esc(e.salt||"Sel non précisé")}${e.saltDose?` — ${esc(e.saltDose)}`:""}</div>`).join("")}</div>`:"";
  const formBadge=!isGroup(m)&&presentationForms.length
    ? presentationForms.length===1?`<button type="button" class="tag tag-form" data-fiche-form="${esc(presentationForms[0])}" title="Explorer cette forme">${esc(presentationForms[0])}</button>`:`<span class="tag tag-form">Plusieurs formes</span>`:"";
- $("detail").innerHTML=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker" style="${entityTreeStyle(m)}color:var(--group-fg)">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche spécialité"}</div><h2 style="${entityTreeStyle(m)}color:var(--group-fg)">${esc(displayMedName(m))}</h2><div class="tags"><button type="button" class="tag tag-category" data-fiche-category="${esc(m.category||"")}" title="Explorer cette classe thérapeutique">${esc(m.category||"Famille à définir")}</button>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${practicalBadges(m)}</div><div class="header-actions" id="detailPublicActions" style="align-items:center"><button id="copyFicheLink" class="soft" type="button">🔗 Copier le lien</button><button class="primary" id="editBtn" type="button">Modifier la fiche</button></div></div>
+ $("detail").innerHTML=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker" style="${entityTreeStyle(m)}color:var(--group-fg)">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche spécialité"}</div><h2 style="${entityTreeStyle(m)}color:var(--group-fg)">${esc(displayMedName(m))}</h2><div class="tags"><button type="button" class="tag tag-category" data-fiche-category="${esc(m.category||"")}" title="Explorer cette classe thérapeutique">${esc(m.category||"Famille à définir")}</button>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${practicalBadges(m)}</div><div class="header-actions" id="detailPublicActions" style="align-items:center"><button id="copyFicheLink" class="soft" type="button">🔗 Copier le lien</button>${admin?`<button class="primary" id="editBtn" type="button">Modifier la fiche</button>`:""}</div></div>
  ${alertSection&&String(alertSection.content||"").trim()?`<div class="priority-card priority-alert">${renderPrioritySection(alertSection,targetSectionId)}</div>`:""}
  ${prioritySection&&String(prioritySection.content||"").trim()?`<div class="group-glance">${renderPrioritySection(prioritySection,targetSectionId)}</div>`:""}
  ${adviceSection&&String(adviceSection.content||"").trim()?`<div class="priority-card priority-advice">${renderPrioritySection(adviceSection,targetSectionId)}</div>`:""}
@@ -2325,7 +2334,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
   try{await navigator.clipboard.writeText(ficheUrl(m.id));toast("Lien de la fiche copié !")}
   catch(e){window.prompt("Copie ce lien :",ficheUrl(m.id))}
  };
- $("editBtn").onclick=()=>{if(!admin){toast("Connecte-toi en administratrice pour modifier cette fiche.");showLogin();return;}renderEditor(m.id);};
+ if(admin&&$("editBtn"))$("editBtn").onclick=()=>renderEditor(m.id);
  $("detail").querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=$("presentation-info");if(!target)return;const index=sel.value===""?null:Number(sel.value);target.innerHTML=index!==null&&m.presentations?.[index]?presentationInfo(m.presentations[index],m):""});
  if(targetPresentationIndex!==null&&!targetSectionId){const details=$("presentations-details");if(details){details.open=true;const choice=$("presentation-choice");if(choice&&m.presentations?.[targetPresentationIndex]){choice.value=String(targetPresentationIndex);$("presentation-info").innerHTML=presentationInfo(m.presentations[targetPresentationIndex])}requestAnimationFrame(()=>details.scrollIntoView({behavior:"smooth",block:"start"}))}}
  if(targetSectionId){
@@ -2604,7 +2613,7 @@ function renderSection(s,targetSectionId=null){
  const isConseil = (s.title || "").toLowerCase().includes("à dire au comptoir");  
  return `<section class="section ${isConseil ? 'conseil-comptoir' : ''} ${targetSectionId&&s.id===targetSectionId?'direct-target':''}" id="section-${esc(s.id)}"><h3>${esc(s.title)}</h3>${s.sharedSourceName?`<p class="shared-origin">🔗 Rubrique partagée depuis ${esc(s.sharedSourceName)}</p>`:""}${imageHtml}${content}</section>`;
 }
-function setAdmin(value){admin=value;dashSetUser();$("adminBanner").classList.toggle("hidden",!admin);$("loginBtn").classList.toggle("hidden",admin);renderResults();if(selectedId&&!editorId&&!$("detail").classList.contains("hidden"))renderDetail()}
+function setAdmin(value){admin=!!value;dashSetUser();$("adminBanner").classList.toggle("hidden",!admin);$("loginBtn").classList.toggle("hidden",admin);renderResults();if(selectedId&&!editorId&&!$("detail").classList.contains("hidden"))renderDetail()}
 function showLogin(){
  $("modalRoot").innerHTML=`<div class="modalback"><div class="modal"><h2>Connexion administrateur</h2><p>Connecte-toi avec le compte créé dans Supabase Authentication. Les inscriptions publiques doivent rester désactivées.</p><label class="label" for="loginEmail">Adresse e-mail</label><input id="loginEmail" type="email" autocomplete="username" placeholder="Ton adresse e-mail"><label class="label" for="loginPassword" style="margin-top:10px">Mot de passe</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Mot de passe"><div class="actions"><button id="cancelLogin">Annuler</button><button class="primary" id="confirmLogin">Se connecter</button></div></div></div>`;
  $("cancelLogin").onclick=()=>$("modalRoot").innerHTML="";
@@ -2673,7 +2682,7 @@ function applyGroupTemplate(m){
  setHierarchy(m,"groupe",oldParent);
  return true;
 }
-function addGroup(){
+function addGroup(){if(!requireAdmin())return;
  if(!admin)return;
  addMedication();
  const m=meds.find(x=>x.id===selectedId);if(!m)return;
@@ -2681,6 +2690,7 @@ function addGroup(){
  renderEditor(m.id);saveLocalDraft();scrollToNewEditor();
 }
 function renderEditor(id){
+ if(!requireAdmin())return;
  openedSearchFiche=true;showView("home");$("searchLayout").classList.remove("hidden");
  const m=meds.find(x=>x.id===id);if(!m)return;
  if(editorId!==id||!editorOriginalSnapshot)editorOriginalSnapshot=clone(m);
@@ -2993,7 +3003,7 @@ function sectionAction(action,index,id){const m=meds.find(x=>x.id===id);if(!m)re
  renderEditor(id);saveLocalDraft()}
 function addSection(id,type){const m=meds.find(x=>x.id===id);if(!m)return;captureEditorFields(m);m.sections.push({id:"custom-"+Date.now(),title:"Nouvelle rubrique",type,content:type==="table"?"Colonne 1 | Colonne 2\nÀ renseigner | À renseigner":"À compléter à partir d’une source vérifiée.",enabled:true,imageData:"",imageUrl:"",imageCaption:""});renderEditor(id);saveLocalDraft()}
 let editorSaveInProgress=false;
-async function saveEditor(id){
+async function saveEditor(id){if(!requireAdmin())return;
  if(editorSaveInProgress)return;
  const m=meds.find(x=>x.id===id);if(!m)return;
  editorSaveInProgress=true;
@@ -3207,8 +3217,8 @@ document.addEventListener("keydown",event=>{
  event.preventDefault();
  if(!event.repeat)saveEditor(editorId);
 });
-function duplicateMed(id){const m=meds.find(x=>x.id===id);if(!m)return;const copy=clone(m);copy.id=crypto.randomUUID();copy.name=m.name+" (copie)";copy.status="À vérifier";copy.updated="";copy.published=false;meds.unshift(copy);selectedId=copy.id;renderFilters();renderResults();renderEditor(copy.id);saveLocalDraft();toast("Copie créée : enregistre-la pour la synchroniser")}
-async function deleteMed(id){const target=meds.find(m=>m.id===id);if(target&&isGroup(target)&&meds.some(m=>!isSourcesRecord(m)&&parentGroupId(m)===id)){toast("Détache d’abord les fiches médicaments de ce groupe avant de le supprimer.");return}if(!confirm("Supprimer définitivement cette fiche de la base en ligne ?"))return;const {error}=await supabaseClient.from("medications").delete().eq("id",id);if(error){console.error(error);toast("Suppression refusée par Supabase");return}clearLocalDraft();pendingPresentationPhotos.delete(id);editorId=null;meds=meds.filter(m=>m.id!==id);selectedId=null;openedSearchFiche=false;$("editor").classList.add("hidden");$("detail").classList.remove("hidden");renderFilters();renderResults();navigateToView("explore");toast("Fiche supprimée de la base en ligne")}
+function duplicateMed(id){if(!requireAdmin())return;const m=meds.find(x=>x.id===id);if(!m)return;const copy=clone(m);copy.id=crypto.randomUUID();copy.name=m.name+" (copie)";copy.status="À vérifier";copy.updated="";copy.published=false;meds.unshift(copy);selectedId=copy.id;renderFilters();renderResults();renderEditor(copy.id);saveLocalDraft();toast("Copie créée : enregistre-la pour la synchroniser")}
+async function deleteMed(id){if(!requireAdmin())return;const target=meds.find(m=>m.id===id);if(target&&isGroup(target)&&meds.some(m=>!isSourcesRecord(m)&&parentGroupId(m)===id)){toast("Détache d’abord les fiches médicaments de ce groupe avant de le supprimer.");return}if(!confirm("Supprimer définitivement cette fiche de la base en ligne ?"))return;const {error}=await supabaseClient.from("medications").delete().eq("id",id);if(error){console.error(error);toast("Suppression refusée par Supabase");return}clearLocalDraft();pendingPresentationPhotos.delete(id);editorId=null;meds=meds.filter(m=>m.id!==id);selectedId=null;openedSearchFiche=false;$("editor").classList.add("hidden");$("detail").classList.remove("hidden");renderFilters();renderResults();navigateToView("explore");toast("Fiche supprimée de la base en ligne")}
 
 // Les références communes sont stockées dans un enregistrement dédié de la table existante.
 // Il est exclu des recherches et du catalogue médicaments.
@@ -3229,6 +3239,7 @@ function renderSources(){
 let pendingSources=null;
 function sourceField(item,i,key,label){return `<label>${label}<input data-source-index="${i}" data-source-key="${key}" value="${esc(item[key]||"")}" placeholder="${label}"></label>`}
 function renderSourcesEditor(){
+ if(!requireAdmin())return;
  if(!admin)return;
  const items=pendingSources===null?clone(sourceItems()):pendingSources;
  $("sourcesAdmin").innerHTML=`<h3 style="margin-top:0">Gérer les sources communes</h3><p class="muted">Ajoute des ressources vérifiables. Utilise les flèches ↑ et ↓ pour choisir leur ordre d’affichage sur la page Sources, puis enregistre. Les modifications sont publiques après enregistrement.</p><div id="sourcesEntries">${items.map((item,i)=>`<div class="source-entry"><div class="sources-toolbar"><strong>Source ${i+1}</strong><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><button type="button" data-move-source="up" data-source-position="${i}" ${i===0?"disabled":""} title="Monter cette source" aria-label="Monter la source ${i+1}">↑</button><button type="button" data-move-source="down" data-source-position="${i}" ${i===items.length-1?"disabled":""} title="Descendre cette source" aria-label="Descendre la source ${i+1}">↓</button><button type="button" data-remove-source="${i}" class="danger">Supprimer</button></div></div><div class="admin-grid">${sourceField(item,i,"title","Titre de la ressource")}${sourceField(item,i,"organization","Organisme / éditeur")}${sourceField(item,i,"url","Adresse URL")}${sourceField(item,i,"description","Description (facultative)")}</div></div>`).join("")}</div><div class="sources-toolbar"><button type="button" id="addCommonSource" class="soft">+ Ajouter une source</button><button type="button" id="saveCommonSources" class="primary">Enregistrer les sources</button></div>`;
@@ -3323,7 +3334,7 @@ async function dashCloudLoad(){
   dashCloudReady=true;dashStatus("☁️ Synchronisation Supabase active · Sauvegarde locale de secours");if(!dashInlineEditing){dashRender();dashRenderSuggestions();}
  }catch(error){console.warn("Synchronisation tableau de bord indisponible",error);dashStatus("💻 Sauvegarde locale uniquement · Installer la table SQL admin_dashboard pour activer la synchronisation");}
 }
-async function dashCloudSave(silent=false){
+async function dashCloudSave(silent=false){if(!requireAdmin())return;
  if(!dashboardOwner||!admin)return false;
  const uid=dashboardOwner,content=dashRead();
  try{
@@ -3578,7 +3589,7 @@ function dashSerialize(){
  walk(tree.querySelector(":scope > ul"),0,"");
  return {...old,text:lines.join("\n"),done,collapsed};
 }
-async function dashSaveInline(){
+async function dashSaveInline(){if(!requireAdmin())return;
  if(!dashInlineEditing)return;
  const state=dashSerialize();
  if(!dashWrite(state))return;
@@ -3599,7 +3610,7 @@ function dashRenderSuggestions(){
  const el=$("dashSuggestions");if(!el)return;
  if(document.activeElement!==el)el.value=dashRead().suggestions||"";
 }
-async function dashSaveSuggestions(){
+async function dashSaveSuggestions(){if(!requireAdmin())return;
  if(!admin)return;
  const state=dashRead();state.suggestions=$("dashSuggestions").value;
  if(!dashWrite(state))return;
