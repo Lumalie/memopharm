@@ -1030,7 +1030,7 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 <style>
 /* V6.45 — Statistiques du tableau de bord par catégorie */
 #adminDashboard .dash-stats-general{grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:10px}
-#adminDashboard .dash-stats-types{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:0}
+#adminDashboard .dash-stats-types{grid-template-columns:repeat(5,minmax(0,1fr));margin-top:0}
 #adminDashboard .dash-stat-review{background:#fff5d9;border-color:#f1d99b}
 #adminDashboard .dash-stat-review b,#adminDashboard .dash-stat-review span{color:#906b20}
 #adminDashboard .dash-stat-group{background:#eaf3ed;border-color:#a8ccb3}
@@ -1039,6 +1039,8 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 #adminDashboard .dash-stat-molecule b,#adminDashboard .dash-stat-molecule span{color:#793f8f}
 #adminDashboard .dash-stat-dosage{background:#faeee7;border-color:#dfb5a4}
 #adminDashboard .dash-stat-dosage b,#adminDashboard .dash-stat-dosage span{color:#98553f}
+#adminDashboard .dash-stat-specialite{background:#e4f5f2;border-color:#9acfc6}
+#adminDashboard .dash-stat-specialite b,#adminDashboard .dash-stat-specialite span{color:#1e7169}
 #adminDashboard .dash-stat-conseil{background:#fce8f0;border-color:#eeb6d0}
 #adminDashboard .dash-stat-conseil b,#adminDashboard .dash-stat-conseil span{color:#9c426c}
 @media(max-width:650px){#adminDashboard .dash-stats-general{grid-template-columns:repeat(3,minmax(0,1fr))}#adminDashboard .dash-stats-types{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -1106,6 +1108,33 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .memo-practical-editor input[type=text]{width:145px;max-width:100%;padding:7px 9px}
 .memo-practical-editor .hint{flex-basis:100%;margin:0}
 </style>
+<style>
+/* V6.53 — Fiche spécialité : identité turquoise doux, distincte des présentations CIP bleues. */
+:root{--memo-specialite-bg:#e4f5f2;--memo-specialite-ink:#1e7169;--memo-specialite-border:#9acfc6}
+#searchWorkspace #searchSuggestions .result-specialite,
+.header-search-active #headerSearchSlot .search-suggestions .result-specialite{
+ --hit-ink:#1e7169;--hit-line:#9acfc6;--hit-rgb:228,245,242;
+ border-left:3px solid #9acfc6!important;background:linear-gradient(90deg,#e4f5f2,transparent 85%)!important;
+}
+#searchWorkspace #searchSuggestions .result-specialite strong,
+.header-search-active #headerSearchSlot .search-suggestions .result-specialite strong{color:#1e7169!important}
+#searchWorkspace #searchSuggestions .result-specialite:hover,
+.header-search-active #headerSearchSlot .search-suggestions .result-specialite:hover{border-left-color:#1e7169!important;background:#d7efea!important}
+#exploreCards .explore-result-specialite{--explore-ink:#1e7169;--explore-line:#9acfc6;--explore-rgb:228,245,242}
+#exploreCards .explore-hit.explore-result-specialite,
+#exploreCards .explore-specialty-direct.explore-result-specialite{border-left-color:#9acfc6!important;background:linear-gradient(90deg,#e4f5f2,transparent 90%)!important}
+#exploreCards .explore-tree-node[style*="--group-bg:#e4f5f2"]>.explore-tree-line .explore-tree-name{color:#1e7169!important}
+#exploreCards .explore-tree-node[style*="--group-bg:#e4f5f2"]>.explore-tree-line .explore-tree-icon{color:#1e7169!important}
+#exploreCards .explore-result-specialite .explore-hit-name,
+#exploreCards .explore-result-specialite .explore-search-child-link{color:#1e7169!important}
+#searchWorkspace .search-preview-children .search-preview-child-specialite{background:#e4f5f2;color:#1e7169;border-color:#9acfc6}
+.fiche-breadcrumb .breadcrumb-current-med[style*="--group-bg:#e4f5f2"]{color:#1e7169!important}
+.explore-tree-node[style*="--group-bg:#e4f5f2"]>.explore-tree-line{background:#e4f5f2!important;border-color:#9acfc6!important}
+.explore-tree-node[style*="--group-bg:#e4f5f2"]>.explore-tree-line button{color:#1e7169!important}
+#adminDashboard .dash-stats-types{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media(max-width:850px){#adminDashboard .dash-stats-types{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:650px){#adminDashboard .dash-stats-types{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
 </head>
 <body>
 <header><div class="wrap">
@@ -1127,7 +1156,7 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
   <section id="dashboardListView" class="hidden" aria-label="Liste des fiches du tableau de bord"><div class="dash-list-page"><div class="dash-list-page-head"><button type="button" id="dashListBack" class="dash-back">← Retour au tableau de bord</button><h2 id="dashListPageTitle">Liste des fiches</h2></div><div id="dashListPageItems"></div></div></section><section id="homeView"><section id="adminDashboard" class="hidden" aria-label="Tableau de bord personnel">
  <div class="dash-heading"><div><h2>🌿 Mon espace Mémopharm</h2><div class="muted">Suivi de la bibliothèque et de mes projets</div></div></div>
  <div class="dash-stats dash-stats-general"><button type="button" class="dash-stat" data-dash-filter="all" aria-label="Afficher la liste : Fiches créées"><b id="dashTotal">0</b><span>Fiches créées</span></button><button type="button" class="dash-stat" data-dash-filter="published" aria-label="Afficher la liste : Fiches publiées"><b id="dashPublished">0</b><span>Fiches publiées</span></button><button type="button" class="dash-stat dash-stat-review" data-dash-filter="review" aria-label="Afficher la liste : À vérifier"><b id="dashReview">0</b><span>À vérifier</span></button></div>
- <div class="dash-stats dash-stats-types" aria-label="Répartition des fiches par catégorie"><button type="button" class="dash-stat dash-stat-group" data-dash-filter="groups" aria-label="Afficher la liste : Fiches groupes"><b id="dashGroups">0</b><span>Fiches groupes</span></button><button type="button" class="dash-stat dash-stat-molecule" data-dash-filter="molecules" aria-label="Afficher la liste : Fiches molécules"><b id="dashMolecules">0</b><span>Fiches molécules</span></button><button type="button" class="dash-stat dash-stat-dosage" data-dash-filter="dosages" aria-label="Afficher la liste : Fiches dosage/forme"><b id="dashDosages">0</b><span>Fiches dosage/forme</span></button><button type="button" class="dash-stat dash-stat-conseil" data-dash-filter="conseils" aria-label="Afficher la liste : Fiches conseil"><b id="dashConseils">0</b><span>Fiches conseil</span></button></div>
+ <div class="dash-stats dash-stats-types" aria-label="Répartition des fiches par catégorie"><button type="button" class="dash-stat dash-stat-group" data-dash-filter="groups" aria-label="Afficher la liste : Fiches groupes"><b id="dashGroups">0</b><span>Fiches groupes</span></button><button type="button" class="dash-stat dash-stat-molecule" data-dash-filter="molecules" aria-label="Afficher la liste : Fiches molécules"><b id="dashMolecules">0</b><span>Fiches molécules</span></button><button type="button" class="dash-stat dash-stat-dosage" data-dash-filter="dosages" aria-label="Afficher la liste : Fiches dosage/forme"><b id="dashDosages">0</b><span>Fiches dosage/forme</span></button><button type="button" class="dash-stat dash-stat-specialite" data-dash-filter="specialites" aria-label="Afficher la liste : Fiches spécialités"><b id="dashSpecialites">0</b><span>Fiches spécialités</span></button><button type="button" class="dash-stat dash-stat-conseil" data-dash-filter="conseils" aria-label="Afficher la liste : Fiches conseil"><b id="dashConseils">0</b><span>Fiches conseil</span></button></div>
  <div id="dashSyncStatus" class="dash-sync-status" role="status">Sauvegarde locale disponible · Synchronisation en attente</div><section id="dashStatList" hidden aria-live="polite"><div class="dash-list-head"><h3 id="dashStatListTitle">Liste des fiches</h3><button class="dash-list-close" id="dashStatListClose" type="button">✕ Fermer</button></div><div id="dashStatListItems"></div></section>
  <div class="dash-panels"><div class="dash-pane"><div class="dash-list-heading"><h3>📋 Ma liste de suivi <small id="dashTaskCount" class="muted"></small></h3><button id="dashToggleEditor" type="button" class="soft">✏️ Modifier ma liste (Ctrl+M)</button></div><div class="dash-progress"><div id="dashProgressBar" style="width:0%"></div></div><div id="dashProgressText" class="muted">Aucune tâche</div><div id="dashTaskTree" class="dash-tree" style="margin-top:12px"></div><div id="dashInlineActions" class="dash-tools hidden"><button type="button" id="dashInlineAdd">＋ Nouvelle entrée</button><button type="button" class="primary" id="dashInlineSave">Enregistrer et trier A → Z (Ctrl+S)</button><button type="button" id="dashInlineCancel">Annuler</button><button type="button" id="dashInlineExport">Exporter</button></div></div>
  <div class="dash-pane hidden" id="dashEditorPane"><h3>✏️ Éditer mes projets</h3><label for="dashTextarea" class="muted">Une ligne = une tâche. Deux espaces supplémentaires = un sous-niveau. Ctrl+S (ou ⌘S sur Mac) pour enregistrer.</label><div id="dashFormatToolbar" class="dash-format-toolbar" aria-label="Mise en forme de la liste"><button type="button" data-dash-format="bold" title="Gras (Ctrl+B)"><b>G</b></button><button type="button" data-dash-format="italic" title="Italique (Ctrl+I)"><i>I</i></button><button type="button" data-dash-format="underline" title="Souligné (Ctrl+U)"><u>S</u></button><button type="button" data-dash-format="link">🔗 Lien</button><button type="button" data-dash-format="bullets">• Liste</button><button type="button" data-dash-format="numbers">1. Liste</button><select data-dash-style="align" aria-label="Alignement"><option value="">Aligner…</option><option value="left">Gauche</option><option value="center">Centré</option><option value="right">Droite</option><option value="justify">Justifié</option></select><select data-dash-style="size" aria-label="Taille"><option value="">Taille…</option><option value="12">12 px</option><option value="14">14 px</option><option value="16">16 px</option><option value="18">18 px</option><option value="20">20 px</option><option value="24">24 px</option><option value="28">28 px</option></select><select data-dash-style="color" aria-label="Couleur"><option value="">Couleur…</option><option value="default">Défaut</option><option value="green">Vert</option><option value="red">Rouge</option><option value="orange">Orange</option><option value="blue">Bleu</option><option value="gray">Gris</option><option value="pink">Rose</option></select></div><textarea id="dashTextarea" spellcheck="false" placeholder="Antibiotiques&#10;  Amoxicilline&#10;    Vérifier les sources&#10;    Compléter la posologie&#10;Antianémiques&#10;  Tardyferon"></textarea><div class="dash-tools"><button type="button" class="primary" id="dashSave">Enregistrer et trier A → Z</button><button type="button" id="dashExport">Exporter ma liste</button><button type="button" id="dashImport">Importer une liste</button><input id="dashImportFile" type="file" accept=".json,application/json" class="hidden"></div><p class="dash-note">Les éléments sont classés par ordre alphabétique à chaque niveau. Les cases cochées sont mémorisées sur ce navigateur. Synchronisation Supabase disponible après installation de la table SQL dédiée. Les données restent également conservées localement.</p></div></div>
@@ -1369,6 +1398,7 @@ function showView(view){
 }
 function hierarchyMeta(m){return (m.sections||[]).find(s=>s.memofficineKind||s.memofficineParentGroup)||(m.sections||[]).find(s=>s.id==="indications")||(m.sections||[])[0]||{}}
 function isMolecule(m){return !isGroup(m)&&!!m.sections?.[0]?.moleculeRoot}
+function isSpecialiteFiche(m){return !isGroup(m)&&!isMolecule(m)&&hierarchyMeta(m).memofficineKind!=="conseil"&&m.entry_type==="specialite"}
 function isDosageFiche(m){return !isGroup(m)&&!isMolecule(m)&&hierarchyMeta(m).memofficineKind!=="conseil"&&m.entry_type==="dci"}
 function moleculeParentId(m){return m.sections?.[0]?.moleculeParentId||""}
 function moleculeChildren(m){return publicMeds().filter(x=>!isGroup(x)&&moleculeParentId(x)===String(m.id)).sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),'fr'))}
@@ -1442,6 +1472,7 @@ function childGroups(group,visible=publicMeds()){
 // V6.27 : une couleur stable par nature de fiche, et non par profondeur.
 const GROUP_LEVEL_COLORS=[{bg:"#eaf3ed",fg:"#2f684b",border:"#a8ccb3"}];
 const DOSAGE_COLOR={bg:"#faeee7",fg:"#98553f",border:"#dfb5a4"};
+const SPECIALITE_COLOR={bg:"#e4f5f2",fg:"#1e7169",border:"#9acfc6"};
 const PRESENTATION_COLOR={bg:"#e6f0fb",fg:"#315b87",border:"#83add9"};
 function typeColorStyle(c){return `--group-bg:${c.bg};--group-fg:${c.fg};--group-border:${c.border};`;}
 function groupDepth(group,visible=publicMeds()){
@@ -1463,7 +1494,7 @@ function entityTreeStyle(item){
   const c=MOLECULE_COLOR;
   return `--group-bg:${c.bg};--group-fg:${c.fg};--group-border:${c.border};`;
  }
- return isGroup(item)?groupLevelStyle(0):typeColorStyle(DOSAGE_COLOR);
+ return isGroup(item)?groupLevelStyle(0):typeColorStyle(isSpecialiteFiche(item)?SPECIALITE_COLOR:DOSAGE_COLOR);
 }
 // V6.25 : un seul emplacement et une seule présentation pour les retours vers les fiches parentes.
 function ficheParent(m,visible=publicMeds()){
@@ -1661,7 +1692,7 @@ function renderExplorer(){
       return `<div class="explore-search-child explore-search-child-med explore-search-child-specialty">${presentations.map(({p,i})=>searchPresentationLine(child,p,i,true)).join("")}</div>`;
      }
      const badges=explorerClasses(child).filter(t=>explorerClassVisible(child,t)).map(t=>`<span class="badge-button badge-class">${esc(t)}</span>`).join("")+indicationTags(child).map(t=>`<span class="badge-button badge-indication">${esc(t)}</span>`).join("");
-     return `<div class="explore-search-child explore-search-child-med ${isMolecule(child)?"explore-result-molecule":child.entry_type==="dci"?"explore-result-dose":"explore-result-presentation"}"><div class="explore-search-child-line"><span class="explore-search-child-spacer" aria-hidden="true"></span><button type="button" class="explore-search-child-link" data-open-med="${esc(child.id)}">● ${esc(displayMedName(child))} ↗</button></div>${badges?`<div class="search-pres-badges">${badges}</div>`:''}</div>`;
+     return `<div class="explore-search-child explore-search-child-med ${isMolecule(child)?"explore-result-molecule":child.entry_type==="dci"?"explore-result-dose":isSpecialiteFiche(child)?"explore-result-specialite":"explore-result-presentation"}"><div class="explore-search-child-line"><span class="explore-search-child-spacer" aria-hidden="true"></span><button type="button" class="explore-search-child-link" data-open-med="${esc(child.id)}">● ${esc(displayMedName(child))} ↗</button></div>${badges?`<div class="search-pres-badges">${badges}</div>`:''}</div>`;
     }
     return `<div class="explore-search-child ${isGroup(child)?"explore-search-child-group":"explore-search-child-med"}">
      <div class="explore-search-child-line">
@@ -1736,14 +1767,14 @@ function renderExplorer(){
    }).join("");
    if(m.entry_type==="specialite"&&specialtyItems(m).length){
     const available=hitGroup.presentations.length?hitGroup.presentations.map(h=>h.presentation):specialtyItems(m).map(x=>x.i);
-    return `<article class="explore-hit explore-hit-med explore-specialty-direct explore-result-presentation">${available.map(i=>m.presentations?.[i]?searchPresentationLine(m,m.presentations[i],i):'').join('')}${preview}</article>`;
+    return `<article class="explore-hit explore-hit-med explore-specialty-direct explore-result-specialite">${available.map(i=>m.presentations?.[i]?searchPresentationLine(m,m.presentations[i],i):'').join('')}${preview}</article>`;
    }
    const presentationToggle=presentationRows?`<button type="button" class="explore-grouped-toggle" data-presentation-toggle aria-expanded="false"><span aria-hidden="true">▸</span> ${hitGroup.presentations.length} présentation${hitGroup.presentations.length>1?"s":""}</button><div class="explore-grouped-children" hidden>${presentationRows}</div>`:"";
-   return `<article class="explore-hit explore-hit-${kind} explore-hit-grouped ${isMolecule(m)?"explore-result-molecule":m.entry_type==="dci"?"explore-result-dose":"explore-result-presentation"}">
+   return `<article class="explore-hit explore-hit-${kind} explore-hit-grouped ${isMolecule(m)?"explore-result-molecule":m.entry_type==="dci"?"explore-result-dose":isSpecialiteFiche(m)?"explore-result-specialite":"explore-result-presentation"}">
     <div class="explore-hit-main">
      <button type="button" class="explore-hit-open" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec?.id||"")}" data-hit-pres="${hit.presentation===null?"":hit.presentation}" aria-label="Ouvrir ${esc(isPresentation?presTitle:m.name)}${sec?" à la rubrique "+esc(sec.title):""}">
       <span class="explore-hit-heading"><span class="explore-hit-symbol" aria-hidden="true">${group?"▸":"●"}</span><strong class="explore-hit-name">${esc(isPresentation?presTitle:searchResultLabel(hit))}</strong><span class="explore-hit-arrow" aria-hidden="true">↗</span></span>
-      ${isPresentation?"":`<span class="explore-hit-meta">${group?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":esc(m.dci||"Médicament")} · ${esc(m.category||"Sans famille")}</span><span class="explore-hit-path">${path.map((part,i)=>`<span>${esc(part)}</span>${i<path.length-1?'<span aria-hidden="true">›</span>':''}`).join("")}</span>`}
+      ${isPresentation?"":`<span class="explore-hit-meta">${group?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche spécialité"} · ${esc(m.category||"Sans famille")}</span><span class="explore-hit-path">${path.map((part,i)=>`<span>${esc(part)}</span>${i<path.length-1?'<span aria-hidden="true">›</span>':''}`).join("")}</span>`}
      </button>
      ${isPresentation?`<div class="explore-pres-info">${presBadge}${presLab}${cipButton}</div>`:""}
     </div>
@@ -2065,7 +2096,7 @@ function previewSearchResult(item){
  const activeIngredients=!isGroup(m)&&m.entry_type!=="dci"?splitDci(m.dci||m.parent_dci):[];
  const ingredientEntries=info?.entries?.length?info.entries:activeIngredients.map(name=>({name,dose:"",salt:"",saltDose:""}));
  const activeIngredientsHtml=ingredientEntries.length?`<div class="detail-dci"><span class="detail-dci-label">DCI / substances actives :</span> ${ingredientEntries.map(e=>`<span class="detail-dci-item">${esc(e.name||"")}${e.dose?` — <strong>${esc(e.dose)}</strong>`:""}</span>`).join(" · ")}${ingredientEntries.filter(e=>e.salt||e.saltDose).map(e=>`<div class="ingredient-salt">${esc(e.name||"Substance active")} : ${esc(e.salt||"Sel non précisé")}${e.saltDose?` — ${esc(e.saltDose)}`:""}</div>`).join("")}</div>`:"";
- const headerHtml=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche médicament"}</div><h2><button type="button" class="search-preview-title-link" data-preview-open-title title="Ouvrir la fiche complète">${esc(displayMedName(m))}</button></h2><div class="tags"><span class="tag tag-category">${esc(m.category||"Famille à définir")}</span>${formBadge}${indicationTags(m).map(t=>`<span class="tag tag-indication">${esc(t)}</span>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${practicalBadges(m)}</div></div>`;
+ const headerHtml=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche spécialité"}</div><h2><button type="button" class="search-preview-title-link" data-preview-open-title title="Ouvrir la fiche complète">${esc(displayMedName(m))}</button></h2><div class="tags"><span class="tag tag-category">${esc(m.category||"Famille à définir")}</span>${formBadge}${indicationTags(m).map(t=>`<span class="tag tag-indication">${esc(t)}</span>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${practicalBadges(m)}</div></div>`;
  const sections=sec&&!isDocumentationSection(sec)?[sec]:(m.sections||[]).filter(x=>x.enabled!==false&&!isDocumentationSection(x)&&String(x.content||'').trim()).slice(0,7);
  // Les encarts prioritaires de l'aperçu utilisent exactement le rendu de la fiche complète.
  const safeSection=section=>{
@@ -2081,7 +2112,7 @@ function previewSearchResult(item){
  const directGroupChildren=isGroup(m)?visible.filter(x=>String(parentGroupId(x))===String(m.id)&&(isGroup(x)||isMolecule(x)||(!moleculeParentId(x))))
   .sort((a,b)=>{const rank=x=>isGroup(x)?0:isMolecule(x)?1:2;return rank(a)-rank(b)||displayMedName(a).localeCompare(displayMedName(b),'fr',{numeric:true,sensitivity:'base'});}):[];
  const previewChildren=isGroup(m)?directGroupChildren:childMeds;
- const previewChildrenHtml=previewChildren.length?`<div class="search-preview-related search-preview-children">${previewChildren.map(x=>`<button type="button" class="search-preview-child ${isGroup(x)?'search-preview-child-group':isMolecule(x)?'search-preview-child-molecule':'search-preview-child-dose'}" ${isGroup(x)||isMolecule(x)?`style="${entityTreeStyle(x)}"`:''} data-preview-child="${esc(x.id)}">${esc(displayMedName(x))} <span aria-hidden="true">↗</span></button>`).join('')}</div>`:'';
+ const previewChildrenHtml=previewChildren.length?`<div class="search-preview-related search-preview-children">${previewChildren.map(x=>`<button type="button" class="search-preview-child ${isGroup(x)?'search-preview-child-group':isMolecule(x)?'search-preview-child-molecule':isSpecialiteFiche(x)?'search-preview-child-specialite':'search-preview-child-dose'}" ${isGroup(x)||isMolecule(x)||isSpecialiteFiche(x)?`style="${entityTreeStyle(x)}"`:''} data-preview-child="${esc(x.id)}">${esc(displayMedName(x))} <span aria-hidden="true">↗</span></button>`).join('')}</div>`:'';
 
  const foundFooter=sec?`<div class="search-preview-found"><div class="search-preview-found-label">Rubrique trouvée dans cette fiche</div><button type="button" class="search-preview-found-link" data-preview-section="${esc(sec.id)}">↗ Afficher « ${esc(sec.title||'la rubrique')} » dans l’aperçu</button></div>`:'';
  $('searchPreview').innerHTML=`<div class="search-preview-header">${headerHtml}</div>${previewChildrenHtml}${sections.map(x=>`<button type="button" class="search-preview-section" data-preview-section="${esc(x.id)}" title="Ouvrir cette rubrique"><span class="search-preview-arrow">↗</span>${safeSection(x)}</button>`).join('')||'<p class="empty">Aucune rubrique renseignée pour cette fiche.</p>'}${foundFooter}${ficheDocumentation(m,(m.sections||[]).filter(x=>x.enabled!==false&&isDocumentationSection(x)))}`;
@@ -2130,7 +2161,7 @@ function renderResults(){
   const p=item.presentation!==null?m.presentations?.[item.presentation]:null;
   const isPresentation=!!p;
   const group=isGroup(m);
-  const kind=isPresentation?"presentation":group?"group":isMolecule(m)?"molecule":"fiche";
+  const kind=isPresentation?"presentation":group?"group":isMolecule(m)?"molecule":isSpecialiteFiche(m)?"specialite":"fiche";
   const name=searchResultLabel(item);
   const lab=p?.presentationKind==="generic"&&p.lab&&!norm(name).includes(norm(p.lab))?p.lab:"";
   const presName=String(p?.name||m.name||"").trim();
@@ -2259,7 +2290,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  const activeIngredientsHtml=ingredientEntries.length?`<div class="detail-dci"><span class="detail-dci-label">DCI / substances actives :</span> ${ingredientEntries.map(e=>`<span class="detail-dci-item">${esc(e.name||"")}${e.dose?` — <strong>${esc(e.dose)}</strong>`:""}</span>`).join(" · ")}${ingredientEntries.filter(e=>e.salt||e.saltDose).map(e=>`<div class="ingredient-salt">${esc(e.name||"Substance active")} : ${esc(e.salt||"Sel non précisé")}${e.saltDose?` — ${esc(e.saltDose)}`:""}</div>`).join("")}</div>`:"";
  const formBadge=!isGroup(m)&&presentationForms.length
    ? presentationForms.length===1?`<button type="button" class="tag tag-form" data-fiche-form="${esc(presentationForms[0])}" title="Explorer cette forme">${esc(presentationForms[0])}</button>`:`<span class="tag tag-form">Plusieurs formes</span>`:"";
- $("detail").innerHTML=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche médicament"}</div><h2>${esc(displayMedName(m))}</h2><div class="tags"><button type="button" class="tag tag-category" data-fiche-category="${esc(m.category||"")}" title="Explorer cette classe thérapeutique">${esc(m.category||"Famille à définir")}</button>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${practicalBadges(m)}</div><div class="header-actions" id="detailPublicActions" style="align-items:center"><button id="copyFicheLink" class="soft" type="button">🔗 Copier le lien</button><button class="primary" id="editBtn" type="button">Modifier la fiche</button></div></div>
+ $("detail").innerHTML=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche spécialité"}</div><h2>${esc(displayMedName(m))}</h2><div class="tags"><button type="button" class="tag tag-category" data-fiche-category="${esc(m.category||"")}" title="Explorer cette classe thérapeutique">${esc(m.category||"Famille à définir")}</button>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${practicalBadges(m)}</div><div class="header-actions" id="detailPublicActions" style="align-items:center"><button id="copyFicheLink" class="soft" type="button">🔗 Copier le lien</button><button class="primary" id="editBtn" type="button">Modifier la fiche</button></div></div>
  ${alertSection&&String(alertSection.content||"").trim()?`<div class="priority-card priority-alert">${renderPrioritySection(alertSection,targetSectionId)}</div>`:""}
  ${prioritySection&&String(prioritySection.content||"").trim()?`<div class="group-glance">${renderPrioritySection(prioritySection,targetSectionId)}</div>`:""}
  ${adviceSection&&String(adviceSection.content||"").trim()?`<div class="priority-card priority-advice">${renderPrioritySection(adviceSection,targetSectionId)}</div>`:""}
@@ -2663,7 +2694,7 @@ function renderEditor(id){
  $("detail").classList.add("hidden");$("editor").classList.remove("hidden");
  $("editor").innerHTML=`<div class="detailtop"><div><h2>${!m.published && m.name==="Nouvelle fiche"?"Nouvelle fiche":"Modifier la fiche"}</h2><div class="muted">Clique sur Enregistrer pour synchroniser les changements avec Supabase.</div></div><div class="editor-top-actions"><button type="button" id="backBtn">Retour à la fiche</button><button type="button" class="primary" id="saveMed">Enregistrer</button><button type="button" id="duplicateMed">Dupliquer</button><button type="button" class="danger" id="deleteMed">Supprimer la fiche</button></div></div>
  <div class="admin-grid" style="margin-top:18px">
-  <div class="full"><label for="f-entry-type">Type de fiche</label><select id="f-entry-type"><option value="groupe" ${isGroup(m)?"selected":""}>Fiche groupe</option><option value="molecule" ${isMolecule(m)?"selected":""}>Fiche molécule</option><option value="dci" ${!isGroup(m)&&!isMolecule(m)?"selected":""}>Fiche dosage/forme</option></select><div class="muted" style="margin-top:5px">La fiche molécule contient les informations communes ; les fiches dosage/forme contiennent leurs particularités et présentations.</div></div>
+  <div class="full"><label for="f-entry-type">Type de fiche</label><select id="f-entry-type"><option value="groupe" ${isGroup(m)?"selected":""}>Fiche groupe</option><option value="molecule" ${isMolecule(m)?"selected":""}>Fiche molécule</option><option value="dci" ${isDosageFiche(m)?"selected":""}>Fiche dosage/forme</option><option value="specialite" ${isSpecialiteFiche(m)?"selected":""}>Fiche spécialité</option></select><div class="muted" style="margin-top:5px">La fiche molécule contient les informations communes ; la fiche dosage/forme mutualise les génériques et princeps ; la fiche spécialité décrit un médicament commercial ayant ses propres particularités.</div></div>
   <div class="full molecule-editor-fields" id="molecule-settings"><label for="f-molecule-parent">Fiche molécule liée (pour une fiche dosage/forme)</label><select id="f-molecule-parent"><option value="">Aucune molécule liée</option>${meds.filter(x=>x.id!==m.id&&isMolecule(x)).sort((a,b)=>a.name.localeCompare(b.name,'fr')).map(x=>`<option value="${esc(x.id)}" ${moleculeParentId(m)===String(x.id)?"selected":""}>${esc(displayMedName(x))}</option>`).join("")}</select><p class="muted">Une fiche molécule contient les données communes ; ses fiches liées conservent les dosages, formes et présentations spécifiques.</p></div>
   <div class="full" id="parent-group-wrap"><label for="f-parent-group">Groupe parent (facultatif)</label><select id="f-parent-group"><option value="">Aucun groupe</option>${groupOptions(m).map(g=>`<option value="${esc(g.id)}" ${parentGroupId(m)===g.id?"selected":""}>${esc(g.name)} — ${esc(g.category)}</option>`).join("")}</select><div class="muted" id="group-parent-help">Choisis librement un groupe parent, quelle que soit sa classe thérapeutique.</div></div>
   <div><label id="f-name-label" for="f-name">Nom de la spécialité</label><input id="f-name" value="${esc(m.name)}" placeholder="Ex. : Tardyferon"></div><div id="f-dci-form-wrap"><label class="field-label-inline" for="f-dci-form">Forme pharmaceutique <span class="field-inline-choice"><input type="checkbox" data-explorer-visibility="forms" ${explorerBadgeVisible(m,"forms")?"checked":""} aria-label="Afficher la forme pharmaceutique dans Explorer"> <span>Afficher dans Explorer</span></span></label><input id="f-dci-form" data-memo-kind="form" list="memo-forms" value="${esc(m.sections?.[0]?.dciForm||m.form||"")}" placeholder="Ex. : Comprimé, gélule, solution buvable"></div><div id="f-dose-title-wrap" class="full"></div><div id="f-dosage-wrap"><label class="field-label-inline" for="f-dosage">Dosage <span class="field-inline-choice"><input type="checkbox" id="f-dose-in-title"> <span>Afficher dans le titre</span></span></label><div class="dosage-fields"><input id="f-dosage" value="${esc(dosageParts(m.dosage).value)}" placeholder="Ex. : 80"><select id="f-dosage-unit" aria-label="Unité de dosage">${["mg","g","µg","mL","UI","mg/mL","µg/mL","g/L","%","autre"].map(u=>`<option value="${u}" ${dosageParts(m.dosage).unit===u?"selected":""}>${u}</option>`).join("")}</select></div></div><div id="f-dci-wrap" class="full"><label>DCI / substances actives et dosages</label><div id="dciEntries"></div><button type="button" id="addDciEntry" class="soft" style="margin-top:8px">+ Ajouter une DCI</button><p class="muted">Une ligne par substance active. Le sel et sa quantité sont facultatifs et apparaîtront en gris conseil. Ne pas confondre la quantité de sel et celle de substance active.</p></div>
@@ -2701,7 +2732,7 @@ const toggleType = () => {
   $("f-name").closest(".admin-grid").classList.toggle("dci-dose-layout",$("f-entry-type").value==="dci");
   const nameLabel = $("f-name-label");
   if (nameLabel) {
-    nameLabel.textContent = isGroupType ? "Nom du groupe" : isMoleculeType ? "Nom de la molécule" : "Nom de la fiche dosage/forme";
+    nameLabel.textContent = isGroupType ? "Nom du groupe" : isMoleculeType ? "Nom de la molécule" : $("f-entry-type").value==="specialite" ? "Nom de la spécialité" : "Nom de la fiche dosage/forme";
   }
 
   ["f-dci-wrap"]
@@ -3343,20 +3374,21 @@ function dashCategoryLists(){
   groups:all.filter(isGroup),
   molecules:all.filter(isMolecule),
   dosages:all.filter(isDosageFiche),
+  specialites:all.filter(isSpecialiteFiche),
   conseils:all.filter(m=>hierarchyMeta(m).memofficineKind==="conseil")
  };
 }
 let dashStatPage=1;
 function dashShowStatList(filter,scroll=true,page=null){
  if(!admin)return;
- const titles={all:"Toutes les fiches créées",published:"Fiches publiées",review:"Fiches à vérifier",groups:"Fiches groupes",molecules:"Fiches molécules",dosages:"Fiches dosage/forme",conseils:"Fiches conseil"};
+ const titles={all:"Toutes les fiches créées",published:"Fiches publiées",review:"Fiches à vérifier",groups:"Fiches groupes",molecules:"Fiches molécules",dosages:"Fiches dosage/forme",specialites:"Fiches spécialités",conseils:"Fiches conseil"};
  if(!Object.hasOwn(titles,filter))return;
  if(dashActiveFilter!==filter)dashStatPage=1;
  if(page!==null)dashStatPage=page;
  dashActiveFilter=filter;
  const themeColors={
   all:"#28533f",published:"#28533f",review:"#906b20",
-  groups:"#2f684b",molecules:"#793f8f",dosages:"#98553f",conseils:"#9c426c"
+  groups:"#2f684b",molecules:"#793f8f",dosages:"#98553f",specialites:"#1e7169",conseils:"#9c426c"
  };
  $("dashboardListView").style.setProperty("--dash-list-ink",themeColors[filter]||"#28533f");
  const matches=dashCategoryLists()[filter].slice().sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),"fr",{sensitivity:"base",numeric:true}));
@@ -3418,6 +3450,7 @@ function dashRender(){
  $("dashGroups").textContent=list.filter(isGroup).length;
  $("dashMolecules").textContent=list.filter(isMolecule).length;
  $("dashDosages").textContent=list.filter(isDosageFiche).length;
+ $("dashSpecialites").textContent=list.filter(isSpecialiteFiche).length;
  // Catégorie réservée aux futures fiches conseil : aucune fiche n'est présumée conseil sur la seule présence d'une rubrique.
  $("dashConseils").textContent=list.filter(m=>hierarchyMeta(m).memofficineKind==="conseil").length;
  $("dashPublished").textContent=list.filter(m=>m.published).length;
