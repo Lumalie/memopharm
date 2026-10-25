@@ -1308,7 +1308,7 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
  <div class="dash-stats dash-stats-general"><button type="button" class="dash-stat" data-dash-filter="all" aria-label="Afficher la liste : Fiches créées"><b id="dashTotal">0</b><span>Fiches créées</span></button><button type="button" class="dash-stat" data-dash-filter="published" aria-label="Afficher la liste : Fiches publiées"><b id="dashPublished">0</b><span>Fiches publiées</span></button><button type="button" class="dash-stat dash-stat-review" data-dash-filter="review" aria-label="Afficher la liste : À vérifier"><b id="dashReview">0</b><span>À vérifier</span></button></div>
  <div class="dash-stats dash-stats-types" aria-label="Répartition des fiches par catégorie"><button type="button" class="dash-stat dash-stat-group" data-dash-filter="groups" aria-label="Afficher la liste : Fiches groupes"><b id="dashGroups">0</b><span>Fiches groupes</span></button><button type="button" class="dash-stat dash-stat-molecule" data-dash-filter="molecules" aria-label="Afficher la liste : Fiches molécules"><b id="dashMolecules">0</b><span>Fiches molécules</span></button><button type="button" class="dash-stat dash-stat-dosage" data-dash-filter="dosages" aria-label="Afficher la liste : Fiches dosage/forme"><b id="dashDosages">0</b><span>Fiches dosage/forme</span></button><button type="button" class="dash-stat dash-stat-specialite" data-dash-filter="specialites" aria-label="Afficher la liste : Fiches spécialités"><b id="dashSpecialites">0</b><span>Fiches spécialités</span></button><button type="button" class="dash-stat dash-stat-conseil" data-dash-filter="conseils" aria-label="Afficher la liste : Fiches conseil"><b id="dashConseils">0</b><span>Fiches conseil</span></button></div>
  <div id="dashSyncStatus" class="dash-sync-status" role="status">Sauvegarde locale disponible · Synchronisation en attente</div><section id="dashStatList" hidden aria-live="polite"><div class="dash-list-head"><h3 id="dashStatListTitle">Liste des fiches</h3><button class="dash-list-close" id="dashStatListClose" type="button">✕ Fermer</button></div><div id="dashStatListItems"></div></section>
- <div class="dash-panels"><div class="dash-pane"><div class="dash-list-heading"><h3>📋 Ma liste de suivi <small id="dashTaskCount" class="muted"></small></h3><button id="dashToggleEditor" type="button" class="soft">✏️ Modifier ma liste (Ctrl+M)</button></div><div class="dash-progress"><div id="dashProgressBar" style="width:0%"></div></div><div id="dashProgressText" class="muted">Aucune tâche</div><div id="dashTaskTree" class="dash-tree" style="margin-top:12px"></div><div id="dashInlineActions" class="dash-tools hidden"><button type="button" id="dashInlineAdd">＋ Nouvelle entrée</button><button type="button" class="primary" id="dashInlineSave">Enregistrer et trier A → Z (Ctrl+S)</button><button type="button" id="dashInlineCancel">Annuler</button><button type="button" id="dashInlineExport">Exporter</button></div></div>
+ <div class="dash-panels"><div class="dash-pane"><div class="dash-list-heading"><h3>📋 Ma liste de suivi <small id="dashTaskCount" class="muted"></small></h3><button id="dashToggleEditor" type="button" class="soft">✏️ Modifier ma liste</button></div><div class="dash-progress"><div id="dashProgressBar" style="width:0%"></div></div><div id="dashProgressText" class="muted">Aucune tâche</div><div id="dashTaskTree" class="dash-tree" style="margin-top:12px"></div><div id="dashInlineActions" class="dash-tools hidden"><button type="button" id="dashInlineAdd">＋ Nouvelle entrée</button><button type="button" class="primary" id="dashInlineSave">Enregistrer et trier A → Z (Ctrl+S)</button><button type="button" id="dashInlineCancel">Annuler</button><button type="button" id="dashInlineExport">Exporter</button></div></div>
  <div class="dash-pane hidden" id="dashEditorPane"><h3>✏️ Éditer mes projets</h3><label for="dashTextarea" class="muted">Une ligne = une tâche. Deux espaces supplémentaires = un sous-niveau. Ctrl+S (ou ⌘S sur Mac) pour enregistrer.</label><div id="dashFormatToolbar" class="dash-format-toolbar" aria-label="Mise en forme de la liste"><button type="button" data-dash-format="bold" title="Gras (Ctrl+B)"><b>G</b></button><button type="button" data-dash-format="italic" title="Italique (Ctrl+I)"><i>I</i></button><button type="button" data-dash-format="underline" title="Souligné (Ctrl+U)"><u>S</u></button><button type="button" data-dash-format="link">🔗 Lien</button><button type="button" data-dash-format="bullets">• Liste</button><button type="button" data-dash-format="numbers">1. Liste</button><select data-dash-style="align" aria-label="Alignement"><option value="">Aligner…</option><option value="left">Gauche</option><option value="center">Centré</option><option value="right">Droite</option><option value="justify">Justifié</option></select><select data-dash-style="size" aria-label="Taille"><option value="">Taille…</option><option value="12">12 px</option><option value="14">14 px</option><option value="16">16 px</option><option value="18">18 px</option><option value="20">20 px</option><option value="24">24 px</option><option value="28">28 px</option></select><select data-dash-style="color" aria-label="Couleur"><option value="">Couleur…</option><option value="default">Défaut</option><option value="green">Vert</option><option value="red">Rouge</option><option value="orange">Orange</option><option value="blue">Bleu</option><option value="gray">Gris</option><option value="pink">Rose</option></select></div><textarea id="dashTextarea" spellcheck="false" placeholder="Antibiotiques&#10;  Amoxicilline&#10;    Vérifier les sources&#10;    Compléter la posologie&#10;Antianémiques&#10;  Tardyferon"></textarea><div class="dash-tools"><button type="button" class="primary" id="dashSave">Enregistrer et trier A → Z</button><button type="button" id="dashExport">Exporter ma liste</button><button type="button" id="dashImport">Importer une liste</button><input id="dashImportFile" type="file" accept=".json,application/json" class="hidden"></div><p class="dash-note">Les éléments sont classés par ordre alphabétique à chaque niveau. Les cases cochées sont mémorisées sur ce navigateur. Synchronisation Supabase disponible après installation de la table SQL dédiée. Les données restent également conservées localement.</p></div></div>
  <div class="dash-suggestions">
  <h3>💡 Suggestions de modifications</h3>
@@ -3420,13 +3420,13 @@ document.addEventListener("keydown",event=>{
 // Ne détourne pas le raccourci hors d'une fiche, ni quand l'éditeur est déjà ouvert.
 document.addEventListener("keydown",event=>{
  if(!(event.ctrlKey||event.metaKey)||event.altKey||event.shiftKey||event.key.toLowerCase()!=="m")return;
- if(event.repeat||editorId||!admin||currentView!=="home"||!selectedId||$("detail").classList.contains("hidden"))return;
+ if(event.repeat||!admin||currentView!=="home"||!selectedId||$("detail").classList.contains("hidden")||!$("editor").classList.contains("hidden"))return;
  const med=meds.find(m=>String(m.id)===String(selectedId)&&!isSourcesRecord(m));
  if(!med)return;
  event.preventDefault();
  event.stopImmediatePropagation();
  renderEditor(med.id);
-});
+},true);
 // Ctrl+A / Cmd+A : revenir à la fiche sans enregistrer depuis l'éditeur.
 // Hors édition, revenir à la page précédente de l'application. Dans les champs
 // de saisie hors éditeur, conserver le raccourci natif « tout sélectionner ».
@@ -3692,7 +3692,7 @@ function dashRender(){
  $("homeView").classList.toggle("admin-dashboard-only",!!admin);
  el.classList.toggle("hidden",!admin||currentView!=="home");
  if(!admin)return;
- $("dashToggleEditor").textContent=dashInlineEditing?"✕ Quitter la modification (Ctrl+M)":"✏️ Modifier ma liste (Ctrl+M)";
+ $("dashToggleEditor").textContent=dashInlineEditing?"✕ Quitter la modification":"✏️ Modifier ma liste";
  const list=meds.filter(m=>!isSourcesRecord(m));
  $("dashTotal").textContent=list.length;
  $("dashReview").textContent=list.filter(m=>String(m.status||"").toLocaleLowerCase("fr")!=="vérifiée").length;
@@ -3859,11 +3859,8 @@ async function dashSaveSuggestions(){if(!requireAdmin())return;
 $("dashSuggestionsSave").onclick=dashSaveSuggestions;
 document.addEventListener("keydown",e=>{
  if(!admin||currentView!=="home"||!(e.ctrlKey||e.metaKey))return;
- // Ctrl+M sur une fiche ouvre son éditeur ; sur l'accueil admin, édite la liste.
- if(e.key.toLowerCase()==="m"&&(!$("detail").classList.contains("hidden")&&!!selectedId||!!editorId))return;
- if(e.key.toLowerCase()==="m"){
-  e.preventDefault();e.stopPropagation();dashEditToggle();
- }else if(e.key.toLowerCase()==="s"&&document.activeElement===$("dashSuggestions")){
+ // Ctrl+M est réservé à la modification de la fiche consultée.
+ if(e.key.toLowerCase()==="s"&&document.activeElement===$("dashSuggestions")){
   e.preventDefault();e.stopPropagation();dashSaveSuggestions();
  }else if(e.key.toLowerCase()==="s"&&dashInlineEditing){
   e.preventDefault();e.stopPropagation();dashSaveInline();
