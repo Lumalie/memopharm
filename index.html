@@ -1202,6 +1202,9 @@ header .topline{min-height:122px}
 #adminDashboard .dash-stats-types{grid-template-columns:repeat(5,minmax(0,1fr))}
 @media(max-width:850px){#adminDashboard .dash-stats-types{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:650px){#adminDashboard .dash-stats-types{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* V6.61 — slogan dans les deux modes, sans modifier la hauteur de la bannière */
+header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:1.25;margin-top:4px;white-space:nowrap}
+@media(max-width:520px){header .brand-slogan{font-size:.7rem;white-space:normal;max-width:205px}}
 </style>
 </head>
 <body>
@@ -1212,6 +1215,7 @@ header .topline{min-height:122px}
   <div>
     <div class="eyebrow">Repères de délivrance</div>
     <h1>Mémopharm</h1>
+    <div class="brand-slogan">Les bonnes infos, au bon moment.</div>
   </div>
 </a>
     <div id="headerSearchSlot" class="header-search-slot"></div>
