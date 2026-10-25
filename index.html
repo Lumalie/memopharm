@@ -1072,6 +1072,26 @@ body.info-page main{display:none!important}
 .info-page-card .info-back:hover{text-decoration:underline}
 .info-page-card a{color:#2f684b}
 .site-footer a[aria-current="page"]{text-decoration:underline}
+
+/* Contact : composition d'un e-mail sans serveur ni collecte locale */
+.contact-mail-form{display:flex;flex-direction:column;gap:12px;margin-top:16px}
+.contact-mail-form label,.contact-category-fieldset legend{font-weight:650;color:#254f3d}
+.contact-mail-form input[type="text"],.contact-mail-form textarea{box-sizing:border-box;width:100%;border:1px solid #c8d9cf;border-radius:10px;padding:12px 13px;font:inherit;color:#233b30;background:#fff}
+.contact-mail-form input[type="text"]:focus,.contact-mail-form textarea:focus{outline:2px solid #8cbfa4;outline-offset:1px}
+.contact-category-fieldset{border:0;padding:0;margin:0;min-width:0}
+.contact-category-fieldset legend{margin-bottom:10px}
+.contact-category-options{display:flex;flex-wrap:wrap;gap:9px}
+.contact-category-choice{position:relative;cursor:pointer}
+.contact-category-choice input{position:absolute;opacity:0;width:1px;height:1px}
+.contact-category-choice span{display:inline-block;border:1px solid #c8d9cf;border-radius:10px;background:#fff;padding:9px 12px;color:#315b46;font-size:.92rem}
+.contact-category-choice input:checked+span{background:#eaf3ed;border-color:#74a88c;color:#21583d}
+.contact-category-choice input:focus-visible+span{outline:2px solid #2f684b;outline-offset:3px}
+.contact-subject-preview{font-size:.88rem;color:#607467;overflow-wrap:anywhere}
+.contact-subject-preview strong{color:#2f684b}
+.contact-mail-form .contact-send-button{align-self:flex-start;background:#2f684b;color:#fff;border:1px solid #2f684b;border-radius:10px;padding:11px 18px;font:inherit;font-weight:650;cursor:pointer}
+.contact-mail-form .contact-send-button:hover{background:#24563d}
+@media(max-width:520px){.contact-category-options{flex-direction:column}.contact-category-choice span{display:block}.contact-mail-form .contact-send-button{width:100%}}
+
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -1345,8 +1365,23 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
     <h1>Contact</h1><p class="info-sub">Une suggestion ? Une information à compléter ? Une coquille à signaler ?</p>
     <p>Vos retours peuvent aider à améliorer Mémopharm. Vous pouvez écrire pour proposer une nouvelle fiche, recommander une source, signaler une erreur ou partager une idée.</p>
     <h2>Envoyer un message</h2>
-    <p><strong>Adresse de contact à renseigner avant publication.</strong></p>
-    <p class="info-note">Une fois l’adresse e-mail dédiée créée, nous pourrons ajouter ici un bouton ouvrant directement la messagerie du visiteur.</p>
+    <form id="contactMailForm" class="contact-mail-form">
+      <fieldset class="contact-category-fieldset">
+        <legend>Quel est l'objet de votre message ?</legend>
+        <div class="contact-category-options">
+          <label class="contact-category-choice"><input type="radio" name="contactCategory" value="Signaler une erreur" checked><span>Signaler une erreur</span></label>
+          <label class="contact-category-choice"><input type="radio" name="contactCategory" value="Proposer une amélioration"><span>Proposer une amélioration</span></label>
+          <label class="contact-category-choice"><input type="radio" name="contactCategory" value="Autre demande"><span>Autre demande</span></label>
+        </div>
+      </fieldset>
+      <label for="contactMailTitle">Titre de votre message</label>
+      <input id="contactMailTitle" type="text" maxlength="120" required placeholder="Ex. : Correction fiche Prégabaline" autocomplete="off">
+      <label for="contactMailBody">Votre message</label>
+      <textarea id="contactMailBody" rows="7" maxlength="10000" required placeholder="Décrivez votre suggestion ou l'erreur constatée…"></textarea>
+      <div class="contact-subject-preview" aria-live="polite">Objet du mail : <strong id="contactSubjectPreview">Signaler une erreur — </strong></div>
+      <button type="submit" class="contact-send-button">✉ Ouvrir ma messagerie</button>
+      <p class="info-note">Votre messagerie s'ouvrira avec un e-mail prérempli à destination de <strong>contact.memopharm@etik.com</strong>. Vérifiez son contenu, puis cliquez sur « Envoyer » dans votre messagerie. Aucun message n'est transmis directement depuis ce formulaire.</p>
+    </form>
     <p class="info-note">Merci de ne transmettre aucune donnée personnelle de santé ni aucune information permettant d’identifier un patient.</p>
   </article>
 </section>
@@ -3876,6 +3911,27 @@ dashArea.addEventListener("keydown",e=>{
  if((e.ctrlKey||e.metaKey)&&["b","i","u","k"].includes(e.key.toLowerCase())){e.preventDefault();e.stopPropagation();dashSelection=[dashArea.selectionStart,dashArea.selectionEnd];dashApplyFormat(({b:"bold",i:"italic",u:"underline",k:"link"})[e.key.toLowerCase()]);}
 });
 
+
+// Prépare un e-mail dans l'application de messagerie choisie par le visiteur.
+(function initContactMail(){
+ const form=document.getElementById("contactMailForm");
+ if(!form)return;
+ const title=document.getElementById("contactMailTitle");
+ const body=document.getElementById("contactMailBody");
+ const preview=document.getElementById("contactSubjectPreview");
+ const category=()=>form.querySelector('input[name="contactCategory"]:checked')?.value||"Autre demande";
+ const subject=()=>category()+" — "+title.value.trim();
+ const refresh=()=>{preview.textContent=subject();};
+ form.addEventListener("input",refresh);
+ form.addEventListener("change",refresh);
+ form.addEventListener("submit",event=>{
+  event.preventDefault();
+  if(!form.reportValidity())return;
+  const url="mailto:contact.memopharm@etik.com?subject="+encodeURIComponent(subject())+"&body="+encodeURIComponent(body.value.trim());
+  window.location.href=url;
+ });
+ refresh();
+})();
 </script>
 </body></html>
 
