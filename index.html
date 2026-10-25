@@ -3996,6 +3996,55 @@ const MEMOPHARM_CONTACT_ENDPOINT = `${SUPABASE_URL}/functions/v1/memopharm-conta
   finally{submit.disabled=false;}
  });
 })();
+
+// Restauration du focus dans les champs ordinaires (recherche, contact, etc.)
+// lors d'un retour depuis un autre onglet ou une autre fenêtre.
+// L'éditeur de fiches et la liste de suivi conservent leurs propres mécanismes.
+(function preserveGeneralInputFocus(){
+ let last=null,returnPending=false;
+ function eligible(el){
+  if(!(el instanceof HTMLElement)||!el.isConnected)return false;
+  if(el.closest('#editor,#dashTaskTree'))return false;
+  if(el.matches('input'))return !['password','hidden','file','checkbox','radio','submit','button','reset','range','color'].includes(el.type)&&!el.disabled;
+  return (el.matches('textarea')||el.isContentEditable)&&!el.matches(':disabled');
+ }
+ function remember(){
+  const el=document.activeElement;
+  if(!eligible(el))return;
+  const saved={el};
+  if((el instanceof HTMLInputElement||el instanceof HTMLTextAreaElement)&&typeof el.selectionStart==='number'){
+   saved.start=el.selectionStart;saved.end=el.selectionEnd;saved.direction=el.selectionDirection;
+  }else if(el.isContentEditable){
+   const sel=window.getSelection();
+   if(sel&&sel.rangeCount&&el.contains(sel.anchorNode)&&el.contains(sel.focusNode))saved.range=sel.getRangeAt(0).cloneRange();
+  }
+  last=saved;
+ }
+ function restore(){
+  const saved=last;
+  if(!saved||!eligible(saved.el))return;
+  const active=document.activeElement;
+  if(active&&active!==document.body&&active!==document.documentElement&&active!==saved.el)return;
+  const el=saved.el;
+  // Ne pas faire défiler la page au retour de l'onglet.
+  try{el.focus({preventScroll:true})}catch(_){el.focus()}
+  if(typeof saved.start==='number'&&typeof el.setSelectionRange==='function'){
+   try{el.setSelectionRange(saved.start,saved.end,saved.direction||'none')}catch(_){}
+  }else if(saved.range&&el.isContentEditable){
+   try{const sel=window.getSelection();sel.removeAllRanges();sel.addRange(saved.range)}catch(_){}
+  }
+ }
+ document.addEventListener('focusin',event=>{if(eligible(event.target)){returnPending=false;remember()}});
+ document.addEventListener('keyup',remember);
+ document.addEventListener('mouseup',remember);
+ document.addEventListener('select',remember,true);
+ document.addEventListener('selectionchange',()=>{if(eligible(document.activeElement))remember()});
+ function leave(){remember();returnPending=!!last&&eligible(last.el)}
+ function comeBack(){if(!returnPending)return;returnPending=false;requestAnimationFrame(restore)}
+ window.addEventListener('blur',leave);
+ window.addEventListener('focus',comeBack);
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)leave();else comeBack()});
+})();
 </script>
 </body></html>
 
