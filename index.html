@@ -1076,8 +1076,8 @@ body.info-page main{display:none!important}
 /* Contact : composition d'un e-mail sans serveur ni collecte locale */
 .contact-mail-form{display:flex;flex-direction:column;gap:12px;margin-top:16px}
 .contact-mail-form label,.contact-category-fieldset legend{font-weight:650;color:#254f3d}
-.contact-mail-form input[type="text"],.contact-mail-form textarea{box-sizing:border-box;width:100%;border:1px solid #c8d9cf;border-radius:10px;padding:12px 13px;font:inherit;color:#233b30;background:#fff}
-.contact-mail-form input[type="text"]:focus,.contact-mail-form textarea:focus{outline:2px solid #8cbfa4;outline-offset:1px}
+.contact-mail-form input[type="text"],.contact-mail-form input[type="email"],.contact-mail-form textarea{box-sizing:border-box;width:100%;border:1px solid #c8d9cf;border-radius:10px;padding:12px 13px;font:inherit;color:#233b30;background:#fff}
+.contact-mail-form input[type="text"]:focus,.contact-mail-form input[type="email"]:focus,.contact-mail-form textarea:focus{outline:2px solid #8cbfa4;outline-offset:1px}
 .contact-category-fieldset{border:0;padding:0;margin:0;min-width:0}
 .contact-category-fieldset legend{margin-bottom:10px}
 .contact-category-options{display:flex;flex-wrap:wrap;gap:9px}
@@ -1086,11 +1086,10 @@ body.info-page main{display:none!important}
 .contact-category-choice span{display:inline-block;border:1px solid #c8d9cf;border-radius:10px;background:#fff;padding:9px 12px;color:#315b46;font-size:.92rem}
 .contact-category-choice input:checked+span{background:#eaf3ed;border-color:#74a88c;color:#21583d}
 .contact-category-choice input:focus-visible+span{outline:2px solid #2f684b;outline-offset:3px}
-.contact-subject-preview{font-size:.88rem;color:#607467;overflow-wrap:anywhere}
-.contact-subject-preview strong{color:#2f684b}
+.contact-identity-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.contact-identity-grid>div{display:flex;flex-direction:column;gap:8px}.contact-trap{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}.contact-mail-form .contact-send-button:disabled{opacity:.55;cursor:not-allowed}
 .contact-mail-form .contact-send-button{align-self:flex-start;background:#2f684b;color:#fff;border:1px solid #2f684b;border-radius:10px;padding:11px 18px;font:inherit;font-weight:650;cursor:pointer}
 .contact-mail-form .contact-send-button:hover{background:#24563d}
-@media(max-width:520px){.contact-category-options{flex-direction:column}.contact-category-choice span{display:block}.contact-mail-form .contact-send-button{width:100%}}
+@media(max-width:520px){.contact-identity-grid{grid-template-columns:1fr}.contact-category-options{flex-direction:column}.contact-category-choice span{display:block}.contact-mail-form .contact-send-button{width:100%}}
 
 </style>
 <style>
@@ -1374,13 +1373,18 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
           <label class="contact-category-choice"><input type="radio" name="contactCategory" value="Autre demande"><span>Autre demande</span></label>
         </div>
       </fieldset>
+      <div class="contact-identity-grid">
+        <div><label for="contactSenderName">Nom ou pseudonyme (facultatif)</label><input id="contactSenderName" type="text" maxlength="100" autocomplete="name" placeholder="Comment vous appeler ?"></div>
+        <div><label for="contactSenderEmail">Adresse e-mail (facultative)</label><input id="contactSenderEmail" type="email" maxlength="254" autocomplete="email" placeholder="Pour recevoir une réponse"></div>
+      </div>
       <label for="contactMailTitle">Titre de votre message</label>
       <input id="contactMailTitle" type="text" maxlength="120" required placeholder="Ex. : Correction fiche Prégabaline" autocomplete="off">
       <label for="contactMailBody">Votre message</label>
       <textarea id="contactMailBody" rows="7" maxlength="10000" required placeholder="Décrivez votre suggestion ou l'erreur constatée…"></textarea>
-      <div class="contact-subject-preview" aria-live="polite">Objet du mail : <strong id="contactSubjectPreview">Signaler une erreur — </strong></div>
-      <button type="submit" class="contact-send-button">✉ Ouvrir ma messagerie</button>
-      <p class="info-note">Votre messagerie s'ouvrira avec un e-mail prérempli à destination de <strong>contact.memopharm@etik.com</strong>. Vérifiez son contenu, puis cliquez sur « Envoyer » dans votre messagerie. Aucun message n'est transmis directement depuis ce formulaire.</p>
+      <div class="contact-trap" aria-hidden="true"><label for="contactWebsite">Ne pas remplir ce champ</label><input id="contactWebsite" type="text" tabindex="-1" autocomplete="off"></div>
+      <button type="submit" id="contactSubmit" class="contact-send-button" disabled>✉ Envoyer le message</button>
+      <p id="contactStatus" class="info-note" role="status" aria-live="polite">L'envoi direct sera disponible après activation du service d'envoi sécurisé.</p>
+      <p class="info-note">Les coordonnées facultatives servent uniquement à traiter votre demande et à vous répondre si nécessaire. Pour toute question concernant vos données, écrivez à <strong>contact.memopharm@etik.com</strong>.</p>
     </form>
     <p class="info-note">Merci de ne transmettre aucune donnée personnelle de santé ni aucune information permettant d’identifier un patient.</p>
   </article>
@@ -3912,25 +3916,33 @@ dashArea.addEventListener("keydown",e=>{
 });
 
 
-// Prépare un e-mail dans l'application de messagerie choisie par le visiteur.
-(function initContactMail(){
+// Adresse HTTPS publique de la fonction Supabase, à activer après son déploiement.
+// Ne jamais insérer ici une clé API d'envoi de mail ou un mot de passe.
+const MEMOPHARM_CONTACT_ENDPOINT = "";
+(function initContactForm(){
  const form=document.getElementById("contactMailForm");
  if(!form)return;
- const title=document.getElementById("contactMailTitle");
- const body=document.getElementById("contactMailBody");
- const preview=document.getElementById("contactSubjectPreview");
- const category=()=>form.querySelector('input[name="contactCategory"]:checked')?.value||"Autre demande";
- const subject=()=>category()+" — "+title.value.trim();
- const refresh=()=>{preview.textContent=subject();};
- form.addEventListener("input",refresh);
- form.addEventListener("change",refresh);
- form.addEventListener("submit",event=>{
+ const submit=document.getElementById("contactSubmit");
+ const status=document.getElementById("contactStatus");
+ const endpoint=MEMOPHARM_CONTACT_ENDPOINT.trim();
+ if(endpoint && /^https:\/\//i.test(endpoint)){
+  submit.disabled=false;
+  status.textContent="Vos messages sont transmis directement depuis ce formulaire.";
+ }
+ form.addEventListener("submit",async event=>{
   event.preventDefault();
-  if(!form.reportValidity())return;
-  const url="mailto:contact.memopharm@etik.com?subject="+encodeURIComponent(subject())+"&body="+encodeURIComponent(body.value.trim());
-  window.location.href=url;
+  if(!endpoint || !/^https:\/\//i.test(endpoint) || !form.reportValidity())return;
+  const category=form.querySelector('input[name="contactCategory"]:checked')?.value||"Autre demande";
+  const payload={category,title:document.getElementById("contactMailTitle").value.trim(),message:document.getElementById("contactMailBody").value.trim(),name:document.getElementById("contactSenderName").value.trim(),email:document.getElementById("contactSenderEmail").value.trim(),website:document.getElementById("contactWebsite").value};
+  if(!payload.title || !payload.message)return;
+  submit.disabled=true;status.textContent="Envoi en cours…";
+  try{
+   const response=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+   if(!response.ok)throw new Error("Envoi indisponible");
+   form.reset();status.textContent="Merci ! Votre message a bien été transmis.";
+  }catch(error){status.textContent="Le message n'a pas pu être envoyé. Vous pouvez écrire directement à contact.memopharm@etik.com.";}
+  finally{submit.disabled=false;}
  });
- refresh();
 })();
 </script>
 </body></html>
