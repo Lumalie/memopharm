@@ -3697,7 +3697,9 @@ function dashRender(){
  $("dashTaskCount").textContent=`(${completed}/${all.length})`;
  $("dashProgressText").textContent=all.length?`${completed} tâche${completed>1?"s":""} terminée${completed>1?"s":""} sur ${all.length}`:"Ajoute tes premières tâches dans l'éditeur.";
  $("dashProgressBar").style.width=(all.length?100*completed/all.length:0)+"%";
- const tree=$("dashTaskTree");tree.replaceChildren();
+ const tree=$("dashTaskTree");
+ const preserveDraft=dashInlineEditing&&tree.classList.contains("dash-is-editing");
+ if(!preserveDraft)tree.replaceChildren();
  function append(nodes,where){
   const ul=document.createElement("ul");
   nodes.forEach(n=>{
@@ -3733,7 +3735,9 @@ function dashRender(){
   });
   where.append(ul);
  }
- if(nodes.length)append(nodes,tree);else tree.innerHTML='<div class="dash-empty">Aucune tâche pour le moment.</div>';
+ if(!preserveDraft){
+  if(nodes.length)append(nodes,tree);else tree.innerHTML='<div class="dash-empty">Aucune tâche pour le moment.</div>';
+ }
  tree.classList.toggle("dash-is-editing",dashInlineEditing);
  $("dashInlineActions").classList.toggle("hidden",!dashInlineEditing);
  if(dashInlineEditing){tree.querySelectorAll(".dash-task-children[hidden]").forEach(x=>x.hidden=false);tree.querySelectorAll(".dash-fold").forEach(x=>x.disabled=true);}
@@ -3749,11 +3753,53 @@ function dashSetUser(){
 let dashInlineEditing=false;
 function dashEditToggle(){
  if(!admin)return;
- if(dashInlineEditing){dashInlineEditing=false;dashRender();return;}
+ if(dashInlineEditing){dashInlineEditing=false;dashLastFocus=null;dashReturnFocus=false;dashRender();return;}
  dashInlineEditing=true;$("dashEditorPane").classList.add("hidden");dashRender();
  const first=$("dashTaskTree").querySelector(".dash-edit-text");if(first)first.focus();
 }
 $("dashToggleEditor").onclick=dashEditToggle;
+// Conserver le curseur de la liste de suivi quand la fenêtre perd le focus.
+let dashLastFocus=null,dashReturnFocus=false;
+function dashRememberFocus(){
+ if(!dashInlineEditing)return;
+ const tree=$("dashTaskTree"),active=document.activeElement;
+ if(!active?.classList?.contains("dash-edit-text")||!tree.contains(active))return;
+ const index=[...tree.querySelectorAll(".dash-edit-text")].indexOf(active);
+ const selection=window.getSelection();
+ if(index<0||!selection?.rangeCount||!active.contains(selection.anchorNode)||!active.contains(selection.focusNode))return;
+ const range=selection.getRangeAt(0),a=range.cloneRange(),b=range.cloneRange();
+ a.selectNodeContents(active);a.setEnd(range.startContainer,range.startOffset);
+ b.selectNodeContents(active);b.setEnd(range.endContainer,range.endOffset);
+ dashLastFocus={index,start:a.toString().length,end:b.toString().length};
+}
+function dashRestoreFocus(){
+ if(!dashInlineEditing||currentView!=="home"||!admin||!dashLastFocus)return;
+ const field=$("dashTaskTree").querySelectorAll(".dash-edit-text")[dashLastFocus.index];
+ if(!field)return;
+ field.focus({preventScroll:true});
+ function locate(offset){
+  const walker=document.createTreeWalker(field,NodeFilter.SHOW_TEXT);
+  let node,last=null,remaining=offset;
+  while((node=walker.nextNode())){last=node;if(remaining<=node.length)return [node,remaining];remaining-=node.length;}
+  return last?[last,last.length]:[field,field.childNodes.length];
+ }
+ const [a,ao]=locate(dashLastFocus.start),[b,bo]=locate(dashLastFocus.end);
+ const range=document.createRange();range.setStart(a,ao);range.setEnd(b,bo);
+ const selection=window.getSelection();selection.removeAllRanges();selection.addRange(range);
+}
+const dashTree=$("dashTaskTree");
+dashTree.addEventListener("keyup",dashRememberFocus);
+dashTree.addEventListener("mouseup",dashRememberFocus);
+dashTree.addEventListener("focusout",dashRememberFocus);
+document.addEventListener("selectionchange",()=>{if(dashInlineEditing&&dashTree.contains(document.activeElement))dashRememberFocus()});
+window.addEventListener("blur",()=>{if(dashInlineEditing&&currentView==="home"){dashRememberFocus();dashReturnFocus=true}});
+window.addEventListener("focus",()=>{if(dashReturnFocus){dashReturnFocus=false;dashRestoreFocus()}});
+document.addEventListener("visibilitychange",()=>{
+ if(!dashInlineEditing||currentView!=="home")return;
+ if(document.hidden){dashRememberFocus();dashReturnFocus=true}
+ else if(dashReturnFocus){dashReturnFocus=false;dashRestoreFocus()}
+});
+
 // Ctrl+M / Cmd+M : modifier la fiche affichée, ou la liste sur le tableau de bord.
 document.addEventListener("keydown",event=>{
  if(!(event.ctrlKey||event.metaKey)||event.altKey||event.shiftKey||event.key.toLowerCase()!=="m"||event.repeat)return;
@@ -3835,11 +3881,11 @@ async function dashSaveInline(){if(!requireAdmin())return;
  if(!dashInlineEditing)return;
  const state=dashSerialize();
  if(!dashWrite(state))return;
- dashInlineEditing=false;dashRender();dashStatus("⏳ Enregistrement sur Supabase…");
+ dashInlineEditing=false;dashLastFocus=null;dashReturnFocus=false;dashRender();dashStatus("⏳ Enregistrement sur Supabase…");
  const ok=await dashCloudSave();toast(ok?"Liste enregistrée, triée et synchronisée.":"Liste enregistrée localement ; synchronisation indisponible.");
 }
 $("dashInlineSave").onclick=dashSaveInline;
-$("dashInlineCancel").onclick=()=>{dashInlineEditing=false;dashRender()};
+$("dashInlineCancel").onclick=()=>{dashInlineEditing=false;dashLastFocus=null;dashReturnFocus=false;dashRender()};
 $("dashInlineAdd").onclick=()=>dashEditItem();
 $("dashInlineExport").onclick=()=>$("dashExport").click();
 $("dashTaskTree").addEventListener("keydown",e=>{
