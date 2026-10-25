@@ -977,6 +977,27 @@ body.admin-header-mode header{padding-top:12px;padding-bottom:12px}
 body.admin-header-mode header>.wrap>p{display:none}
 body.admin-header-mode header .header-action-stack{gap:4px}
 @media(max-width:740px){header .header-admin-actions{align-items:flex-start}body.admin-header-mode header{padding-top:14px;padding-bottom:14px}}
+
+/* V6.59 — Boutons de bannière inspirés de la fenêtre de connexion */
+header .header-actions button,
+header .header-admin-actions .header-new-fiche,
+header .header-json-menu>summary{
+  min-height:43px;padding:10px 17px;border-radius:13px;
+  background:#fff;color:#193f34;border:1px solid #d8e4da;
+  font-size:.91rem;font-weight:500;line-height:1.3;
+  box-shadow:none;transition:background .15s,border-color .15s;
+}
+header .header-actions button:hover,
+header .header-admin-actions .header-new-fiche:hover,
+header .header-json-menu>summary:hover{background:#f1f7f2;border-color:#b6d2bf}
+header .header-actions .header-logout{background:#a72f3b;color:#fff;border-color:#a72f3b;font-weight:600}
+header .header-actions .header-logout:hover{background:#87232f;color:#fff;border-color:#87232f}
+header .header-admin-actions{flex-direction:row;align-items:center;justify-content:flex-end;gap:7px;width:auto}
+header .header-admin-actions .header-new-fiche{width:auto;white-space:nowrap}
+header .header-json-menu{width:auto;flex:0 0 auto}
+header .header-json-menu>summary{width:auto;white-space:nowrap;gap:6px;padding-left:13px;padding-right:13px}
+body.admin-header-mode header{padding-top:12px;padding-bottom:12px}
+@media(max-width:740px){header .header-admin-actions{justify-content:flex-start;flex-wrap:wrap}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
