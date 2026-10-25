@@ -1013,6 +1013,27 @@ header .topline{min-height:122px}
   header,body.admin-header-mode header{min-height:158px;padding-top:14px;padding-bottom:14px}
   header .topline{min-height:130px}
 }
+/* V6.63 : accès administrateur discret et liens permanents */
+header .admin-lock{display:inline-flex;align-items:center;justify-content:center;width:35px;min-width:35px;padding:7px;color:#dcebe2;opacity:.78}
+header .admin-lock:hover,header .admin-lock:focus-visible{opacity:1}
+.site-footer{max-width:1180px;margin:0 auto;padding:0 18px 18px;display:flex;justify-content:flex-end;align-items:center;gap:9px;color:#7b8781;font-size:.76rem}
+.site-footer a{color:inherit;text-decoration:none}
+.site-footer a:hover,.site-footer a:focus-visible{text-decoration:underline;color:#315b46}
+
+/* V6.64 : pages d'information internes, sans nouveau fichier */
+body.info-page main{display:none!important}
+.info-page-view{max-width:900px;margin:0 auto;padding:35px 20px 55px;min-height:calc(100vh - 205px)}
+.info-page-view.hidden{display:none!important}
+.info-page-card{background:var(--card,#fff);border:1px solid var(--line,#dce8de);border-radius:17px;padding:clamp(20px,4vw,36px);box-shadow:0 5px 20px #193f3408;line-height:1.7}
+.info-page-card h1{font-size:clamp(1.6rem,3vw,2rem);margin:8px 0 0}
+.info-page-card h2{font-size:1.18rem;color:#2f684b;margin:26px 0 8px}
+.info-page-card p{margin:9px 0}
+.info-page-card .info-sub{color:#61776b}
+.info-page-card .info-note{font-size:.88rem;color:#697c70}
+.info-page-card .info-back{display:inline-block;color:#2f684b;text-decoration:none;margin-bottom:9px;font-weight:650}
+.info-page-card .info-back:hover{text-decoration:underline}
+.info-page-card a{color:#2f684b}
+.site-footer a[aria-current="page"]{text-decoration:underline}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -1219,12 +1240,12 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
   </div>
 </a>
     <div id="headerSearchSlot" class="header-search-slot"></div>
-    <div class="header-action-stack"><div class="header-actions"><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="loginBtn">Connexion administrateur</button><button id="logoutBtn" type="button" class="header-logout hidden">Déconnexion</button></div><div class="header-admin-actions hidden" id="headerAdminActions"><button id="addMedBtn" type="button" class="header-new-fiche hidden">+ Nouvelle fiche</button><details class="header-json-menu" id="headerJsonMenu"><summary>JSON <span aria-hidden="true">⌄</span></summary><div class="header-json-items"><button id="exportBtn" type="button">Exporter JSON</button><button id="importBtn" type="button">Importer JSON</button></div></details><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
+    <div class="header-action-stack"><div class="header-actions"><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="loginBtn" type="button" class="admin-lock" title="Administration (Ctrl + Alt + A)" aria-label="Connexion administrateur" aria-keyshortcuts="Control+Alt+A"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></button><button id="logoutBtn" type="button" class="header-logout hidden">Déconnexion</button></div><div class="header-admin-actions hidden" id="headerAdminActions"><button id="addMedBtn" type="button" class="header-new-fiche hidden">+ Nouvelle fiche</button><details class="header-json-menu" id="headerJsonMenu"><summary>JSON <span aria-hidden="true">⌄</span></summary><div class="header-json-items"><button id="exportBtn" type="button">Exporter JSON</button><button id="importBtn" type="button">Importer JSON</button></div></details><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
   </div>
   <p>Une base de repères pour retrouver rapidement les informations utiles sur les médicaments, leurs modalités de prise et les points de vigilance.</p>
 </div></header>
 <main>
-  
+
   <section id="dashboardListView" class="hidden" aria-label="Liste des fiches du tableau de bord"><div class="dash-list-page"><div class="dash-list-page-head"><button type="button" id="dashListBack" class="dash-back">← Retour au tableau de bord</button><h2 id="dashListPageTitle">Liste des fiches</h2></div><div id="dashListPageItems"></div></div></section><section id="homeView"><section id="adminDashboard" class="hidden" aria-label="Tableau de bord personnel">
  <div class="dash-heading"><div><h2>🌿 Mon espace Mémopharm</h2><div class="muted">Suivi de la bibliothèque et de mes projets</div></div></div>
  <div class="dash-stats dash-stats-general"><button type="button" class="dash-stat" data-dash-filter="all" aria-label="Afficher la liste : Fiches créées"><b id="dashTotal">0</b><span>Fiches créées</span></button><button type="button" class="dash-stat" data-dash-filter="published" aria-label="Afficher la liste : Fiches publiées"><b id="dashPublished">0</b><span>Fiches publiées</span></button><button type="button" class="dash-stat dash-stat-review" data-dash-filter="review" aria-label="Afficher la liste : À vérifier"><b id="dashReview">0</b><span>À vérifier</span></button></div>
@@ -1266,6 +1287,32 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
   </section><section id="exploreView" class="hidden"><div class="explore-heading"><h2>Explorer les fiches</h2><p>Parcourez les fiches communes et leurs spécialités associées.</p></div><div class="explore-search"><label for="exploreSearch">Rechercher dans les fiches</label><div class="explore-search-row"><input id="exploreSearch" type="search" autocomplete="off" placeholder="Ex. : amoxicilline, oubli de prise, CIP, conservation…"><button id="clearExploreSearch" type="button">Effacer</button></div><p id="exploreSearchCount" class="muted" aria-live="polite"></p></div><div class="explore-controls"><label>Classe thérapeutique<select id="exploreClass"></select></label><label>Indication thérapeutique<select id="exploreIndication"></select></label><label>Forme pharmaceutique<select id="exploreForm"></select></label><button id="resetExplore" type="button">Effacer les filtres</button></div><div id="exploreCards" class="explore-cards"></div></section><section id="sourcesView" class="hidden"><div class="explore-heading"><h2>Sources documentaires</h2><p>Références communes utilisées pour construire et vérifier les fiches de Mémopharm.</p></div><div id="sourcesList" class="sources-list"></div><div id="sourcesAdmin" class="panel hidden" style="padding:18px;margin-top:18px"></div></section><p class="foot">Les fiches finales devront être renseignées à partir des sources officielles (notices et RCP notamment), avec date de mise à jour et statut de vérification. Mémopharm est une aide documentaire : elle ne remplace ni le jugement professionnel ni la vérification de la spécialité exacte.</p>
   <div class="notice"><strong>Base documentaire en construction :</strong> seules les fiches publiées sont visibles publiquement. Les contenus doivent être vérifiés à partir des sources officielles et ne remplacent pas la vérification de la spécialité exacte ni le jugement professionnel.</div>
 </main>
+
+<section id="infoPageView" class="info-page-view hidden" aria-label="Informations sur Mémopharm">
+  <article id="aboutPage" class="info-page-card hidden">
+    <a class="info-back" href="#" data-info-home>← Retour à Mémopharm</a>
+    <h1>À propos de Mémopharm</h1><p class="info-sub">Les bonnes infos, au bon moment.</p>
+    <h2>Pourquoi Mémopharm ?</h2>
+    <p>Mémopharm est un projet de base documentaire destiné à faciliter la consultation rapide d’informations pratiques sur les médicaments, notamment dans le contexte de l’officine.</p>
+    <p>L’objectif est de rassembler des repères utiles, présentés de façon claire, pour retrouver plus facilement les informations nécessaires au quotidien.</p>
+    <h2>Qui est derrière le projet ?</h2>
+    <p>Mémopharm est un projet indépendant imaginé par une professionnelle de l’officine, à partir des besoins rencontrés au comptoir.</p>
+    <p><em>Cette présentation pourra être enrichie avec le nom ou le pseudonyme et le parcours que la créatrice souhaite rendre publics.</em></p>
+    <h2>Un projet en évolution</h2>
+    <p>Les fiches sont enrichies progressivement. Les sources documentaires et les dates de mise à jour ont vocation à accompagner les informations publiées.</p>
+    <p class="info-note">Mémopharm est un outil documentaire. Il ne remplace ni les références officielles, notamment les RCP et notices, ni l’analyse et le jugement d’un professionnel de santé.</p>
+  </article>
+  <article id="contactPage" class="info-page-card hidden">
+    <a class="info-back" href="#" data-info-home>← Retour à Mémopharm</a>
+    <h1>Contact</h1><p class="info-sub">Une suggestion ? Une information à compléter ? Une coquille à signaler ?</p>
+    <p>Vos retours peuvent aider à améliorer Mémopharm. Vous pouvez écrire pour proposer une nouvelle fiche, recommander une source, signaler une erreur ou partager une idée.</p>
+    <h2>Envoyer un message</h2>
+    <p><strong>Adresse de contact à renseigner avant publication.</strong></p>
+    <p class="info-note">Une fois l’adresse e-mail dédiée créée, nous pourrons ajouter ici un bouton ouvrant directement la messagerie du visiteur.</p>
+    <p class="info-note">Merci de ne transmettre aucune donnée personnelle de santé ni aucune information permettant d’identifier un patient.</p>
+  </article>
+</section>
+<footer class="site-footer" aria-label="Informations du site"><a href="#a-propos">À propos</a><span aria-hidden="true">·</span><a href="#contact">Contact</a></footer>
 <div id="modalRoot"></div><div id="toastRoot"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
 </script>
@@ -1465,6 +1512,7 @@ window.addEventListener("focus",()=>{
  if(editorFocusReturnPending){editorFocusReturnPending=false;restoreEditorFocus()}
 });
 function showView(view){
+ leaveInfoPage();
  if(currentView==="home"&&view!=="home"&&editorId){rememberEditorFocus();saveLocalDraft();}
  const changing=currentView!==view;
  if(changing&&!restoringViewScroll)viewScrollPositions[currentView]=window.scrollY;
@@ -2001,6 +2049,7 @@ function detailLocation(id){
  url.searchParams.delete("edition");history.replaceState({fiche:id},"",url);rememberNavigation();
 }
 function navigateToView(view){
+ leaveInfoPage();
  const url=new URL(location.href);
  url.searchParams.delete("fiche");
  url.searchParams.delete("edition");
@@ -2018,7 +2067,37 @@ function navigateToView(view){
  showView(view);
  window.scrollTo({top:0,behavior:"instant"});
 }
+function showInfoPage(page){
+ const isAbout=page==="a-propos";
+ const info=document.getElementById("infoPageView");
+ document.body.classList.add("info-page");
+ info.classList.remove("hidden");
+ document.getElementById("aboutPage").classList.toggle("hidden",!isAbout);
+ document.getElementById("contactPage").classList.toggle("hidden",isAbout);
+ document.querySelectorAll(".site-footer a").forEach(a=>{
+  if(a.getAttribute("href")==="#"+page)a.setAttribute("aria-current","page");
+  else a.removeAttribute("aria-current");
+ });
+ document.title=(isAbout?"À propos":"Contact")+" — Mémopharm";
+ window.scrollTo({top:0,behavior:"instant"});
+}
+function navigateInfoPage(page,addHistory=true){
+ if(page!=="a-propos"&&page!=="contact")return;
+ if(addHistory){
+  const url=new URL(location.href);url.search="";url.hash=page;
+  history.pushState({infoPage:page},"",url);rememberNavigation();
+ }
+ showInfoPage(page);
+}
+function leaveInfoPage(){
+ document.body.classList.remove("info-page");
+ document.getElementById("infoPageView").classList.add("hidden");
+ document.querySelectorAll(".site-footer a").forEach(a=>a.removeAttribute("aria-current"));
+ document.title="Mémopharm";
+}
 function restoreHistoryPage(state=history.state){
+ if(location.hash==="#a-propos"||location.hash==="#contact"){navigateInfoPage(location.hash.slice(1),false);return;}
+ leaveInfoPage();
  if(state?.view==="dashboard-list"&&state.dashFilter&&admin){dashShowStatList(state.dashFilter,false);return;}
  const searchContext=state?.memopharmSearch;
  if(searchContext&&!new URLSearchParams(location.search).has('fiche')){
@@ -3360,6 +3439,7 @@ $("exploreSearch").addEventListener("input",()=>{explorerVisibleLimit=20;renderE
 $("clearExploreSearch").onclick=()=>{$("exploreSearch").value="";explorerVisibleLimit=20;renderExplorer();$("exploreSearch").focus()};
 $("exploreClass").onchange=$("exploreIndication").onchange=$("exploreForm").onchange=()=>{explorerVisibleLimit=20;renderExplorer()};
 $("resetExplore").onclick=()=>{explorerVisibleLimit=20;$("exploreClass").value="";$("exploreIndication").value="";$("exploreForm").value="";renderExplorer()};
+document.addEventListener("keydown",event=>{if(event.ctrlKey&&event.altKey&&!event.shiftKey&&!event.metaKey&&event.code==="KeyA"&&!event.repeat&&!admin){event.preventDefault();showLogin()}});
 $("loginBtn").onclick=showLogin;$("logoutBtn").onclick=logout;$("addMedBtn").onclick=addMedication;$("search").addEventListener("input",()=>{renderResults()});$("clearSearch").onclick=()=>{$("search").value="";renderResults()};
 $("exportBtn").onclick=()=>{$("headerJsonMenu").open=false;const blob=new Blob([JSON.stringify(meds,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="memopharm-sauvegarde-cloud.json";a.click();URL.revokeObjectURL(a.href)};
 $("importBtn").onclick=()=>{$("headerJsonMenu").open=false;toast("Import JSON désactivé temporairement : nous le relierons à la base avec validation.");};$("importFile").onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const parsed=JSON.parse(await file.text());if(!Array.isArray(parsed)||!parsed.every(m=>m.name&&Array.isArray(m.sections)))throw new Error("Format");if(!confirm("Remplacer les fiches locales par ce fichier ?"))return;toast("Import JSON non disponible dans cette version connectée : aucune donnée modifiée")}catch(err){toast("Fichier JSON non reconnu")}e.target.value=""};
@@ -3382,9 +3462,12 @@ if(!location.search&&!location.hash){
   }
  }catch(e){}
 }
-openedSearchFiche=!!new URLSearchParams(location.search).get("fiche");renderFilters();renderResults();if(location.hash==="#explorer")showView("explore");else if(location.hash==="#sources")showView("sources");
+openedSearchFiche=!!new URLSearchParams(location.search).get("fiche");renderFilters();renderResults();if(location.hash==="#explorer")showView("explore");else if(location.hash==="#sources")showView("sources");else if(location.hash==="#a-propos"||location.hash==="#contact")navigateInfoPage(location.hash.slice(1),false);
 if(currentView==="explore"&&!meds.length)$("exploreCards").innerHTML='<div class="empty">Chargement des fiches…</div>';
 initCloud();
+// V6.64 : liens internes et historique pour les pages À propos / Contact.
+document.querySelectorAll('.site-footer a[href="#a-propos"],.site-footer a[href="#contact"]').forEach(a=>a.addEventListener("click",e=>{e.preventDefault();navigateInfoPage(a.hash.slice(1));}));
+document.querySelectorAll("[data-info-home]").forEach(a=>a.addEventListener("click",e=>{e.preventDefault();navigateToView("home");}));
 // V6.34 — Tableau de bord privé (données locales, séparées de Supabase).
 let dashboardOwner="";
 function dashKey(){return "memopharm-dashboard-v1-"+dashboardOwner}
