@@ -1215,6 +1215,9 @@ body.info-page main{display:none!important}
 #editor .section-editor:not(.memo-collapsed) .memo-section-expand::before{content:'▾'}
 #editor .memo-variant-card .memo-variant-body[hidden]{display:none!important}
 @media(max-width:760px){#editor .memo-editor-nav{grid-template-columns:repeat(2,minmax(0,1fr))}#editor .memo-editor-tab{font-size:.82rem;min-height:48px}#editor .memo-editor-footer{bottom:5px}#editor .memo-editor-footer .muted{display:none}}
+#editor .memo-type-prominent{background:#eef5ee;border:1px solid #d5e5d8;border-radius:12px;padding:13px;margin-bottom:8px}
+#editor .memo-type-prominent label{font-weight:800;color:#244f3c}
+#editor #memo-editor-source-sections{margin-bottom:20px}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -1690,7 +1693,7 @@ function restoreEditorFocus(){
   if(currentView!=="home"||editorId!==saved.id||$("editor").classList.contains("hidden"))return;
   let el=saved.element?.isConnected?saved.element:null;
   if(!el&&saved.elementId)el=document.getElementById(saved.elementId);
-  if(!el&&saved.sectionIndex!==null){const card=[...$("sectionEditors").querySelectorAll('.section-editor')][Number(saved.sectionIndex)];el=saved.field?card?.querySelector(`[data-field="${saved.field}"]`):null;}
+  if(!el&&saved.sectionIndex!==null){const card=$("editor").querySelector(`.section-editor[data-section="${Number(saved.sectionIndex)}"]`);el=saved.field?card?.querySelector(`[data-field="${saved.field}"]`):null;}
   if(!el&&saved.presentationIndex!==null){const card=[...$("presentationEditors").children][Number(saved.presentationIndex)];el=saved.field?card?.querySelector(`[data-field="${saved.field}"]`):null;}
   if(!el||!$("editor").contains(el))return;
   // Ne pas interrompre une nouvelle interaction volontaire.
@@ -2966,7 +2969,7 @@ function richText(raw){
  close();return html;
 }
 function wireTextFormatting(){
- document.querySelectorAll('#sectionEditors .section-editor').forEach(card=>{
+ document.querySelectorAll('#editor .section-editor').forEach(card=>{
   const area=card.querySelector('textarea[data-field="content"]');
   const bubble=card.querySelector('.text-format-bubble');
   const preview=card.querySelector('.rich-preview');
@@ -3173,7 +3176,7 @@ function renderEditor(id){
  const metaGrid=editorRoot.querySelector(".admin-meta");
  const nav=document.createElement("nav");nav.className="memo-editor-nav";nav.setAttribute("aria-label","Rubriques de l’éditeur");
  const panels={};
- const tabDefinitions=[["identity","🏷️ Identité"],["general","📖 Informations générales"],["variants","💊 Formes et dosages"],["tracking","📋 Publication et suivi"]];
+ const tabDefinitions=[["identity","🏷️ Identité"],["general","📖 Informations générales"],["variants","💊 Formes et dosages"],["tracking","📚 Sources et publication"]];
  tabDefinitions.forEach(([key,label])=>{
   const btn=document.createElement("button");btn.type="button";btn.className="memo-editor-tab";btn.dataset.memoTab=key;btn.textContent=label;btn.setAttribute("aria-controls","memo-panel-"+key);nav.appendChild(btn);
   const panel=document.createElement("section");panel.id="memo-panel-"+key;panel.className="memo-editor-panel";panels[key]=panel;
@@ -3182,17 +3185,30 @@ function renderEditor(id){
  panels.identity.appendChild(identityGrid);
  const advanced=document.createElement("details");advanced.className="memo-editor-advanced";
  advanced.innerHTML="<summary>Options avancées d’identification</summary>";
- // Le type et le lien à une molécule restent disponibles sans encombrer la saisie ordinaire.
+ // Le type de fiche est le premier champ visible de l’onglet Identité.
+ const typeField=$("f-entry-type")?.closest(".full");
+ if(typeField){identityGrid.prepend(typeField);typeField.classList.add("memo-type-prominent")}
  const advancedGrid=document.createElement("div");advancedGrid.className="admin-grid";
- [$("f-entry-type")?.closest(".full"),$("molecule-settings")].filter(Boolean).forEach(el=>advancedGrid.appendChild(el));
+ [$("molecule-settings")].filter(Boolean).forEach(el=>advancedGrid.appendChild(el));
  advanced.appendChild(advancedGrid);panels.identity.appendChild(advanced);
  const generalHeading=document.createElement("div");generalHeading.className="memo-editor-panel-heading";generalHeading.textContent="Rubriques de cette fiche";
  panels.general.append(generalHeading,sectionHint,sectionsRoot,sectionActions);
  if(sectionHeading)sectionHeading.remove();
  const variantHeading=document.createElement("div");variantHeading.className="memo-editor-panel-heading";variantHeading.textContent="Présentations et particularités";
  panels.variants.append(variantHeading,variantsWrap,presentationWrap);
- const trackingHeading=document.createElement("div");trackingHeading.className="memo-editor-panel-heading";trackingHeading.textContent="Publication et suivi";
+ const trackingHeading=document.createElement("div");trackingHeading.className="memo-editor-panel-heading";trackingHeading.textContent="Sources, vérification et publication";
  panels.tracking.append(trackingHeading,metaGrid);
+ const sourceCards=[...sectionsRoot.querySelectorAll(".section-editor")].filter(card=>{
+  const index=Number(card.dataset.section),sec=m.sections?.[index];
+  return sec&&(sec.id==="sources"||/sources(?:\s+et\s+mise\s+[àa]\s+jour)?/i.test(sec.title||""));
+ });
+ if(sourceCards.length){
+  const sourceHeading=document.createElement("div");sourceHeading.className="memo-editor-panel-heading";sourceHeading.textContent="📚 Sources documentaires";
+  const sourceArea=document.createElement("div");sourceArea.id="memo-editor-source-sections";
+  sourceCards.forEach(card=>sourceArea.appendChild(card));
+  panels.tracking.insertBefore(sourceHeading,metaGrid);
+  panels.tracking.insertBefore(sourceArea,metaGrid);
+ }
  const footer=document.createElement("div");footer.className="memo-editor-footer";
  footer.innerHTML='<span class="muted">Pense à enregistrer tes modifications avant de quitter.</span><button type="button" class="primary" id="memo-editor-save-bottom">💾 Enregistrer</button>';
  editorRoot.appendChild(footer);
@@ -3207,7 +3223,7 @@ function renderEditor(id){
  nav.querySelectorAll("[data-memo-tab]").forEach(btn=>btn.onclick=()=>showMemoTab(btn.dataset.memoTab));
  showMemoTab(memoEditorActiveTab);
  // Replier les rubriques sans retirer les champs du DOM : les brouillons restent intacts.
- const sectionCards=[...sectionsRoot.querySelectorAll(".section-editor")];
+ const sectionCards=[...editorRoot.querySelectorAll(".section-editor")];
  sectionCards.forEach((card,i)=>{
   const heading=card.querySelector(".section-editor-head");
   const title=card.querySelector('[data-field="title"]')?.value||"Rubrique "+(i+1);
@@ -3235,7 +3251,7 @@ function renderEditor(id){
   $("f-molecule-parent").disabled=isMoleculeType;
   $("parent-group-wrap").classList.remove("hidden");
   $("princeps-editor-wrap").classList.toggle("hidden",$("f-entry-type").value!=="dci" && !isMoleculeType);
-  $("f-dci-form-wrap").classList.toggle("hidden",$("f-entry-type").value!=="dci" && !isMoleculeType);
+  $("f-dci-form-wrap").classList.toggle("hidden",$("f-entry-type").value!=="dci");
   $("f-dosage-wrap").classList.toggle("hidden",isGroupType || isMoleculeType);
   $("f-dose-title-wrap").classList.toggle("hidden",isGroupType);
 
@@ -3370,7 +3386,7 @@ function renderEditor(id){
  const refreshPresentationEditors=()=>{const root=$("presentationEditors");root.innerHTML=(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("");root.querySelectorAll("[data-remove-presentation]").forEach(b=>b.onclick=()=>{captureEditorFields(m);const removed=Number(b.dataset.removePresentation);m.presentations.splice(removed,1);const old=pendingPresentationPhotos.get(m.id);if(old){const shifted=new Map();for(const [i,file] of old)if(i!==removed)shifted.set(i>removed?i-1:i,file);pendingPresentationPhotos.set(m.id,shifted)}refreshPresentationEditors()});wirePhotoInputs();root.querySelectorAll("[data-add-cip-pack]").forEach(b=>b.onclick=()=>{const rows=b.closest(".cip-pack-rows");const row=rows.querySelector("[data-cip-pack-row]").cloneNode(true);row.querySelectorAll("input").forEach(input=>input.value="");rows.insertBefore(row,b);row.querySelector("[data-cip-value]").focus()});root.addEventListener("click",e=>{const b=e.target.closest("[data-remove-cip-pack]");if(!b)return;const rows=b.closest(".cip-pack-rows");const all=rows.querySelectorAll("[data-cip-pack-row]");if(all.length===1){all[0].querySelectorAll("input").forEach(input=>input.value="")}else b.closest("[data-cip-pack-row]").remove()});root.querySelectorAll("[data-pkind]").forEach(input=>input.addEventListener("change",()=>{if(!input.checked)return;input.closest("[data-presentation]").querySelectorAll("[data-pkind]").forEach(other=>{if(other!==input)other.checked=false})}));root.querySelectorAll("[data-cannot-split],[data-can-split],[data-cannot-crush],[data-can-crush],[data-cannot-open],[data-can-open]").forEach(input=>input.addEventListener("change",()=>{const card=input.closest("[data-presentation]");const kind=input.hasAttribute("data-cannot-split")||input.hasAttribute("data-can-split")?"split":input.hasAttribute("data-cannot-open")||input.hasAttribute("data-can-open")?"open":"crush";const yes=card.querySelector(`[data-can-${kind}]`),no=card.querySelector(`[data-cannot-${kind}]`),reason=card.querySelector(`[data-reason-for="${kind}"]`);if(input===yes&&yes.checked)no.checked=false;if(input===no&&no.checked)yes.checked=false;reason.hidden=false;}));};
  $("addPresentation").onclick=()=>{captureEditorFields(m);m.presentations.push({name:"",showLab:false,lab:"",dosage:"",form:"",cip:"",cis:"",description:"",marking:"",imageUrl:"",sourceUrl:""});refreshPresentationEditors()};
  wirePhotoInputs();
- $("sectionEditors").querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>sectionAction(b.dataset.act,Number(b.dataset.index),m.id));
+ $("editor").querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>sectionAction(b.dataset.act,Number(b.dataset.index),m.id));
  wireTextFormatting();
  wireTableGrids(m);
  wireTableCellFormatting();
@@ -3405,7 +3421,7 @@ function readTableGrid(card){
  return trs.map(tr=>[...tr.querySelectorAll("[data-table-cell]")].map(input=>input.value.replace(/\r\n?/g,"\n").replace(/\n/g,"[[newline]]").trim()).join(" | ")).join("\n");
 }
 function wireTableCellFormatting(){
- document.querySelectorAll("#sectionEditors .table-grid-wrap").forEach(wrap=>{
+ document.querySelectorAll("#editor .table-grid-wrap").forEach(wrap=>{
   const toolbar=wrap.querySelector(".table-cell-toolbar");
   const preview=wrap.querySelector(".table-cell-preview");
   let active=null, range=null;
@@ -3450,7 +3466,7 @@ function wireTableCellFormatting(){
  });
 }
 function wireTableGrids(m){
- $("sectionEditors").querySelectorAll("[data-grid-action]").forEach(button=>button.onclick=()=>{
+ $("editor").querySelectorAll("[data-grid-action]").forEach(button=>button.onclick=()=>{
   const card=button.closest(".section-editor"),i=Number(card.dataset.section);
   captureEditorFields(m);
   let rows=tableRows(m.sections[i].content);
@@ -3462,7 +3478,7 @@ function wireTableGrids(m){
   m.sections[i].content=rows.map(row=>row.join(" | ")).join("\n");
   renderEditor(m.id);saveLocalDraft();
  });
- $("sectionEditors").querySelectorAll('[data-field="type"]').forEach(select=>select.onchange=()=>{
+ $("editor").querySelectorAll('[data-field="type"]').forEach(select=>select.onchange=()=>{
   const card=select.closest(".section-editor"),i=Number(card.dataset.section);
   // Conserver le type d'origine AVANT la capture : celle-ci lit le sélecteur
   // et écrasait l'ancien type, empêchant toute conversion effective.
@@ -3523,8 +3539,8 @@ function captureEditorFields(m){
  m.status=(get("f-status")||"à vérifier").toLocaleLowerCase("fr");m.published=get("f-published")==="true";
  m.updated=get("f-updated"); // Source principale historique conservée.
  readPresentationEditors(m);
- const cards=[...$("sectionEditors").querySelectorAll(".section-editor")];
- cards.forEach((card,i)=>{if(!m.sections[i])return;
+ const cards=[...$("editor").querySelectorAll(".section-editor")];
+ cards.forEach(card=>{const i=Number(card.dataset.section);if(!m.sections[i])return;
    for(const field of ["title","type","content"]){
      const el=card.querySelector(`[data-field="${field}"]`);
      if(el)m.sections[i][field]=el.value;
@@ -3540,7 +3556,7 @@ function sectionAction(action,index,id){const m=meds.find(x=>x.id===id);if(!m)re
  if(action==="down"&&index<ss.length-1)[ss[index+1],ss[index]]=[ss[index],ss[index+1]];
  if(action==="toggle"){
   ss[index].enabled=!(ss[index].enabled!==false&&ss[index].enabled!=="false");
-  const card=$('sectionEditors')?.querySelector(`.section-editor[data-section="${index}"]`);
+  const card=$('editor')?.querySelector(`.section-editor[data-section="${index}"]`);
   if(card){
    card.classList.toggle('is-disabled',ss[index].enabled===false);
    const button=card.querySelector('[data-act="toggle"]');
