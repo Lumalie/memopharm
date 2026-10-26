@@ -1327,6 +1327,11 @@ body.info-page main{display:none!important}
 .admin .memo-v16-section .memo-rich-editor{min-height:120px}
 .admin #memo-variant-sources{margin-top:12px}
 @media(max-width:760px){.admin .memo-v16-layout{grid-template-columns:1fr}.admin .memo-v16-list{display:flex;overflow-x:auto;padding-bottom:5px}.admin .memo-v16-choice{min-width:180px;flex:0 0 auto}}
+
+/* V18 : bouton d'ajout sur la ligne du titre des présentations */
+#editor .memo-variant-title-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:5px 0 14px}
+#editor .memo-variant-title-row .memo-editor-panel-heading{margin:0}
+#editor .memo-variant-title-row #variant-add{margin-left:auto;white-space:normal}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -3395,7 +3400,11 @@ function renderEditor(id){
  panels.general.append(generalHeading,sectionHint,sectionsRoot,sectionActions);
  if(sectionHeading)sectionHeading.remove();
  const variantHeading=document.createElement("div");variantHeading.className="memo-editor-panel-heading";variantHeading.textContent="Présentations et particularités";
- panels.variants.append(variantHeading,variantsWrap,presentationWrap);
+ const variantTitleRow=document.createElement("div");variantTitleRow.className="memo-variant-title-row";
+ variantTitleRow.appendChild(variantHeading);
+ const variantAddButton=$("variant-add");
+ if(variantAddButton){variantTitleRow.appendChild(variantAddButton);}
+ panels.variants.append(variantTitleRow,variantsWrap,presentationWrap);
  const trackingHeading=document.createElement("div");trackingHeading.className="memo-editor-panel-heading";trackingHeading.textContent="Sources, vérification et publication";
  panels.tracking.append(trackingHeading,metaGrid);
  const sourceCards=[...sectionsRoot.querySelectorAll(".section-editor")].filter(card=>{
