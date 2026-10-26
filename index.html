@@ -1157,6 +1157,16 @@ body.info-page main{display:none!important}
 .detail .molecule-tabs>summary:focus-visible{outline:2px solid #6d9b7d;outline-offset:4px}
 .detail .molecule-general-inner,
 .detail .molecule-tabs-inner{padding:14px 0 0!important}
+
+/* Mémopharm — onglets de formes et de dosages, largeur intégrale */
+.detail .molecule-tab-strip{display:grid;grid-template-columns:repeat(var(--memo-tabs-count,1),minmax(0,1fr));gap:8px;width:100%;overflow:visible;padding:0;margin:8px 0 12px}
+.detail .molecule-dose-strip{margin-top:0;margin-bottom:16px}
+.detail .molecule-tab{display:block;min-width:0;width:100%;padding:12px 8px;border:0!important;border-radius:13px;background:transparent;color:inherit;font:inherit;font-weight:600;text-align:center;white-space:normal;overflow-wrap:anywhere;cursor:pointer;transition:background-color .16s ease,box-shadow .16s ease}
+.detail .molecule-tab:hover{background:rgba(108,155,125,.13);box-shadow:0 2px 7px rgba(35,70,50,.07)}
+.detail .molecule-tab[aria-selected="true"]{background:rgba(108,155,125,.28);box-shadow:none;font-weight:700}
+.detail .molecule-tab[aria-selected="true"]:hover{background:rgba(108,155,125,.34)}
+.detail .molecule-tab:focus-visible{outline:2px solid #6d9b7d;outline-offset:2px}
+@media(max-width:480px){.detail .molecule-tab{padding:10px 4px;font-size:.91rem}.detail .molecule-tab-strip{gap:4px}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -2639,23 +2649,43 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
 
  ${isGroup(m)||isMolecule(m)?"":renderPresentations(m)}
  ${isMolecule(m)&&moleculeDosages.length?`<details class="molecule-general" id="molecule-general" ${targetSectionId?"open":""}><summary>📖 Informations générales</summary><div class="molecule-general-inner">${displaySections.map(s=>renderSection(s,targetSectionId)).join("")}</div></details>`:displaySections.map(s=>renderSection(s,targetSectionId)).join("")}
-  ${isMolecule(m)&&moleculeDosages.length?`<details class="molecule-tabs" id="molecule-tabs"><summary>💊 Présentations</summary><div class="molecule-tabs-inner"><div class="molecule-tab-strip" role="tablist" aria-label="Présentations de ${esc(displayMedName(m))}">${moleculeDosages.map((child,i)=>`<button type="button" role="tab" class="molecule-tab" data-molecule-tab="${esc(child.id)}" aria-selected="${i===0?"true":"false"}">${esc(displayMedName(child))}</button>`).join("")}</div><div class="molecule-tab-content" id="molecule-tab-content"></div></div></details>`:""}
+  ${isMolecule(m)&&moleculeDosages.length?`<details class="molecule-tabs" id="molecule-tabs"><summary>💊 Présentations</summary><div class="molecule-tabs-inner"><div class="molecule-tab-strip molecule-form-strip" role="tablist" aria-label="Formes pharmaceutiques de ${esc(displayMedName(m))}"></div><div class="molecule-tab-strip molecule-dose-strip" role="tablist" aria-label="Dosages disponibles"></div><div class="molecule-tab-content" id="molecule-tab-content"></div></div></details>`:""}
  ${ficheDocumentation(m,documentationSections)}`;
- // Onglets des fiches dosage/forme : réutilisent les données existantes, sans les dupliquer.
+ // Deux rangées d'onglets : forme pharmaceutique puis dosage, sans dupliquer les fiches.
  if(isMolecule(m)&&moleculeDosages.length){
-  const tabs=[...$("detail").querySelectorAll("[data-molecule-tab]")];
+  const formStrip=$("detail").querySelector(".molecule-form-strip");
+  const doseStrip=$("detail").querySelector(".molecule-dose-strip");
   const panel=$("molecule-tab-content");
-  const showDose=id=>{
-   const child=moleculeDosages.find(x=>String(x.id)===String(id));
+  const groups=moleculeDosageColumns(moleculeDosages);
+  const dosageLabel=child=>{
+   const dose=String(child.dosage||ingredientTitleDose(child)||"").trim();
+   if(dose)return dose;
+   const title=displayMedName(child);
+   const match=title.match(/(\d+(?:[.,]\d+)?\s*(?:µg|mcg|mg|g|UI|mL|ml)(?:\/\s*(?:µg|mcg|mg|g|UI|mL|ml))?)\b/i);
+   return match?match[1]:title;
+  };
+  const renderChild=child=>{
    if(!child||!panel)return;
-   tabs.forEach(t=>{const active=t.dataset.moleculeTab===String(id);t.setAttribute("aria-selected",String(active));t.tabIndex=active?0:-1});
    const childSections=(child.sections||[]).filter(x=>x.enabled!==false&&!isDocumentationSection(x)).map(x=>resolveSharedSection(child,x));
    panel.innerHTML=`<div class="molecule-tab-heading"><strong>${esc(displayMedName(child))}</strong><button type="button" class="soft" data-group-open="${esc(child.id)}">Ouvrir la fiche complète ↗</button></div>${renderPresentations(child)}${childSections.map(x=>renderSection(x)).join("")}${ficheDocumentation(child,(child.sections||[]).filter(isDocumentationSection))}`;
    panel.querySelectorAll("[data-group-open]").forEach(b=>b.onclick=()=>openMedication(b.dataset.groupOpen));
    panel.querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=panel.querySelector("#presentation-info");const index=sel.value===""?null:Number(sel.value);if(target)target.innerHTML=index!==null&&child.presentations?.[index]?presentationInfo(child.presentations[index],child):""});
   };
-  tabs.forEach(t=>t.onclick=()=>showDose(t.dataset.moleculeTab));
-  showDose(moleculeDosages[0].id);
+  const chooseForm=(group,preferredId)=>{
+   [...formStrip.querySelectorAll("[data-molecule-form]")].forEach(b=>{const active=b.dataset.moleculeForm===group.form;b.setAttribute("aria-selected",String(active));b.tabIndex=active?0:-1});
+   doseStrip.style.setProperty("--memo-tabs-count",group.items.length);
+   doseStrip.innerHTML=group.items.map((child,i)=>`<button type="button" role="tab" class="molecule-tab" data-molecule-dose="${esc(child.id)}" aria-selected="false" tabindex="-1">${esc(dosageLabel(child))}</button>`).join("");
+   const chooseDose=id=>{
+    [...doseStrip.querySelectorAll("[data-molecule-dose]")].forEach(b=>{const active=b.dataset.moleculeDose===String(id);b.setAttribute("aria-selected",String(active));b.tabIndex=active?0:-1});
+    renderChild(group.items.find(x=>String(x.id)===String(id)));
+   };
+   doseStrip.querySelectorAll("[data-molecule-dose]").forEach(b=>b.onclick=()=>chooseDose(b.dataset.moleculeDose));
+   chooseDose(preferredId||group.items[0].id);
+  };
+  formStrip.style.setProperty("--memo-tabs-count",groups.length);
+  formStrip.innerHTML=groups.map(g=>`<button type="button" role="tab" class="molecule-tab" data-molecule-form="${esc(g.form)}" aria-selected="false" tabindex="-1">${esc(g.form)}</button>`).join("");
+  formStrip.querySelectorAll("[data-molecule-form]").forEach(b=>b.onclick=()=>chooseForm(groups.find(g=>g.form===b.dataset.moleculeForm)));
+  if(groups.length)chooseForm(groups[0]);
  }
  $("detail").querySelectorAll("[data-group-open]").forEach(b=>b.onclick=()=>openMedication(b.dataset.groupOpen));
  $("detail").querySelectorAll(".associated-molecule-toggle").forEach(button=>button.onclick=()=>{
