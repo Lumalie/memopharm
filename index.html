@@ -1091,6 +1091,14 @@ body.info-page main{display:none!important}
 .contact-mail-form .contact-send-button:hover{background:#24563d}
 @media(max-width:520px){.contact-identity-grid{grid-template-columns:1fr}.contact-category-options{flex-direction:column}.contact-category-choice span{display:block}.contact-mail-form .contact-send-button{width:100%}}
 
+
+/* Fil d'Ariane adaptatif : chemin complet sur ordinateur, parent direct sur mobile. */
+@media(max-width:600px){
+ .fiche-breadcrumb .breadcrumb-ancestor,
+ .fiche-breadcrumb .breadcrumb-ancestor-separator{display:none!important}
+ .fiche-breadcrumb .breadcrumb-current{min-width:0;overflow-wrap:anywhere}
+ .fiche-breadcrumb .breadcrumb-nearest-parent{max-width:48%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -1731,7 +1739,7 @@ function ficheBreadcrumb(m){
   chain.unshift(node);
   parent=isMolecule(node)||isGroup(node)?parentGroupId(node):"";
  }
- return `<nav class="fiche-breadcrumb" aria-label="Chemin de la fiche">${chain.map((g,i)=>`<button type="button" class="breadcrumb-link breadcrumb-group-level" style="${entityTreeStyle(g)}" data-group-open="${esc(g.id)}" title="Ouvrir ${esc(g.name)}">${esc(g.name)}</button><span class="breadcrumb-separator" aria-hidden="true">›</span>`).join("")}<span class="breadcrumb-current ${isGroup(m)||isMolecule(m)?"breadcrumb-current-group-level":"breadcrumb-current-med"}" ${`style="${entityTreeStyle(m)}"`} aria-current="page">${esc(displayMedName(m))}</span></nav>`;
+ return `<nav class="fiche-breadcrumb" aria-label="Chemin de la fiche">${chain.map((g,i)=>`<button type="button" class="breadcrumb-link breadcrumb-group-level${i===chain.length-1?' breadcrumb-nearest-parent':' breadcrumb-ancestor'}" style="${entityTreeStyle(g)}" data-group-open="${esc(g.id)}" title="Ouvrir ${esc(g.name)}">${esc(g.name)}</button><span class="breadcrumb-separator${i===chain.length-1?' breadcrumb-nearest-separator':' breadcrumb-ancestor-separator'}" aria-hidden="true">›</span>`).join("")}<span class="breadcrumb-current ${isGroup(m)||isMolecule(m)?"breadcrumb-current-group-level":"breadcrumb-current-med"}" ${`style="${entityTreeStyle(m)}"`} aria-current="page">${esc(displayMedName(m))}</span></nav>`;
 }
 
 function indicationTags(m){
