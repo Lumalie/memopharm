@@ -1193,6 +1193,28 @@ body.info-page main{display:none!important}
 .detail .molecule-dose-strip .molecule-tab[aria-selected="true"]{background:var(--memo-dose-bg)!important}
 .detail .molecule-dose-strip .molecule-tab[aria-selected="true"]:hover{background:#f4e1d6!important}
 
+
+/* V8 — navigation claire de l'éditeur, sans changement de modèle de données */
+#editor .memo-editor-nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:18px 0 16px}
+#editor .memo-editor-tab{display:flex;align-items:center;justify-content:center;gap:7px;text-align:center;min-height:54px;padding:10px 8px;border:1px solid #d8e3da;background:#f7faf7;color:#365a48;border-radius:12px;font-size:.88rem;font-weight:650;cursor:pointer}
+#editor .memo-editor-tab[aria-selected="true"]{background:#dcecdf;border-color:#9dbda5;color:#1d4d37;box-shadow:inset 0 -2px #74a486}
+#editor .memo-editor-panel{min-width:0;padding:3px 0 16px}
+#editor .memo-editor-panel[hidden]{display:none!important}
+#editor .memo-editor-panel>h3:first-child{margin-top:6px}
+#editor .memo-editor-panel-heading{font-size:1.08rem;font-weight:800;color:#244f3c;margin:5px 0 14px}
+#editor .memo-editor-footer{position:sticky;bottom:10px;z-index:4;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 13px;margin-top:12px;background:rgba(248,251,248,.97);border:1px solid #c7d9ca;border-radius:13px;box-shadow:0 4px 18px #193f3420;backdrop-filter:blur(6px)}
+#editor .memo-editor-footer button{min-height:40px}
+#editor .memo-editor-footer .primary{background:var(--green);color:white;border-color:var(--green)}
+#editor .memo-editor-advanced{margin-top:12px;padding:10px 13px;border:1px solid #dbe5dc;border-radius:12px;background:#fbfcfb}
+#editor .memo-editor-advanced>summary{cursor:pointer;font-weight:700;color:#365a48}
+#editor .memo-editor-advanced>summary+*{margin-top:14px}
+#editor .section-editor.memo-collapsed>div:not(.section-editor-head){display:none}
+#editor .section-editor-head{gap:10px}
+#editor .memo-section-expand{background:transparent;border:0;padding:5px 4px;text-align:left;flex:1;min-width:0;color:var(--ink);cursor:pointer;font-weight:750;white-space:normal}
+#editor .memo-section-expand::before{content:'▸';margin-right:9px;color:#5d9470}
+#editor .section-editor:not(.memo-collapsed) .memo-section-expand::before{content:'▾'}
+#editor .memo-variant-card .memo-variant-body[hidden]{display:none!important}
+@media(max-width:760px){#editor .memo-editor-nav{grid-template-columns:repeat(2,minmax(0,1fr))}#editor .memo-editor-tab{font-size:.82rem;min-height:48px}#editor .memo-editor-footer{bottom:5px}#editor .memo-editor-footer .muted{display:none}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -3092,10 +3114,13 @@ function addGroup(){if(!requireAdmin())return;
  m.name="Nouveau groupe";m.entry_type="dci";m.sections=clone(GROUP_SECTIONS);setHierarchy(m,"groupe","");
  renderEditor(m.id);saveLocalDraft();scrollToNewEditor();
 }
+let memoEditorActiveTab="identity";
+let memoEditorOpenSection=null;
 function renderEditor(id){
  if(!requireAdmin())return;
  openedSearchFiche=true;showView("home");$("searchLayout").classList.remove("hidden");
  const m=meds.find(x=>x.id===id);if(!m)return;
+ if(editorId!==id){memoEditorActiveTab="identity";memoEditorOpenSection=null;}
  if(editorId!==id||!editorOriginalSnapshot)editorOriginalSnapshot=clone(m);
  if(isGroup(m)){
   const core=m.sections||[];
@@ -3135,7 +3160,72 @@ function renderEditor(id){
  <h3>Rubriques de cette fiche</h3><p class="muted">Désactive une rubrique pour la masquer. Utilise les flèches pour changer l’ordre, ou ajoute une rubrique personnalisée.</p>
  <div id="sectionEditors">${(m.sections||[]).map((s,i)=>sectionEditor(s,i)).join("")}</div><div class="section-bottom-actions"><button type="button" id="addTextSection">+ Rubrique texte</button><button type="button" id="addTableSection">+ Rubrique tableau</button><button type="button" id="editorBackToTop">↑ Retour en haut</button></div>
  <div class="admin-grid admin-meta" style="margin-top:24px"><div><label>Statut de vérification</label><select id="f-status">${["à vérifier","en cours de vérification","vérifiée"].map(v=>`<option ${String(m.status||"à vérifier").toLocaleLowerCase("fr")===v?"selected":""}>${v}</option>`).join("")}</select></div><div><label>Publication</label><select id="f-published"><option value="false" ${!m.published?"selected":""}>Brouillon — privé</option><option value="true" ${m.published?"selected":""}>Publié — visible publiquement</option></select></div><div class="full"><label for="f-updated">Date de mise à jour</label><input id="f-updated" type="date" value="${esc(m.updated)}"></div></div>`;
-const toggleType = () => {
+// V8 : réorganiser les contrôles existants dans quatre panneaux, sans les recréer.
+ // Les mêmes identifiants, écouteurs et champs restent utilisés par la sauvegarde.
+ const editorRoot=$("editor");
+ const identityGrid=editorRoot.querySelector(".admin-grid");
+ const presentationWrap=$("presentation-editor-wrap");
+ const variantsWrap=$("molecule-variants-editor");
+ const sectionsRoot=$("sectionEditors");
+ const sectionHeading=sectionsRoot.previousElementSibling?.previousElementSibling;
+ const sectionHint=sectionsRoot.previousElementSibling;
+ const sectionActions=sectionsRoot.nextElementSibling;
+ const metaGrid=editorRoot.querySelector(".admin-meta");
+ const nav=document.createElement("nav");nav.className="memo-editor-nav";nav.setAttribute("aria-label","Rubriques de l’éditeur");
+ const panels={};
+ const tabDefinitions=[["identity","🏷️ Identité"],["general","📖 Informations générales"],["variants","💊 Formes et dosages"],["tracking","📋 Publication et suivi"]];
+ tabDefinitions.forEach(([key,label])=>{
+  const btn=document.createElement("button");btn.type="button";btn.className="memo-editor-tab";btn.dataset.memoTab=key;btn.textContent=label;btn.setAttribute("aria-controls","memo-panel-"+key);nav.appendChild(btn);
+  const panel=document.createElement("section");panel.id="memo-panel-"+key;panel.className="memo-editor-panel";panels[key]=panel;
+ });
+ const editorTop=editorRoot.querySelector(".detailtop");editorTop.after(nav,...tabDefinitions.map(([key])=>panels[key]));
+ panels.identity.appendChild(identityGrid);
+ const advanced=document.createElement("details");advanced.className="memo-editor-advanced";
+ advanced.innerHTML="<summary>Options avancées d’identification</summary>";
+ // Le type et le lien à une molécule restent disponibles sans encombrer la saisie ordinaire.
+ const advancedGrid=document.createElement("div");advancedGrid.className="admin-grid";
+ [$("f-entry-type")?.closest(".full"),$("molecule-settings")].filter(Boolean).forEach(el=>advancedGrid.appendChild(el));
+ advanced.appendChild(advancedGrid);panels.identity.appendChild(advanced);
+ const generalHeading=document.createElement("div");generalHeading.className="memo-editor-panel-heading";generalHeading.textContent="Rubriques de cette fiche";
+ panels.general.append(generalHeading,sectionHint,sectionsRoot,sectionActions);
+ if(sectionHeading)sectionHeading.remove();
+ const variantHeading=document.createElement("div");variantHeading.className="memo-editor-panel-heading";variantHeading.textContent="Présentations et particularités";
+ panels.variants.append(variantHeading,variantsWrap,presentationWrap);
+ const trackingHeading=document.createElement("div");trackingHeading.className="memo-editor-panel-heading";trackingHeading.textContent="Publication et suivi";
+ panels.tracking.append(trackingHeading,metaGrid);
+ const footer=document.createElement("div");footer.className="memo-editor-footer";
+ footer.innerHTML='<span class="muted">Pense à enregistrer tes modifications avant de quitter.</span><button type="button" class="primary" id="memo-editor-save-bottom">💾 Enregistrer</button>';
+ editorRoot.appendChild(footer);
+ $("memo-editor-save-bottom").onclick=()=>$("saveMed").click();
+ const showMemoTab=(key)=>{
+  memoEditorActiveTab=panels[key]?key:"identity";
+  tabDefinitions.forEach(([id])=>{
+   panels[id].hidden=id!==memoEditorActiveTab;
+   nav.querySelector(`[data-memo-tab="${id}"]`).setAttribute("aria-selected",String(id===memoEditorActiveTab));
+  });
+ };
+ nav.querySelectorAll("[data-memo-tab]").forEach(btn=>btn.onclick=()=>showMemoTab(btn.dataset.memoTab));
+ showMemoTab(memoEditorActiveTab);
+ // Replier les rubriques sans retirer les champs du DOM : les brouillons restent intacts.
+ const sectionCards=[...sectionsRoot.querySelectorAll(".section-editor")];
+ sectionCards.forEach((card,i)=>{
+  const heading=card.querySelector(".section-editor-head");
+  const title=card.querySelector('[data-field="title"]')?.value||"Rubrique "+(i+1);
+  const strong=heading.querySelector("strong");if(strong)strong.remove();
+  const toggle=document.createElement("button");toggle.type="button";toggle.className="memo-section-expand";
+  toggle.textContent=title;toggle.setAttribute("aria-expanded","false");
+  heading.prepend(toggle);
+  const open=memoEditorOpenSection===i;
+  card.classList.toggle("memo-collapsed",!open);toggle.setAttribute("aria-expanded",String(open));
+  toggle.onclick=()=>{
+   const wasOpen=!card.classList.contains("memo-collapsed");
+   sectionCards.forEach((other,j)=>{other.classList.add("memo-collapsed");other.querySelector(".memo-section-expand")?.setAttribute("aria-expanded","false")});
+   memoEditorOpenSection=wasOpen?null:i;
+   if(!wasOpen){card.classList.remove("memo-collapsed");toggle.setAttribute("aria-expanded","true")}
+  };
+  card.querySelector('[data-field="title"]')?.addEventListener("input",e=>{toggle.textContent=e.target.value||"Rubrique "+(i+1)});
+ });
+ const toggleType = () => {
   const isGroupType = $("f-entry-type").value === "groupe";
   const isMoleculeType = $("f-entry-type").value === "molecule";
   const isDci = $("f-entry-type").value === "dci" || isMoleculeType || isGroupType;
@@ -3460,8 +3550,8 @@ function sectionAction(action,index,id){const m=meds.find(x=>x.id===id);if(!m)re
   return;
  }
  if(action==="remove"){if(!confirm("Retirer cette rubrique de la fiche ?"))return;ss.splice(index,1)}
- renderEditor(id);saveLocalDraft()}
-function addSection(id,type){const m=meds.find(x=>x.id===id);if(!m)return;captureEditorFields(m);m.sections.push({id:"custom-"+Date.now(),title:"Nouvelle rubrique",type,content:type==="table"?"Colonne 1 | Colonne 2\nÀ renseigner | À renseigner":"À compléter à partir d’une source vérifiée.",enabled:true,imageData:"",imageUrl:"",imageCaption:""});renderEditor(id);saveLocalDraft()}
+ memoEditorActiveTab="general";memoEditorOpenSection=null;renderEditor(id);saveLocalDraft()}
+function addSection(id,type){const m=meds.find(x=>x.id===id);if(!m)return;captureEditorFields(m);m.sections.push({id:"custom-"+Date.now(),title:"Nouvelle rubrique",type,content:type==="table"?"Colonne 1 | Colonne 2\nÀ renseigner | À renseigner":"À compléter à partir d’une source vérifiée.",enabled:true,imageData:"",imageUrl:"",imageCaption:""});memoEditorActiveTab="general";memoEditorOpenSection=m.sections.length-1;renderEditor(id);saveLocalDraft()}
 let editorSaveInProgress=false;
 async function saveEditor(id){if(!requireAdmin())return;
  if(editorSaveInProgress)return;
