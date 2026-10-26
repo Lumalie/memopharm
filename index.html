@@ -1636,6 +1636,19 @@ body.info-page main{display:none!important}
 header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:1.25;margin-top:4px;white-space:nowrap}
 @media(max-width:520px){header .brand-slogan{font-size:.7rem;white-space:normal;max-width:205px}}
 </style>
+<style>
+/* V31 — badges pharmaceutiques : couleurs propres, plus intenses au survol */
+.memo-practical-badge{border:0!important;background:#e1edf8!important;color:#365f8c!important;box-shadow:none!important;text-transform:none!important}
+.memo-practical-badge:hover{background:#bfd7f0!important;color:#254e79!important;border:0!important;box-shadow:none!important}
+.memo-practical-badge.memo-mte{background:#fff0e4!important;color:#934c22!important}
+.memo-practical-badge.memo-mte:hover{background:#f7d5bb!important;color:#783914!important}
+.memo-practical-badge.memo-light{background:#fff4d9!important;color:#8c6b30!important}
+.memo-practical-badge.memo-light:hover{background:#f3df9f!important;color:#71521b!important}
+.memo-practical-badge.memo-duration{background:#eaeef2!important;color:#596776!important}
+.memo-practical-badge.memo-duration:hover{background:#ced7e0!important;color:#394a5c!important}
+.tag.tag-category:hover{border:0!important;outline:none!important;outline-offset:0!important;box-shadow:none!important;background:#cce4d2!important;filter:none!important}
+.tag.tag-category:focus-visible{border:0!important;outline:2px solid #245d4b!important;outline-offset:2px!important}
+</style>
 </head>
 <body>
 <header><div class="wrap">
@@ -3160,10 +3173,10 @@ function practicalMTE(m,p=null){
 }
 function practicalBadges(m,p=null){
  const flags=p||practicalFlags(m),out=[];
- if(p&&p.coldStorage===true)out.push('<button type="button" class="memo-practical-badge" data-filter-badge="cold" title="Consulter les conditions exactes dans le RCP">❄ Conservation au froid</button>');
+ if(p&&p.coldStorage===true)out.push('<button type="button" class="memo-practical-badge" data-filter-badge="cold" title="Consulter les conditions exactes dans le RCP">❄ conservation au froid</button>');
  if(practicalMTE(m,p))out.push('<button type="button" class="memo-practical-badge memo-mte" data-filter-badge="mte" title="Médicament à marge thérapeutique étroite : vérifier les précautions et les règles de substitution applicables">⚠ MTE</button>');
- if(practicalPhotosensitive(m,p))out.push('<button type="button" class="memo-practical-badge memo-light" data-filter-badge="photo" title="Photosensibilisation : vérifier les précautions selon la forme et la voie">☀ Photosensibilisant</button>');
- if(p&&p.afterOpening===true){const duration=String(p.afterOpeningDuration||'').trim();out.push(`<button type="button" class="memo-practical-badge memo-duration" data-filter-badge="after" title="Durée de conservation après ouverture : vérifier les conditions exactes dans le RCP">◷ ${duration?esc(duration):'Après ouverture'}</button>`)}
+ if(practicalPhotosensitive(m,p))out.push('<button type="button" class="memo-practical-badge memo-light" data-filter-badge="photo" title="Photosensibilisation : vérifier les précautions selon la forme et la voie">☀ photosensibilisant</button>');
+ if(p&&p.afterOpening===true){const duration=String(p.afterOpeningDuration||'').trim();out.push(`<button type="button" class="memo-practical-badge memo-duration" data-filter-badge="after" title="Durée de conservation après ouverture : vérifier les conditions exactes dans le RCP">◷ ${duration?esc(duration):'après ouverture'}</button>`)}
  return out.length?`<div class="memo-practical-badges">${out.join('')}</div>`:'';
 }
 function presentationInfo(p,m=null){
