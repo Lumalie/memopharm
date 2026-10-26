@@ -1099,6 +1099,20 @@ body.info-page main{display:none!important}
  .fiche-breadcrumb .breadcrumb-current{min-width:0;overflow-wrap:anywhere}
  .fiche-breadcrumb .breadcrumb-nearest-parent{max-width:48%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 }
+
+/* Barre tactile de modification de la liste, uniquement sur petit écran. */
+#dashMobileToolbar{display:none}
+@media(max-width:700px){
+ body.dash-mobile-editing #dashMobileToolbar{
+  display:flex;position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));
+  z-index:9999;align-items:center;justify-content:center;gap:8px;
+  padding:9px;background:#f0f5f1;border:1px solid #b8d0c2;
+  border-radius:16px;box-shadow:0 4px 22px #1d3d2b38;
+ }
+ #dashMobileToolbar button{flex:1;min-height:44px;border:1px solid #b5cbbc;
+  border-radius:10px;background:white;color:#284b39;font:600 14px inherit;padding:8px 5px}
+ body.dash-mobile-editing{padding-bottom:90px}
+}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -1352,6 +1366,11 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
   </div>
   </section><section id="exploreView" class="hidden"><div class="explore-heading"><h2>Explorer les fiches</h2><p>Parcourez les fiches communes et leurs spécialités associées.</p></div><div class="explore-search"><label for="exploreSearch">Rechercher dans les fiches</label><div class="explore-search-row"><input id="exploreSearch" type="search" autocomplete="off" placeholder="Ex. : amoxicilline, oubli de prise, CIP, conservation…"><button id="clearExploreSearch" type="button">Effacer</button></div><p id="exploreSearchCount" class="muted" aria-live="polite"></p></div><div class="explore-controls"><label>Classe thérapeutique<select id="exploreClass"></select></label><label>Indication thérapeutique<select id="exploreIndication"></select></label><label>Forme pharmaceutique<select id="exploreForm"></select></label><button id="resetExplore" type="button">Effacer les filtres</button></div><div id="exploreCards" class="explore-cards"></div></section><section id="sourcesView" class="hidden"><div class="explore-heading"><h2>Sources documentaires</h2><p>Références communes utilisées pour construire et vérifier les fiches de Mémopharm.</p></div><div id="sourcesList" class="sources-list"></div><div id="sourcesAdmin" class="panel hidden" style="padding:18px;margin-top:18px"></div></section><p class="foot">Les fiches finales devront être renseignées à partir des sources officielles (notices et RCP notamment), avec date de mise à jour et statut de vérification. Mémopharm est une aide documentaire : elle ne remplace ni le jugement professionnel ni la vérification de la spécialité exacte.</p>
   <div class="notice"><strong>Base documentaire en construction :</strong> seules les fiches publiées sont visibles publiquement. Les contenus doivent être vérifiés à partir des sources officielles et ne remplacent pas la vérification de la spécialité exacte ni le jugement professionnel.</div>
+<div id="dashMobileToolbar" role="toolbar" aria-label="Outils de modification de la liste">
+<button type="button" data-dash-mobile="outdent" aria-label="Retirer un niveau">← Retrait</button>
+<button type="button" data-dash-mobile="indent" aria-label="Ajouter un niveau">→ Tabulation</button>
+<button type="button" data-dash-mobile="new" aria-label="Nouvelle ligne">↵ Nouvelle ligne</button>
+</div>
 </main>
 
 <section id="infoPageView" class="info-page-view hidden" aria-label="Informations sur Mémopharm">
@@ -3771,6 +3790,7 @@ function dashRender(){
  if(!preserveDraft){
   if(nodes.length)append(nodes,tree);else tree.innerHTML='<div class="dash-empty">Aucune tâche pour le moment.</div>';
  }
+ document.body.classList.toggle("dash-mobile-editing",dashInlineEditing&&admin&&currentView==="home");
  tree.classList.toggle("dash-is-editing",dashInlineEditing);
  $("dashInlineActions").classList.toggle("hidden",!dashInlineEditing);
  if(dashInlineEditing){tree.querySelectorAll(".dash-task-children[hidden]").forEach(x=>x.hidden=false);tree.querySelectorAll(".dash-fold").forEach(x=>x.disabled=true);}
@@ -3921,6 +3941,29 @@ $("dashInlineSave").onclick=dashSaveInline;
 $("dashInlineCancel").onclick=()=>{dashInlineEditing=false;dashLastFocus=null;dashReturnFocus=false;dashRender()};
 $("dashInlineAdd").onclick=()=>dashEditItem();
 $("dashInlineExport").onclick=()=>$("dashExport").click();
+// Barre flottante mobile : applique les mêmes actions que Tab, Maj+Tab et Entrée.
+// pointerdown préserve le focus clavier et la sélection dans le champ édité.
+const dashMobileToolbar=$("dashMobileToolbar");
+dashMobileToolbar.addEventListener("pointerdown",e=>{
+ if(e.target.closest("button"))e.preventDefault();
+});
+dashMobileToolbar.addEventListener("click",e=>{
+ const btn=e.target.closest("button[data-dash-mobile]");
+ if(!btn||!dashInlineEditing||!admin||currentView!=="home")return;
+ const tree=$("dashTaskTree");
+ let field=document.activeElement?.matches?.(".dash-edit-text")?document.activeElement:null;
+ if(!field||!tree.contains(field)){
+  field=tree.querySelectorAll(".dash-edit-text")[dashLastFocus?.index??-1]||null;
+ }
+ if(!field){toast("Sélectionne d’abord une ligne de ta liste.");return}
+ const li=dashCurrentLi(field);
+ if(btn.dataset.dashMobile==="indent")dashChangeIndent(li,1);
+ else if(btn.dataset.dashMobile==="outdent")dashChangeIndent(li,-1);
+ else if(btn.dataset.dashMobile==="new"){dashEditItem("",li);dashRememberFocus();return}
+ field.focus({preventScroll:true});
+ dashRestoreFocus();
+ dashRememberFocus();
+});
 $("dashTaskTree").addEventListener("keydown",e=>{
  if(!dashInlineEditing||!e.target.matches(".dash-edit-text"))return;
  const li=dashCurrentLi(e.target);
