@@ -3338,7 +3338,7 @@ function renderEditor(id){
     <div class="admin-actions"><button type="button" id="addPresentation">+ Ajouter une présentation</button></div>
   </div>
 
- <div id="molecule-variants-editor" class="full hidden" style="margin:22px 0;padding:18px;border:1px solid var(--border,#ddd);border-radius:14px">
+ <div id="molecule-variants-editor" class="full hidden" style="margin:0;padding:0;border:0;border-radius:0">
    <h3>🌿 Formes et dosages de cette molécule</h3>
    <p class="muted">Ajoute une présentation ou sélectionne une présentation existante. Renseigne uniquement ses particularités : elles apparaîtront dans les onglets de la fiche molécule. Les fiches déjà liées sont conservées.</p>
    <div class="admin-actions"><button type="button" id="variant-add">+ Ajouter une forme / un dosage</button></div>
@@ -3492,7 +3492,7 @@ function renderEditor(id){
  const variantDrafts=new Map();
  const variantRoot=$("variant-editors");
  const variantHost=$("molecule-variants-editor");
- variantHost.querySelector('h3').textContent='🌿 Présentations et particularités';
+ variantHost.querySelector('h3')?.remove();
  variantHost.querySelector('p.muted')?.remove();
  let variantActiveId=null;
  let variantOpenSection=null;
