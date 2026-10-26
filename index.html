@@ -1227,6 +1227,12 @@ body.info-page main{display:none!important}
 .memo-name-flags-row .memo-practical-editor input{margin:0}
 .memo-name-flags-row .memo-practical-editor.hidden{display:none}
 @media(max-width:760px){.memo-name-flags-row{grid-template-columns:minmax(0,1fr)}.memo-name-flags-row .memo-practical-editor{gap:8px 14px}}
+
+/* V11 — édition directe mise en forme, sans aperçu secondaire */
+.memo-rich-storage{display:none!important}
+.admin .memo-rich-editor{min-height:140px;padding:12px 14px;border:1px solid #c7d6cc;border-radius:10px;background:#fff;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;outline:none;cursor:text}
+.admin .memo-rich-editor:focus{border-color:#6b9c7b;box-shadow:0 0 0 3px #6b9c7b22}
+.memo-rich-editor p{margin:3px 0}.memo-rich-editor ul,.memo-rich-editor ol{padding-left:25px;margin:5px 0}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -2977,51 +2983,109 @@ function richText(raw){
  }
  close();return html;
 }
+// Édition WYSIWYG : stockage conservé dans le format texte historique de Mémopharm.
+function memoRichSerialize(root){
+ const clean=t=>String(t||'').replace(/\u00a0/g,' ');
+ const inline=node=>{
+  if(node.nodeType===3)return clean(node.nodeValue);
+  if(node.nodeType!==1)return '';
+  const tag=node.tagName.toLowerCase();
+  if(tag==='br')return '\n';
+  const value=[...node.childNodes].map(inline).join('');
+  if(!value)return '';
+  if(tag==='b'||tag==='strong')return `**${value}**`;
+  if(tag==='i'||tag==='em')return `*${value}*`;
+  if(tag==='u')return `__${value}__`;
+  if(tag==='a'){
+   const url=validSourceLink(node.getAttribute('href')||'');
+   return url?`[${value}](${url})`:value;
+  }
+  if(tag==='span'||tag==='font'){
+   const style=getComputedStyle(node);
+   const color=(node.getAttribute('color')||node.style.color||'').toLowerCase();
+   const rgb=color.match(/\d+/g);
+   let named='';
+   if(rgb&&rgb.length>=3){
+    const hex='#'+rgb.slice(0,3).map(v=>Number(v).toString(16).padStart(2,'0')).join('');
+    named=Object.keys(TEXT_COLORS).find(k=>TEXT_COLORS[k]===hex)||'';
+   }else named=Object.keys(TEXT_COLORS).find(k=>TEXT_COLORS[k]===color)||'';
+   if(named&&named!=='default')return `[[${named}|${value}]]`;
+   const size=parseInt(node.style.fontSize||node.getAttribute('size')||'',10);
+   if([12,14,16,18,20,24,28].includes(size))return `[[size:${size}|${value}]]`;
+  }
+  return value;
+ };
+ const blocks=[];
+ const visit=(node)=>{
+  if(node.nodeType===3){if(node.nodeValue.trim())blocks.push(inline(node));return}
+  if(node.nodeType!==1)return;
+  const tag=node.tagName.toLowerCase();
+  if(tag==='ul'||tag==='ol'){
+   [...node.children].filter(el=>el.tagName.toLowerCase()==='li').forEach((li,i)=>blocks.push((tag==='ul'?'- ':(i+1)+'. ')+[...li.childNodes].map(inline).join('')));
+  }else if(['div','p','h1','h2','h3','blockquote'].includes(tag)){
+   const value=[...node.childNodes].map(inline).join('');
+   const align=node.style.textAlign;
+   blocks.push(align&&['left','center','right','justify'].includes(align)?`[[align:${align}|${value}]]`:value);
+  }else if(tag==='br')blocks.push('');
+  else blocks.push(inline(node));
+ };
+ [...root.childNodes].forEach(visit);
+ return blocks.join('\n').replace(/\n{3,}/g,'\n\n').trim();
+}
 function wireTextFormatting(){
  document.querySelectorAll('#editor .section-editor').forEach(card=>{
-  const area=card.querySelector('textarea[data-field="content"]');
+  const storage=card.querySelector('textarea[data-field="content"]');
+  const editor=card.querySelector('.memo-rich-editor');
   const bubble=card.querySelector('.text-format-bubble');
-  const preview=card.querySelector('.rich-preview');
-  if(!area||!bubble||!preview)return;
-  const refresh=()=>{preview.innerHTML=richText(area.value)};
-  const show=()=>{bubble.hidden=area.selectionStart===area.selectionEnd};
-  area.addEventListener('select',show);area.addEventListener('mouseup',show);area.addEventListener('keyup',show);
-  area.addEventListener('input',refresh);
-  // Ne pas perdre la sélection quand on clique sur la barre flottante.
+  if(!storage||!editor||!bubble)return;
+  editor.innerHTML=richText(storage.value);
+  const sync=()=>{storage.value=memoRichSerialize(editor);storage.dispatchEvent(new Event('input',{bubbles:true}))};
+  editor.addEventListener('input',sync);
+  editor.addEventListener('blur',sync);
+  editor.addEventListener('paste',event=>{
+   event.preventDefault();
+   const plain=event.clipboardData.getData('text/plain');
+   document.execCommand('insertText',false,plain);
+  });
+  const show=()=>{
+   const sel=window.getSelection();
+   bubble.hidden=!(sel&&!sel.isCollapsed&&editor.contains(sel.anchorNode)&&editor.contains(sel.focusNode));
+  };
+  editor.addEventListener('mouseup',show);
+  editor.addEventListener('keyup',show);
   bubble.addEventListener('mousedown',e=>{if(e.target.closest('button'))e.preventDefault()});
+  let savedRange=null;
+  const remember=()=>{const sel=window.getSelection();if(sel&&sel.rangeCount&&editor.contains(sel.anchorNode))savedRange=sel.getRangeAt(0).cloneRange()};
+  const restore=()=>{editor.focus();if(savedRange){const sel=window.getSelection();sel.removeAllRanges();sel.addRange(savedRange)}};
   const apply=(mode)=>{
-   const start=area.selectionStart,end=area.selectionEnd,selected=area.value.slice(start,end);
-   if(!selected&&mode!=='link')return;
-   if(mode==='link'){applyEditorKeyboardFormat(area,'link');bubble.hidden=true;return}
-   let replacement=selected;
-   if(['bold','italic','underline'].includes(mode)){toggleInlineMarks(area,mode,start,end);bubble.hidden=true;return}
-   if(mode==='bullets')replacement=selected.split('\n').map(x=>'- '+x.replace(/^\s*(?:[-•]|\d+\.)\s+/, '')).join('\n');
-   if(mode==='numbers')replacement=selected.split('\n').map((x,i)=>(i+1)+'. '+x.replace(/^\s*(?:[-•]|\d+\.)\s+/, '')).join('\n');
-   if(mode.startsWith('color:'))replacement=`[[${mode.slice(6)}|${selected}]]`;
-   if(mode.startsWith('align:')||mode.startsWith('size:'))replacement=`[[${mode}|${selected}]]`;
-   editHistoryBefore(area);
-   area.setRangeText(replacement,start,end,'select');
-   area.dispatchEvent(new Event('input',{bubbles:true}));
-   bubble.hidden=true;area.focus();
+   restore();
+   const sel=window.getSelection();if(!sel||sel.isCollapsed)return;
+   if(mode==='bold'||mode==='italic'||mode==='underline')document.execCommand(mode,false,null);
+   else if(mode==='bullets'||mode==='numbers')document.execCommand(mode==='bullets'?'insertUnorderedList':'insertOrderedList',false,null);
+   else if(mode==='link'){
+    const url=prompt('Adresse du lien (https://) :','https://');
+    const safe=validSourceLink(url||'');if(safe)document.execCommand('createLink',false,safe);
+   }else if(mode.startsWith('color:')){
+    const color=TEXT_COLORS[mode.slice(6)];if(color)document.execCommand('foreColor',false,color);
+   }else if(mode.startsWith('align:'))document.execCommand(({left:'justifyLeft',center:'justifyCenter',right:'justifyRight',justify:'justifyFull'})[mode.slice(6)],false,null);
+   else if(mode.startsWith('size:')){
+    const range=sel.getRangeAt(0);const span=document.createElement('span');span.style.fontSize=mode.slice(5)+'px';
+    try{range.surroundContents(span)}catch{const frag=range.extractContents();span.append(frag);range.insertNode(span)}
+   }
+   sync();remember();bubble.hidden=true;
   };
   bubble.querySelectorAll('[data-format]').forEach(btn=>btn.addEventListener('click',()=>apply(btn.dataset.format)));
-  const picker=bubble.querySelector('[data-text-color]');
-  let savedSelection=null;
-  area.addEventListener('select',()=>{if(area.selectionStart!==area.selectionEnd)savedSelection=[area.selectionStart,area.selectionEnd]});
-  picker.addEventListener('mousedown',()=>{savedSelection=[area.selectionStart,area.selectionEnd]});
-  picker.addEventListener('change',()=>{
-   if(picker.value){
-    if(savedSelection&&savedSelection[0]!==savedSelection[1])area.setSelectionRange(...savedSelection);
-    apply('color:'+picker.value);
-   }
-   picker.value='';savedSelection=null;
-  });
-  for(const [attr,prefix] of [['data-format-align','align:'],['data-format-size','size:']]){
-   const select=bubble.querySelector(`[${attr}]`);let selection=null;
-   select.addEventListener('mousedown',()=>{selection=[area.selectionStart,area.selectionEnd]});
-   select.addEventListener('change',()=>{if(select.value){if(selection)area.setSelectionRange(...selection);apply(prefix+select.value)}select.value='';selection=null});
+  for(const [attr,prefix] of [['data-text-color','color:'],['data-format-align','align:'],['data-format-size','size:']]){
+   const select=bubble.querySelector(`[${attr}]`);
+   select.addEventListener('mousedown',remember);
+   select.addEventListener('focus',remember);
+   select.addEventListener('change',()=>{if(select.value)apply(prefix+select.value);select.value=''});
   }
-  refresh();
+  editor.addEventListener('keydown',e=>{
+   if(!(e.ctrlKey||e.metaKey)||e.altKey)return;
+   const key=e.key.toLowerCase();
+   if(key==='k'){e.preventDefault();remember();apply('link')}
+  });
  });
 }
 function renderPrioritySection(s,targetSectionId=null){
@@ -3524,7 +3588,7 @@ function wireTableGrids(m){
   renderEditor(m.id);saveLocalDraft();
  });
 }
-function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button type="button" data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button type="button" data-act="down" data-index="${i}" ${i===(meds.find(m=>m.id===editorId)?.sections?.length||0)-1?'disabled':''}>↓</button><button type="button" data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button type="button" class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Type</label><select data-field="type"><option value="text" ${s.type==="text"?'selected':''}>Texte</option><option value="table" ${s.type==="table"?'selected':''}>Tableau simple</option></select><label style="margin-top:8px">Contenu</label><label style="margin-top:8px">🔗 Rubrique partagée (facultatif)</label><select data-field="shared-source"><option value="">Contenu propre à cette fiche</option>${meds.filter(x=>x.id!==editorId&&!isSourcesRecord(x)).sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),'fr')).flatMap(x=>(x.sections||[]).filter(y=>y.enabled!==false).map(y=>`<option value="${esc(x.id)}::${esc(y.id)}" ${String(s.sharedFromMedId||"")===String(x.id)&&String(s.sharedFromSectionId||"")===String(y.id)?"selected":""}>${esc(displayMedName(x))} → ${esc(y.title)}</option>`)).join("")}</select><p class="muted">Si une source est choisie, son contenu remplacera celui de cette rubrique à l'affichage. Les modifications de la source seront répercutées ici.</p>${s.type==="text"?`<div class="text-edit-wrap"><div class="text-format-bubble" hidden><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="link" title="Insérer un lien URL (Ctrl+K)">🔗 Lien</button><button type="button" data-format="bullets" title="Liste à puces">• Liste</button><button type="button" data-format="numbers" title="Liste numérotée">1. Liste</button><select data-format-align aria-label="Alignement du texte"><option value="">Aligner…</option><option value="left">Gauche</option><option value="center">Centré</option><option value="right">Droite</option><option value="justify">Justifié</option></select><select data-format-size aria-label="Taille de police"><option value="">Taille…</option><option value="12">12 px</option><option value="14">14 px</option><option value="16">16 px</option><option value="18">18 px</option><option value="20">20 px</option><option value="24">24 px</option><option value="28">28 px</option></select><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris précision</option><option value="pink">Rose conseil</option></select></div><textarea data-field="content">${esc(s.content||"")}</textarea><p class="hint">Raccourcis : Ctrl+B gras · Ctrl+I italique · Ctrl+U souligné · Ctrl+K lien vers une source · Ctrl+Z annuler · Ctrl+Y rétablir (sur Mac : Cmd).</p><div class="rich-preview" aria-label="Aperçu du texte mis en forme"></div></div>`:`${tableGridEditor(s.content||"")}`}</div></div>`}
+function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button type="button" data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button type="button" data-act="down" data-index="${i}" ${i===(meds.find(m=>m.id===editorId)?.sections?.length||0)-1?'disabled':''}>↓</button><button type="button" data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button type="button" class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Type</label><select data-field="type"><option value="text" ${s.type==="text"?'selected':''}>Texte</option><option value="table" ${s.type==="table"?'selected':''}>Tableau simple</option></select><label style="margin-top:8px">Contenu</label>${s.type==="text"?`<div class="text-edit-wrap"><div class="text-format-bubble" hidden><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="link" title="Insérer un lien URL (Ctrl+K)">🔗 Lien</button><button type="button" data-format="bullets" title="Liste à puces">• Liste</button><button type="button" data-format="numbers" title="Liste numérotée">1. Liste</button><select data-format-align aria-label="Alignement du texte"><option value="">Aligner…</option><option value="left">Gauche</option><option value="center">Centré</option><option value="right">Droite</option><option value="justify">Justifié</option></select><select data-format-size aria-label="Taille de police"><option value="">Taille…</option><option value="12">12 px</option><option value="14">14 px</option><option value="16">16 px</option><option value="18">18 px</option><option value="20">20 px</option><option value="24">24 px</option><option value="28">28 px</option></select><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris précision</option><option value="pink">Rose conseil</option></select></div><textarea data-field="content" class="memo-rich-storage" tabindex="-1" aria-hidden="true">${esc(s.content||"")}</textarea><div class="memo-rich-editor" contenteditable="true" role="textbox" aria-label="Contenu de la rubrique" aria-multiline="true"></div><p class="hint">Raccourcis : Ctrl+B gras · Ctrl+I italique · Ctrl+U souligné · Ctrl+K lien vers une source · Ctrl+Z annuler · Ctrl+Y rétablir (sur Mac : Cmd).</p></div>`:`${tableGridEditor(s.content||"")}`}</div></div>`}
 function captureEditorFields(m){
  const get=id=>$(id)?.value;
  if(get("f-entry-type")===undefined)return;
