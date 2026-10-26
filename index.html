@@ -1113,6 +1113,12 @@ body.info-page main{display:none!important}
   border-radius:10px;background:white;color:#284b39;font:600 14px inherit;padding:8px 5px}
  body.dash-mobile-editing{padding-bottom:90px}
 }
+
+/* Résultat Explorer : contenu de la rubrique directement visible sous son titre. */
+.explore-preview-direct{padding:4px 12px 10px 30px;min-width:0}
+.explore-preview-direct .explore-preview-link{display:inline-flex;align-items:center;gap:5px;border:0;background:transparent;padding:5px 0;color:#285d48;font-weight:700;cursor:pointer;text-align:left}
+.explore-preview-direct .explore-hit-content{margin:5px 0 0;padding:10px 12px;max-height:none;overflow:visible}
+.explore-preview-direct .explore-hit-content table{max-width:100%;display:block;overflow-x:auto}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -1984,7 +1990,7 @@ function renderExplorer(){
    const presBadge=princeps?'<span class="explore-pres-princeps">Princeps</span>':"";
    const cipButton=cipBadges(p);
    const showSectionContent=!!sec&&(m.entry_type==="dci"||m.entry_type==="specialite")&&!group;
-   const preview=showSectionContent?`<div class="explore-preview-direct explore-preview-link" role="link" tabindex="0" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec.id)}" aria-label="Ouvrir ${esc(sec.title)} dans la fiche ${esc(m.name)}"><span class="explore-preview-title">↳ ${esc(sec.title)}</span></div>`:"";
+   const preview=showSectionContent?`<div class="explore-preview-direct"><button type="button" class="explore-preview-link" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec.id)}" aria-label="Ouvrir ${esc(sec.title)} dans la fiche ${esc(m.name)}"><span class="explore-preview-title">↳ ${esc(sec.title)}</span> <span aria-hidden="true">↗</span></button>${searchSectionPreview(resolveSharedSection(m,sec))}</div>`:"";
    if(group){
     const tags=`${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}`;
     const ancestorNodes=parents.map((name,i)=>{
