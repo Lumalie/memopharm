@@ -1601,6 +1601,15 @@ function showView(view){
  leaveInfoPage();
  if(currentView==="home"&&view!=="home"&&editorId){rememberEditorFocus();saveLocalDraft();}
  const changing=currentView!==view;
+ // À chaque nouvelle visite d'Explorer, repartir d'une arborescence entièrement repliée.
+ if(changing&&view==="explore"){
+  exploreExpandedGroups.clear();
+  $("exploreSearch").value="";
+  $("exploreClass").value="";
+  $("exploreIndication").value="";
+  $("exploreForm").value="";
+  explorerVisibleLimit=20;
+ }
  if(changing&&!restoringViewScroll)viewScrollPositions[currentView]=window.scrollY;
  currentView=view;
  $("homeView").classList.toggle("hidden",view!=="home");
@@ -2070,6 +2079,12 @@ function renderExplorer(){
  const renderNode=(m,depth=0,ancestors=new Set())=>{
   if(ancestors.has(m.id))return "";
   const next=new Set(ancestors);next.add(m.id);
+  // Les badges déjà affichés par une fiche ancêtre ne sont pas répétés
+  // sur les descendants dans l'arborescence d'Explorer uniquement.
+  const ancestorMeds=[...ancestors].map(id=>visibleById.get(id)).filter(Boolean);
+  const inheritedClasses=new Set(ancestorMeds.flatMap(x=>explorerClasses(x).filter(t=>explorerClassVisible(x,t)).map(norm)));
+  const inheritedIndications=new Set(ancestorMeds.flatMap(x=>indicationTags(x).filter(t=>!((x.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(norm)));
+  const inheritedForms=new Set(ancestorMeds.flatMap(x=>((x.entry_type==="dci"?explorerBadgeVisible(x,"forms"):true)?medicationForms(x):[]).map(norm)));
   const kids=isGroup(m)||isMolecule(m)?childrenOf(m.id):[];
   const forms=medicationForms(m);
   const isMatch=filtered.some(x=>x.id===m.id);
@@ -2089,7 +2104,7 @@ function renderExplorer(){
     
    </div>
    ${specialtyPresentations.length>1?`<div class="explore-tree-presentations">${specialtyPresentations.map(({p,i})=>`<button type="button" class="explore-tree-presentation" data-open-med="${esc(m.id)}" data-open-pres="${i}"><span aria-hidden="true">↳</span> ${esc(presentationTitle(p))}${p.presentationKind==="princeps"?'<span class="explore-pres-princeps-inline">Princeps</span>':""}</button>`).join("")}</div>`:""}
-   ${isMatch?`<div class="explore-tree-tags">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}${((m.entry_type==="dci"?explorerBadgeVisible(m,"forms"):true)?forms:[]).map(t=>`<button type="button" class="badge-button badge-form" data-filter-form="${esc(t)}">${esc(t)}</button>`).join("")}</div>`:""}
+   ${isMatch?`<div class="explore-tree-tags">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)&&!inheritedClasses.has(norm(t))).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)&&!inheritedIndications.has(norm(t))).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}${((m.entry_type==="dci"?explorerBadgeVisible(m,"forms"):true)?forms:[]).filter(t=>!inheritedForms.has(norm(t))).map(t=>`<button type="button" class="badge-button badge-form" data-filter-form="${esc(t)}">${esc(t)}</button>`).join("")}</div>`:""}
    ${kids.length?`<div class="explore-tree-children" id="tree-children-${esc(m.id)}" ${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)?"":"hidden"}>${kids.map(child=>renderNode(child,depth+1,next)).join("")}</div>`:""}
   </div>`;
  };
