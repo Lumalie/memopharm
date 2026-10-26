@@ -2874,7 +2874,7 @@ function memoLinkifyCips(root){
  while(walker.nextNode()){
   const node=walker.currentNode, parent=node.parentElement;
   if(!parent||!/(^|\D)\d{13}(?!\d)/.test(node.nodeValue||''))continue;
-  if(parent.closest('a,button,input,textarea,select,script,style,[contenteditable],.memo-inline-cip'))continue;
+  if(parent.closest('a,button,input,textarea,select,script,style,[contenteditable],.explore-cip-copy,.memo-inline-cip'))continue;
   nodes.push(node);
  }
  for(const node of nodes){
@@ -2883,10 +2883,11 @@ function memoLinkifyCips(root){
   while((match=re.exec(text))){
    const start=match.index+match[1].length;
    if(start>last)fragment.append(document.createTextNode(text.slice(last,start)));
-   const cip=match[2],btn=document.createElement('button');
-   btn.type='button';btn.className='memo-inline-cip';btn.dataset.copyCip=cip;
-   btn.title='Copier le CIP '+cip;btn.setAttribute('aria-label','Copier le CIP '+cip);
-   btn.textContent=cip;fragment.append(btn);last=start+cip.length;
+   const cip=match[2];
+   // Même générateur de badges que la fiche Présentation : même HTML, CSS et action de copie.
+   const holder=document.createElement('span');holder.innerHTML=cipBadges({cip});
+   while(holder.firstChild)fragment.append(holder.firstChild);
+   last=start+cip.length;
   }
   if(last){if(last<text.length)fragment.append(document.createTextNode(text.slice(last)));node.replaceWith(fragment)}
  }
