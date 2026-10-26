@@ -1133,6 +1133,30 @@ body.info-page main{display:none!important}
 .molecule-general{margin:16px 0;border:1px solid #c8d9cf;border-radius:12px;overflow:hidden}
 .molecule-general>summary{cursor:pointer;padding:15px;font-weight:700;background:#f1f7f3}
 .molecule-general-inner{padding:10px 15px}
+
+/* Fiches molécules : accordéons sobres, titres assortis à « En un coup d’œil ». */
+.detail .molecule-general,
+.detail .molecule-tabs{
+  border:0!important;border-radius:0!important;box-shadow:none!important;
+  background:transparent!important;overflow:visible!important;
+  margin:18px 0!important;padding:0!important;
+}
+.detail .molecule-general>summary,
+.detail .molecule-tabs>summary{
+  display:list-item!important;list-style:disclosure-closed inside;
+  border:0!important;border-radius:0!important;box-shadow:none!important;
+  background:transparent!important;padding:0!important;
+  color:#245d4b!important;font-size:1.25rem!important;font-weight:800!important;
+  line-height:1.4!important;cursor:pointer;
+}
+.detail .molecule-general[open]>summary,
+.detail .molecule-tabs[open]>summary{list-style-type:disclosure-open}
+.detail .molecule-general>summary:hover,
+.detail .molecule-tabs>summary:hover{text-decoration:underline;text-underline-offset:3px}
+.detail .molecule-general>summary:focus-visible,
+.detail .molecule-tabs>summary:focus-visible{outline:2px solid #6d9b7d;outline-offset:4px}
+.detail .molecule-general-inner,
+.detail .molecule-tabs-inner{padding:14px 0 0!important}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
