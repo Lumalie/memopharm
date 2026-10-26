@@ -1435,6 +1435,13 @@ body.info-page main{display:none!important}
 .memo-v29-badges-grid select{width:100%;min-width:0}
 .memo-v29-badges .hint{margin:0 0 12px}
 @media(max-width:520px){.memo-v29-badges-grid{grid-template-columns:1fr;gap:6px}.memo-v29-badges-grid select{margin-bottom:8px}}
+
+/* V30 : badges unis et interactifs, cohérents avec les indications */
+.memo-practical-badge,.memo-practical-badge.memo-mte,.memo-practical-badge.memo-light,.memo-practical-badge.memo-duration{border:0!important;background:#e5edf9;color:#365f8c;cursor:pointer;font-family:inherit;transition:background-color .16s ease,box-shadow .16s ease}
+.memo-practical-badge:hover,.memo-practical-badge.memo-mte:hover,.memo-practical-badge.memo-light:hover,.memo-practical-badge.memo-duration:hover{background:#d5e4fa;box-shadow:none}
+.memo-practical-badge:focus-visible{outline:2px solid #365f8c;outline-offset:2px}
+.tag.tag-category,.tag.tag-form,.badge-button{border:0!important;transition:background-color .16s ease}
+.tag.tag-category:hover,.tag.tag-form:hover,.badge-button:hover{filter:brightness(.94)}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -1687,7 +1694,7 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
     <section class="panel" aria-live="polite"><div id="detail" class="detail"><div class="empty">Choisis une fiche dans la bibliothèque pour afficher son contenu.</div></div><div id="editor" class="detail admin hidden"></div></section>
     <div id="memo-combined-sources-slot" class="memo-external-sources hidden" aria-label="Références documentaires"></div>
   </div>
-  </section><section id="exploreView" class="hidden"><div class="explore-heading"><h2>Explorer les fiches</h2><p>Parcourez les fiches communes et leurs spécialités associées.</p></div><div class="explore-search"><label for="exploreSearch">Rechercher dans les fiches</label><div class="explore-search-row"><input id="exploreSearch" type="search" autocomplete="off" placeholder="Ex. : amoxicilline, oubli de prise, CIP, conservation…"><button id="clearExploreSearch" type="button">Effacer</button></div><p id="exploreSearchCount" class="muted" aria-live="polite"></p></div><div class="explore-controls"><label>Classe thérapeutique<select id="exploreClass"></select></label><label>Indication thérapeutique<select id="exploreIndication"></select></label><label>Forme pharmaceutique<select id="exploreForm"></select></label><button id="resetExplore" type="button">Effacer les filtres</button></div><div id="exploreCards" class="explore-cards"></div></section><section id="sourcesView" class="hidden"><div class="explore-heading"><h2>Sources documentaires</h2><p>Références communes utilisées pour construire et vérifier les fiches de Mémopharm.</p></div><div id="sourcesList" class="sources-list"></div><div id="sourcesAdmin" class="panel hidden" style="padding:18px;margin-top:18px"></div></section><p class="foot">Les fiches finales devront être renseignées à partir des sources officielles (notices et RCP notamment), avec date de mise à jour et statut de vérification. Mémopharm est une aide documentaire : elle ne remplace ni le jugement professionnel ni la vérification de la spécialité exacte.</p>
+  </section><section id="exploreView" class="hidden"><div class="explore-heading"><h2>Explorer les fiches</h2><p>Parcourez les fiches communes et leurs spécialités associées.</p></div><div class="explore-search"><label for="exploreSearch">Rechercher dans les fiches</label><div class="explore-search-row"><input id="exploreSearch" type="search" autocomplete="off" placeholder="Ex. : amoxicilline, oubli de prise, CIP, conservation…"><button id="clearExploreSearch" type="button">Effacer</button></div><p id="exploreSearchCount" class="muted" aria-live="polite"></p></div><div class="explore-controls"><label>Classe thérapeutique<select id="exploreClass"></select></label><label>Indication thérapeutique<select id="exploreIndication"></select></label><label>Forme pharmaceutique<select id="exploreForm"></select></label><label>Badge pharmaceutique<select id="exploreBadge"><option value="">Tous les badges</option><option value="mte">⚠ MTE</option><option value="photo">☀ Photosensibilisant</option><option value="cold">❄ Conservation au froid</option><option value="after">◷ Conservation après ouverture</option></select></label><button id="resetExplore" type="button">Effacer les filtres</button></div><div id="exploreCards" class="explore-cards"></div></section><section id="sourcesView" class="hidden"><div class="explore-heading"><h2>Sources documentaires</h2><p>Références communes utilisées pour construire et vérifier les fiches de Mémopharm.</p></div><div id="sourcesList" class="sources-list"></div><div id="sourcesAdmin" class="panel hidden" style="padding:18px;margin-top:18px"></div></section><p class="foot">Les fiches finales devront être renseignées à partir des sources officielles (notices et RCP notamment), avec date de mise à jour et statut de vérification. Mémopharm est une aide documentaire : elle ne remplace ni le jugement professionnel ni la vérification de la spécialité exacte.</p>
   <div class="notice"><strong>Base documentaire en construction :</strong> seules les fiches publiées sont visibles publiquement. Les contenus doivent être vérifiés à partir des sources officielles et ne remplacent pas la vérification de la spécialité exacte ni le jugement professionnel.</div>
 <div id="dashMobileToolbar" role="toolbar" aria-label="Outils de modification de la liste">
 <button type="button" data-dash-mobile="outdent" aria-label="Retirer un niveau">← Retrait</button>
@@ -2184,6 +2191,27 @@ function searchPresentationLine(m,p,i,child=false){
  return `<div class="search-pres-direct ${child?'search-pres-child':''}"><button type="button" class="search-pres-title" data-open-med="${esc(m.id)}" data-hit-pres="${i}" aria-label="Ouvrir ${esc(title)}"><span aria-hidden="true">●</span> ${esc(title)} <span aria-hidden="true">↗</span></button><div class="search-pres-details">${princeps}${cip}${badges?`<div class="search-pres-badges">${badges}</div>`:''}</div></div>`;
 }
 let explorerVisibleLimit=20;
+function memoBadgeMatches(m,kind){
+ const related=[m,...publicMeds().filter(x=>String(x.parent_id||x.parentId||x.molecule_id||x.moleculeId||"")===String(m.id))];
+ return related.some(x=>{
+  const ps=x.presentations||[];
+  if(kind==="mte")return practicalMTE(x)||ps.some(p=>practicalMTE(x,p));
+  if(kind==="photo")return practicalPhotosensitive(x)||ps.some(p=>practicalPhotosensitive(x,p));
+  if(kind==="cold")return ps.some(p=>p.coldStorage===true);
+  if(kind==="after")return ps.some(p=>p.afterOpening===true);
+  return true;
+ });
+}
+function memoOpenBadgeFilter(kind){
+ showView("explore");
+ $("exploreSearch").value="";
+ $("exploreClass").value="";$("exploreIndication").value="";$("exploreForm").value="";
+ $("exploreBadge").value=kind;
+ renderExplorer();
+}
+function memoWireBadgeClicks(scope){
+ scope.querySelectorAll("[data-filter-badge]").forEach(b=>b.onclick=()=>memoOpenBadgeFilter(b.dataset.filterBadge));
+}
 function renderExplorer(){
  const entries=publicMeds();
  const classes=[...new Set(entries.flatMap(explorerClasses).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"fr"));
@@ -2198,7 +2226,7 @@ function renderExplorer(){
  const query=$("exploreSearch").value.trim();
  const searchMatches=query?getSearchMatches(query):[];
  const matchingIds=query?new Set(searchMatches.map(x=>x.med.id)):null;
- const filtered=entries.filter(m=>(!matchingIds||matchingIds.has(m.id))&&(!classSel.value||explorerClasses(m).includes(classSel.value))&&(!indSel.value||indicationTags(m).includes(indSel.value))&&(!formSel.value||medicationForms(m).includes(formSel.value)));
+ const filtered=entries.filter(m=>(!$("exploreBadge").value||memoBadgeMatches(m,$("exploreBadge").value))&&(!matchingIds||matchingIds.has(m.id))&&(!classSel.value||explorerClasses(m).includes(classSel.value))&&(!indSel.value||indicationTags(m).includes(indSel.value))&&(!formSel.value||medicationForms(m).includes(formSel.value)));
  $("exploreSearchCount").textContent=query?`${filtered.length} fiche${filtered.length===1?"":"s"} trouvée${filtered.length===1?"":"s"}`:"";
  // En mode recherche, afficher les correspondances précises à la place de l'arborescence.
  if(query){
@@ -3051,12 +3079,13 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
   button.setAttribute("aria-expanded",String(!panel.hidden));
   button.classList.toggle("is-open",!panel.hidden);
  });
+ memoWireBadgeClicks($("detail"));
  $("detail").querySelectorAll("[data-fiche-category]").forEach(btn=>btn.onclick=()=>{showView("explore");$("exploreClass").value=btn.dataset.ficheCategory;renderExplorer()});
  $("detail").querySelectorAll("[data-fiche-indication]").forEach(btn=>btn.onclick=()=>{showView("explore");$("exploreIndication").value=btn.dataset.ficheIndication;renderExplorer()});
  $("detail").querySelectorAll("[data-fiche-form]").forEach(btn=>btn.onclick=()=>{showView("explore");renderExplorer();$("exploreForm").value=btn.dataset.ficheForm;renderExplorer()});
  if(admin&&$("editBtn"))$("editBtn").onclick=()=>renderEditor(m.id);
- $("detail").querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=$("presentation-info");if(!target)return;const index=sel.value===""?null:Number(sel.value);target.innerHTML=index!==null&&m.presentations?.[index]?presentationInfo(m.presentations[index],m):""});
- if(targetPresentationIndex!==null&&!targetSectionId){const details=$("presentations-details");if(details){details.open=true;const choice=$("presentation-choice");if(choice&&m.presentations?.[targetPresentationIndex]){choice.value=String(targetPresentationIndex);$("presentation-info").innerHTML=presentationInfo(m.presentations[targetPresentationIndex])}requestAnimationFrame(()=>details.scrollIntoView({behavior:"smooth",block:"start"}))}}
+ $("detail").querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=$("presentation-info");if(!target)return;const index=sel.value===""?null:Number(sel.value);target.innerHTML=index!==null&&m.presentations?.[index]?presentationInfo(m.presentations[index],m):"";memoWireBadgeClicks(target)});
+ if(targetPresentationIndex!==null&&!targetSectionId){const details=$("presentations-details");if(details){details.open=true;const choice=$("presentation-choice");if(choice&&m.presentations?.[targetPresentationIndex]){choice.value=String(targetPresentationIndex);$("presentation-info").innerHTML=presentationInfo(m.presentations[targetPresentationIndex],m);memoWireBadgeClicks($("presentation-info"))}requestAnimationFrame(()=>details.scrollIntoView({behavior:"smooth",block:"start"}))}}
  if(targetSectionId){
    // La restauration de défilement de la vue se fait sur plusieurs frames.
    // Le saut ciblé intervient ensuite, et est réajusté après le rendu des polices/images.
@@ -3131,10 +3160,10 @@ function practicalMTE(m,p=null){
 }
 function practicalBadges(m,p=null){
  const flags=p||practicalFlags(m),out=[];
- if(p&&p.coldStorage===true)out.push('<span class="memo-practical-badge" title="Consulter les conditions exactes dans le RCP">❄ Conservation au froid</span>');
- if(practicalMTE(m,p))out.push('<span class="memo-practical-badge memo-mte" title="Médicament à marge thérapeutique étroite : vérifier les précautions et les règles de substitution applicables">⚠ MTE</span>');
- if(practicalPhotosensitive(m,p))out.push('<span class="memo-practical-badge memo-light" title="Photosensibilisation : vérifier les précautions selon la forme et la voie">☀ Photosensibilisant</span>');
- if(p&&p.afterOpening===true){const duration=String(p.afterOpeningDuration||'').trim();out.push(`<span class="memo-practical-badge memo-duration" title="Durée de conservation après ouverture : vérifier les conditions exactes dans le RCP">◷ ${duration?esc(duration):'Après ouverture'}</span>`)}
+ if(p&&p.coldStorage===true)out.push('<button type="button" class="memo-practical-badge" data-filter-badge="cold" title="Consulter les conditions exactes dans le RCP">❄ Conservation au froid</button>');
+ if(practicalMTE(m,p))out.push('<button type="button" class="memo-practical-badge memo-mte" data-filter-badge="mte" title="Médicament à marge thérapeutique étroite : vérifier les précautions et les règles de substitution applicables">⚠ MTE</button>');
+ if(practicalPhotosensitive(m,p))out.push('<button type="button" class="memo-practical-badge memo-light" data-filter-badge="photo" title="Photosensibilisation : vérifier les précautions selon la forme et la voie">☀ Photosensibilisant</button>');
+ if(p&&p.afterOpening===true){const duration=String(p.afterOpeningDuration||'').trim();out.push(`<button type="button" class="memo-practical-badge memo-duration" data-filter-badge="after" title="Durée de conservation après ouverture : vérifier les conditions exactes dans le RCP">◷ ${duration?esc(duration):'Après ouverture'}</button>`)}
  return out.length?`<div class="memo-practical-badges">${out.join('')}</div>`:'';
 }
 function presentationInfo(p,m=null){
@@ -4463,8 +4492,8 @@ document.querySelectorAll('[data-example-search]').forEach(btn=>btn.addEventList
 }));
 $("exploreSearch").addEventListener("input",()=>{explorerVisibleLimit=20;renderExplorer()});
 $("clearExploreSearch").onclick=()=>{$("exploreSearch").value="";explorerVisibleLimit=20;renderExplorer();$("exploreSearch").focus()};
-$("exploreClass").onchange=$("exploreIndication").onchange=$("exploreForm").onchange=()=>{explorerVisibleLimit=20;renderExplorer()};
-$("resetExplore").onclick=()=>{explorerVisibleLimit=20;$("exploreClass").value="";$("exploreIndication").value="";$("exploreForm").value="";renderExplorer()};
+$("exploreBadge").onchange=$("exploreClass").onchange=$("exploreIndication").onchange=$("exploreForm").onchange=()=>{explorerVisibleLimit=20;renderExplorer()};
+$("resetExplore").onclick=()=>{explorerVisibleLimit=20;$("exploreClass").value="";$("exploreIndication").value="";$("exploreForm").value="";$("exploreBadge").value="";renderExplorer()};
 document.addEventListener("keydown",event=>{if(event.ctrlKey&&event.altKey&&!event.shiftKey&&!event.metaKey&&event.code==="KeyA"&&!event.repeat&&!admin){event.preventDefault();showLogin()}});
 $("loginBtn").onclick=showLogin;$("logoutBtn").onclick=logout;$("addMedBtn").onclick=addMedication;$("search").addEventListener("input",()=>{renderResults()});$("clearSearch").onclick=()=>{$("search").value="";renderResults()};
 $("exportBtn").onclick=()=>{$("headerJsonMenu").open=false;const blob=new Blob([JSON.stringify(meds,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="memopharm-sauvegarde-cloud.json";a.click();URL.revokeObjectURL(a.href)};
