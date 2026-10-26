@@ -1405,6 +1405,17 @@ body.info-page main{display:none!important}
 #searchLayout>.memo-external-sources .memo-combined-sources>summary{padding:3px 0 7px}
 #searchLayout>.memo-external-sources .memo-sources-inner{padding:0 2px 3px}
 #searchLayout:has(#editor:not(.hidden))>.memo-external-sources{display:none!important}
+
+/* V25 — espacement cohérent entre les deux cartes, sans trait final superflu */
+#searchLayout > .memo-external-sources:not(.hidden) {
+  margin-top: 20px;
+}
+/* La dernière rubrique spécifique n'a pas besoin de séparateur inférieur. */
+#detail .molecule-tab-content .memo-specific-section:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
