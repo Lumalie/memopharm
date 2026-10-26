@@ -1280,6 +1280,30 @@ body.info-page main{display:none!important}
 .detail .molecule-tab-content .presentation-fixed{margin:0 0 15px;padding:0 0 12px;border-bottom:1px solid #dce6df}
 @media(max-width:600px){.detail .memo-selected-presentation{padding:10px 12px}.detail .memo-specific-body{padding-left:9px}}
 
+
+/* V15 — consultation légère : rubriques ouvertes, encarts prioritaires rétablis */
+.detail .memo-specific-section{padding:15px 2px 16px;border-bottom:1px solid #dce6df;background:transparent}
+.detail .memo-specific-section>h3{margin:0 0 9px!important;color:#245d4b;font-size:1.04rem;font-weight:750}
+.detail .memo-specific-section .memo-specific-body{padding:0 2px}
+.detail .memo-specific-section .memo-specific-body>.section{padding:0!important;margin:0!important;border:0!important;background:transparent!important;box-shadow:none!important}
+.detail .memo-specific-section .memo-specific-body>.section>h3{display:none!important}
+.detail .memo-specific-section .memo-specific-body p{margin:4px 0 8px;line-height:1.55}
+.detail .memo-specific-section .memo-specific-body ul,.detail .memo-specific-section .memo-specific-body ol{margin:5px 0 10px;padding-left:23px}
+.detail .memo-presentation-priority{margin:12px 0;padding:13px 16px;border-radius:11px;border:1px solid #d6e3d9;background:#eef5f0}
+.detail .memo-presentation-priority .section{margin:0!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important}
+.detail .memo-presentation-priority .section h3{font-size:1.03rem;margin:0 0 9px;color:#245d4b}
+.detail .memo-priority-alert{background:#fff2f0;border-color:#efd1cc}
+.detail .memo-priority-alert .section h3{color:#933b40}
+.detail .memo-priority-advice{background:#faf0f6;border-color:#e9d5e1}
+.detail .memo-priority-advice .section h3{color:#873f66}
+.detail .memo-presentation-priority p{margin:5px 0;line-height:1.5}
+.detail .molecule-tab-content .presentation-fixed{background:#f7faf8;border:1px solid #dce6df;border-radius:12px;padding:14px 16px;margin:0 0 16px}
+.detail .molecule-tab-content .presentation-fixed>h3{margin:0 0 10px;color:#245d4b;font-size:1.02rem}
+.detail .molecule-tab-content .presentation-fixed #presentation-info{margin-top:9px!important}
+.detail .molecule-tab-content .presentation-fixed #presentation-info p{margin:5px 0;line-height:1.45}
+.detail .molecule-tab-content .presentation-fixed .hint{font-size:.78rem;color:#718176;margin-top:11px!important}
+@media(max-width:600px){.detail .molecule-tab-content .presentation-fixed{padding:11px 12px}.detail .memo-presentation-priority{padding:11px 12px}}
+
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -2780,13 +2804,23 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
   const renderChild=child=>{
    if(!child||!panel)return;
    const childSections=(child.sections||[]).filter(x=>x.enabled!==false&&!isDocumentationSection(x)&&String(x.content||" ").trim()).map(x=>resolveSharedSection(child,x));
-   // Les onglets sont désormais la page de consultation des particularités de chaque présentation.
-   // Ne pas répéter les conseils généraux : seules les rubriques spécifiques renseignées figurent ici.
-   const specificSections=childSections.filter(x=>x.id!=="coup-oeil"&&x.id!=="alerte-delivrance"&&x.id!=="conseils-comptoir"&&x.id!=="sources");
+   // Toutes les rubriques actives propres à la présentation sont visibles,
+   // y compris les trois encarts prioritaires lorsque l'éditeur les active.
+   const priorityIds=new Set(["alerte-delivrance","coup-oeil","conseils-comptoir"]);
+   const prioritySections=childSections.filter(x=>priorityIds.has(x.id));
+   const specificSections=childSections.filter(x=>!priorityIds.has(x.id)&&x.id!=="sources");
    const presentationHtml=(child.presentations||[]).length?renderPresentations(child):"";
-   const specificHtml=specificSections.map((x,i)=>`<details class="memo-specific-accordion" ${i===0?'open':''}><summary>${esc(x.title||"Information spécifique")}</summary><div class="memo-specific-body">${renderSection(x)}</div></details>`).join("");
+   const priorityHtml=prioritySections.map(x=>{
+    const cls=x.id==="alerte-delivrance"?"memo-priority-alert":x.id==="coup-oeil"?"memo-priority-glance":"memo-priority-advice";
+    return `<div class="memo-presentation-priority ${cls}">${renderSection(x)}</div>`;
+   }).join("");
+   const specificHtml=specificSections.map(x=>`<div class="memo-specific-section"><h3>${esc(x.title||"Information spécifique")}</h3><div class="memo-specific-body">${renderSection(x)}</div></div>`).join("");
    const documents=ficheDocumentation(child,(child.sections||[]).filter(isDocumentationSection));
-   panel.innerHTML=`<div class="memo-selected-presentation"><span class="memo-selected-caption">PRÉSENTATION SÉLECTIONNÉE</span><strong>${esc(displayMedName(child))}</strong></div>${presentationHtml}${specificHtml||(!presentationHtml?'<p class="memo-specific-empty">Aucune particularité renseignée pour cette présentation.</p>':'')}${documents}`;
+   const form=String(child.form||child.sections?.[0]?.dciForm||medicationForms(child)[0]||"").trim();
+   const dose=dosageLabel(child);
+   const moleculeName=displayMedName(m);
+   const selectedTitle=[moleculeName,dose].filter(Boolean).join(" ")+(form?" — "+form:"");
+   panel.innerHTML=`<div class="memo-selected-presentation"><span class="memo-selected-caption">PRÉSENTATION SÉLECTIONNÉE</span><strong>${esc(selectedTitle)}</strong></div>${presentationHtml}${priorityHtml}${specificHtml}${(!priorityHtml&&!specificHtml&&!presentationHtml)?'<p class="memo-specific-empty">Aucune particularité renseignée pour cette présentation.</p>':''}${documents}`;
    panel.querySelectorAll("[data-group-open]").forEach(b=>b.onclick=()=>openMedication(b.dataset.groupOpen));
    panel.querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=panel.querySelector("#presentation-info");const index=sel.value===""?null:Number(sel.value);if(target)target.innerHTML=index!==null&&child.presentations?.[index]?presentationInfo(child.presentations[index],child):""});
   };
