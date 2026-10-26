@@ -1248,6 +1248,19 @@ body.info-page main{display:none!important}
 #editor #memo-panel-identity > .admin-grid > div select{border-radius:10px}
 @media(max-width:760px){#editor #memo-panel-identity > .admin-grid > div:not(.hidden){padding:13px 12px}#editor #memo-panel-identity > .admin-grid > .memo-name-flags-row{align-items:stretch}}
 
+
+/* V13 — catalogue de choix pour les champs à valeurs multiples */
+#editor .memo-catalog-control{position:relative;display:flex;align-items:stretch;gap:7px}
+#editor .memo-catalog-control>input{flex:1;min-width:0}
+#editor .memo-catalog-toggle{flex:0 0 39px;border:1px solid #c8d9ce;border-radius:10px;background:#edf5ef;color:#305b43;font-size:1.4rem;line-height:1;padding:0 8px;cursor:pointer}
+#editor .memo-catalog-toggle:hover{background:#dcecdf}
+#editor .memo-catalog-popup{position:absolute;top:calc(100% + 5px);left:0;right:0;z-index:90;max-height:230px;overflow:auto;background:#fff;border:1px solid #c8d9ce;border-radius:11px;box-shadow:0 10px 25px #254c3426;padding:5px}
+#editor .memo-catalog-popup[hidden]{display:none}
+#editor .memo-catalog-option{display:block;width:100%;text-align:left;background:transparent;border:0;border-radius:7px;padding:9px 11px;color:#234a36;cursor:pointer}
+#editor .memo-catalog-option:hover,#editor .memo-catalog-option:focus{background:#eaf4ec}
+#editor .memo-catalog-empty{font-size:.85rem;color:#607568;padding:10px}
+#editor #memo-panel-identity .admin-grid > .full.hidden{display:none!important}
+
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -3226,7 +3239,7 @@ function renderEditor(id){
   <div class="full"><label for="f-entry-type">Type de fiche</label><select id="f-entry-type"><option value="groupe" ${isGroup(m)?"selected":""}>Fiche groupe</option><option value="molecule" ${isMolecule(m)?"selected":""}>Fiche molécule</option><option value="dci" ${isDosageFiche(m)?"selected":""}>Fiche dosage/forme</option><option value="specialite" ${isSpecialiteFiche(m)?"selected":""}>Fiche spécialité</option></select><div class="muted" style="margin-top:5px">La fiche molécule contient les informations communes ; la fiche dosage/forme mutualise les génériques et princeps ; la fiche spécialité décrit un médicament commercial ayant ses propres particularités.</div></div>
   <div class="full molecule-editor-fields" id="molecule-settings"><label for="f-molecule-parent">Fiche molécule liée (pour une fiche dosage/forme)</label><select id="f-molecule-parent"><option value="">Aucune molécule liée</option>${meds.filter(x=>x.id!==m.id&&isMolecule(x)).sort((a,b)=>a.name.localeCompare(b.name,'fr')).map(x=>`<option value="${esc(x.id)}" ${moleculeParentId(m)===String(x.id)?"selected":""}>${esc(displayMedName(x))}</option>`).join("")}</select><p class="muted">Une fiche molécule contient les données communes ; ses fiches liées conservent les dosages, formes et présentations spécifiques.</p></div>
   <div class="full" id="parent-group-wrap"><label for="f-parent-group">Groupe parent (facultatif)</label><select id="f-parent-group"><option value="">Aucun groupe</option>${groupOptions(m).map(g=>`<option value="${esc(g.id)}" ${parentGroupId(m)===g.id?"selected":""}>${esc(g.name)} — ${esc(g.category)}</option>`).join("")}</select><div class="muted" id="group-parent-help">Choisis librement un groupe parent, quelle que soit sa classe thérapeutique.</div></div>
-  <div><label id="f-name-label" for="f-name">Nom de la spécialité</label><input id="f-name" value="${esc(m.name)}" placeholder="Ex. : Tardyferon"></div><div id="f-dci-form-wrap"><label class="field-label-inline" for="f-dci-form">Forme pharmaceutique <span class="field-inline-choice"><input type="checkbox" data-explorer-visibility="forms" ${explorerBadgeVisible(m,"forms")?"checked":""} aria-label="Afficher la forme pharmaceutique dans Explorer"> <span>Afficher dans Explorer</span></span></label><input id="f-dci-form" data-memo-kind="form" list="memo-forms" value="${esc(m.sections?.[0]?.dciForm||m.form||"")}" placeholder="Ex. : Comprimé, gélule, solution buvable"></div><div id="f-dose-title-wrap" class="full"></div><div id="f-dosage-wrap"><label class="field-label-inline" for="f-dosage">Dosage <span class="field-inline-choice"><input type="checkbox" id="f-dose-in-title"> <span>Afficher dans le titre</span></span></label><div class="dosage-fields"><input id="f-dosage" value="${esc(dosageParts(m.dosage).value)}" placeholder="Ex. : 80"><select id="f-dosage-unit" aria-label="Unité de dosage">${["mg","g","µg","mL","UI","mg/mL","µg/mL","g/L","%","autre"].map(u=>`<option value="${u}" ${dosageParts(m.dosage).unit===u?"selected":""}>${u}</option>`).join("")}</select></div></div><div id="f-dci-wrap" class="full"><label>DCI / substances actives et dosages</label><div id="dciEntries"></div><button type="button" id="addDciEntry" class="soft" style="margin-top:8px">+ Ajouter une DCI</button><p class="muted">Une ligne par substance active. Le sel et sa quantité sont facultatifs et apparaîtront en gris conseil. Ne pas confondre la quantité de sel et celle de substance active.</p></div>
+  <div><label id="f-name-label" for="f-name">Nom de la spécialité</label><input id="f-name" value="${esc(m.name)}" placeholder="Ex. : Tardyferon"></div><div id="f-dci-form-wrap"><label class="field-label-inline" for="f-dci-form">Forme pharmaceutique <span class="field-inline-choice"><input type="checkbox" data-explorer-visibility="forms" ${explorerBadgeVisible(m,"forms")?"checked":""} aria-label="Afficher la forme pharmaceutique dans Explorer"> <span>Afficher dans Explorer</span></span></label><input id="f-dci-form" data-memo-kind="form" list="memo-forms" value="${esc(m.sections?.[0]?.dciForm||m.form||"")}" placeholder="Ex. : Comprimé, gélule, solution buvable"></div><div id="f-dose-title-wrap" class="full hidden"></div><div id="f-dosage-wrap"><label class="field-label-inline" for="f-dosage">Dosage <span class="field-inline-choice"><input type="checkbox" id="f-dose-in-title"> <span>Afficher dans le titre</span></span></label><div class="dosage-fields"><input id="f-dosage" value="${esc(dosageParts(m.dosage).value)}" placeholder="Ex. : 80"><select id="f-dosage-unit" aria-label="Unité de dosage">${["mg","g","µg","mL","UI","mg/mL","µg/mL","g/L","%","autre"].map(u=>`<option value="${u}" ${dosageParts(m.dosage).unit===u?"selected":""}>${u}</option>`).join("")}</select></div></div><div id="f-dci-wrap" class="full"><label>DCI / substances actives et dosages</label><div id="dciEntries"></div><button type="button" id="addDciEntry" class="soft" style="margin-top:8px">+ Ajouter une DCI</button><p class="muted">Une ligne par substance active. Le sel et sa quantité sont facultatifs et apparaîtront en gris conseil. Ne pas confondre la quantité de sel et celle de substance active.</p></div>
  <div class="full explorer-class-custom" id="princeps-editor-wrap"><label for="f-princeps">Princeps</label><input id="f-princeps" list="princeps-suggestions" value="${esc((m.sections?.[0]?.princepsNames||[]).join(', '))}" placeholder="Ex. : Nom de spécialité 1, Nom de spécialité 2" autocomplete="off"><datalist id="princeps-suggestions">${[...new Set(meds.flatMap(x=>x.sections?.[0]?.princepsNames||[]))].sort((a,b)=>a.localeCompare(b,'fr')).map(x=>`<option value="${esc(x)}"></option>`).join('')}</datalist><p class="muted">Sépare les noms de spécialités par des virgules. Plusieurs noms peuvent être renseignés pour une même DCI. Vérifier le statut de princeps de chaque spécialité.</p></div>
  <div class="full explorer-class-custom"><label class="explorer-section-heading" for="f-extra-classes">Classe·s thérapeutique·s</label><input id="f-extra-classes" list="class-suggestions" value="${esc(explorerClasses(m).filter(t=>t!=="Autres"||explorerClasses(m).length===1).join(", "))}" placeholder="Ex. : Antibiotiques, Pénicillines" autocomplete="off"><datalist id="class-suggestions">${[...new Set(meds.flatMap(explorerClasses))].sort((a,b)=>a.localeCompare(b,"fr")).map(t=>`<option value="${esc(t)}"></option>`).join("")}</datalist><div id="explorer-class-choices" class="explorer-class-choices"></div><p class="muted">Sépare les étiquettes par des virgules. Coche uniquement les badges à afficher dans Explorer. Les autres restent enregistrés et utilisables dans les filtres.</p></div>
  <div class="full memo-practical-editor" id="molecule-practical-flags"><label><input type="checkbox" id="f-mte" ${practicalFlags(m).mte===true?"checked":""}> ⚠ MTE — Marge thérapeutique étroite</label><label><input type="checkbox" id="f-photosensitizing" ${practicalFlags(m).photosensitizing===true?"checked":""}> ☀ Photosensibilisant</label><span class="hint">À renseigner sur la fiche molécule si pertinent ; chaque présentation peut ensuite conserver ou désactiver ce badge selon la voie d'administration.</span></div>
@@ -3477,6 +3490,55 @@ function renderEditor(id){
  }
  wireIndividualBadges("f-extra-classes","explorer-class-choices","explorerHiddenClasses");
  wireIndividualBadges("f-indications","explorer-indication-choices","explorerHiddenIndications");
+
+ // V13 — catalogues multi-valeurs : les entrées proviennent des fiches déjà enregistrées.
+ // Les nouvelles valeurs saisies restent modifiables et rejoignent le catalogue après sauvegarde.
+ const memoCatalogFields=[
+  {id:"f-princeps",values:meds.flatMap(x=>x.sections?.[0]?.princepsNames||[])},
+  {id:"f-extra-classes",values:meds.flatMap(explorerClasses)},
+  {id:"f-indications",values:meds.flatMap(indicationTags)}
+ ];
+ memoCatalogFields.forEach(({id,values})=>{
+  const input=$(id);if(!input)return;
+  input.removeAttribute("list");
+  const catalog=[...new Map(values.map(v=>String(v||"").trim()).filter(Boolean).map(v=>[v.toLocaleLowerCase("fr"),v])).values()].sort((a,b)=>a.localeCompare(b,"fr"));
+  const wrap=document.createElement("div");wrap.className="memo-catalog-control";
+  input.parentNode.insertBefore(wrap,input);wrap.appendChild(input);
+  const toggle=document.createElement("button");toggle.type="button";toggle.className="memo-catalog-toggle";toggle.textContent="⌄";toggle.title="Afficher les choix enregistrés";toggle.setAttribute("aria-label","Afficher les choix enregistrés");
+  const popup=document.createElement("div");popup.className="memo-catalog-popup";popup.hidden=true;
+  wrap.append(toggle,popup);
+  let showAll=false;
+  const parts=()=>input.value.split(",").map(v=>v.trim()).filter(Boolean);
+  const currentToken=()=>input.value.split(",").at(-1).trim();
+  const render=()=>{
+   const selected=new Set(parts().map(v=>v.toLocaleLowerCase("fr")));
+   const needle=showAll?"":currentToken().toLocaleLowerCase("fr");
+   const matches=catalog.filter(v=>!selected.has(v.toLocaleLowerCase("fr"))&&(!needle||v.toLocaleLowerCase("fr").includes(needle))).slice(0,60);
+   popup.replaceChildren();
+   if(!matches.length){const empty=document.createElement("div");empty.className="memo-catalog-empty";empty.textContent=catalog.length?"Aucune autre suggestion — tu peux saisir une nouvelle valeur.":"Catalogue vide — saisis une première valeur.";popup.append(empty);return}
+   matches.forEach(value=>{
+    const button=document.createElement("button");button.type="button";button.className="memo-catalog-option";button.textContent=value;
+    button.addEventListener("mousedown",e=>e.preventDefault());
+    button.addEventListener("click",()=>{
+     const tokens=input.value.split(",").map(x=>x.trim());
+     if(!showAll&&tokens.length&&tokens[tokens.length-1])tokens.pop();
+     const next=[...tokens.filter(Boolean),value];
+     input.value=[...new Map(next.map(x=>[x.toLocaleLowerCase("fr"),x])).values()].join(", ");
+     input.dispatchEvent(new Event("input",{bubbles:true}));
+     showAll=true;popup.hidden=false;render();input.focus();
+    });popup.append(button);
+   });
+  };
+  toggle.addEventListener("click",()=>{showAll=true;popup.hidden=!popup.hidden;if(!popup.hidden)render()});
+  input.addEventListener("focus",()=>{showAll=false;popup.hidden=false;render()});
+  input.addEventListener("input",()=>{showAll=false;popup.hidden=false;render()});
+  input.addEventListener("keydown",e=>{if(e.key==="Escape")popup.hidden=true});
+  document.addEventListener("pointerdown",e=>{if(!wrap.contains(e.target))popup.hidden=true});
+ });
+ // Un ancien conteneur vide n'a pas à créer une carte blanche dans Identité.
+ const emptyDoseTitle=$("f-dose-title-wrap");
+ if(emptyDoseTitle&&!emptyDoseTitle.textContent.trim()&&!emptyDoseTitle.children.length)emptyDoseTitle.classList.add("hidden");
+
  $("backBtn").onclick=()=>{
   // Annuler réellement les modifications locales, y compris la conversion
   // automatique des anciennes rubriques en modèle de groupe.
