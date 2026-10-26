@@ -1304,6 +1304,29 @@ body.info-page main{display:none!important}
 .detail .molecule-tab-content .presentation-fixed .hint{font-size:.78rem;color:#718176;margin-top:11px!important}
 @media(max-width:600px){.detail .molecule-tab-content .presentation-fixed{padding:11px 12px}.detail .memo-presentation-priority{padding:11px 12px}}
 
+
+/* V16 — Éditeur de présentations unifié */
+.admin .memo-v16-layout{display:grid;grid-template-columns:minmax(190px,260px) minmax(0,1fr);gap:16px;margin-top:14px;align-items:start}
+.admin .memo-v16-list{display:grid;gap:8px;align-content:start}
+.admin .memo-v16-choice{display:flex;flex-direction:column;gap:5px;text-align:left;padding:12px 14px;border:1px solid #d8e4db;border-radius:11px;background:#f8faf8;color:#204d3e;cursor:pointer;white-space:normal}
+.admin .memo-v16-choice.is-active{background:#e1eee4;border-color:#8bb79a;box-shadow:inset 3px 0 #689b79}
+.admin .memo-v16-choice small{color:#647c6c;font-size:12px}
+.admin .memo-v16-editor-area{min-width:0}
+.admin .memo-v16-editor{border:1px solid #dbe5dd;border-radius:13px;padding:15px;background:#fff}
+.admin .memo-v16-editor h4{margin:0 0 16px;color:#235642}
+.admin .memo-v16-section,.admin .memo-variant-sources .memo-v16-section{border:1px solid #dce6de;border-radius:10px;margin:9px 0;overflow:visible;background:#fff}
+.admin .memo-v16-section-head{display:flex;align-items:center;gap:8px;padding:7px 10px}
+.admin .memo-v16-section-toggle{flex:1;text-align:left;border:0;background:transparent;color:#21583f;font-weight:700;padding:7px;cursor:pointer}
+.admin .memo-v16-section-toggle span{float:right;color:#82998a}
+.admin .memo-v16-delete{border:0;background:transparent;color:#9d7774;padding:5px 9px;cursor:pointer;font-size:17px}
+.admin .memo-v16-delete:hover{background:#fff1ef;border-radius:7px;color:#a33}
+.admin .memo-v16-section-body{padding:5px 14px 15px;display:grid;gap:10px}
+.admin .memo-v16-section-body[hidden]{display:none}
+.admin .memo-v16-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.admin .memo-v16-section .text-edit-wrap{min-width:0}
+.admin .memo-v16-section .memo-rich-editor{min-height:120px}
+.admin #memo-variant-sources{margin-top:12px}
+@media(max-width:760px){.admin .memo-v16-layout{grid-template-columns:1fr}.admin .memo-v16-list{display:flex;overflow-x:auto;padding-bottom:5px}.admin .memo-v16-choice{min-width:180px;flex:0 0 auto}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -3120,11 +3143,12 @@ function memoRichSerialize(root){
  return blocks.join('\n').replace(/\n{3,}/g,'\n\n').trim();
 }
 function wireTextFormatting(){
- document.querySelectorAll('#editor .section-editor').forEach(card=>{
+ document.querySelectorAll('#editor .section-editor, #editor .memo-v16-section').forEach(card=>{
   const storage=card.querySelector('textarea[data-field="content"]');
   const editor=card.querySelector('.memo-rich-editor');
   const bubble=card.querySelector('.text-format-bubble');
-  if(!storage||!editor||!bubble)return;
+  if(!storage||!editor||!bubble||editor.dataset.memoRichWired)return;
+  editor.dataset.memoRichWired='1';
   editor.innerHTML=richText(storage.value);
   const sync=()=>{storage.value=memoRichSerialize(editor);storage.dispatchEvent(new Event('input',{bubbles:true}))};
   editor.addEventListener('input',sync);
@@ -3464,53 +3488,100 @@ function renderEditor(id){
  };toggleType();
  // Édition intégrée des présentations : les enregistrements Supabase existants
  // restent indépendants techniquement, mais se gèrent depuis la fiche molécule.
+ // V16 : édition unifiée des formes et dosages, une présentation active.
  const variantDrafts=new Map();
  const variantRoot=$("variant-editors");
- const variantTemplate=(child)=>{
-  const isNew=!meds.some(x=>String(x.id)===String(child.id));
-  const sections=(child.sections||[]).filter(sec=>sec.enabled!==false && (sec.content||sec.title));
-  return `<div class="memo-variant-card" data-variant-id="${esc(child.id)}" style="margin-top:12px;padding:14px;border:1px solid var(--border,#ddd);border-radius:12px">
-   <div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><strong>${esc(isNew?"Nouvelle présentation":displayMedName(child))}</strong><button type="button" class="soft" data-variant-collapse>Replier</button></div>
-   <div class="memo-variant-body" style="margin-top:12px">
-    <div class="admin-grid"><label>Forme pharmaceutique<input data-variant-form value="${esc(child.form||child.sections?.[0]?.dciForm||'')}" placeholder="Ex. : Gélules"></label><label>Dosage<input data-variant-dose value="${esc(child.dosage||'')}" placeholder="Ex. : 500 mg"></label></div>
-    <p class="muted">Les rubriques ci-dessous sont propres à cette présentation. Une rubrique vide n’apparaît pas à la consultation.</p>
-    <div class="memo-variant-sections">${sections.map((sec,i)=>`<div class="memo-variant-section" data-variant-section="${i}" style="margin:12px 0;padding:12px;border:1px solid var(--border,#ddd);border-radius:10px"><div style="display:flex;gap:8px;justify-content:space-between"><label>Rubrique<input data-variant-title value="${esc(sec.title||'')}" placeholder="Ex. : Posologie"></label><button type="button" class="soft" data-variant-remove-section>Retirer</button></div><label>Contenu spécifique<textarea data-variant-content rows="4">${esc(sec.content||'')}</textarea></label></div>`).join('')}</div>
-    <button type="button" class="soft" data-variant-add-section>+ Ajouter une rubrique</button>
-    <p class="muted">Pour modifier les tableaux complexes, les photos ou les champs avancés d’une ancienne présentation, l’éditeur complet reste disponible.</p>
-    ${!isNew?`<button type="button" class="soft" data-variant-advanced>Éditeur complet de cette présentation ↗</button>`:''}
+ const variantHost=$("molecule-variants-editor");
+ variantHost.querySelector('h3').textContent='🌿 Présentations et particularités';
+ variantHost.querySelector('p.muted')?.remove();
+ let variantActiveId=null;
+ let variantOpenSection=null;
+ const variantSources=document.createElement('div');
+ variantSources.id='memo-variant-sources';
+ variantSources.className='memo-variant-sources';
+ const trackingPanel=document.getElementById('memo-panel-tracking');
+ if(trackingPanel){const heading=document.createElement('h3');heading.textContent='Sources de la présentation sélectionnée';heading.id='memo-variant-sources-heading';trackingPanel.append(heading,variantSources)}
+ const variantIsSource=sec=>sec.id==='sources'||/sources(?:\s+et\s+mise\s+[àa]\s+jour)?/i.test(sec.title||'');
+ const variantIsVisible=sec=>sec.enabled!==false&&(sec.content||sec.title);
+ const variantLabel=child=>[m.name,child.dosage,child.form||child.sections?.[0]?.dciForm].filter(Boolean).join(' — ');
+ const variantSectionHTML=(sec,i)=>{
+  const table=sec.type==='table';
+  return `<div class="memo-v16-section" data-variant-section="${i}">
+   <div class="memo-v16-section-head"><button type="button" class="memo-v16-section-toggle" data-variant-section-toggle aria-expanded="${variantOpenSection===i}">${esc(sec.title||'Nouvelle rubrique')} <span>⌄</span></button><button type="button" class="memo-v16-delete" data-variant-remove-section title="Retirer cette rubrique" aria-label="Retirer cette rubrique">✕</button></div>
+   <div class="memo-v16-section-body" ${variantOpenSection===i?'':'hidden'}>
+    <label>Rubrique<input data-variant-title value="${esc(sec.title||'')}" placeholder="Ex. : Posologie"></label>
+    <label>Type de contenu<select data-variant-type><option value="text" ${!table?'selected':''}>Texte enrichi</option><option value="table" ${table?'selected':''}>Tableau simple</option></select></label>
+    ${table?`<label>Tableau (colonnes séparées par |, une ligne par rangée)<textarea data-variant-table rows="6">${esc(sec.content||'')}</textarea></label>`:`<div class="text-edit-wrap"><div class="text-format-bubble" hidden><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="link" title="Insérer un lien URL (Ctrl+K)">🔗 Lien</button><button type="button" data-format="bullets" title="Liste à puces">• Liste</button><button type="button" data-format="numbers" title="Liste numérotée">1. Liste</button><select data-format-align aria-label="Alignement du texte"><option value="">Aligner…</option><option value="left">Gauche</option><option value="center">Centré</option><option value="right">Droite</option><option value="justify">Justifié</option></select><select data-format-size aria-label="Taille de police"><option value="">Taille…</option><option value="12">12 px</option><option value="14">14 px</option><option value="16">16 px</option><option value="18">18 px</option><option value="20">20 px</option><option value="24">24 px</option><option value="28">28 px</option></select><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris précision</option><option value="pink">Rose conseil</option></select></div><textarea data-field="content" data-variant-content class="memo-rich-storage" tabindex="-1" aria-hidden="true">${esc(sec.content||'')}</textarea><div class="memo-rich-editor" contenteditable="true" role="textbox" aria-label="Contenu spécifique" aria-multiline="true"></div></div>`}
    </div></div>`;
  };
- function variantReadCard(card){
-  const child=variantDrafts.get(card.dataset.variantId);if(!child)return;
-  child.form=card.querySelector('[data-variant-form]').value.trim();
-  child.dosage=card.querySelector('[data-variant-dose]').value.trim();
+ function variantReadCard(){
+  if(!variantActiveId)return;
+  const child=variantDrafts.get(variantActiveId);if(!child)return;
+  const card=variantRoot.querySelector('.memo-v16-editor');if(!card)return;
+  child.form=card.querySelector('[data-variant-form]')?.value.trim()||'';
+  child.dosage=card.querySelector('[data-variant-dose]')?.value.trim()||'';
   child.name=(document.getElementById('f-name')?.value.trim()||m.name)+' '+child.dosage;
   child.category=m.category;
-  const original=child.sections||[];
-  const visible=original.filter(sec=>sec.enabled!==false && (sec.content||sec.title));
-  const hidden=original.filter(sec=>!visible.includes(sec));
-  const cards=[...card.querySelectorAll('.memo-variant-section')];
-  const next=cards.map((el,i)=>({...visible[i],id:visible[i]?.id||'variant-'+crypto.randomUUID(),type:visible[i]?.type==='table'?'table':'text',title:el.querySelector('[data-variant-title]').value.trim()||'Précision',content:el.querySelector('[data-variant-content]').value,enabled:true}));
-  child.sections=[...next,...hidden];
+  const old=child.sections||[];
+  const visible=old.filter(variantIsVisible);
+  const hidden=old.filter(sec=>!variantIsVisible(sec));
+  const allSections=[...card.querySelectorAll('.memo-v16-section'),...variantSources.querySelectorAll('.memo-v16-section')];
+  const updated=allSections.map(el=>{
+   const i=Number(el.dataset.variantSection),previous=visible[i]||{};
+   const type=el.querySelector('[data-variant-type]')?.value||previous.type||'text';
+   const content=type==='table'?el.querySelector('[data-variant-table]')?.value||'':el.querySelector('[data-variant-content]')?.value||'';
+   return {...previous,id:previous.id||'variant-'+crypto.randomUUID(),type,title:el.querySelector('[data-variant-title]')?.value.trim()||'Précision',content,enabled:true};
+  });
+  child.sections=[...updated,...hidden];
   if(!child.sections.length)child.sections=[{id:'variant-meta',title:'Métadonnées',type:'text',content:'',enabled:false}];
   child.sections[0].moleculeParentId=String(m.id);
   child.sections[0].dciForm=child.form;
  }
- function variantReadAll(){variantRoot.querySelectorAll('[data-variant-id]').forEach(variantReadCard)}
+ function variantReadAll(){variantReadCard()}
  function variantRender(){
-  variantRoot.innerHTML=[...variantDrafts.values()].map(variantTemplate).join('')||'<p class="muted">Aucune présentation liée pour le moment.</p>';
-  variantRoot.querySelectorAll('[data-variant-collapse]').forEach(btn=>btn.onclick=()=>{const body=btn.closest('.memo-variant-card').querySelector('.memo-variant-body');body.hidden=!body.hidden;btn.textContent=body.hidden?'Déplier':'Replier'});
-  variantRoot.querySelectorAll('[data-variant-add-section]').forEach(btn=>btn.onclick=()=>{variantReadAll();const child=variantDrafts.get(btn.closest('[data-variant-id]').dataset.variantId);child.sections.push({id:'variant-'+crypto.randomUUID(),title:'Nouvelle rubrique',type:'text',content:'',enabled:true});variantRender()});
-  variantRoot.querySelectorAll('[data-variant-remove-section]').forEach(btn=>btn.onclick=()=>{variantReadAll();const card=btn.closest('[data-variant-id]');const child=variantDrafts.get(card.dataset.variantId);const index=[...card.querySelectorAll('.memo-variant-section')].indexOf(btn.closest('.memo-variant-section'));child.sections.splice(index,1);variantRender()});
-  variantRoot.querySelectorAll('[data-variant-advanced]').forEach(btn=>btn.onclick=()=>{variantReadAll();captureEditorFields(m);const child=variantDrafts.get(btn.closest('[data-variant-id]').dataset.variantId);if(!confirm('Ouvrir l’éditeur complet ? Enregistre d’abord la fiche molécule pour conserver ses changements.'))return;renderEditor(child.id)});
+  const items=[...variantDrafts.values()];
+  if(!variantDrafts.has(variantActiveId))variantActiveId=String(items[0]?.id||'');
+  const child=variantDrafts.get(variantActiveId);
+  variantRoot.innerHTML=`<div class="memo-v16-layout"><div class="memo-v16-list" role="group" aria-label="Choisir une présentation">${items.map(item=>`<button type="button" class="memo-v16-choice ${String(item.id)===variantActiveId?'is-active':''}" data-variant-choice="${esc(item.id)}"><strong>${esc(variantLabel(item))}</strong><small>${item.sections?.filter(sec=>variantIsVisible(sec)&&!variantIsSource(sec)).length||0} rubrique(s) spécifique(s)</small></button>`).join('')||'<p class="muted">Aucune présentation liée.</p>'}</div><div class="memo-v16-editor-area">${child?`<div class="memo-v16-editor"><h4>${esc(variantLabel(child))}</h4><div class="admin-grid"><label>Forme pharmaceutique<input data-variant-form list="memo-forms" value="${esc(child.form||child.sections?.[0]?.dciForm||'')}" placeholder="Ex. : gélule"></label><label>Dosage<input data-variant-dose value="${esc(child.dosage||'')}" placeholder="Ex. : 500 mg"></label></div><div class="memo-v16-sections">${(child.sections||[]).filter(variantIsVisible).map((sec,i)=>variantIsSource(sec)?'':variantSectionHTML(sec,i)).join('')}</div><div class="memo-v16-actions"><button type="button" class="soft" data-variant-add-section>+ Rubrique texte</button><button type="button" class="soft" data-variant-add-table>+ Tableau</button></div></div>`:''}</div></div>`;
+  variantSources.innerHTML=child?(child.sections||[]).filter(variantIsVisible).map((sec,i)=>variantIsSource(sec)?variantSectionHTML(sec,i):'').join(''):'';
+  const sourceHeading=document.getElementById('memo-variant-sources-heading');
+  if(sourceHeading)sourceHeading.hidden=!variantSources.children.length;
+  const showSources=variantSources.children.length>0;
+  variantSources.hidden=!showSources;
+  variantRoot.querySelectorAll('[data-variant-choice]').forEach(btn=>btn.onclick=()=>{variantReadAll();variantActiveId=btn.dataset.variantChoice;variantOpenSection=null;variantRender()});
+  const allRoot=[variantRoot,variantSources];
+  allRoot.forEach(root=>{
+   root.querySelectorAll('[data-variant-section-toggle]').forEach(btn=>btn.onclick=()=>{
+    const el=btn.closest('.memo-v16-section');const wasOpen=!el.querySelector('.memo-v16-section-body').hidden;
+    root.querySelectorAll('.memo-v16-section-body').forEach(body=>body.hidden=true);
+    root.querySelectorAll('[data-variant-section-toggle]').forEach(t=>t.setAttribute('aria-expanded','false'));
+    if(!wasOpen){el.querySelector('.memo-v16-section-body').hidden=false;btn.setAttribute('aria-expanded','true')}
+   });
+   root.querySelectorAll('[data-variant-remove-section]').forEach(btn=>btn.onclick=()=>{
+    variantReadAll();const child=variantDrafts.get(variantActiveId);const visible=child.sections.filter(variantIsVisible);
+    const idx=Number(btn.closest('.memo-v16-section').dataset.variantSection);
+    child.sections=child.sections.filter(sec=>sec!==visible[idx]);variantOpenSection=null;variantRender();
+   });
+   root.querySelectorAll('[data-variant-type]').forEach(select=>select.onchange=()=>{
+    variantReadAll();const child=variantDrafts.get(variantActiveId);const sec=child.sections.filter(variantIsVisible)[Number(select.closest('.memo-v16-section').dataset.variantSection)];
+    if(sec){sec.type=select.value;variantOpenSection=Number(select.closest('.memo-v16-section').dataset.variantSection)}variantRender();
+   });
+  });
+  variantRoot.querySelectorAll('[data-variant-add-section],[data-variant-add-table]').forEach(btn=>btn.onclick=()=>{
+   variantReadAll();const child=variantDrafts.get(variantActiveId);if(!child)return;
+   const table=btn.hasAttribute('data-variant-add-table');
+   child.sections.splice(child.sections.filter(variantIsVisible).length,0,{id:'variant-'+crypto.randomUUID(),title:table?'Nouveau tableau':'Nouvelle rubrique',type:table?'table':'text',content:table?'Colonne 1 | Colonne 2\nValeur 1 | Valeur 2':'',enabled:true});
+   variantOpenSection=child.sections.filter(variantIsVisible).length-1;variantRender();
+  });
+  // Réutiliser les outils de mise en forme des Informations générales.
+  wireTextFormatting();
  }
  meds.filter(x=>!isGroup(x)&&moleculeParentId(x)===String(m.id)).forEach(x=>variantDrafts.set(String(x.id),clone(x)));
  variantRender();
  $("variant-add").onclick=()=>{
-  variantReadAll();
-  const child={id:crypto.randomUUID(),name:m.name,entry_type:'dci',dosage:'',dci:'',parent_dci:'',form:'',category:m.category,presentations:[],status:'à vérifier',updated:'',published:false,sections:[{id:'variant-meta',title:'Métadonnées',type:'text',content:'',enabled:false,moleculeParentId:String(m.id)}]};
-  variantDrafts.set(String(child.id),child);variantRender();
-  variantRoot.querySelector(`[data-variant-id="${child.id}"] [data-variant-form]`)?.focus();
+  variantReadAll();const child={id:crypto.randomUUID(),name:m.name,entry_type:'dci',dosage:'',dci:'',parent_dci:'',form:'',category:m.category,presentations:[],status:'à vérifier',updated:'',published:false,sections:[{id:'variant-meta',title:'Métadonnées',type:'text',content:'',enabled:false,moleculeParentId:String(m.id)}]};
+  variantDrafts.set(String(child.id),child);variantActiveId=String(child.id);variantOpenSection=null;variantRender();
+  variantRoot.querySelector('[data-variant-form]')?.focus();
  };
  const doseUnit=$("f-dosage-unit");
  if(doseUnit&&!m.dosage){const initialForm=(m.presentations||[])[0]?.form||m.form||"";doseUnit.value=/sirop|solution|goutte|liquide|suspension/i.test(initialForm)?"mL":"mg"}
