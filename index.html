@@ -1233,6 +1233,21 @@ body.info-page main{display:none!important}
 .admin .memo-rich-editor{min-height:140px;padding:12px 14px;border:1px solid #c7d6cc;border-radius:10px;background:#fff;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;outline:none;cursor:text}
 .admin .memo-rich-editor:focus{border-color:#6b9c7b;box-shadow:0 0 0 3px #6b9c7b22}
 .memo-rich-editor p{margin:3px 0}.memo-rich-editor ul,.memo-rich-editor ol{padding-left:25px;margin:5px 0}
+
+/* V12 — harmonisation des encarts de l’onglet Identité */
+#editor #memo-panel-identity > .admin-grid{gap:14px;align-items:stretch}
+#editor #memo-panel-identity > .admin-grid > div:not(.hidden){background:#f8fbf9;border:1px solid #dce8df;border-radius:13px;padding:15px 16px;margin:0;box-shadow:none;min-width:0}
+#editor #memo-panel-identity > .admin-grid > .memo-type-prominent{background:#f0f6f1;border-color:#d3e4d7}
+#editor #memo-panel-identity > .admin-grid > .explorer-class-custom{background:#f8fbf9;border-color:#dce8df}
+#editor #memo-panel-identity > .admin-grid > .memo-name-flags-row{align-items:center;gap:16px}
+#editor #memo-panel-identity > .admin-grid > .memo-name-flags-row .memo-practical-editor{background:transparent;border:0;padding:0;box-shadow:none}
+#editor #memo-panel-identity > .admin-grid > div > label:first-child,
+#editor #memo-panel-identity .memo-name-primary > label:first-child{font-weight:750;color:#1e3f31;font-size:.96rem;margin-bottom:8px}
+#editor #memo-panel-identity > .admin-grid > div .muted{line-height:1.5;margin-top:8px}
+#editor #memo-panel-identity > .admin-grid > div input:not([type=checkbox]),
+#editor #memo-panel-identity > .admin-grid > div select{border-radius:10px}
+@media(max-width:760px){#editor #memo-panel-identity > .admin-grid > div:not(.hidden){padding:13px 12px}#editor #memo-panel-identity > .admin-grid > .memo-name-flags-row{align-items:stretch}}
+
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
