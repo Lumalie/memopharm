@@ -2692,7 +2692,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
   };
   const renderChild=child=>{
    if(!child||!panel)return;
-   const childSections=(child.sections||[]).filter(x=>x.enabled!==false&&!isDocumentationSection(x)).map(x=>resolveSharedSection(child,x));
+   const childSections=(child.sections||[]).filter(x=>x.enabled!==false&&!isDocumentationSection(x)&&String(x.content||" ").trim()).map(x=>resolveSharedSection(child,x));
    panel.innerHTML=`<div class="molecule-tab-heading"><strong>${esc(displayMedName(child))}</strong><button type="button" class="soft" data-group-open="${esc(child.id)}">Ouvrir la fiche complète ↗</button></div>${renderPresentations(child)}${childSections.map(x=>renderSection(x)).join("")}${ficheDocumentation(child,(child.sections||[]).filter(isDocumentationSection))}`;
    panel.querySelectorAll("[data-group-open]").forEach(b=>b.onclick=()=>openMedication(b.dataset.groupOpen));
    panel.querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=panel.querySelector("#presentation-info");const index=sel.value===""?null:Number(sel.value);if(target)target.innerHTML=index!==null&&child.presentations?.[index]?presentationInfo(child.presentations[index],child):""});
@@ -3126,6 +3126,12 @@ function renderEditor(id){
     <div class="admin-actions"><button type="button" id="addPresentation">+ Ajouter une présentation</button></div>
   </div>
 
+ <div id="molecule-variants-editor" class="full hidden" style="margin:22px 0;padding:18px;border:1px solid var(--border,#ddd);border-radius:14px">
+   <h3>🌿 Formes et dosages de cette molécule</h3>
+   <p class="muted">Ajoute une présentation ou sélectionne une présentation existante. Renseigne uniquement ses particularités : elles apparaîtront dans les onglets de la fiche molécule. Les fiches déjà liées sont conservées.</p>
+   <div class="admin-actions"><button type="button" id="variant-add">+ Ajouter une forme / un dosage</button></div>
+   <div id="variant-editors"></div>
+ </div>
  <h3>Rubriques de cette fiche</h3><p class="muted">Désactive une rubrique pour la masquer. Utilise les flèches pour changer l’ordre, ou ajoute une rubrique personnalisée.</p>
  <div id="sectionEditors">${(m.sections||[]).map((s,i)=>sectionEditor(s,i)).join("")}</div><div class="section-bottom-actions"><button type="button" id="addTextSection">+ Rubrique texte</button><button type="button" id="addTableSection">+ Rubrique tableau</button><button type="button" id="editorBackToTop">↑ Retour en haut</button></div>
  <div class="admin-grid admin-meta" style="margin-top:24px"><div><label>Statut de vérification</label><select id="f-status">${["à vérifier","en cours de vérification","vérifiée"].map(v=>`<option ${String(m.status||"à vérifier").toLocaleLowerCase("fr")===v?"selected":""}>${v}</option>`).join("")}</select></div><div><label>Publication</label><select id="f-published"><option value="false" ${!m.published?"selected":""}>Brouillon — privé</option><option value="true" ${m.published?"selected":""}>Publié — visible publiquement</option></select></div><div class="full"><label for="f-updated">Date de mise à jour</label><input id="f-updated" type="date" value="${esc(m.updated)}"></div></div>`;
@@ -3134,6 +3140,7 @@ const toggleType = () => {
   const isMoleculeType = $("f-entry-type").value === "molecule";
   const isDci = $("f-entry-type").value === "dci" || isMoleculeType || isGroupType;
   $("presentation-editor-wrap").classList.toggle("hidden",isGroupType||isMoleculeType);
+  $("molecule-variants-editor").classList.toggle("hidden",!isMoleculeType);
   $("molecule-settings").classList.toggle("hidden",isGroupType||isMoleculeType);
   $("f-molecule-parent").disabled=isMoleculeType;
   $("parent-group-wrap").classList.remove("hidden");
@@ -3173,6 +3180,56 @@ const toggleType = () => {
   
  toggleType();
  };toggleType();
+ // Édition intégrée des présentations : les enregistrements Supabase existants
+ // restent indépendants techniquement, mais se gèrent depuis la fiche molécule.
+ const variantDrafts=new Map();
+ const variantRoot=$("variant-editors");
+ const variantTemplate=(child)=>{
+  const isNew=!meds.some(x=>String(x.id)===String(child.id));
+  const sections=(child.sections||[]).filter(sec=>sec.enabled!==false && (sec.content||sec.title));
+  return `<div class="memo-variant-card" data-variant-id="${esc(child.id)}" style="margin-top:12px;padding:14px;border:1px solid var(--border,#ddd);border-radius:12px">
+   <div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><strong>${esc(isNew?"Nouvelle présentation":displayMedName(child))}</strong><button type="button" class="soft" data-variant-collapse>Replier</button></div>
+   <div class="memo-variant-body" style="margin-top:12px">
+    <div class="admin-grid"><label>Forme pharmaceutique<input data-variant-form value="${esc(child.form||child.sections?.[0]?.dciForm||'')}" placeholder="Ex. : Gélules"></label><label>Dosage<input data-variant-dose value="${esc(child.dosage||'')}" placeholder="Ex. : 500 mg"></label></div>
+    <p class="muted">Les rubriques ci-dessous sont propres à cette présentation. Une rubrique vide n’apparaît pas à la consultation.</p>
+    <div class="memo-variant-sections">${sections.map((sec,i)=>`<div class="memo-variant-section" data-variant-section="${i}" style="margin:12px 0;padding:12px;border:1px solid var(--border,#ddd);border-radius:10px"><div style="display:flex;gap:8px;justify-content:space-between"><label>Rubrique<input data-variant-title value="${esc(sec.title||'')}" placeholder="Ex. : Posologie"></label><button type="button" class="soft" data-variant-remove-section>Retirer</button></div><label>Contenu spécifique<textarea data-variant-content rows="4">${esc(sec.content||'')}</textarea></label></div>`).join('')}</div>
+    <button type="button" class="soft" data-variant-add-section>+ Ajouter une rubrique</button>
+    <p class="muted">Pour modifier les tableaux complexes, les photos ou les champs avancés d’une ancienne présentation, l’éditeur complet reste disponible.</p>
+    ${!isNew?`<button type="button" class="soft" data-variant-advanced>Éditeur complet de cette présentation ↗</button>`:''}
+   </div></div>`;
+ };
+ function variantReadCard(card){
+  const child=variantDrafts.get(card.dataset.variantId);if(!child)return;
+  child.form=card.querySelector('[data-variant-form]').value.trim();
+  child.dosage=card.querySelector('[data-variant-dose]').value.trim();
+  child.name=(document.getElementById('f-name')?.value.trim()||m.name)+' '+child.dosage;
+  child.category=m.category;
+  const original=child.sections||[];
+  const visible=original.filter(sec=>sec.enabled!==false && (sec.content||sec.title));
+  const hidden=original.filter(sec=>!visible.includes(sec));
+  const cards=[...card.querySelectorAll('.memo-variant-section')];
+  const next=cards.map((el,i)=>({...visible[i],id:visible[i]?.id||'variant-'+crypto.randomUUID(),type:visible[i]?.type==='table'?'table':'text',title:el.querySelector('[data-variant-title]').value.trim()||'Précision',content:el.querySelector('[data-variant-content]').value,enabled:true}));
+  child.sections=[...next,...hidden];
+  if(!child.sections.length)child.sections=[{id:'variant-meta',title:'Métadonnées',type:'text',content:'',enabled:false}];
+  child.sections[0].moleculeParentId=String(m.id);
+  child.sections[0].dciForm=child.form;
+ }
+ function variantReadAll(){variantRoot.querySelectorAll('[data-variant-id]').forEach(variantReadCard)}
+ function variantRender(){
+  variantRoot.innerHTML=[...variantDrafts.values()].map(variantTemplate).join('')||'<p class="muted">Aucune présentation liée pour le moment.</p>';
+  variantRoot.querySelectorAll('[data-variant-collapse]').forEach(btn=>btn.onclick=()=>{const body=btn.closest('.memo-variant-card').querySelector('.memo-variant-body');body.hidden=!body.hidden;btn.textContent=body.hidden?'Déplier':'Replier'});
+  variantRoot.querySelectorAll('[data-variant-add-section]').forEach(btn=>btn.onclick=()=>{variantReadAll();const child=variantDrafts.get(btn.closest('[data-variant-id]').dataset.variantId);child.sections.push({id:'variant-'+crypto.randomUUID(),title:'Nouvelle rubrique',type:'text',content:'',enabled:true});variantRender()});
+  variantRoot.querySelectorAll('[data-variant-remove-section]').forEach(btn=>btn.onclick=()=>{variantReadAll();const card=btn.closest('[data-variant-id]');const child=variantDrafts.get(card.dataset.variantId);const index=[...card.querySelectorAll('.memo-variant-section')].indexOf(btn.closest('.memo-variant-section'));child.sections.splice(index,1);variantRender()});
+  variantRoot.querySelectorAll('[data-variant-advanced]').forEach(btn=>btn.onclick=()=>{variantReadAll();captureEditorFields(m);const child=variantDrafts.get(btn.closest('[data-variant-id]').dataset.variantId);if(!confirm('Ouvrir l’éditeur complet ? Enregistre d’abord la fiche molécule pour conserver ses changements.'))return;renderEditor(child.id)});
+ }
+ meds.filter(x=>!isGroup(x)&&moleculeParentId(x)===String(m.id)).forEach(x=>variantDrafts.set(String(x.id),clone(x)));
+ variantRender();
+ $("variant-add").onclick=()=>{
+  variantReadAll();
+  const child={id:crypto.randomUUID(),name:m.name,entry_type:'dci',dosage:'',dci:'',parent_dci:'',form:'',category:m.category,presentations:[],status:'à vérifier',updated:'',published:false,sections:[{id:'variant-meta',title:'Métadonnées',type:'text',content:'',enabled:false,moleculeParentId:String(m.id)}]};
+  variantDrafts.set(String(child.id),child);variantRender();
+  variantRoot.querySelector(`[data-variant-id="${child.id}"] [data-variant-form]`)?.focus();
+ };
  const doseUnit=$("f-dosage-unit");
  if(doseUnit&&!m.dosage){const initialForm=(m.presentations||[])[0]?.form||m.form||"";doseUnit.value=/sirop|solution|goutte|liquide|suspension/i.test(initialForm)?"mL":"mg"}
  $("presentationEditors").addEventListener("change",e=>{if(e.target.matches("[data-pfield=form]")&&!$("f-dosage").value.trim())doseUnit.value=/sirop|solution|goutte|liquide|suspension/i.test(e.target.value)?"mL":"mg"});
@@ -3231,7 +3288,7 @@ const toggleType = () => {
  $("editorBackToTop").onclick=()=>{window.scrollTo({top:0,behavior:"smooth"});};
  $("editor").oninput=saveLocalDraft;
  $("editor").onchange=saveLocalDraft;
- $("saveMed").onclick=()=>saveEditor(m.id);$("duplicateMed").onclick=()=>duplicateMed(m.id);$("deleteMed").onclick=()=>deleteMed(m.id);
+ $("saveMed").onclick=async()=>{if(isMolecule(m)){variantReadAll();m._variantDrafts=[...variantDrafts.values()].map(clone)}await saveEditor(m.id)};$("duplicateMed").onclick=()=>duplicateMed(m.id);$("deleteMed").onclick=()=>deleteMed(m.id);
 }
 function readPresentationEditors(m){const cards=[...$("presentationEditors").querySelectorAll("[data-presentation]")];m.presentations=cards.map((card,i)=>{const p={imageUrl:m.presentations?.[i]?.imageUrl||"",presentationKind:card.querySelector("[data-pkind]:checked")?.dataset.pkind||"",canSplit:card.querySelector("[data-can-split]")?.checked===true,canCrush:card.querySelector("[data-can-crush]")?.checked===true,canOpen:card.querySelector("[data-can-open]")?.checked===true,cannotSplit:card.querySelector("[data-cannot-split]")?.checked===true,cannotCrush:card.querySelector("[data-cannot-crush]")?.checked===true,cannotOpen:card.querySelector("[data-cannot-open]")?.checked===true};p.coldStorage=!!card.querySelector("[data-practical-cold]")?.checked;p.afterOpening=!!card.querySelector("[data-practical-after]")?.checked;p.afterOpeningDuration=card.querySelector("[data-practical-duration]")?.value.trim()||"";const photoSetting=card.querySelector("[data-practical-photo]")?.value;p.photosensitizingOverride=photoSetting==="yes"?true:photoSetting==="no"?false:null;const mteSetting=card.querySelector("[data-practical-mte]")?.value;p.mteOverride=mteSetting==="yes"?true:mteSetting==="no"?false:null;card.querySelectorAll("[data-show-field]").forEach(input=>p[input.dataset.showField]=input.checked);card.querySelectorAll("[data-pfield]").forEach(input=>p[input.dataset.pfield]=input.value.trim());p.cipBoxes=[...card.querySelectorAll("[data-cip-pack-row]")].map(row=>({cip:row.querySelector("[data-cip-value]").value.trim(),pack:row.querySelector("[data-pack-value]").value.trim()})).filter(x=>x.cip||x.pack);p.cip=p.cipBoxes[0]?.cip||"";return p})}
 function tableRows(content){
@@ -3415,7 +3472,22 @@ async function saveEditor(id){if(!requireAdmin())return;
  try{
   captureEditorFields(m);
   await uploadPresentationPhotos(m);
+  const variants=Array.isArray(m._variantDrafts)?m._variantDrafts:null;
+  delete m._variantDrafts;
   await syncMedication(m);
+  if(variants){
+   for(const child of variants){
+    if(!String(child.form||'').trim()||!String(child.dosage||'').trim())throw new Error('Chaque présentation doit avoir une forme et un dosage.');
+    child.sections=child.sections||[];
+    if(!child.sections.length)child.sections=[{id:'variant-meta',title:'Métadonnées',type:'text',content:'',enabled:false}];
+    child.sections[0].moleculeParentId=String(m.id);
+    child.sections[0].dciForm=child.form;
+    child.name=m.name+' '+child.dosage;
+    child.category=m.category;
+    await syncMedication(child);
+   }
+   selectedId=m.id;
+  }
   clearLocalDraft();
   detailLocation(id);renderDetail();
   // Après la sauvegarde, afficher le début de la fiche qui vient d'être modifiée.
