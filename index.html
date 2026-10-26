@@ -1427,6 +1427,14 @@ body.info-page main{display:none!important}
 .memo-v26-commercial-pills button.is-active{background:#dcece1;border-color:#7eac90}
 .memo-v26-commercial .presentation-card{margin:0}
 @media(max-width:640px){.memo-v26-tabs{flex-direction:column}}
+
+/* V29 — badges de forme/dosage, discrets et séparés des rubriques */
+.memo-v29-badges{border:1px solid #d9e7dd;border-radius:10px;background:#f8fbf9;margin:12px 0 17px;padding:0 13px}
+.memo-v29-badges summary{cursor:pointer;font-weight:650;padding:12px 0;color:#285f48}
+.memo-v29-badges-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(160px,230px);gap:10px 16px;align-items:center;padding:8px 0 12px}
+.memo-v29-badges-grid select{width:100%;min-width:0}
+.memo-v29-badges .hint{margin:0 0 12px}
+@media(max-width:520px){.memo-v29-badges-grid{grid-template-columns:1fr;gap:6px}.memo-v29-badges-grid select{margin-bottom:8px}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -3108,14 +3116,18 @@ function moleculeForDosage(m){return meds.find(x=>String(x.id)===String(molecule
 function practicalPhotosensitive(m,p=null){
  const root=isMolecule(m)?m:moleculeForDosage(m);
  const inherited=!!practicalFlags(root).photosensitizing;
- if(p)return p.photosensitizingOverride===true?true:p.photosensitizingOverride===false?false:inherited;
- return !!practicalFlags(m).photosensitizing||inherited;
+ const specific=practicalFlags(m).photosensitizingOverride;
+ const effective=specific===true?true:specific===false?false:inherited;
+ if(p)return p.photosensitizingOverride===true?true:p.photosensitizingOverride===false?false:effective;
+ return effective;
 }
 function practicalMTE(m,p=null){
  const root=isMolecule(m)?m:moleculeForDosage(m);
  const inherited=!!practicalFlags(root).mte;
- if(p)return p.mteOverride===true?true:p.mteOverride===false?false:inherited;
- return !!practicalFlags(m).mte||inherited;
+ const specific=practicalFlags(m).mteOverride;
+ const effective=specific===true?true:specific===false?false:inherited;
+ if(p)return p.mteOverride===true?true:p.mteOverride===false?false:effective;
+ return effective;
 }
 function practicalBadges(m,p=null){
  const flags=p||practicalFlags(m),out=[];
@@ -3181,12 +3193,8 @@ function presentationEditor(p,i){
  <div class="presentation-kind-row"><span>Statut de la présentation :</span><label><input type="checkbox" data-pkind="princeps" ${p.presentationKind==="princeps"?"checked":""}> Princeps</label><label><input type="checkbox" data-pkind="generic" ${p.presentationKind==="generic"?"checked":""}> Générique</label><span class="hint">Laisser les deux décochées si non vérifié.</span></div>
  <div class="memo-practical-editor">
  <label><input type="checkbox" data-practical-cold ${p.coldStorage===true?"checked":""}> ❄ Conservation au froid</label>
- <label for="presentation-mte-${i}">⚠ MTE</label>
- <select id="presentation-mte-${i}" data-practical-mte aria-label="Marge thérapeutique étroite pour cette présentation"><option value="inherit" ${p.mteOverride!==true&&p.mteOverride!==false?"selected":""}>Hériter de la molécule</option><option value="yes" ${p.mteOverride===true?"selected":""}>Oui</option><option value="no" ${p.mteOverride===false?"selected":""}>Non</option></select>
  <label><input type="checkbox" data-practical-after ${p.afterOpening===true?"checked":""}> ◷ Durée après ouverture</label>
  <input type="text" data-practical-duration value="${esc(p.afterOpeningDuration||"")}" placeholder="Ex. : 4 semaines" aria-label="Durée après ouverture, texte court" maxlength="45">
- <label for="presentation-photo-${i}">☀ Photosensibilisant</label>
- <select id="presentation-photo-${i}" data-practical-photo aria-label="Photosensibilisant pour cette présentation"><option value="inherit" ${p.photosensitizingOverride!==true&&p.photosensitizingOverride!==false?"selected":""}>Hériter de la molécule</option><option value="yes" ${p.photosensitizingOverride===true?"selected":""}>Oui</option><option value="no" ${p.photosensitizingOverride===false?"selected":""}>Non</option></select>
  <span class="hint">La durée est un résumé facultatif (ex. 4 semaines) : les conditions exactes restent à préciser dans la rubrique Conservation et dans le RCP.</span>
  </div>
  <p class="hint">Coche les critères à afficher sur la fiche. Aucun n'est visible par défaut ; les informations masquées restent enregistrées.</p>
@@ -3725,8 +3733,8 @@ function renderEditor(id){
     afterOpeningDuration:card.querySelector('[data-practical-duration]')?.value.trim()||''};
    const photo=card.querySelector('[data-practical-photo]')?.value;
    const mte=card.querySelector('[data-practical-mte]')?.value;
-   p.photosensitizingOverride=photo==='yes'?true:photo==='no'?false:null;
-   p.mteOverride=mte==='yes'?true:mte==='no'?false:null;
+   if(photo!==undefined)p.photosensitizingOverride=photo==='yes'?true:photo==='no'?false:null;
+   if(mte!==undefined)p.mteOverride=mte==='yes'?true:mte==='no'?false:null;
    card.querySelectorAll('[data-show-field]').forEach(el=>p[el.dataset.showField]=el.checked);
    card.querySelectorAll('[data-pfield]').forEach(el=>p[el.dataset.pfield]=el.value.trim());
    p.cipBoxes=[...card.querySelectorAll('[data-cip-pack-row]')].map(row=>({
@@ -3795,6 +3803,16 @@ function renderEditor(id){
    if(hint)hint.textContent='Photo sélectionnée : '+file.name;
   });
  }
+ function variantBadgePanel(child){
+  const flags=practicalFlags(child);
+  const pick=(key)=>flags[key]===true?'yes':flags[key]===false?'no':'inherit';
+  return `<details class="memo-v29-badges"><summary>🏷️ Badges et caractéristiques</summary>
+   <div class="memo-v29-badges-grid">
+    <label for="memo-v29-mte">⚠️ MTE</label><select id="memo-v29-mte" data-v29-badge="mteOverride"><option value="inherit" ${pick('mteOverride')==='inherit'?'selected':''}>Hériter de la molécule</option><option value="yes" ${pick('mteOverride')==='yes'?'selected':''}>Oui</option><option value="no" ${pick('mteOverride')==='no'?'selected':''}>Non</option></select>
+    <label for="memo-v29-photo">☀️ Photosensibilisant</label><select id="memo-v29-photo" data-v29-badge="photosensitizingOverride"><option value="inherit" ${pick('photosensitizingOverride')==='inherit'?'selected':''}>Hériter de la molécule</option><option value="yes" ${pick('photosensitizingOverride')==='yes'?'selected':''}>Oui</option><option value="no" ${pick('photosensitizingOverride')==='no'?'selected':''}>Non</option></select>
+   </div><p class="hint">Ces réglages concernent la forme et le dosage. Les badges de conservation restent propres à chaque médicament commercial.</p>
+  </details>`;
+ }
  function variantReadCard(){
   variantReadCommercial();
   if(!variantActiveId)return;
@@ -3818,13 +3836,19 @@ function renderEditor(id){
   if(!child.sections.length)child.sections=[{id:'variant-meta',title:'Métadonnées',type:'text',content:'',enabled:false}];
   child.sections[0].moleculeParentId=String(m.id);
   child.sections[0].dciForm=child.form;
+  const badgeInputs=card.querySelectorAll('[data-v29-badge]');
+  if(badgeInputs.length){
+   const flags={...(child.sections[0].practicalFlags||{})};
+   badgeInputs.forEach(el=>{flags[el.dataset.v29Badge]=el.value==='yes'?true:el.value==='no'?false:null});
+   child.sections[0].practicalFlags=flags;
+  }
  }
  function variantReadAll(){variantReadCard()}
  function variantRender(){
   const items=[...variantDrafts.values()];
   if(!variantDrafts.has(variantActiveId))variantActiveId=String(items[0]?.id||'');
   const child=variantDrafts.get(variantActiveId);
-  variantRoot.innerHTML=`<div class="memo-v16-layout"><div class="memo-v16-list" role="group" aria-label="Choisir une présentation">${items.map(item=>`<button type="button" class="memo-v16-choice ${String(item.id)===variantActiveId?'is-active':''}" data-variant-choice="${esc(item.id)}"><strong>${esc(variantLabel(item))}</strong><small>${item.sections?.filter(sec=>variantIsVisible(sec)&&!variantIsSource(sec)).length||0} rubrique(s) spécifique(s)</small></button>`).join('')||'<p class="muted">Aucune présentation liée.</p>'}</div><div class="memo-v16-editor-area">${child?`<div class="memo-v16-editor"><h4>${esc(variantLabel(child))}</h4><div class="admin-grid"><label>Forme pharmaceutique<input data-variant-form list="memo-forms" value="${esc(child.form||child.sections?.[0]?.dciForm||'')}" placeholder="Ex. : gélule"></label><label>Dosage<input data-variant-dose value="${esc(child.dosage||'')}" placeholder="Ex. : 500 mg"></label></div><div class="memo-v26-tabs"><button type="button" data-v26-tab="particularites" class="${variantSubtab==='particularites'?'is-active':''}">Particularités</button><button type="button" data-v26-tab="commerciaux" class="${variantSubtab==='commerciaux'?'is-active':''}">Médicaments commerciaux (${(child.presentations||[]).length})</button></div><div ${variantSubtab==='particularites'?'':'hidden'}><div class="memo-v16-sections">${(child.sections||[]).map((sec,i)=>variantIsSource(sec)||sec.id==='variant-meta'?'':variantSectionHTML(sec,i,child.sections.length)).join('')}</div><div class="memo-v16-actions"><button type="button" class="soft" data-variant-add-section>+ Rubrique texte</button><button type="button" class="soft" data-variant-add-table>+ Tableau</button></div></div>${variantSubtab==='commerciaux'?variantCommercialMarkup(child):''}</div>`:''}</div></div>`;
+  variantRoot.innerHTML=`<div class="memo-v16-layout"><div class="memo-v16-list" role="group" aria-label="Choisir une présentation">${items.map(item=>`<button type="button" class="memo-v16-choice ${String(item.id)===variantActiveId?'is-active':''}" data-variant-choice="${esc(item.id)}"><strong>${esc(variantLabel(item))}</strong><small>${item.sections?.filter(sec=>variantIsVisible(sec)&&!variantIsSource(sec)).length||0} rubrique(s) spécifique(s)</small></button>`).join('')||'<p class="muted">Aucune présentation liée.</p>'}</div><div class="memo-v16-editor-area">${child?`<div class="memo-v16-editor"><h4>${esc(variantLabel(child))}</h4><div class="admin-grid"><label>Forme pharmaceutique<input data-variant-form list="memo-forms" value="${esc(child.form||child.sections?.[0]?.dciForm||'')}" placeholder="Ex. : gélule"></label><label>Dosage<input data-variant-dose value="${esc(child.dosage||'')}" placeholder="Ex. : 500 mg"></label></div><div class="memo-v26-tabs"><button type="button" data-v26-tab="particularites" class="${variantSubtab==='particularites'?'is-active':''}">Particularités</button><button type="button" data-v26-tab="commerciaux" class="${variantSubtab==='commerciaux'?'is-active':''}">Médicaments commerciaux (${(child.presentations||[]).length})</button></div><div ${variantSubtab==='particularites'?'':'hidden'}>${variantBadgePanel(child)}<div class="memo-v16-sections">${(child.sections||[]).map((sec,i)=>variantIsSource(sec)||sec.id==='variant-meta'?'':variantSectionHTML(sec,i,child.sections.length)).join('')}</div><div class="memo-v16-actions"><button type="button" class="soft" data-variant-add-section>+ Rubrique texte</button><button type="button" class="soft" data-variant-add-table>+ Tableau</button></div></div>${variantSubtab==='commerciaux'?variantCommercialMarkup(child):''}</div>`:''}</div></div>`;
   variantSources.innerHTML=child?(child.sections||[]).map((sec,i)=>variantIsSource(sec)?variantSectionHTML(sec,i,child.sections.length):'').join(''):'';
   const sourceHeading=document.getElementById('memo-variant-sources-heading');
   if(sourceHeading)sourceHeading.hidden=!variantSources.children.length;
