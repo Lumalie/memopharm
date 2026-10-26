@@ -1367,20 +1367,20 @@ body.info-page main{display:none!important}
 #detail .memo-date-row{display:block;margin-top:9px;color:#6f8076;font-size:.78rem;line-height:1.5;font-weight:400}
 #detail .memo-verified-date{color:#7d8981}
 #detail .memo-selected-presentation .memo-date-row{margin-top:3px;color:#94796c}
-#detail .memo-combined-sources{margin:24px 0 4px;border-top:1px solid #dbe5dc;color:#2b604d}
-#detail .memo-combined-sources>summary{cursor:pointer;list-style:none;font-weight:750;padding:14px 2px;font-size:.98rem}
-#detail .memo-combined-sources>summary::-webkit-details-marker{display:none}
-#detail .memo-combined-sources>summary::before{content:'▸';display:inline-block;margin-right:10px;font-size:.8rem}
-#detail .memo-combined-sources[open]>summary::before{content:'▾'}
-#detail .memo-sources-inner{padding:2px 10px 12px}
-#detail .memo-source-group{padding:10px 0;color:#42584c;font-size:.9rem;line-height:1.55}
-#detail .memo-source-group+.memo-source-group{border-top:1px solid #e3eae4}
-#detail .memo-source-group h4{margin:0 0 8px;font-size:.9rem;color:#235c48}
-#detail .memo-source-group .documentation-source{overflow-wrap:anywhere}
-#detail .memo-source-group .documentation-source p{margin:5px 0}
+.memo-external-sources .memo-combined-sources{margin:24px 0 4px;border-top:1px solid #dbe5dc;color:#2b604d}
+.memo-external-sources .memo-combined-sources>summary{cursor:pointer;list-style:none;font-weight:750;padding:14px 2px;font-size:.98rem}
+.memo-external-sources .memo-combined-sources>summary::-webkit-details-marker{display:none}
+.memo-external-sources .memo-combined-sources>summary::before{content:'▸';display:inline-block;margin-right:10px;font-size:.8rem}
+.memo-external-sources .memo-combined-sources[open]>summary::before{content:'▾'}
+.memo-external-sources .memo-sources-inner{padding:2px 10px 12px}
+.memo-external-sources .memo-source-group{padding:10px 0;color:#42584c;font-size:.9rem;line-height:1.55}
+.memo-external-sources .memo-source-group+.memo-source-group{border-top:1px solid #e3eae4}
+.memo-external-sources .memo-source-group h4{margin:0 0 8px;font-size:.9rem;color:#235c48}
+.memo-external-sources .memo-source-group .documentation-source{overflow-wrap:anywhere}
+.memo-external-sources .memo-source-group .documentation-source p{margin:5px 0}
 
 /* V23 — documentation séparée et plus compacte */
-#detail .memo-combined-sources{
+.memo-external-sources .memo-combined-sources{
   margin:16px 0 5px;
   border:1px solid #d9e6dd;
   border-radius:12px;
@@ -1388,16 +1388,23 @@ body.info-page main{display:none!important}
   color:#2b604d;
   overflow:hidden;
 }
-#detail .memo-combined-sources>summary{padding:10px 13px;font-size:.94rem}
-#detail .memo-sources-inner{padding:0 13px 9px}
-#detail .memo-source-group{padding:7px 0;font-size:.86rem;line-height:1.42}
-#detail .memo-source-group h4{margin:0 0 5px;font-size:.86rem}
-#detail .memo-source-group .documentation-source p{margin:3px 0}
-#detail .memo-combined-sources .documentation-source{margin:0}
-#detail .memo-inline-cip{display:inline-flex;align-items:center;vertical-align:baseline;
+.memo-external-sources .memo-combined-sources>summary{padding:10px 13px;font-size:.94rem}
+.memo-external-sources .memo-sources-inner{padding:0 13px 9px}
+.memo-external-sources .memo-source-group{padding:7px 0;font-size:.86rem;line-height:1.42}
+.memo-external-sources .memo-source-group h4{margin:0 0 5px;font-size:.86rem}
+.memo-external-sources .memo-source-group .documentation-source p{margin:3px 0}
+.memo-external-sources .memo-combined-sources .documentation-source{margin:0}
+.memo-external-sources .memo-inline-cip{display:inline-flex;align-items:center;vertical-align:baseline;
   border:1px solid #c6dce9;border-radius:5px;background:#eef6fc;color:#285b80;
   padding:1px 5px;font:inherit;font-size:.92em;font-weight:700;cursor:pointer;white-space:nowrap}
-#detail .memo-inline-cip:hover,#detail .memo-inline-cip:focus-visible{background:#dbeefa;border-color:#7faac7}
+.memo-external-sources .memo-inline-cip:hover,.memo-external-sources .memo-inline-cip:focus-visible{background:#dbeefa;border-color:#7faac7}
+
+/* V24 : documentation hors de la carte principale, véritable carte soeur. */
+#searchLayout>.memo-external-sources{grid-column:1/-1;background:var(--card);border:1px solid var(--line);border-radius:17px;box-shadow:0 5px 20px #193f3408;padding:12px 15px;margin-top:0;min-width:0}
+#searchLayout>.memo-external-sources .memo-combined-sources{margin:0;border:0;border-radius:0;background:transparent}
+#searchLayout>.memo-external-sources .memo-combined-sources>summary{padding:3px 0 7px}
+#searchLayout>.memo-external-sources .memo-sources-inner{padding:0 2px 3px}
+#searchLayout:has(#editor:not(.hidden))>.memo-external-sources{display:none!important}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -1648,6 +1655,7 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
   </div>
   <div id="searchLayout" class="layout hidden">
     <section class="panel" aria-live="polite"><div id="detail" class="detail"><div class="empty">Choisis une fiche dans la bibliothèque pour afficher son contenu.</div></div><div id="editor" class="detail admin hidden"></div></section>
+    <div id="memo-combined-sources-slot" class="memo-external-sources hidden" aria-label="Références documentaires"></div>
   </div>
   </section><section id="exploreView" class="hidden"><div class="explore-heading"><h2>Explorer les fiches</h2><p>Parcourez les fiches communes et leurs spécialités associées.</p></div><div class="explore-search"><label for="exploreSearch">Rechercher dans les fiches</label><div class="explore-search-row"><input id="exploreSearch" type="search" autocomplete="off" placeholder="Ex. : amoxicilline, oubli de prise, CIP, conservation…"><button id="clearExploreSearch" type="button">Effacer</button></div><p id="exploreSearchCount" class="muted" aria-live="polite"></p></div><div class="explore-controls"><label>Classe thérapeutique<select id="exploreClass"></select></label><label>Indication thérapeutique<select id="exploreIndication"></select></label><label>Forme pharmaceutique<select id="exploreForm"></select></label><button id="resetExplore" type="button">Effacer les filtres</button></div><div id="exploreCards" class="explore-cards"></div></section><section id="sourcesView" class="hidden"><div class="explore-heading"><h2>Sources documentaires</h2><p>Références communes utilisées pour construire et vérifier les fiches de Mémopharm.</p></div><div id="sourcesList" class="sources-list"></div><div id="sourcesAdmin" class="panel hidden" style="padding:18px;margin-top:18px"></div></section><p class="foot">Les fiches finales devront être renseignées à partir des sources officielles (notices et RCP notamment), avec date de mise à jour et statut de vérification. Mémopharm est une aide documentaire : elle ne remplace ni le jugement professionnel ni la vérification de la spécialité exacte.</p>
   <div class="notice"><strong>Base documentaire en construction :</strong> seules les fiches publiées sont visibles publiquement. Les contenus doivent être vérifiés à partir des sources officielles et ne remplacent pas la vérification de la spécialité exacte ni le jugement professionnel.</div>
@@ -2943,7 +2951,9 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  ${isGroup(m)||isMolecule(m)?"":renderPresentations(m)}
  ${isMolecule(m)&&moleculeDosages.length?`<details class="molecule-general" id="molecule-general" ${targetSectionId?"open":""}><summary>📖 Informations générales</summary><div class="molecule-general-inner">${displaySections.map(s=>renderSection(s,targetSectionId)).join("")}</div></details>`:displaySections.map(s=>renderSection(s,targetSectionId)).join("")}
   ${isMolecule(m)&&moleculeDosages.length?`<section class="molecule-tabs" id="molecule-tabs" aria-label="Présentations"><div class="molecule-tabs-inner"><div class="molecule-tab-strip molecule-form-strip" role="tablist" aria-label="Formes pharmaceutiques de ${esc(displayMedName(m))}"></div><div class="molecule-tab-strip molecule-dose-strip" role="tablist" aria-label="Dosages disponibles"></div><div class="molecule-tab-content" id="molecule-tab-content"></div></div></section>`:""}
- <div id="memo-combined-sources-slot">${ficheCombinedSources(m,documentationSections)}</div>`;
+`;
+ const memoExternalSources=$("memo-combined-sources-slot");
+ if(memoExternalSources){memoExternalSources.innerHTML=ficheCombinedSources(m,documentationSections);memoExternalSources.classList.toggle("hidden",!memoExternalSources.innerHTML.trim());}
  memoLinkifyCips($("detail"));
  // Deux rangées d'onglets : forme pharmaceutique puis dosage, sans dupliquer les fiches.
  if(isMolecule(m)&&moleculeDosages.length){
@@ -2979,7 +2989,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
    const selectedTitle=[moleculeName,dose].filter(Boolean).join(" ")+(form?" — "+form:"");
    panel.innerHTML=`<div class="memo-selected-presentation"><span class="memo-selected-caption">PRÉSENTATION SÉLECTIONNÉE</span><strong>${esc(selectedTitle)}</strong>${ficheDateLabel(child)}</div>${presentationHtml}${priorityHtml}${specificHtml}${(!priorityHtml&&!specificHtml&&!presentationHtml)?'<p class="memo-specific-empty">Aucune particularité renseignée pour cette présentation.</p>':''}`;
    const sourcesSlot=$("memo-combined-sources-slot");
-   if(sourcesSlot)sourcesSlot.innerHTML=ficheCombinedSources(m,documentationSections,child);
+   if(sourcesSlot){sourcesSlot.innerHTML=ficheCombinedSources(m,documentationSections,child);sourcesSlot.classList.toggle("hidden",!sourcesSlot.innerHTML.trim());memoLinkifyCips(sourcesSlot);}
    panel.querySelectorAll("[data-group-open]").forEach(b=>b.onclick=()=>openMedication(b.dataset.groupOpen));
    panel.querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=panel.querySelector("#presentation-info");const index=sel.value===""?null:Number(sel.value);if(target)target.innerHTML=index!==null&&child.presentations?.[index]?presentationInfo(child.presentations[index],child):""});
   };
