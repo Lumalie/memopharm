@@ -1261,6 +1261,25 @@ body.info-page main{display:none!important}
 #editor .memo-catalog-empty{font-size:.85rem;color:#607568;padding:10px}
 #editor #memo-panel-identity .admin-grid > .full.hidden{display:none!important}
 
+
+/* V14 — consultation de la molécule : séparation et particularités sans duplication */
+.detail .molecule-tabs{margin-top:15px!important;padding-top:20px!important;border-top:1px solid #dce6df!important}
+.detail .molecule-tab-content{padding:10px 0 0}
+.detail .memo-selected-presentation{display:flex;flex-direction:column;gap:5px;background:#f8f0eb;border-left:3px solid #d5aa95;border-radius:9px;padding:12px 15px;margin:8px 0 18px}
+.detail .memo-selected-caption{font-size:.72rem;letter-spacing:.07em;font-weight:750;color:#98654e}
+.detail .memo-selected-presentation strong{font-size:1.03rem;color:#654436}
+.detail .memo-specific-accordion{border-bottom:1px solid #dce6df;margin:0;background:transparent}
+.detail .memo-specific-accordion>summary{display:list-item;cursor:pointer;color:#245d4b;font-weight:750;font-size:1.02rem;padding:13px 4px;list-style:disclosure-closed inside}
+.detail .memo-specific-accordion[open]>summary{list-style-type:disclosure-open}
+.detail .memo-specific-accordion>summary:hover{color:#39795e}
+.detail .memo-specific-accordion>summary:focus-visible{outline:2px solid #78a58b;outline-offset:2px}
+.detail .memo-specific-body{padding:0 4px 12px 18px}
+.detail .memo-specific-body>.section{margin:0;padding:0;border:0}
+.detail .memo-specific-body>.section>h3{display:none}
+.detail .memo-specific-empty{color:#6d8076;font-style:italic;margin:12px 2px 20px}
+.detail .molecule-tab-content .presentation-fixed{margin:0 0 15px;padding:0 0 12px;border-bottom:1px solid #dce6df}
+@media(max-width:600px){.detail .memo-selected-presentation{padding:10px 12px}.detail .memo-specific-body{padding-left:9px}}
+
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -2761,7 +2780,13 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
   const renderChild=child=>{
    if(!child||!panel)return;
    const childSections=(child.sections||[]).filter(x=>x.enabled!==false&&!isDocumentationSection(x)&&String(x.content||" ").trim()).map(x=>resolveSharedSection(child,x));
-   panel.innerHTML=`<div class="molecule-tab-heading"><strong>${esc(displayMedName(child))}</strong><button type="button" class="soft" data-group-open="${esc(child.id)}">Ouvrir la fiche complète ↗</button></div>${renderPresentations(child)}${childSections.map(x=>renderSection(x)).join("")}${ficheDocumentation(child,(child.sections||[]).filter(isDocumentationSection))}`;
+   // Les onglets sont désormais la page de consultation des particularités de chaque présentation.
+   // Ne pas répéter les conseils généraux : seules les rubriques spécifiques renseignées figurent ici.
+   const specificSections=childSections.filter(x=>x.id!=="coup-oeil"&&x.id!=="alerte-delivrance"&&x.id!=="conseils-comptoir"&&x.id!=="sources");
+   const presentationHtml=(child.presentations||[]).length?renderPresentations(child):"";
+   const specificHtml=specificSections.map((x,i)=>`<details class="memo-specific-accordion" ${i===0?'open':''}><summary>${esc(x.title||"Information spécifique")}</summary><div class="memo-specific-body">${renderSection(x)}</div></details>`).join("");
+   const documents=ficheDocumentation(child,(child.sections||[]).filter(isDocumentationSection));
+   panel.innerHTML=`<div class="memo-selected-presentation"><span class="memo-selected-caption">PRÉSENTATION SÉLECTIONNÉE</span><strong>${esc(displayMedName(child))}</strong></div>${presentationHtml}${specificHtml||(!presentationHtml?'<p class="memo-specific-empty">Aucune particularité renseignée pour cette présentation.</p>':'')}${documents}`;
    panel.querySelectorAll("[data-group-open]").forEach(b=>b.onclick=()=>openMedication(b.dataset.groupOpen));
    panel.querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=panel.querySelector("#presentation-info");const index=sel.value===""?null:Number(sel.value);if(target)target.innerHTML=index!==null&&child.presentations?.[index]?presentationInfo(child.presentations[index],child):""});
   };
