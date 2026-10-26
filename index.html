@@ -1218,6 +1218,15 @@ body.info-page main{display:none!important}
 #editor .memo-type-prominent{background:#eef5ee;border:1px solid #d5e5d8;border-radius:12px;padding:13px;margin-bottom:8px}
 #editor .memo-type-prominent label{font-weight:800;color:#244f3c}
 #editor #memo-editor-source-sections{margin-bottom:20px}
+
+/* V10 — identité : nom prioritaire, badges à droite, sans encart supplémentaire */
+.memo-name-flags-row{display:grid;grid-template-columns:minmax(240px,1fr) auto;gap:16px;align-items:end;min-width:0}
+.memo-name-flags-row .memo-name-primary{min-width:0}
+.memo-name-flags-row .memo-practical-editor{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding:0;margin:0;border:0;background:transparent;box-shadow:none;min-width:0}
+.memo-name-flags-row .memo-practical-editor label{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;margin:0;font-weight:500}
+.memo-name-flags-row .memo-practical-editor input{margin:0}
+.memo-name-flags-row .memo-practical-editor.hidden{display:none}
+@media(max-width:760px){.memo-name-flags-row{grid-template-columns:minmax(0,1fr)}.memo-name-flags-row .memo-practical-editor{gap:8px 14px}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -3183,14 +3192,30 @@ function renderEditor(id){
  });
  const editorTop=editorRoot.querySelector(".detailtop");editorTop.after(nav,...tabDefinitions.map(([key])=>panels[key]));
  panels.identity.appendChild(identityGrid);
- const advanced=document.createElement("details");advanced.className="memo-editor-advanced";
- advanced.innerHTML="<summary>Options avancées d’identification</summary>";
- // Le type de fiche est le premier champ visible de l’onglet Identité.
+ // Type de fiche visible en premier, puis nom et badges côte à côte.
  const typeField=$("f-entry-type")?.closest(".full");
  if(typeField){identityGrid.prepend(typeField);typeField.classList.add("memo-type-prominent")}
- const advancedGrid=document.createElement("div");advancedGrid.className="admin-grid";
- [$("molecule-settings")].filter(Boolean).forEach(el=>advancedGrid.appendChild(el));
- advanced.appendChild(advancedGrid);panels.identity.appendChild(advanced);
+ const nameField=$("f-name")?.parentElement;
+ const parentField=$("parent-group-wrap");
+ const flagsField=$("molecule-practical-flags");
+ const moleculeSettings=$("molecule-settings");
+ // Garder la liaison à une molécule accessible pour les anciennes fiches dosage/forme.
+ if(moleculeSettings&&parentField)parentField.before(moleculeSettings);
+ if(nameField&&parentField){
+   const nameRow=document.createElement("div");nameRow.className="memo-name-flags-row full";
+   nameField.classList.add("memo-name-primary");
+   nameRow.appendChild(nameField);
+   if(flagsField){
+     flagsField.classList.remove("full");
+     flagsField.querySelector(".hint")?.remove();
+     nameRow.appendChild(flagsField);
+   }
+   parentField.before(nameRow);
+ }
+ // Les badges ne concernent que les fiches molécules ; les autres types gardent leurs champs enregistrables.
+ const showFlags=()=>{if(flagsField)flagsField.classList.toggle("hidden",$("f-entry-type").value!=="molecule")};
+ $("f-entry-type").addEventListener("change",showFlags);
+ showFlags();
  const generalHeading=document.createElement("div");generalHeading.className="memo-editor-panel-heading";generalHeading.textContent="Rubriques de cette fiche";
  panels.general.append(generalHeading,sectionHint,sectionsRoot,sectionActions);
  if(sectionHeading)sectionHeading.remove();
