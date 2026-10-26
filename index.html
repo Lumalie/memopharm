@@ -2215,13 +2215,26 @@ function memoBadgeMatches(m,kind){
   return true;
  });
 }
-function memoOpenBadgeFilter(kind){
- showView("explore");
+// Une navigation par badge crée une vraie étape dans l'historique.
+function memoNavigateExplorerFilter(filterType,filterValue){
+ const filter={type:filterType,value:filterValue};
+ navigateToView("explore");
+ history.replaceState({...history.state,memopharmExplorerFilter:filter},"",location.href);
+ memoApplyExplorerFilter(filter);
+}
+function memoApplyExplorerFilter(filter){
+ if(!filter)return;
+ const ids={badge:"exploreBadge",class:"exploreClass",indication:"exploreIndication",form:"exploreForm"};
  $("exploreSearch").value="";
- $("exploreClass").value="";$("exploreIndication").value="";$("exploreForm").value="";
- $("exploreBadge").value=kind;
+ for(const id of Object.values(ids))$(id).value="";
+ // Les listes de classes, indications et formes sont remplies par renderExplorer.
+ renderExplorer();
+ const input=$(ids[filter.type]);
+ if(input)input.value=filter.value;
+ explorerVisibleLimit=20;
  renderExplorer();
 }
+function memoOpenBadgeFilter(kind){memoNavigateExplorerFilter("badge",kind)}
 function memoWireBadgeClicks(scope){
  scope.querySelectorAll("[data-filter-badge]").forEach(b=>b.onclick=()=>memoOpenBadgeFilter(b.dataset.filterBadge));
 }
@@ -2616,6 +2629,7 @@ function restoreHistoryPage(state=history.state){
   renderDetail(params.get("rubrique"),params.has("presentation")?Number(params.get("presentation")):null);
  }else{
   showView(location.hash==="#explorer"?"explore":location.hash==="#sources"?"sources":"home");
+  if(location.hash==="#explorer"&&state?.memopharmExplorerFilter)memoApplyExplorerFilter(state.memopharmExplorerFilter);
  }
  window.scrollTo({top:0,behavior:"instant"});
 }
@@ -3093,9 +3107,9 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
   button.classList.toggle("is-open",!panel.hidden);
  });
  memoWireBadgeClicks($("detail"));
- $("detail").querySelectorAll("[data-fiche-category]").forEach(btn=>btn.onclick=()=>{showView("explore");$("exploreClass").value=btn.dataset.ficheCategory;renderExplorer()});
- $("detail").querySelectorAll("[data-fiche-indication]").forEach(btn=>btn.onclick=()=>{showView("explore");$("exploreIndication").value=btn.dataset.ficheIndication;renderExplorer()});
- $("detail").querySelectorAll("[data-fiche-form]").forEach(btn=>btn.onclick=()=>{showView("explore");renderExplorer();$("exploreForm").value=btn.dataset.ficheForm;renderExplorer()});
+ $("detail").querySelectorAll("[data-fiche-category]").forEach(btn=>btn.onclick=()=>memoNavigateExplorerFilter("class",btn.dataset.ficheCategory));
+ $("detail").querySelectorAll("[data-fiche-indication]").forEach(btn=>btn.onclick=()=>memoNavigateExplorerFilter("indication",btn.dataset.ficheIndication));
+ $("detail").querySelectorAll("[data-fiche-form]").forEach(btn=>btn.onclick=()=>memoNavigateExplorerFilter("form",btn.dataset.ficheForm));
  if(admin&&$("editBtn"))$("editBtn").onclick=()=>renderEditor(m.id);
  $("detail").querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=$("presentation-info");if(!target)return;const index=sel.value===""?null:Number(sel.value);target.innerHTML=index!==null&&m.presentations?.[index]?presentationInfo(m.presentations[index],m):"";memoWireBadgeClicks(target)});
  if(targetPresentationIndex!==null&&!targetSectionId){const details=$("presentations-details");if(details){details.open=true;const choice=$("presentation-choice");if(choice&&m.presentations?.[targetPresentationIndex]){choice.value=String(targetPresentationIndex);$("presentation-info").innerHTML=presentationInfo(m.presentations[targetPresentationIndex],m);memoWireBadgeClicks($("presentation-info"))}requestAnimationFrame(()=>details.scrollIntoView({behavior:"smooth",block:"start"}))}}
@@ -4531,6 +4545,7 @@ if(!location.search&&!location.hash){
  }catch(e){}
 }
 openedSearchFiche=!!new URLSearchParams(location.search).get("fiche");renderFilters();renderResults();if(location.hash==="#explorer")showView("explore");else if(location.hash==="#sources")showView("sources");else if(location.hash==="#a-propos"||location.hash==="#contact")navigateInfoPage(location.hash.slice(1),false);
+if(location.hash==="#explorer"&&history.state?.memopharmExplorerFilter)memoApplyExplorerFilter(history.state.memopharmExplorerFilter);
 if(currentView==="explore"&&!meds.length)$("exploreCards").innerHTML='<div class="empty">Chargement des fiches…</div>';
 initCloud();
 // V6.64 : liens internes et historique pour les pages À propos / Contact.
