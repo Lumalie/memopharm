@@ -3542,16 +3542,27 @@ function renderEditor(id){
  if(trackingPanel){const heading=document.createElement('h3');heading.textContent='Sources de la présentation sélectionnée';heading.id='memo-variant-sources-heading';trackingPanel.append(heading,variantSources)}
  const variantIsSource=sec=>sec.id==='sources'||/sources(?:\s+et\s+mise\s+[àa]\s+jour)?/i.test(sec.title||'');
  const variantIsVisible=sec=>sec.enabled!==false&&(sec.content||sec.title);
+ const variantSectionCatalog=()=>{
+  const map=new Map();
+  [...(m.sections||[]),...meds.flatMap(med=>med.sections||[]),...DEFAULT_SECTIONS].forEach(sec=>{
+   if(!sec||variantIsSource(sec)||sec.id==='variant-meta'||!sec.title)return;
+   const key=String(sec.title).trim().toLocaleLowerCase('fr');
+   if(!map.has(key))map.set(key,{id:sec.id||'variant-'+crypto.randomUUID(),title:sec.title,type:sec.type==='table'?'table':'text',content:'',enabled:true});
+  });
+  return [...map.values()].map(sec=>({...sec,id:'variant-'+crypto.randomUUID()}));
+ };
  const variantLabel=child=>[m.name,child.dosage,child.form||child.sections?.[0]?.dciForm].filter(Boolean).join(' — ');
- const variantSectionHTML=(sec,i)=>{
-  const table=sec.type==='table';
-  return `<div class="memo-v16-section" data-variant-section="${i}">
-   <div class="memo-v16-section-head"><button type="button" class="memo-v16-section-toggle" data-variant-section-toggle aria-expanded="${variantOpenSection===i}">${esc(sec.title||'Nouvelle rubrique')} <span>⌄</span></button><button type="button" class="memo-v16-delete" data-variant-remove-section title="Retirer cette rubrique" aria-label="Retirer cette rubrique">✕</button></div>
-   <div class="memo-v16-section-body" ${variantOpenSection===i?'':'hidden'}>
-    <label>Rubrique<input data-variant-title value="${esc(sec.title||'')}" placeholder="Ex. : Posologie"></label>
-    <label>Type de contenu<select data-variant-type><option value="text" ${!table?'selected':''}>Texte enrichi</option><option value="table" ${table?'selected':''}>Tableau simple</option></select></label>
-    ${table?`<label>Tableau (colonnes séparées par |, une ligne par rangée)<textarea data-variant-table rows="6">${esc(sec.content||'')}</textarea></label>`:`<div class="text-edit-wrap"><div class="text-format-bubble" hidden><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="link" title="Insérer un lien URL (Ctrl+K)">🔗 Lien</button><button type="button" data-format="bullets" title="Liste à puces">• Liste</button><button type="button" data-format="numbers" title="Liste numérotée">1. Liste</button><select data-format-align aria-label="Alignement du texte"><option value="">Aligner…</option><option value="left">Gauche</option><option value="center">Centré</option><option value="right">Droite</option><option value="justify">Justifié</option></select><select data-format-size aria-label="Taille de police"><option value="">Taille…</option><option value="12">12 px</option><option value="14">14 px</option><option value="16">16 px</option><option value="18">18 px</option><option value="20">20 px</option><option value="24">24 px</option><option value="28">28 px</option></select><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris précision</option><option value="pink">Rose conseil</option></select></div><textarea data-field="content" data-variant-content class="memo-rich-storage" tabindex="-1" aria-hidden="true">${esc(sec.content||'')}</textarea><div class="memo-rich-editor" contenteditable="true" role="textbox" aria-label="Contenu spécifique" aria-multiline="true"></div></div>`}
-   </div></div>`;
+ // Même composant HTML que dans « Informations générales » : sectionEditor.
+ const variantSectionHTML=(sec,i,total)=>{
+  let html=sectionEditor(sec,i);
+  html=html.replace(/data-act=/g,'data-variant-act=').replace(/data-index=/g,'data-variant-index=');
+  // Le dernier index est calculé sur la présentation, pas sur la fiche molécule.
+  html=html.replace(/(<button[^>]*data-variant-act="down"[^>]*?) disabled(>)/,(_all,start,end)=>i===total-1?start+' disabled'+end:start+end);
+  if(i===total-1)html=html.replace(/(<button[^>]*data-variant-act="down"[^>]*?)(>)/,(_all,start,end)=>start.includes('disabled')?start+end:start+' disabled'+end);
+  html=html.replace(`data-section="${i}"`,`data-variant-section="${i}"`);
+  html=html.replace('<strong>Rubrique '+(i+1)+'</strong>',`<button type="button" class="memo-section-expand" data-variant-section-toggle aria-expanded="${variantOpenSection===i}">${esc(sec.title||'Rubrique '+(i+1))}</button>`);
+  html=html.replace('class="section-editor ',`class="section-editor memo-variant-section ${variantOpenSection===i?'':'memo-collapsed'} `);
+  return html;
  };
  function variantReadCard(){
   if(!variantActiveId)return;
@@ -3562,16 +3573,16 @@ function renderEditor(id){
   child.name=(document.getElementById('f-name')?.value.trim()||m.name)+' '+child.dosage;
   child.category=m.category;
   const old=child.sections||[];
-  const visible=old.filter(variantIsVisible);
-  const hidden=old.filter(sec=>!variantIsVisible(sec));
-  const allSections=[...card.querySelectorAll('.memo-v16-section'),...variantSources.querySelectorAll('.memo-v16-section')];
-  const updated=allSections.map(el=>{
-   const i=Number(el.dataset.variantSection),previous=visible[i]||{};
-   const type=el.querySelector('[data-variant-type]')?.value||previous.type||'text';
-   const content=type==='table'?el.querySelector('[data-variant-table]')?.value||'':el.querySelector('[data-variant-content]')?.value||'';
-   return {...previous,id:previous.id||'variant-'+crypto.randomUUID(),type,title:el.querySelector('[data-variant-title]')?.value.trim()||'Précision',content,enabled:true};
+  const cards=[...card.querySelectorAll('.memo-variant-section'),...variantSources.querySelectorAll('.memo-variant-section')];
+  const updated=cards.map(el=>{
+   const i=Number(el.dataset.variantSection),previous=old[i]||{};
+   const type=el.querySelector('[data-field="type"]')?.value||previous.type||'text';
+   const content=type==='table'?readTableGrid(el):el.querySelector('[data-field="content"]')?.value||'';
+   return {...previous,id:previous.id||'variant-'+crypto.randomUUID(),type,title:el.querySelector('[data-field="title"]')?.value.trim()||'Précision',content,enabled:el.classList.contains('is-disabled')?false:true};
   });
-  child.sections=[...updated,...hidden];
+  // Les rubriques masquées restent présentes et éditables, comme dans Informations générales.
+  const byIndex=new Map(cards.map((el,k)=>[Number(el.dataset.variantSection),updated[k]]));
+  child.sections=old.map((sec,i)=>byIndex.get(i)||sec);
   if(!child.sections.length)child.sections=[{id:'variant-meta',title:'Métadonnées',type:'text',content:'',enabled:false}];
   child.sections[0].moleculeParentId=String(m.id);
   child.sections[0].dciForm=child.form;
@@ -3581,8 +3592,8 @@ function renderEditor(id){
   const items=[...variantDrafts.values()];
   if(!variantDrafts.has(variantActiveId))variantActiveId=String(items[0]?.id||'');
   const child=variantDrafts.get(variantActiveId);
-  variantRoot.innerHTML=`<div class="memo-v16-layout"><div class="memo-v16-list" role="group" aria-label="Choisir une présentation">${items.map(item=>`<button type="button" class="memo-v16-choice ${String(item.id)===variantActiveId?'is-active':''}" data-variant-choice="${esc(item.id)}"><strong>${esc(variantLabel(item))}</strong><small>${item.sections?.filter(sec=>variantIsVisible(sec)&&!variantIsSource(sec)).length||0} rubrique(s) spécifique(s)</small></button>`).join('')||'<p class="muted">Aucune présentation liée.</p>'}</div><div class="memo-v16-editor-area">${child?`<div class="memo-v16-editor"><h4>${esc(variantLabel(child))}</h4><div class="admin-grid"><label>Forme pharmaceutique<input data-variant-form list="memo-forms" value="${esc(child.form||child.sections?.[0]?.dciForm||'')}" placeholder="Ex. : gélule"></label><label>Dosage<input data-variant-dose value="${esc(child.dosage||'')}" placeholder="Ex. : 500 mg"></label></div><div class="memo-v16-sections">${(child.sections||[]).filter(variantIsVisible).map((sec,i)=>variantIsSource(sec)?'':variantSectionHTML(sec,i)).join('')}</div><div class="memo-v16-actions"><button type="button" class="soft" data-variant-add-section>+ Rubrique texte</button><button type="button" class="soft" data-variant-add-table>+ Tableau</button></div></div>`:''}</div></div>`;
-  variantSources.innerHTML=child?(child.sections||[]).filter(variantIsVisible).map((sec,i)=>variantIsSource(sec)?variantSectionHTML(sec,i):'').join(''):'';
+  variantRoot.innerHTML=`<div class="memo-v16-layout"><div class="memo-v16-list" role="group" aria-label="Choisir une présentation">${items.map(item=>`<button type="button" class="memo-v16-choice ${String(item.id)===variantActiveId?'is-active':''}" data-variant-choice="${esc(item.id)}"><strong>${esc(variantLabel(item))}</strong><small>${item.sections?.filter(sec=>variantIsVisible(sec)&&!variantIsSource(sec)).length||0} rubrique(s) spécifique(s)</small></button>`).join('')||'<p class="muted">Aucune présentation liée.</p>'}</div><div class="memo-v16-editor-area">${child?`<div class="memo-v16-editor"><h4>${esc(variantLabel(child))}</h4><div class="admin-grid"><label>Forme pharmaceutique<input data-variant-form list="memo-forms" value="${esc(child.form||child.sections?.[0]?.dciForm||'')}" placeholder="Ex. : gélule"></label><label>Dosage<input data-variant-dose value="${esc(child.dosage||'')}" placeholder="Ex. : 500 mg"></label></div><div class="memo-v16-sections">${(child.sections||[]).map((sec,i)=>variantIsSource(sec)||sec.id==='variant-meta'?'':variantSectionHTML(sec,i,child.sections.length)).join('')}</div><div class="memo-v16-actions"><button type="button" class="soft" data-variant-add-section>+ Rubrique texte</button><button type="button" class="soft" data-variant-add-table>+ Tableau</button></div></div>`:''}</div></div>`;
+  variantSources.innerHTML=child?(child.sections||[]).map((sec,i)=>variantIsSource(sec)?variantSectionHTML(sec,i,child.sections.length):'').join(''):'';
   const sourceHeading=document.getElementById('memo-variant-sources-heading');
   if(sourceHeading)sourceHeading.hidden=!variantSources.children.length;
   const showSources=variantSources.children.length>0;
@@ -3591,34 +3602,34 @@ function renderEditor(id){
   const allRoot=[variantRoot,variantSources];
   allRoot.forEach(root=>{
    root.querySelectorAll('[data-variant-section-toggle]').forEach(btn=>btn.onclick=()=>{
-    const el=btn.closest('.memo-v16-section');const wasOpen=!el.querySelector('.memo-v16-section-body').hidden;
-    root.querySelectorAll('.memo-v16-section-body').forEach(body=>body.hidden=true);
-    root.querySelectorAll('[data-variant-section-toggle]').forEach(t=>t.setAttribute('aria-expanded','false'));
-    if(!wasOpen){el.querySelector('.memo-v16-section-body').hidden=false;btn.setAttribute('aria-expanded','true')}
+    const el=btn.closest('.memo-variant-section');const wasOpen=!el.classList.contains('memo-collapsed');
+    [variantRoot,variantSources].forEach(container=>container.querySelectorAll('.memo-variant-section').forEach(other=>{other.classList.add('memo-collapsed');other.querySelector('.memo-section-expand')?.setAttribute('aria-expanded','false')}));
+    variantOpenSection=wasOpen?null:Number(el.dataset.variantSection);
+    if(!wasOpen){el.classList.remove('memo-collapsed');btn.setAttribute('aria-expanded','true')}
    });
-   root.querySelectorAll('[data-variant-remove-section]').forEach(btn=>btn.onclick=()=>{
-    variantReadAll();const child=variantDrafts.get(variantActiveId);const visible=child.sections.filter(variantIsVisible);
-    const idx=Number(btn.closest('.memo-v16-section').dataset.variantSection);
-    child.sections=child.sections.filter(sec=>sec!==visible[idx]);variantOpenSection=null;variantRender();
+   root.querySelectorAll('.memo-variant-section [data-field="title"]').forEach(input=>input.addEventListener('input',()=>{input.closest('.memo-variant-section').querySelector('.memo-section-expand').textContent=input.value||'Rubrique'}));
+   root.querySelectorAll('[data-variant-act]').forEach(btn=>btn.onclick=()=>{
+    variantReadAll();const child=variantDrafts.get(variantActiveId);if(!child)return;
+    const i=Number(btn.dataset.variantIndex),action=btn.dataset.variantAct;
+    if(action==='up'&&i>0)[child.sections[i-1],child.sections[i]]=[child.sections[i],child.sections[i-1]];
+    if(action==='down'&&i<child.sections.length-1)[child.sections[i+1],child.sections[i]]=[child.sections[i],child.sections[i+1]];
+    if(action==='toggle')child.sections[i].enabled=child.sections[i].enabled===false?true:false;
+    if(action==='remove')child.sections.splice(i,1);
+    variantOpenSection=null;variantRender();
    });
-   root.querySelectorAll('[data-variant-type]').forEach(select=>select.onchange=()=>{
-    variantReadAll();const child=variantDrafts.get(variantActiveId);const sec=child.sections.filter(variantIsVisible)[Number(select.closest('.memo-v16-section').dataset.variantSection)];
-    if(sec){sec.type=select.value;variantOpenSection=Number(select.closest('.memo-v16-section').dataset.variantSection)}variantRender();
+   root.querySelectorAll('.memo-variant-section [data-field="type"]').forEach(select=>select.onchange=()=>{
+    const i=Number(select.closest('.memo-variant-section').dataset.variantSection);
+    variantReadAll();variantOpenSection=i;variantRender();
    });
   });
-  variantRoot.querySelectorAll('[data-variant-add-section],[data-variant-add-table]').forEach(btn=>btn.onclick=()=>{
-   variantReadAll();const child=variantDrafts.get(variantActiveId);if(!child)return;
-   const table=btn.hasAttribute('data-variant-add-table');
-   child.sections.splice(child.sections.filter(variantIsVisible).length,0,{id:'variant-'+crypto.randomUUID(),title:table?'Nouveau tableau':'Nouvelle rubrique',type:table?'table':'text',content:table?'Colonne 1 | Colonne 2\nValeur 1 | Valeur 2':'',enabled:true});
-   variantOpenSection=child.sections.filter(variantIsVisible).length-1;variantRender();
-  });
+  // Même barre d'outils de texte et gestion de tableaux que l'éditeur général.
   // Réutiliser les outils de mise en forme des Informations générales.
   wireTextFormatting();
  }
  meds.filter(x=>!isGroup(x)&&moleculeParentId(x)===String(m.id)).forEach(x=>variantDrafts.set(String(x.id),clone(x)));
  variantRender();
  $("variant-add").onclick=()=>{
-  variantReadAll();const child={id:crypto.randomUUID(),name:m.name,entry_type:'dci',dosage:'',dci:'',parent_dci:'',form:'',category:m.category,presentations:[],status:'à vérifier',updated:'',published:false,sections:[{id:'variant-meta',title:'Métadonnées',type:'text',content:'',enabled:false,moleculeParentId:String(m.id)}]};
+  variantReadAll();const child={id:crypto.randomUUID(),name:m.name,entry_type:'dci',dosage:'',dci:'',parent_dci:'',form:'',category:m.category,presentations:[],status:'à vérifier',updated:'',published:false,sections:[{id:'variant-meta',title:'Métadonnées',type:'text',content:'',enabled:false,moleculeParentId:String(m.id)},...variantSectionCatalog()]};
   variantDrafts.set(String(child.id),child);variantActiveId=String(child.id);variantOpenSection=null;variantRender();
   variantRoot.querySelector('[data-variant-form]')?.focus();
  };
