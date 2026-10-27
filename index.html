@@ -3129,7 +3129,19 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  $("detail").querySelectorAll("[data-fiche-indication]").forEach(btn=>btn.onclick=()=>memoNavigateExplorerFilter("indication",btn.dataset.ficheIndication));
  $("detail").querySelectorAll("[data-fiche-form]").forEach(btn=>btn.onclick=()=>memoNavigateExplorerFilter("form",btn.dataset.ficheForm));
  if(admin&&$("editBtn"))$("editBtn").onclick=()=>renderEditor(m.id);
- $("detail").querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=$("presentation-info");if(!target)return;const index=sel.value===""?null:Number(sel.value);memoSetViewChoice(m.id,{presentation:index});target.innerHTML=index!==null&&m.presentations?.[index]?presentationInfo(m.presentations[index],m):"";memoWireBadgeClicks(target)});
+ $("detail").querySelectorAll("[data-presentation-select]").forEach(sel=>{
+  // Les présentations imbriquées dans une forme/dosage possèdent déjà leur propre gestionnaire.
+  // Ne pas l’écraser avec celui de la molécule, qui n’a pas ces présentations.
+  if(sel.closest("#molecule-tab-content"))return;
+  sel.onchange=()=>{
+   const target=sel.closest("#presentations-details")?.querySelector("#presentation-info");
+   if(!target)return;
+   const index=sel.value===""?null:Number(sel.value);
+   memoSetViewChoice(m.id,{presentation:index});
+   target.innerHTML=index!==null&&m.presentations?.[index]?presentationInfo(m.presentations[index],m):"";
+   memoWireBadgeClicks(target);
+  };
+ });
  if(targetPresentationIndex!==null&&!targetSectionId){const details=$("presentations-details");if(details){details.open=true;const choice=$("presentation-choice");if(choice&&m.presentations?.[targetPresentationIndex]){memoSetViewChoice(m.id,{presentation:targetPresentationIndex});choice.value=String(targetPresentationIndex);$("presentation-info").innerHTML=presentationInfo(m.presentations[targetPresentationIndex],m);memoWireBadgeClicks($("presentation-info"))}requestAnimationFrame(()=>details.scrollIntoView({behavior:"smooth",block:"start"}))}}
  if(targetSectionId){
    // La restauration de défilement de la vue se fait sur plusieurs frames.
