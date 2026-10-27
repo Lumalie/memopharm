@@ -1866,6 +1866,9 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
 .memo-repro[data-state="precautions"]:hover,.memo-repro[data-state="precautions"]:focus-visible{background:#f5cb6e;color:#663c00}
 .memo-repro[data-state="contre-indique"]:hover,.memo-repro[data-state="contre-indique"]:focus-visible{background:#eda6a0;color:#78201c}
 .memo-repro-icon{display:flex;align-items:center;justify-content:center;width:34px;height:34px;line-height:1}.memo-repro-icon svg{display:block;flex:none}
+.memo-repro-icon.lucide-official{display:inline-block;width:35px;height:35px;background:currentColor;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;-webkit-mask-size:contain;mask-size:contain}
+.memo-repro-icon.lucide-baby{-webkit-mask-image:url("https://cdn.jsdelivr.net/npm/lucide-static@0.468.0/icons/baby.svg");mask-image:url("https://cdn.jsdelivr.net/npm/lucide-static@0.468.0/icons/baby.svg")}
+.memo-repro-icon.lucide-heart-handshake{-webkit-mask-image:url("https://cdn.jsdelivr.net/npm/lucide-static@0.468.0/icons/heart-handshake.svg");mask-image:url("https://cdn.jsdelivr.net/npm/lucide-static@0.468.0/icons/heart-handshake.svg")}
 .memo-repro-tooltip{position:absolute;box-sizing:border-box;right:0;top:calc(100% + 10px);z-index:200;width:310px;max-width:min(310px,calc(100vw - 32px));padding:15px 17px;border-radius:12px;background:#fffdf9;color:#293b32;border:1px solid #d7e2d9;font-size:13px;font-weight:400;line-height:1.6;text-align:left;white-space:normal;overflow-wrap:break-word;box-shadow:0 9px 28px #1b352221;opacity:0;visibility:hidden;pointer-events:none;transform:translateY(-4px);transition:opacity .12s,transform .12s}
 .memo-repro-tooltip .memo-repro-tip-title{display:block;font-size:14px;font-weight:750;line-height:1.35;margin-bottom:9px;color:#245c43}
 .memo-repro-tooltip .memo-repro-tip-note{display:block;font-size:13px;line-height:1.55;margin-bottom:11px;color:#36463d}
@@ -3302,7 +3305,7 @@ function memoReproSourceUrl(value){
 }
 function memoReproBadges(m){
  if(!isMolecule(m))return '';
- const info=memoReproInfo(m),names={pregnancy:['<svg viewBox="0 0 48 48" width="35" height="35" fill="none" stroke="currentColor" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 7c-5 0-9 3-11 8-4 2-4 7-2 10-2 5 0 9 4 11 1 5 6 8 11 8h8c5 0 10-3 11-8 4-2 6-6 4-11 2-3 2-8-2-10-2-5-6-8-11-8"/><path d="M21 6c0 4 6 5 8 1"/><path d="M17 22v2m14-2v2"/><path d="M19 32c3 4 7 4 10 0"/><path d="M24 27c-2 1-2 3 0 3"/></svg>','Grossesse'],breastfeeding:['<svg viewBox="0 0 48 48" width="35" height="35" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M24 43 7 26C-4 15 11 1 22 12l2 2 2-2C37 1 52 15 41 26L24 43Z"/><path d="M15 22c3-5 7-6 11-2l5 5c2 2 5-1 3-3l-5-5"/><path d="m12 28 9-9m-4 14 10-10m-5 15 10-10"/></svg>','Allaitement']};
+ const info=memoReproInfo(m),names={pregnancy:['lucide-baby','Grossesse'],breastfeeding:['lucide-heart-handshake','Allaitement']};
  const labels={'compatible':'Compatible','precautions':'Sous conditions / précautions','contre-indique':'Contre-indiqué','non-renseigne':'Non renseigné'};
  return '<div class="memo-repro-badges" aria-label="Grossesse et allaitement">'+Object.entries(names).map(([key,[icon,label]])=>{
   const r=info[key],url=memoReproSourceUrl(r.source);
@@ -3310,7 +3313,7 @@ function memoReproBadges(m){
   const note=r.note?`<span class="memo-repro-tip-note">${esc(r.note)}</span>`:'<span class="memo-repro-tip-note">Aucune précision renseignée.</span>';
   const date=r.checked?`Vérifié le ${esc(r.checked)}`:'Date de vérification non renseignée';
   const tip=`<span class="memo-repro-tooltip" role="tooltip"><span class="memo-repro-tip-title">${esc(label)} · ${esc(labels[r.status])}</span>${note}<span class="memo-repro-tip-meta">${date}</span><span class="memo-repro-tip-action">${url?'Consulter la source ↗':'Lien source non renseigné'}</span></span>`;
-  return `<a class="memo-repro" data-state="${esc(r.status)}" ${url?`href="${esc(url)}" target="_blank" rel="noopener noreferrer"`:'tabindex="0" role="img"'} aria-label="${esc(description)}${url?' — ouvrir la source':' — source non disponible'}"><span class="memo-repro-icon" aria-hidden="true">${icon}</span>${tip}</a>`;
+  return `<a class="memo-repro" data-state="${esc(r.status)}" ${url?`href="${esc(url)}" target="_blank" rel="noopener noreferrer"`:'tabindex="0" role="img"'} aria-label="${esc(description)}${url?' — ouvrir la source':' — source non disponible'}"><span class="memo-repro-icon lucide-official ${icon}" aria-hidden="true"></span>${tip}</a>`;
  }).join('')+'</div>';
 }
 function memoReproEditor(m){
