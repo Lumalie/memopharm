@@ -1602,6 +1602,15 @@ body.header-search-active #headerSearchSlot .search-suggestions .results{max-hei
 .presentation-v37-lightbox .memo-v53-tools button:hover{background:#e3efe7}
 .presentation-v37-lightbox .memo-v53-level{min-width:62px;text-align:center;font-size:14px;font-weight:600}
 @media(max-width:700px){.detail .memo-v52-photo-tile .presentation-v37-zoom{min-height:120px}}
+
+/* V54 — Galerie sans cadre ni légendes ; boutons de zoom centrés. */
+.detail #presentations-details .presentation-v33-photo.memo-v52-gallery{border:0!important;background:transparent!important;box-shadow:none!important;padding:0!important}
+.detail .memo-v52-photo-tile figcaption{display:none}
+.detail .memo-v52-photo-tile{gap:0}
+.detail #presentations-details .memo-v48-identity{gap:7px}
+.detail #presentations-details .memo-v48-cip{margin-top:2px}
+.presentation-v37-lightbox .memo-v53-tools button{display:flex;align-items:center;justify-content:center;padding:0;line-height:0}
+.presentation-v37-lightbox .memo-v53-tools button svg{display:block;width:19px;height:19px;flex:none;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -3533,7 +3542,7 @@ function presentationInfo(p,m=null){
   p.showOpen===true?`<p><strong>Ouverture de la gélule :</strong> <span class="${p.cannotOpen===true?"presentation-status-note":""}">${p.cannotOpen===true?"Impossible":p.canOpen===true?"Possible selon vérification":"Non confirmé — vérifier"}${p.openReason?` — ${esc(p.openReason)}`:""}</span></p>`:""
  ].filter(Boolean);
  const tabletImg=safeHttp(p.tabletImageUrl||"");
- const imageTile=(url,label)=>`<figure class="memo-v52-photo-tile"><button type="button" class="presentation-v37-zoom" data-presentation-zoom="${esc(url)}" aria-label="Agrandir la photo : ${label}" title="Cliquer pour agrandir"><img src="${esc(url)}" alt="${label} de la présentation" loading="lazy"><span class="presentation-v37-zoom-icon" aria-hidden="true">⤢</span></button><figcaption>${label}</figcaption></figure>`;
+ const imageTile=(url,label)=>`<figure class="memo-v52-photo-tile"><button type="button" class="presentation-v37-zoom" data-presentation-zoom="${esc(url)}" aria-label="Agrandir la photo : ${label}" title="Cliquer pour agrandir"><img src="${esc(url)}" alt="${label} de la présentation" loading="lazy"><span class="presentation-v37-zoom-icon" aria-hidden="true">⤢</span></button></figure>`;
  const tiles=[p.showPhoto===true&&img?imageTile(img,"Boîte"):"",p.showTabletPhoto===true&&tabletImg?imageTile(tabletImg,"Comprimé / gélule"):""].filter(Boolean);
  const photo=tiles.length?`<div class="presentation-v33-photo memo-v52-gallery">${tiles.join("")}</div>`:"";
  const badges=m?practicalBadges(m,{...p,regulatoryList:""}):"";
@@ -3560,7 +3569,7 @@ function memoSetViewChoice(id,patch){
 }
 function renderPresentations(m,targetPresentationIndex=null,selectedPack=null){
  const options=memoV44Options(m).filter(x=>selectedPack===null||x.pack===selectedPack),saved=memoV44Chosen(m),chosen=options.find(x=>x.key===saved?.key)||options[0]||null;
- return `<section class="section presentation-fixed ${chosen?.p&&((chosen.p.showPhoto===true&&safeHttp(chosen.p.imageUrl||""))||(chosen.p.showTabletPhoto===true&&safeHttp(chosen.p.tabletImageUrl||"")))?'memo-v48-has-photo':''}" id="presentations-details"><h3>💊 Présentation</h3>${options.length?`<div class="memo-v48-identity"><div class="memo-v48-selector"><label class="label" for="presentation-choice">Médicament commercial</label><select id="presentation-choice" data-presentation-select ${options.length===1?'aria-label="Médicament commercial"':''}>${options.map(x=>`<option value="${esc(x.key)}" ${chosen?.key===x.key?"selected":""}>${esc(presentationLabel(x.p,m,Number(x.key.split(":")[0])))}</option>`).join("")}</select></div><div class="memo-v48-cip"><span class="label">Code CIP</span><div data-v48-cip>${memoV48Cip(chosen?.p)}</div></div></div><div id="presentation-info" style="margin-top:12px">${chosen?presentationInfo(chosen.p,m):""}</div>`:'<p class="muted">Aucune présentation renseignée.</p>'}</section>`
+ return `<section class="section presentation-fixed ${chosen?.p&&((chosen.p.showPhoto===true&&safeHttp(chosen.p.imageUrl||""))||(chosen.p.showTabletPhoto===true&&safeHttp(chosen.p.tabletImageUrl||"")))?'memo-v48-has-photo':''}" id="presentations-details"><h3>💊 Présentation</h3>${options.length?`<div class="memo-v48-identity"><div class="memo-v48-selector"><select id="presentation-choice" aria-label="Médicament commercial" data-presentation-select ${options.length===1?'aria-label="Médicament commercial"':''}>${options.map(x=>`<option value="${esc(x.key)}" ${chosen?.key===x.key?"selected":""}>${esc(presentationLabel(x.p,m,Number(x.key.split(":")[0])))}</option>`).join("")}</select></div><div class="memo-v48-cip"><div data-v48-cip>${memoV48Cip(chosen?.p)}</div></div></div><div id="presentation-info" style="margin-top:12px">${chosen?presentationInfo(chosen.p,m):""}</div>`:'<p class="muted">Aucune présentation renseignée.</p>'}</section>`
 }
 
 const MEMO_CHOICES_KEY="memofficine_field_choices_v1";
@@ -5486,7 +5495,7 @@ const MEMOPHARM_CONTACT_ENDPOINT = `${SUPABASE_URL}/functions/v1/memopharm-conta
   let o=getOverlay();if(o)return o;
   o=document.createElement('div');o.id='presentation-v37-lightbox';o.className='presentation-v37-lightbox';o.hidden=true;
   o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');o.setAttribute('aria-label','Photographie agrandie de la présentation');
-  o.innerHTML='<button type="button" class="presentation-v37-close" aria-label="Fermer la photographie"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6L18 18M18 6L6 18"/></svg></button><div class="memo-v53-viewport"><img alt="Photographie agrandie de la présentation" draggable="false"></div><div class="memo-v53-tools" aria-label="Commandes de zoom"><button type="button" data-v53="minus" aria-label="Dézoomer">−</button><span class="memo-v53-level">100 %</span><button type="button" data-v53="plus" aria-label="Zoomer">+</button><button type="button" data-v53="reset" aria-label="Réinitialiser le zoom" title="Réinitialiser">↺</button></div>';
+  o.innerHTML='<button type="button" class="presentation-v37-close" aria-label="Fermer la photographie"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6L18 18M18 6L6 18"/></svg></button><div class="memo-v53-viewport"><img alt="Photographie agrandie de la présentation" draggable="false"></div><div class="memo-v53-tools" aria-label="Commandes de zoom"><button type="button" data-v53="minus" aria-label="Dézoomer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button><span class="memo-v53-level">100 %</span><button type="button" data-v53="plus" aria-label="Zoomer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></button><button type="button" data-v53="reset" aria-label="Réinitialiser le zoom" title="Réinitialiser"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11a9 9 0 1 1 2.5 6.2M3 4v7h7"/></svg></button></div>';
   document.body.appendChild(o);
   const view=o.querySelector('.memo-v53-viewport');
   view.addEventListener('wheel',e=>{e.preventDefault();zoom(scale*(e.deltaY<0?1.2:1/1.2))},{passive:false});
