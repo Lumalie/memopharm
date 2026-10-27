@@ -1448,6 +1448,23 @@ body.info-page main{display:none!important}
 .detail .presentation-v33-photo{min-height:0;padding:9px;align-self:start}
 .detail .presentation-v33-photo img{max-height:250px}
 @media(max-width:700px){.detail .presentation-v33-layout.has-photo{grid-template-columns:minmax(0,1fr);max-width:100%}.detail .presentation-v33-photo{max-width:300px}}
+
+/* V37 — Espacement uniforme des sous-rubriques et photo agrandissable */
+.detail .presentation-v33-fields{display:flex;flex-direction:column;gap:13px;align-items:stretch}
+.detail .presentation-v33-fields>p,
+.detail .presentation-v33-fields>.presentation-cip-list,
+.detail .molecule-tab-content .presentation-fixed #presentation-info .presentation-v33-fields>p{margin:0!important;line-height:1.55}
+.detail .presentation-v37-zoom{position:relative;display:flex;align-items:center;justify-content:center;width:100%;padding:0;border:0;background:transparent;cursor:zoom-in;border-radius:7px}
+.detail .presentation-v37-zoom img{pointer-events:none}
+.detail .presentation-v37-zoom-icon{position:absolute;right:8px;bottom:8px;background:rgba(255,255,255,.94);color:#285b46;border-radius:7px;padding:3px 7px;font-size:19px;opacity:0;transition:opacity .15s ease}
+.detail .presentation-v37-zoom:hover .presentation-v37-zoom-icon,.detail .presentation-v37-zoom:focus-visible .presentation-v37-zoom-icon{opacity:1}
+.detail .presentation-v37-zoom:focus-visible{outline:3px solid #5a9b77;outline-offset:3px}
+.presentation-v37-lightbox[hidden]{display:none!important}
+.presentation-v37-lightbox{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:54px 22px 25px;box-sizing:border-box;background:rgba(16,29,23,.82)}
+.presentation-v37-lightbox img{display:block;max-width:min(96vw,1100px);max-height:calc(100vh - 95px);width:auto;height:auto;object-fit:contain;background:#fff;border-radius:9px;box-shadow:0 12px 45px rgba(0,0,0,.25)}
+.presentation-v37-close{position:absolute;top:13px;right:18px;display:flex;align-items:center;justify-content:center;width:39px;height:39px;border:1px solid rgba(255,255,255,.55);border-radius:50%;background:#fff;color:#204b3c;font-size:26px;cursor:pointer}
+.presentation-v37-close:hover{background:#e3efe7}
+
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -3242,7 +3259,7 @@ function presentationInfo(p,m=null){
   p.showCrush===true?`<p><strong>Écrasement :</strong> <span class="${p.cannotCrush===true?"presentation-status-note":""}">${p.cannotCrush===true?"Impossible":p.canCrush===true?"Possible selon vérification":"Non confirmé — vérifier"}${p.crushReason?` — ${esc(p.crushReason)}`:""}</span></p>`:"",
   p.showOpen===true?`<p><strong>Ouverture de la gélule :</strong> <span class="${p.cannotOpen===true?"presentation-status-note":""}">${p.cannotOpen===true?"Impossible":p.canOpen===true?"Possible selon vérification":"Non confirmé — vérifier"}${p.openReason?` — ${esc(p.openReason)}`:""}</span></p>`:""
  ].filter(Boolean);
- const photo=p.showPhoto===true&&img?`<figure class="presentation-v33-photo"><img src="${esc(img)}" alt="Photographie documentée de la présentation" loading="lazy"></figure>`:"";
+ const photo=p.showPhoto===true&&img?`<figure class="presentation-v33-photo"><button type="button" class="presentation-v37-zoom" data-presentation-zoom="${esc(img)}" aria-label="Agrandir la photographie de la présentation" title="Cliquer pour agrandir"><img src="${esc(img)}" alt="Photographie documentée de la présentation" loading="lazy"><span class="presentation-v37-zoom-icon" aria-hidden="true">⤢</span></button></figure>`:"";
  const badges=m?practicalBadges(m,p):"";
  if(!rows.length&&!photo&&!badges&&!p.name)return '<p class="muted">Aucun critère de présentation affiché pour le moment.</p>';
  const title="";
@@ -5133,6 +5150,46 @@ const MEMOPHARM_CONTACT_ENDPOINT = `${SUPABASE_URL}/functions/v1/memopharm-conta
  window.addEventListener('focus',comeBack);
  document.addEventListener('visibilitychange',()=>{if(document.hidden)leave();else comeBack()});
 })();
+
+// V37 — Visionneuse des photos de présentations (délégation pour contenu dynamique).
+(function(){
+ let previousFocus=null;
+ function closePresentationZoom(){
+  const overlay=document.getElementById('presentation-v37-lightbox');
+  if(!overlay||overlay.hidden)return;
+  overlay.hidden=true;
+  overlay.querySelector('img').removeAttribute('src');
+  document.body.style.overflow=overlay.dataset.previousOverflow||'';
+  if(previousFocus&&previousFocus.isConnected)previousFocus.focus();
+  previousFocus=null;
+ }
+ document.addEventListener('click',function(event){
+  const trigger=event.target.closest('[data-presentation-zoom]');
+  if(trigger){
+   const src=trigger.getAttribute('data-presentation-zoom');
+   if(!src||!/^https?:\/\//i.test(src))return;
+   let overlay=document.getElementById('presentation-v37-lightbox');
+   if(!overlay){
+    overlay=document.createElement('div');
+    overlay.id='presentation-v37-lightbox';overlay.className='presentation-v37-lightbox';overlay.hidden=true;
+    overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','Photographie agrandie de la présentation');
+    overlay.innerHTML='<button type="button" class="presentation-v37-close" aria-label="Fermer la photographie">×</button><img alt="Photographie agrandie de la présentation">';
+    document.body.appendChild(overlay);
+   }
+   previousFocus=trigger;
+   overlay.querySelector('img').src=src;
+   overlay.dataset.previousOverflow=document.body.style.overflow;
+   document.body.style.overflow='hidden';
+   overlay.hidden=false;
+   overlay.querySelector('.presentation-v37-close').focus();
+   return;
+  }
+  const overlay=document.getElementById('presentation-v37-lightbox');
+  if(overlay&&!overlay.hidden&&(event.target===overlay||event.target.closest('.presentation-v37-close')))closePresentationZoom();
+ });
+ document.addEventListener('keydown',function(event){if(event.key==='Escape')closePresentationZoom()});
+})();
+
 </script>
 </body></html>
 
