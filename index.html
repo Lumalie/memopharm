@@ -1623,6 +1623,14 @@ body.header-search-active #headerSearchSlot .search-suggestions .results{max-hei
  .detail #presentations-details.memo-v48-has-photo .presentation-v33-photo.memo-v52-gallery{position:static;top:auto;right:auto;margin:0 auto}
  .detail #presentations-details.memo-v48-has-photo .presentation-v33-warning{width:100%;max-width:100%}
 }
+/* V56 — Galerie relevée dans sa colonne, sans chevauchement du texte de sécurité. */
+@media (min-width:701px){
+ .detail #presentations-details.memo-v48-has-photo .presentation-v33-layout.has-photo{align-items:start}
+ .detail #presentations-details.memo-v48-has-photo .presentation-v33-photo.memo-v52-gallery{margin-top:-105px;position:relative}
+}
+@media (min-width:701px) and (max-width:950px){
+ .detail #presentations-details.memo-v48-has-photo .presentation-v33-photo.memo-v52-gallery{margin-top:-65px}
+}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
