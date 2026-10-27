@@ -1527,6 +1527,10 @@ body.header-search-active #headerSearchSlot .searchcard{position:relative;overfl
 body.header-search-active #headerSearchSlot .search-suggestions:not(.hidden){display:block;position:absolute;top:calc(100% + 5px);left:0;right:0;z-index:150;max-height:min(60vh,480px);overflow-y:auto;background:#fff;box-shadow:0 12px 28px #193f342b}
 body.header-search-active #headerSearchSlot .search-suggestions .results{max-height:390px;overflow-y:auto}
 
+/* V44 : boîtage et classement réunis dans la bannière de sélection. */
+.memo-v44-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.memo-v44-heading strong{flex:1;min-width:200px}
+.memo-v44-regulatory .memo-practical-badge{margin:0}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -3254,11 +3258,12 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
    const dose=dosageLabel(child);
    const moleculeName=displayMedName(m);
    const selectedTitle=[moleculeName,dose].filter(Boolean).join(" ")+(form?" — "+form:"");
-   panel.innerHTML=`<div class="memo-selected-presentation"><span class="memo-selected-caption">PRÉSENTATION SÉLECTIONNÉE</span><strong>${esc(selectedTitle)}</strong>${ficheDateLabel(child)}</div>${presentationHtml}${priorityHtml}${specificHtml}${(!priorityHtml&&!specificHtml&&!presentationHtml)?'<p class="memo-specific-empty">Aucune particularité renseignée pour cette présentation.</p>':''}`;
+   panel.innerHTML=`<div class="memo-selected-presentation"><span class="memo-selected-caption">PRÉSENTATION SÉLECTIONNÉE</span><div class="memo-v44-heading"><strong class="memo-v44-title">${esc(selectedTitle)}</strong><span class="memo-v44-regulatory"></span></div>${ficheDateLabel(child)}</div>${presentationHtml}${priorityHtml}${specificHtml}${(!priorityHtml&&!specificHtml&&!presentationHtml)?'<p class="memo-specific-empty">Aucune particularité renseignée pour cette présentation.</p>':''}`;
    const sourcesSlot=$("memo-combined-sources-slot");
    if(sourcesSlot){sourcesSlot.innerHTML=ficheCombinedSources(m,documentationSections,child);sourcesSlot.classList.toggle("hidden",!sourcesSlot.innerHTML.trim());memoLinkifyCips(sourcesSlot);}
    panel.querySelectorAll("[data-group-open]").forEach(b=>b.onclick=()=>openMedication(b.dataset.groupOpen));
-   panel.querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=panel.querySelector("#presentation-info");const index=sel.value===""?null:Number(sel.value);memoSetViewChoice(child.id,{presentation:index});if(target)target.innerHTML=index!==null&&child.presentations?.[index]?presentationInfo(child.presentations[index],child):"";memoWireBadgeClicks(target)});
+   memoV44Banner(panel,child,selectedTitle);
+   panel.querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=panel.querySelector("#presentation-info");memoSetViewChoice(child.id,{presentation:sel.value});const choice=memoV44Chosen(child);if(target)target.innerHTML=choice?presentationInfo(choice.p,child):"";memoWireBadgeClicks(target);memoV44Banner(panel,child,selectedTitle)});
   };
   const chooseForm=(group,preferredId)=>{
    if(!group)return;
@@ -3389,6 +3394,28 @@ function practicalBadges(m,p=null){
  if(p&&p.afterOpening===true){const duration=String(p.afterOpeningDuration||'').trim();out.push(`<button type="button" class="memo-practical-badge memo-duration" data-filter-badge="after" title="Durée de conservation après ouverture : vérifier les conditions exactes dans le RCP">◷ ${duration?esc(duration):'après ouverture'}</button>`)}
  return out.length?`<div class="memo-practical-badges">${out.join('')}</div>`:'';
 }
+// V44 — chaque option consultable représente un conditionnement précis.
+// Les données historiques restent intactes : aucun CIP n'est supprimé ni réaffecté.
+function memoV44Options(m){
+ const result=[];
+ (m.presentations||[]).forEach((p,i)=>{
+  const boxes=Array.isArray(p.cipBoxes)&&p.cipBoxes.length?p.cipBoxes:[{cip:p.cip||"",pack:p.pack||""}];
+  boxes.forEach((box,j)=>result.push({key:i+":"+j,p:{...p,cip:box.cip||"",cipBoxes:[box]},pack:String(box.pack||"").trim(),regulatoryList:boxes.length>1?"":p.regulatoryList||"",legacyMultiple:boxes.length>1}));
+ });
+ return result;
+}
+function memoV44Chosen(m){
+ const options=memoV44Options(m),stored=memoGetViewChoice(m.id).presentation;
+ const key=stored===null||stored===undefined?null:String(stored).includes(":")?String(stored):String(stored)+":0";
+ return options.find(x=>x.key===key)||options[0]||null;
+}
+function memoV44Banner(panel,child,title){
+ const chosen=memoV44Chosen(child),pack=chosen?.pack||"";
+ const header=panel.querySelector(".memo-v44-title");
+ if(header)header.textContent=title+(pack?" — "+pack:"");
+ const badge=panel.querySelector(".memo-v44-regulatory");
+ if(badge){const status=chosen?.regulatoryList||"";badge.innerHTML=status==="I"?'<button type="button" class="memo-practical-badge memo-v43-list-i" data-filter-badge="listI">Liste I</button>':status==="II"?'<button type="button" class="memo-practical-badge memo-v43-list-ii" data-filter-badge="listII">Liste II</button>':"";memoWireBadgeClicks(badge)}
+}
 function presentationInfo(p,m=null){
  if(!p)return '<p class="muted">Aucune présentation documentée.</p>';
  const img=safeHttp(p.imageUrl||"");
@@ -3403,7 +3430,7 @@ function presentationInfo(p,m=null){
   p.showOpen===true?`<p><strong>Ouverture de la gélule :</strong> <span class="${p.cannotOpen===true?"presentation-status-note":""}">${p.cannotOpen===true?"Impossible":p.canOpen===true?"Possible selon vérification":"Non confirmé — vérifier"}${p.openReason?` — ${esc(p.openReason)}`:""}</span></p>`:""
  ].filter(Boolean);
  const photo=p.showPhoto===true&&img?`<figure class="presentation-v33-photo"><button type="button" class="presentation-v37-zoom" data-presentation-zoom="${esc(img)}" aria-label="Agrandir la photographie de la présentation" title="Cliquer pour agrandir"><img src="${esc(img)}" alt="Photographie documentée de la présentation" loading="lazy"><span class="presentation-v37-zoom-icon" aria-hidden="true">⤢</span></button></figure>`:"";
- const badges=m?practicalBadges(m,p):"";
+ const badges=m?practicalBadges(m,{...p,regulatoryList:""}):"";
  if(!rows.length&&!photo&&!badges&&!p.name)return '<p class="muted">Aucun critère de présentation affiché pour le moment.</p>';
  const title="";
  return `<div class="presentation-v33-content">${title}${badges}<div class="presentation-v33-layout${photo?' has-photo':''}"><div class="presentation-v33-fields">${rows.join('')}</div>${photo}</div><p class="hint presentation-v33-warning">L’aspect seul ne permet pas d’identifier avec certitude un médicament. Vérifier la concordance avec la présentation exacte.</p></div>`;
@@ -3425,7 +3452,10 @@ function memoSetViewChoice(id,patch){
  if(!id)return;
  try{const all=JSON.parse(localStorage.getItem(MEMO_VIEW_CHOICE_KEY)||"{}");const safe=all&&typeof all==="object"?all:{};safe[String(id)]={...(safe[String(id)]||{}),...patch};localStorage.setItem(MEMO_VIEW_CHOICE_KEY,JSON.stringify(safe))}catch(_){/* Navigation possible sans stockage local. */}
 }
-function renderPresentations(m,targetPresentationIndex=null){const ps=m.presentations||[];const remembered=memoGetViewChoice(m.id).presentation;const restored=targetPresentationIndex!==null?targetPresentationIndex:remembered;const chosen=restored!==null&&restored!==undefined&&ps[Number(restored)]?Number(restored):null;return `<section class="section presentation-fixed" id="presentations-details"><h3>💊 Présentation</h3>${ps.length?`${ps.length>1?`<label class="label" for="presentation-choice">Choisir une présentation</label><select id="presentation-choice" data-presentation-select><option value="" ${chosen===null?"selected":""}>— Choisir une présentation —</option>${ps.map((p,i)=>`<option value="${i}" ${i===chosen?"selected":""}>${esc(presentationLabel(p,m,i))}</option>`).join("")}</select>`:""}<div id="presentation-info" style="margin-top:12px">${chosen!==null?presentationInfo(ps[chosen],m):ps.length===1?presentationInfo(ps[0],m):""}</div>`:'<p class="muted">Aucune présentation renseignée.</p>'}</section>`}
+function renderPresentations(m,targetPresentationIndex=null){
+ const options=memoV44Options(m),chosen=memoV44Chosen(m);
+ return `<section class="section presentation-fixed" id="presentations-details"><h3>💊 Présentation</h3>${options.length?`${options.length>1?`<label class="label" for="presentation-choice">Choisir une présentation</label><select id="presentation-choice" data-presentation-select>${options.map(x=>`<option value="${esc(x.key)}" ${chosen?.key===x.key?"selected":""}>${esc(presentationLabel(x.p,m,Number(x.key.split(":")[0])))}${x.pack?" · "+esc(x.pack):""}</option>`).join("")}</select>`:""}<div id="presentation-info" style="margin-top:12px">${chosen?presentationInfo(chosen.p,m):""}</div>`:'<p class="muted">Aucune présentation renseignée.</p>'}</section>`
+}
 
 const MEMO_CHOICES_KEY="memofficine_field_choices_v1";
 function memoChoices(kind){
