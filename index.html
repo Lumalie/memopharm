@@ -1465,6 +1465,19 @@ body.info-page main{display:none!important}
 .presentation-v37-close{position:absolute;top:13px;right:18px;display:flex;align-items:center;justify-content:center;width:39px;height:39px;border:1px solid rgba(255,255,255,.55);border-radius:50%;background:#fff;color:#204b3c;font-size:26px;cursor:pointer}
 .presentation-v37-close:hover{background:#e3efe7}
 
+
+/* V38 : ajout de forme/dosage au pied de la liste latérale */
+#editor .memo-v16-list .memo-variant-add-round{
+  display:flex;align-items:center;justify-content:center;
+  width:38px;height:38px;min-width:38px;padding:0;
+  margin:12px auto 4px;border-radius:50%;
+  border:1px solid #83a991;background:#e7f2e9;color:#246c4d;
+  font-size:27px;font-weight:400;line-height:1;cursor:pointer;
+  transition:background .16s ease,transform .16s ease;
+}
+#editor .memo-v16-list .memo-variant-add-round:hover{background:#cce6d3;transform:scale(1.05)}
+#editor .memo-v16-list .memo-variant-add-round:focus-visible{outline:3px solid #77ad8d;outline-offset:3px}
+@media(max-width:760px){#editor .memo-v16-list .memo-variant-add-round{margin:0 5px;align-self:center;flex:0 0 38px}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -3310,14 +3323,14 @@ function presentationEditor(p,i){
  const check=(key,label)=>`<label class="presentation-toggle"><input type="checkbox" data-show-field="${key}" ${p[key]===true?"checked":""}><span>${label}</span></label>`;
  const field=(key,label,showKey)=>`<div class="full presentation-edit-row">${check(showKey,label)}<input aria-label="${label}" data-pfield="${key}" ${key==="lab"?'data-memo-kind="lab" list="memo-labs"':""} value="${esc(p[key]||"")}" placeholder="${label}"></div>`;
  return `<div class="presentation-card" data-presentation="${i}"><div class="section-editor-head"><strong>Présentation ${i+1}</strong><button type="button" data-remove-presentation="${i}" class="danger">Retirer</button></div>
- <div class="presentation-kind-row"><span>Statut de la présentation :</span><label><input type="checkbox" data-pkind="princeps" ${p.presentationKind==="princeps"?"checked":""}> Princeps</label><label><input type="checkbox" data-pkind="generic" ${p.presentationKind==="generic"?"checked":""}> Générique</label><span class="hint">Laisser les deux décochées si non vérifié.</span></div>
+ <div class="presentation-kind-row"><span>Statut de la présentation :</span><label><input type="checkbox" data-pkind="princeps" ${p.presentationKind==="princeps"?"checked":""}> Princeps</label><label><input type="checkbox" data-pkind="generic" ${p.presentationKind==="generic"?"checked":""}> Générique</label></div>
  <div class="memo-practical-editor">
  <label><input type="checkbox" data-practical-cold ${p.coldStorage===true?"checked":""}> ❄ Conservation au froid</label>
  <label><input type="checkbox" data-practical-after ${p.afterOpening===true?"checked":""}> ◷ Durée après ouverture</label>
  <input type="text" data-practical-duration value="${esc(p.afterOpeningDuration||"")}" placeholder="Ex. : 4 semaines" aria-label="Durée après ouverture, texte court" maxlength="45">
- <span class="hint">La durée est un résumé facultatif (ex. 4 semaines) : les conditions exactes restent à préciser dans la rubrique Conservation et dans le RCP.</span>
+ 
  </div>
- <p class="hint">Coche les critères à afficher sur la fiche. Aucun n'est visible par défaut ; les informations masquées restent enregistrées.</p>
+ 
  <div class="presentation-fields">
  ${field("name","Nom","showName")}
  <div class="full presentation-edit-row cip-pack-editor">${check("showCip","CIP / conditionnements")}<div class="cip-pack-rows">${cipConditionnements(p).concat(cipConditionnements(p).length?[]:[{cip:"",pack:""}]).map((item,j)=>`<div class="cip-pack-edit-row" data-cip-pack-row><input type="text" inputmode="numeric" data-cip-value value="${esc(item.cip)}" placeholder="Code CIP (13 chiffres)"><input type="text" data-pack-value value="${esc(item.pack)}" placeholder="Boîte de 30, boîte de 90…"><button type="button" data-remove-cip-pack title="Supprimer ce conditionnement" aria-label="Supprimer ce conditionnement">×</button></div>`).join("")}<button type="button" class="cip-pack-add" data-add-cip-pack>+ Ajouter un conditionnement</button></div></div>
@@ -3329,7 +3342,7 @@ function presentationEditor(p,i){
  <div class="full presentation-edit-row">${check("showOpen","Ouverture de la gélule")}<div class="presentation-status-row"><label class="presentation-verified"><input type="checkbox" data-can-open ${p.canOpen===true&&!p.cannotOpen?"checked":""}>Possible (confirmé)</label><label class="presentation-verified"><input type="checkbox" data-cannot-open ${p.cannotOpen===true?"checked":""}>Impossible (confirmé)</label><input type="text" data-pfield="openReason" value="${esc(p.openReason||"")}" placeholder="Pourquoi ? (facultatif)" data-reason-for="open"></div></div>
  <div class="full presentation-edit-row">${check("showPhoto","Photo")}<input type="file" accept="image/jpeg,image/png,image/webp" data-photo-file="${i}"><div class="hint" data-photo-hint="${i}">${pending?"Photo sélectionnée : "+esc(pending.name):currentPhoto?"Photo enregistrée : visible ci-dessous":"JPG, PNG ou WebP · maximum 2 Mo. Envoyée lors de l’enregistrement de la fiche."}</div>${currentPhoto?`<img class="image-preview" src="${esc(currentPhoto)}" alt="Photo enregistrée de la présentation">`:""}</div>
  ${["dosage","form","cis","sourceUrl"].map(key=>`<input type="hidden" data-pfield="${key}" value="${esc(p[key]||"")}">`).join("")}
- <p class="hint full">Sans case « Possible » ni « Impossible », le statut reste « non confirmé ». Vérifier chaque présentation auprès d’une source fiable.</p>
+ 
  </div></div>`;
 }
 function wirePhotoInputs(){
@@ -3637,7 +3650,7 @@ function renderEditor(id){
  <div id="molecule-variants-editor" class="full hidden" style="margin:0;padding:0;border:0;border-radius:0">
    <h3>🌿 Formes et dosages de cette molécule</h3>
    <p class="muted">Ajoute une présentation ou sélectionne une présentation existante. Renseigne uniquement ses particularités : elles apparaîtront dans les onglets de la fiche molécule. Les fiches déjà liées sont conservées.</p>
-   <div class="admin-actions"><button type="button" id="variant-add">+ Ajouter une forme / un dosage</button></div>
+   
    <div id="variant-editors"></div>
  </div>
  <h3>Rubriques de cette fiche</h3><p class="muted">Désactive une rubrique pour la masquer. Utilise les flèches pour changer l’ordre, ou ajoute une rubrique personnalisée.</p>
@@ -3693,8 +3706,6 @@ function renderEditor(id){
  const variantHeading=document.createElement("div");variantHeading.className="memo-editor-panel-heading";variantHeading.textContent="Présentations et particularités";
  const variantTitleRow=document.createElement("div");variantTitleRow.className="memo-variant-title-row";
  variantTitleRow.appendChild(variantHeading);
- const variantAddButton=$("variant-add");
- if(variantAddButton){variantTitleRow.appendChild(variantAddButton);}
  panels.variants.append(variantTitleRow,variantsWrap,presentationWrap);
  const trackingHeading=document.createElement("div");trackingHeading.className="memo-editor-panel-heading";trackingHeading.textContent="Sources, vérification et publication";
  panels.tracking.append(trackingHeading,metaGrid);
@@ -3968,12 +3979,14 @@ function renderEditor(id){
   const items=[...variantDrafts.values()];
   if(!variantDrafts.has(variantActiveId))variantActiveId=String(items[0]?.id||'');
   const child=variantDrafts.get(variantActiveId);
-  variantRoot.innerHTML=`<div class="memo-v16-layout"><div class="memo-v16-list" role="group" aria-label="Choisir une présentation">${items.map(item=>`<button type="button" class="memo-v16-choice ${String(item.id)===variantActiveId?'is-active':''}" data-variant-choice="${esc(item.id)}"><strong>${esc(variantLabel(item))}</strong><small>${item.sections?.filter(sec=>variantIsVisible(sec)&&!variantIsSource(sec)).length||0} rubrique(s) spécifique(s)</small></button>`).join('')||'<p class="muted">Aucune présentation liée.</p>'}</div><div class="memo-v16-editor-area">${child?`<div class="memo-v16-editor"><h4>${esc(variantLabel(child))}</h4><div class="admin-grid"><label>Forme pharmaceutique<input data-variant-form list="memo-forms" value="${esc(child.form||child.sections?.[0]?.dciForm||'')}" placeholder="Ex. : gélule"></label><label>Dosage<input data-variant-dose value="${esc(child.dosage||'')}" placeholder="Ex. : 500 mg"></label></div><div class="memo-v26-tabs"><button type="button" data-v26-tab="particularites" class="${variantSubtab==='particularites'?'is-active':''}">Particularités</button><button type="button" data-v26-tab="commerciaux" class="${variantSubtab==='commerciaux'?'is-active':''}">Médicaments commerciaux (${(child.presentations||[]).length})</button></div><div ${variantSubtab==='particularites'?'':'hidden'}>${variantBadgePanel(child)}<div class="memo-v16-sections">${(child.sections||[]).map((sec,i)=>variantIsSource(sec)||sec.id==='variant-meta'?'':variantSectionHTML(sec,i,child.sections.length)).join('')}</div><div class="memo-v16-actions"><button type="button" class="soft" data-variant-add-section>+ Rubrique texte</button><button type="button" class="soft" data-variant-add-table>+ Tableau</button></div></div>${variantSubtab==='commerciaux'?variantCommercialMarkup(child):''}</div>`:''}</div></div>`;
+  variantRoot.innerHTML=`<div class="memo-v16-layout"><div class="memo-v16-list" role="group" aria-label="Choisir une présentation">${items.map(item=>`<button type="button" class="memo-v16-choice ${String(item.id)===variantActiveId?'is-active':''}" data-variant-choice="${esc(item.id)}"><strong>${esc(variantLabel(item))}</strong><small>${item.sections?.filter(sec=>variantIsVisible(sec)&&!variantIsSource(sec)).length||0} rubrique(s) spécifique(s)</small></button>`).join('')||'<p class="muted">Aucune présentation liée.</p>'}<button type="button" id="variant-add" class="memo-variant-add-round" title="Ajouter une forme ou un dosage" aria-label="Ajouter une forme ou un dosage">+</button></div><div class="memo-v16-editor-area">${child?`<div class="memo-v16-editor"><h4>${esc(variantLabel(child))}</h4><div class="admin-grid"><label>Forme pharmaceutique<input data-variant-form list="memo-forms" value="${esc(child.form||child.sections?.[0]?.dciForm||'')}" placeholder="Ex. : gélule"></label><label>Dosage<input data-variant-dose value="${esc(child.dosage||'')}" placeholder="Ex. : 500 mg"></label></div><div class="memo-v26-tabs"><button type="button" data-v26-tab="particularites" class="${variantSubtab==='particularites'?'is-active':''}">Particularités</button><button type="button" data-v26-tab="commerciaux" class="${variantSubtab==='commerciaux'?'is-active':''}">Médicaments commerciaux (${(child.presentations||[]).length})</button></div><div ${variantSubtab==='particularites'?'':'hidden'}>${variantBadgePanel(child)}<div class="memo-v16-sections">${(child.sections||[]).map((sec,i)=>variantIsSource(sec)||sec.id==='variant-meta'?'':variantSectionHTML(sec,i,child.sections.length)).join('')}</div><div class="memo-v16-actions"><button type="button" class="soft" data-variant-add-section>+ Rubrique texte</button><button type="button" class="soft" data-variant-add-table>+ Tableau</button></div></div>${variantSubtab==='commerciaux'?variantCommercialMarkup(child):''}</div>`:''}</div></div>`;
   variantSources.innerHTML=child?(child.sections||[]).map((sec,i)=>variantIsSource(sec)?variantSectionHTML(sec,i,child.sections.length):'').join(''):'';
   const sourceHeading=document.getElementById('memo-variant-sources-heading');
   if(sourceHeading)sourceHeading.hidden=!variantSources.children.length;
   const showSources=variantSources.children.length>0;
   variantSources.hidden=!showSources;
+  const addRound=variantRoot.querySelector("#variant-add");
+  if(addRound)addRound.onclick=variantAddNew;
   variantRoot.querySelectorAll('[data-variant-choice]').forEach(btn=>btn.onclick=()=>{variantReadAll();variantActiveId=btn.dataset.variantChoice;variantOpenSection=null;variantCommercialIndex=0;variantRender()});
   variantRoot.querySelectorAll('[data-v26-tab]').forEach(btn=>btn.onclick=()=>{variantReadAll();variantSubtab=btn.dataset.v26Tab;variantRender()});
   variantWireCommercial();
@@ -4014,7 +4027,7 @@ function renderEditor(id){
   target._variantUi={activeId:variantActiveId,subtab:variantSubtab,commercialIndex:variantCommercialIndex};
  };
  variantRender();
- $("variant-add").onclick=()=>{
+ function variantAddNew(){
   variantReadAll();const child={id:crypto.randomUUID(),name:m.name,entry_type:'dci',dosage:'',dci:'',parent_dci:'',form:'',category:m.category,presentations:[],status:'à vérifier',updated:'',published:false,sections:[{id:'variant-meta',title:'Métadonnées',type:'text',content:'',enabled:false,moleculeParentId:String(m.id)},...variantSectionCatalog()]};
   variantDrafts.set(String(child.id),child);variantActiveId=String(child.id);variantOpenSection=null;variantCommercialIndex=0;variantRender();
   variantRoot.querySelector('[data-variant-form]')?.focus();
