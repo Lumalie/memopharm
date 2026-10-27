@@ -1611,6 +1611,18 @@ body.header-search-active #headerSearchSlot .search-suggestions .results{max-hei
 .detail #presentations-details .memo-v48-cip{margin-top:2px}
 .presentation-v37-lightbox .memo-v53-tools button{display:flex;align-items:center;justify-content:center;padding:0;line-height:0}
 .presentation-v37-lightbox .memo-v53-tools button svg{display:block;width:19px;height:19px;flex:none;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+
+/* V55 — Galerie dans le flux de mise en page : aucune superposition avec l'avertissement. */
+@media (min-width:701px){
+ .detail #presentations-details.memo-v48-has-photo{padding-right:18px;min-height:0}
+ .detail #presentations-details.memo-v48-has-photo .presentation-v33-layout.has-photo{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,370px);gap:20px;align-items:start;max-width:none}
+ .detail #presentations-details.memo-v48-has-photo .presentation-v33-photo.memo-v52-gallery{position:static;top:auto;right:auto;width:100%;max-width:370px;margin:0;align-self:start}
+ .detail #presentations-details.memo-v48-has-photo .presentation-v33-warning{width:100%;max-width:100%;clear:both}
+}
+@media (max-width:700px){
+ .detail #presentations-details.memo-v48-has-photo .presentation-v33-photo.memo-v52-gallery{position:static;top:auto;right:auto;margin:0 auto}
+ .detail #presentations-details.memo-v48-has-photo .presentation-v33-warning{width:100%;max-width:100%}
+}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
