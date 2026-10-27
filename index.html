@@ -1542,6 +1542,17 @@ body.header-search-active #headerSearchSlot .search-suggestions .results{max-hei
 .detail .molecule-pack-strip .molecule-tab:focus-visible{outline-color:#4388c8}
 .detail .molecule-pack-strip[hidden]{display:none!important}
 
+/* V49 — Encart compact : photo à droite dès la première ligne, sans vide au-dessus. */
+@media(min-width:701px){
+ .detail #presentations-details.memo-v48-has-photo{position:relative;min-height:315px;box-sizing:border-box;padding-right:300px}
+ .detail #presentations-details.memo-v48-has-photo .memo-v48-identity{max-width:none}
+ .detail #presentations-details.memo-v48-has-photo .presentation-v33-layout.has-photo{display:block;max-width:none}
+ .detail #presentations-details.memo-v48-has-photo .presentation-v33-photo{position:absolute;right:18px;top:55px;width:240px;min-height:0;box-sizing:border-box;padding:8px}
+ .detail #presentations-details.memo-v48-has-photo .presentation-v33-photo img{max-height:205px}
+ .detail #presentations-details.memo-v48-has-photo .presentation-v33-warning{width:calc(100% + 282px);max-width:none}
+ .detail #presentations-details.memo-v48-has-photo .presentation-v33-content .memo-practical-badges{margin-bottom:11px}
+ .detail #presentations-details.memo-v48-has-photo .presentation-v33-fields>p{margin-bottom:9px}
+}
 /* V48 — identité commerciale compacte et CIP lié à la sélection. */
 .detail .memo-v48-identity{display:grid;grid-template-columns:minmax(0,3fr) minmax(210px,2fr);gap:12px;align-items:end}
 .detail .memo-v48-selector,.detail .memo-v48-cip{min-width:0}
