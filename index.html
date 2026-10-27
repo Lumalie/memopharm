@@ -1565,7 +1565,20 @@ body.header-search-active #headerSearchSlot .search-suggestions .results{max-hei
 /* V50 — Le CIP reste sous le sélecteur, avec ou sans photographie. */
 .detail .memo-v48-identity{grid-template-columns:minmax(0,1fr);max-width:500px;gap:8px}
 .detail .memo-v48-cip [data-v48-cip]{min-height:0}
+/* V51 — Largeur identique du sélecteur avec ou sans photo. */
+.detail #presentations-details .memo-v48-identity,
+.detail #presentations-details.memo-v48-has-photo .memo-v48-identity{width:100%;max-width:500px;box-sizing:border-box}
+.detail #presentations-details .memo-v48-selector select{width:100%;box-sizing:border-box}
 
+
+/* V52 — Deux photographies indépendantes, côte à côte et agrandissables. */
+.detail #presentations-details.memo-v48-has-photo .presentation-v33-photo.memo-v52-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-items:start;width:290px;right:12px;top:55px;padding:7px;box-sizing:border-box}
+.detail #presentations-details.memo-v48-has-photo{padding-right:325px}
+.detail .memo-v52-photo-tile{margin:0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:5px}
+.detail .memo-v52-photo-tile .presentation-v37-zoom{width:100%;min-height:140px;display:flex;align-items:center;justify-content:center}
+.detail .memo-v52-photo-tile img{max-width:100%;max-height:205px;object-fit:contain}
+.detail .memo-v52-photo-tile figcaption{font-size:11px;color:#64756b;text-align:center}
+@media(max-width:700px){.detail #presentations-details.memo-v48-has-photo{padding-right:18px}.detail #presentations-details.memo-v48-has-photo .presentation-v33-photo.memo-v52-gallery{position:static;width:100%;max-width:360px;grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -1908,6 +1921,7 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLI
 const PHOTO_BUCKET = "presentation-photos";
 // Les fichiers choisis restent en mémoire jusqu’à l’enregistrement (pas dans sessionStorage).
 const pendingPresentationPhotos = new Map();
+const pendingTabletPhotos = new Map();
 const MAX_PHOTO_SIZE = 2 * 1024 * 1024;
 const DEFAULT_SECTIONS = [
  {id:"alerte-delivrance",title:"🚨 Alerte à la délivrance",type:"text",content:"",enabled:true},
@@ -3478,7 +3492,7 @@ function memoV48Cip(p){
 }
 function memoV48Sync(section,p){
  if(!section)return;
- const hasPhoto=!!(p&&p.showPhoto===true&&safeHttp(p.imageUrl||""));
+ const hasPhoto=!!(p&&((p.showPhoto===true&&safeHttp(p.imageUrl||""))||(p.showTabletPhoto===true&&safeHttp(p.tabletImageUrl||""))));
  section.classList.toggle("memo-v48-has-photo",hasPhoto);
  const cip=section.querySelector("[data-v48-cip]");
  if(cip)cip.innerHTML=memoV48Cip(p);
@@ -3495,7 +3509,10 @@ function presentationInfo(p,m=null){
   p.showCrush===true?`<p><strong>Écrasement :</strong> <span class="${p.cannotCrush===true?"presentation-status-note":""}">${p.cannotCrush===true?"Impossible":p.canCrush===true?"Possible selon vérification":"Non confirmé — vérifier"}${p.crushReason?` — ${esc(p.crushReason)}`:""}</span></p>`:"",
   p.showOpen===true?`<p><strong>Ouverture de la gélule :</strong> <span class="${p.cannotOpen===true?"presentation-status-note":""}">${p.cannotOpen===true?"Impossible":p.canOpen===true?"Possible selon vérification":"Non confirmé — vérifier"}${p.openReason?` — ${esc(p.openReason)}`:""}</span></p>`:""
  ].filter(Boolean);
- const photo=p.showPhoto===true&&img?`<figure class="presentation-v33-photo"><button type="button" class="presentation-v37-zoom" data-presentation-zoom="${esc(img)}" aria-label="Agrandir la photographie de la présentation" title="Cliquer pour agrandir"><img src="${esc(img)}" alt="Photographie documentée de la présentation" loading="lazy"><span class="presentation-v37-zoom-icon" aria-hidden="true">⤢</span></button></figure>`:"";
+ const tabletImg=safeHttp(p.tabletImageUrl||"");
+ const imageTile=(url,label)=>`<figure class="memo-v52-photo-tile"><button type="button" class="presentation-v37-zoom" data-presentation-zoom="${esc(url)}" aria-label="Agrandir la photo : ${label}" title="Cliquer pour agrandir"><img src="${esc(url)}" alt="${label} de la présentation" loading="lazy"><span class="presentation-v37-zoom-icon" aria-hidden="true">⤢</span></button><figcaption>${label}</figcaption></figure>`;
+ const tiles=[p.showPhoto===true&&img?imageTile(img,"Boîte"):"",p.showTabletPhoto===true&&tabletImg?imageTile(tabletImg,"Comprimé / gélule"):""].filter(Boolean);
+ const photo=tiles.length?`<div class="presentation-v33-photo memo-v52-gallery">${tiles.join("")}</div>`:"";
  const badges=m?practicalBadges(m,{...p,regulatoryList:""}):"";
  if(!rows.length&&!photo&&!badges&&!p.name)return '<p class="muted">Aucun critère de présentation affiché pour le moment.</p>';
  const title="";
@@ -3520,7 +3537,7 @@ function memoSetViewChoice(id,patch){
 }
 function renderPresentations(m,targetPresentationIndex=null,selectedPack=null){
  const options=memoV44Options(m).filter(x=>selectedPack===null||x.pack===selectedPack),saved=memoV44Chosen(m),chosen=options.find(x=>x.key===saved?.key)||options[0]||null;
- return `<section class="section presentation-fixed ${chosen?.p?.showPhoto===true&&safeHttp(chosen.p.imageUrl||"")?'memo-v48-has-photo':''}" id="presentations-details"><h3>💊 Présentation</h3>${options.length?`<div class="memo-v48-identity"><div class="memo-v48-selector"><label class="label" for="presentation-choice">Médicament commercial</label><select id="presentation-choice" data-presentation-select ${options.length===1?'aria-label="Médicament commercial"':''}>${options.map(x=>`<option value="${esc(x.key)}" ${chosen?.key===x.key?"selected":""}>${esc(presentationLabel(x.p,m,Number(x.key.split(":")[0])))}</option>`).join("")}</select></div><div class="memo-v48-cip"><span class="label">Code CIP</span><div data-v48-cip>${memoV48Cip(chosen?.p)}</div></div></div><div id="presentation-info" style="margin-top:12px">${chosen?presentationInfo(chosen.p,m):""}</div>`:'<p class="muted">Aucune présentation renseignée.</p>'}</section>`
+ return `<section class="section presentation-fixed ${chosen?.p&&((chosen.p.showPhoto===true&&safeHttp(chosen.p.imageUrl||""))||(chosen.p.showTabletPhoto===true&&safeHttp(chosen.p.tabletImageUrl||"")))?'memo-v48-has-photo':''}" id="presentations-details"><h3>💊 Présentation</h3>${options.length?`<div class="memo-v48-identity"><div class="memo-v48-selector"><label class="label" for="presentation-choice">Médicament commercial</label><select id="presentation-choice" data-presentation-select ${options.length===1?'aria-label="Médicament commercial"':''}>${options.map(x=>`<option value="${esc(x.key)}" ${chosen?.key===x.key?"selected":""}>${esc(presentationLabel(x.p,m,Number(x.key.split(":")[0])))}</option>`).join("")}</select></div><div class="memo-v48-cip"><span class="label">Code CIP</span><div data-v48-cip>${memoV48Cip(chosen?.p)}</div></div></div><div id="presentation-info" style="margin-top:12px">${chosen?presentationInfo(chosen.p,m):""}</div>`:'<p class="muted">Aucune présentation renseignée.</p>'}</section>`
 }
 
 const MEMO_CHOICES_KEY="memofficine_field_choices_v1";
@@ -3546,6 +3563,8 @@ document.addEventListener("change",e=>{
 function presentationEditor(p,i){
  const currentPhoto=safeHttp(p.imageUrl||"");
  const pending=pendingPresentationPhotos.get(editorId)?.get(i);
+ const tabletPhoto=safeHttp(p.tabletImageUrl||"");
+ const tabletPending=pendingTabletPhotos.get(editorId)?.get(i);
  const check=(key,label)=>`<label class="presentation-toggle"><input type="checkbox" data-show-field="${key}" ${p[key]===true?"checked":""}><span>${label}</span></label>`;
  const field=(key,label,showKey)=>`<div class="full presentation-edit-row">${check(showKey,label)}<input aria-label="${label}" data-pfield="${key}" ${key==="lab"?'data-memo-kind="lab" list="memo-labs"':""} value="${esc(p[key]||"")}" placeholder="${label}"></div>`;
  return `<div class="presentation-card" data-presentation="${i}"><div class="section-editor-head"><strong>Présentation ${i+1}</strong><button type="button" data-remove-presentation="${i}" class="danger">Retirer</button></div>
@@ -3567,12 +3586,24 @@ function presentationEditor(p,i){
  <div class="full presentation-edit-row">${check("showSplit","Fractionnement")}<div class="presentation-status-row"><label class="presentation-verified"><input type="checkbox" data-can-split ${p.canSplit===true&&!p.cannotSplit?"checked":""}>Possible (confirmé)</label><label class="presentation-verified"><input type="checkbox" data-cannot-split ${p.cannotSplit===true?"checked":""}>Impossible (confirmé)</label><input type="text" data-pfield="splitReason" value="${esc(p.splitReason||"")}" placeholder="Pourquoi ? (facultatif)" data-reason-for="split"></div></div>
  <div class="full presentation-edit-row">${check("showCrush","Écrasement")}<div class="presentation-status-row"><label class="presentation-verified"><input type="checkbox" data-can-crush ${p.canCrush===true&&!p.cannotCrush?"checked":""}>Possible (confirmé)</label><label class="presentation-verified"><input type="checkbox" data-cannot-crush ${p.cannotCrush===true?"checked":""}>Impossible (confirmé)</label><input type="text" data-pfield="crushReason" value="${esc(p.crushReason||"")}" placeholder="Pourquoi ? (facultatif)" data-reason-for="crush"></div></div>
  <div class="full presentation-edit-row">${check("showOpen","Ouverture de la gélule")}<div class="presentation-status-row"><label class="presentation-verified"><input type="checkbox" data-can-open ${p.canOpen===true&&!p.cannotOpen?"checked":""}>Possible (confirmé)</label><label class="presentation-verified"><input type="checkbox" data-cannot-open ${p.cannotOpen===true?"checked":""}>Impossible (confirmé)</label><input type="text" data-pfield="openReason" value="${esc(p.openReason||"")}" placeholder="Pourquoi ? (facultatif)" data-reason-for="open"></div></div>
- <div class="full presentation-edit-row">${check("showPhoto","Photo")}<input type="file" accept="image/jpeg,image/png,image/webp" data-photo-file="${i}"><div class="hint" data-photo-hint="${i}">${pending?"Photo sélectionnée : "+esc(pending.name):currentPhoto?"Photo enregistrée : visible ci-dessous":"JPG, PNG ou WebP · maximum 2 Mo. Envoyée lors de l’enregistrement de la fiche."}</div>${currentPhoto?`<img class="image-preview" src="${esc(currentPhoto)}" alt="Photo enregistrée de la présentation">`:""}</div>
+ <div class="full presentation-edit-row">${check("showPhoto","Photo de la boîte")}<input type="file" accept="image/jpeg,image/png,image/webp" data-photo-file="${i}"><div class="hint" data-photo-hint="${i}">${pending?"Photo sélectionnée : "+esc(pending.name):currentPhoto?"Photo enregistrée : visible ci-dessous":"JPG, PNG ou WebP · maximum 2 Mo. Envoyée lors de l’enregistrement de la fiche."}</div>${currentPhoto?`<img class="image-preview" src="${esc(currentPhoto)}" alt="Photo enregistrée de la présentation">`:""}</div>
+ <div class="full presentation-edit-row">${check("showTabletPhoto","Photo du comprimé / de la gélule")}<input type="file" accept="image/jpeg,image/png,image/webp" data-tablet-photo-file="${i}"><div class="hint" data-tablet-photo-hint="${i}">${tabletPending?"Photo sélectionnée : "+esc(tabletPending.name):tabletPhoto?"Photo enregistrée : visible ci-dessous":"JPG, PNG ou WebP · maximum 2 Mo. Envoyée lors de l’enregistrement de la fiche."}</div>${tabletPhoto?`<img class="image-preview" src="${esc(tabletPhoto)}" alt="Photo enregistrée du comprimé ou de la gélule">`:""}</div>
  ${["dosage","form","cis","sourceUrl"].map(key=>`<input type="hidden" data-pfield="${key}" value="${esc(p[key]||"")}">`).join("")}
  
  </div></div>`;
 }
 function wirePhotoInputs(){
+ $("presentationEditors").querySelectorAll("[data-tablet-photo-file]").forEach(input=>{
+  const i=Number(input.dataset.tabletPhotoFile);
+  input.addEventListener("change",()=>{
+   const file=input.files?.[0];if(!file)return;
+   if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>MAX_PHOTO_SIZE){toast("Choisis une image JPG, PNG ou WebP de 2 Mo maximum");input.value="";return}
+   if(!pendingTabletPhotos.has(editorId))pendingTabletPhotos.set(editorId,new Map());
+   pendingTabletPhotos.get(editorId).set(i,file);
+   const hint=$("presentationEditors").querySelector(`[data-tablet-photo-hint="${i}"]`);
+   if(hint)hint.textContent="Photo prête à envoyer : "+file.name+" (clique sur Enregistrer)";
+  });
+ });
  $("presentationEditors").querySelectorAll("[data-photo-file]").forEach(input=>{
   const i=Number(input.dataset.photoFile);
   input.addEventListener("change",()=>{
@@ -3586,6 +3617,21 @@ function wirePhotoInputs(){
  });
 }
 async function uploadPresentationPhotos(m){
+ const tabletPending=pendingTabletPhotos.get(m.id);
+ if(tabletPending?.size){
+  for(const [i,file] of tabletPending){
+   if(!m.presentations[i])continue;
+   const ext={"image/jpeg":"jpg","image/png":"png","image/webp":"webp"}[file.type];
+   if(!ext||file.size>MAX_PHOTO_SIZE)throw new Error("Image invalide ou trop volumineuse");
+   const path=`${currentUser.id}/${m.id}/${crypto.randomUUID()}.${ext}`;
+   const {error}=await supabaseClient.storage.from(PHOTO_BUCKET).upload(path,file,{contentType:file.type,upsert:false});
+   if(error)throw error;
+   const {data}=supabaseClient.storage.from(PHOTO_BUCKET).getPublicUrl(path);
+   m.presentations[i].tabletImageUrl=data.publicUrl;
+   tabletPending.delete(i);
+  }
+  if(!tabletPending.size)pendingTabletPhotos.delete(m.id);
+ }
  const pending=pendingPresentationPhotos.get(m.id);if(!pending?.size)return;
  for(const [i,file] of pending){
   if(!m.presentations[i])continue;
@@ -4128,7 +4174,7 @@ function renderEditor(id){
    variantReadCommercial();const child=variantDrafts.get(variantActiveId);
    child.presentations.splice(variantCommercialIndex,1);
    const photos=pendingPresentationPhotos.get(child.id);
-   if(photos){const shifted=new Map();for(const [i,file] of photos)if(i!==variantCommercialIndex)shifted.set(i>variantCommercialIndex?i-1:i,file);pendingPresentationPhotos.set(child.id,shifted)}
+   if(photos){const shifted=new Map();for(const [i,file] of photos)if(i!==variantCommercialIndex)shifted.set(i>variantCommercialIndex?i-1:i,file);pendingPresentationPhotos.set(child.id,shifted)}const tabletOld=pendingTabletPhotos.get(child.id);if(tabletOld){const shifted=new Map();for(const [i,file] of tabletOld)if(i!==variantCommercialIndex)shifted.set(i>variantCommercialIndex?i-1:i,file);pendingTabletPhotos.set(child.id,shifted)}
    variantCommercialIndex=0;variantRender();
   });
   root.querySelector('[data-add-cip-pack]')?.addEventListener('click',e=>{
@@ -4153,6 +4199,7 @@ function renderEditor(id){
    const opposite=el.hasAttribute('data-can-'+key)?'data-cannot-'+key:'data-can-'+key;
    root.querySelector('['+opposite+']').checked=false;
   });
+  root.querySelector('[data-tablet-photo-file]')?.addEventListener('change',e=>{const file=e.target.files?.[0];if(!file)return;if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>MAX_PHOTO_SIZE){toast('Image invalide (2 Mo maximum)');e.target.value='';return}if(!pendingTabletPhotos.has(variantActiveId))pendingTabletPhotos.set(variantActiveId,new Map());pendingTabletPhotos.get(variantActiveId).set(variantCommercialIndex,file);const hint=root.querySelector('[data-tablet-photo-hint]');if(hint)hint.textContent='Photo prête à envoyer : '+file.name;});
   root.querySelector('[data-photo-file]')?.addEventListener('change',e=>{
    const file=e.target.files?.[0];if(!file)return;
    if(!pendingPresentationPhotos.has(variantActiveId))pendingPresentationPhotos.set(variantActiveId,new Map());
@@ -4355,7 +4402,7 @@ function renderEditor(id){
   editorOriginalSnapshot=null;
   clearLocalDraft();detailLocation(id);renderDetail();
  };
- const refreshPresentationEditors=()=>{const root=$("presentationEditors");root.innerHTML=(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("");root.querySelectorAll("[data-remove-presentation]").forEach(b=>b.onclick=()=>{captureEditorFields(m);const removed=Number(b.dataset.removePresentation);m.presentations.splice(removed,1);const old=pendingPresentationPhotos.get(m.id);if(old){const shifted=new Map();for(const [i,file] of old)if(i!==removed)shifted.set(i>removed?i-1:i,file);pendingPresentationPhotos.set(m.id,shifted)}refreshPresentationEditors()});wirePhotoInputs();root.querySelectorAll("[data-add-cip-pack]").forEach(b=>b.onclick=()=>{const rows=b.closest(".cip-pack-rows");const row=rows.querySelector("[data-cip-pack-row]").cloneNode(true);row.querySelectorAll("input").forEach(input=>input.value="");rows.insertBefore(row,b);row.querySelector("[data-cip-value]").focus()});root.addEventListener("click",e=>{const b=e.target.closest("[data-remove-cip-pack]");if(!b)return;const rows=b.closest(".cip-pack-rows");const all=rows.querySelectorAll("[data-cip-pack-row]");if(all.length===1){all[0].querySelectorAll("input").forEach(input=>input.value="")}else b.closest("[data-cip-pack-row]").remove()});root.querySelectorAll("[data-pkind]").forEach(input=>input.addEventListener("change",()=>{if(!input.checked)return;input.closest("[data-presentation]").querySelectorAll("[data-pkind]").forEach(other=>{if(other!==input)other.checked=false})}));root.querySelectorAll("[data-cannot-split],[data-can-split],[data-cannot-crush],[data-can-crush],[data-cannot-open],[data-can-open]").forEach(input=>input.addEventListener("change",()=>{const card=input.closest("[data-presentation]");const kind=input.hasAttribute("data-cannot-split")||input.hasAttribute("data-can-split")?"split":input.hasAttribute("data-cannot-open")||input.hasAttribute("data-can-open")?"open":"crush";const yes=card.querySelector(`[data-can-${kind}]`),no=card.querySelector(`[data-cannot-${kind}]`),reason=card.querySelector(`[data-reason-for="${kind}"]`);if(input===yes&&yes.checked)no.checked=false;if(input===no&&no.checked)yes.checked=false;reason.hidden=false;}));};
+ const refreshPresentationEditors=()=>{const root=$("presentationEditors");root.innerHTML=(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("");root.querySelectorAll("[data-remove-presentation]").forEach(b=>b.onclick=()=>{captureEditorFields(m);const removed=Number(b.dataset.removePresentation);m.presentations.splice(removed,1);const old=pendingPresentationPhotos.get(m.id);if(old){const shifted=new Map();for(const [i,file] of old)if(i!==removed)shifted.set(i>removed?i-1:i,file);pendingPresentationPhotos.set(m.id,shifted)}const tabletOld=pendingTabletPhotos.get(m.id);if(tabletOld){const shifted=new Map();for(const [i,file] of tabletOld)if(i!==removed)shifted.set(i>removed?i-1:i,file);pendingTabletPhotos.set(m.id,shifted)}refreshPresentationEditors()});wirePhotoInputs();root.querySelectorAll("[data-add-cip-pack]").forEach(b=>b.onclick=()=>{const rows=b.closest(".cip-pack-rows");const row=rows.querySelector("[data-cip-pack-row]").cloneNode(true);row.querySelectorAll("input").forEach(input=>input.value="");rows.insertBefore(row,b);row.querySelector("[data-cip-value]").focus()});root.addEventListener("click",e=>{const b=e.target.closest("[data-remove-cip-pack]");if(!b)return;const rows=b.closest(".cip-pack-rows");const all=rows.querySelectorAll("[data-cip-pack-row]");if(all.length===1){all[0].querySelectorAll("input").forEach(input=>input.value="")}else b.closest("[data-cip-pack-row]").remove()});root.querySelectorAll("[data-pkind]").forEach(input=>input.addEventListener("change",()=>{if(!input.checked)return;input.closest("[data-presentation]").querySelectorAll("[data-pkind]").forEach(other=>{if(other!==input)other.checked=false})}));root.querySelectorAll("[data-cannot-split],[data-can-split],[data-cannot-crush],[data-can-crush],[data-cannot-open],[data-can-open]").forEach(input=>input.addEventListener("change",()=>{const card=input.closest("[data-presentation]");const kind=input.hasAttribute("data-cannot-split")||input.hasAttribute("data-can-split")?"split":input.hasAttribute("data-cannot-open")||input.hasAttribute("data-can-open")?"open":"crush";const yes=card.querySelector(`[data-can-${kind}]`),no=card.querySelector(`[data-cannot-${kind}]`),reason=card.querySelector(`[data-reason-for="${kind}"]`);if(input===yes&&yes.checked)no.checked=false;if(input===no&&no.checked)yes.checked=false;reason.hidden=false;}));};
  $("addPresentation").onclick=()=>{captureEditorFields(m);m.presentations.push({name:"",showLab:false,lab:"",dosage:"",form:"",cip:"",cis:"",description:"",marking:"",imageUrl:"",sourceUrl:""});refreshPresentationEditors()};
  wirePhotoInputs();
  $("editor").querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>sectionAction(b.dataset.act,Number(b.dataset.index),m.id));
@@ -4368,7 +4415,7 @@ function renderEditor(id){
  $("editor").onchange=saveLocalDraft;
  $("saveMed").onclick=async()=>{if(isMolecule(m)){variantReadAll();m._variantDrafts=[...variantDrafts.values()].map(clone)}await saveEditor(m.id)};$("duplicateMed").onclick=()=>duplicateMed(m.id);$("deleteMed").onclick=()=>deleteMed(m.id);
 }
-function readPresentationEditors(m){const cards=[...$("presentationEditors").querySelectorAll("[data-presentation]")];m.presentations=cards.map((card,i)=>{const p={imageUrl:m.presentations?.[i]?.imageUrl||"",presentationKind:card.querySelector("[data-pkind]:checked")?.dataset.pkind||"",canSplit:card.querySelector("[data-can-split]")?.checked===true,canCrush:card.querySelector("[data-can-crush]")?.checked===true,canOpen:card.querySelector("[data-can-open]")?.checked===true,cannotSplit:card.querySelector("[data-cannot-split]")?.checked===true,cannotCrush:card.querySelector("[data-cannot-crush]")?.checked===true,cannotOpen:card.querySelector("[data-cannot-open]")?.checked===true};p.coldStorage=!!card.querySelector("[data-practical-cold]")?.checked;p.afterOpening=!!card.querySelector("[data-practical-after]")?.checked;p.afterOpeningDuration=card.querySelector("[data-practical-duration]")?.value.trim()||"";p.regulatoryList=card.querySelector("[data-regulation]")?.value||"";const photoSetting=card.querySelector("[data-practical-photo]")?.value;p.photosensitizingOverride=photoSetting==="yes"?true:photoSetting==="no"?false:null;const mteSetting=card.querySelector("[data-practical-mte]")?.value;p.mteOverride=mteSetting==="yes"?true:mteSetting==="no"?false:null;card.querySelectorAll("[data-show-field]").forEach(input=>p[input.dataset.showField]=input.checked);card.querySelectorAll("[data-pfield]").forEach(input=>p[input.dataset.pfield]=input.value.trim());p.cipBoxes=[...card.querySelectorAll("[data-cip-pack-row]")].map(row=>({cip:row.querySelector("[data-cip-value]").value.trim(),pack:row.querySelector("[data-pack-value]").value.trim()})).filter(x=>x.cip||x.pack);p.cip=p.cipBoxes[0]?.cip||"";return p})}
+function readPresentationEditors(m){const cards=[...$("presentationEditors").querySelectorAll("[data-presentation]")];m.presentations=cards.map((card,i)=>{const p={imageUrl:m.presentations?.[i]?.imageUrl||"",tabletImageUrl:m.presentations?.[i]?.tabletImageUrl||"",presentationKind:card.querySelector("[data-pkind]:checked")?.dataset.pkind||"",canSplit:card.querySelector("[data-can-split]")?.checked===true,canCrush:card.querySelector("[data-can-crush]")?.checked===true,canOpen:card.querySelector("[data-can-open]")?.checked===true,cannotSplit:card.querySelector("[data-cannot-split]")?.checked===true,cannotCrush:card.querySelector("[data-cannot-crush]")?.checked===true,cannotOpen:card.querySelector("[data-cannot-open]")?.checked===true};p.coldStorage=!!card.querySelector("[data-practical-cold]")?.checked;p.afterOpening=!!card.querySelector("[data-practical-after]")?.checked;p.afterOpeningDuration=card.querySelector("[data-practical-duration]")?.value.trim()||"";p.regulatoryList=card.querySelector("[data-regulation]")?.value||"";const photoSetting=card.querySelector("[data-practical-photo]")?.value;p.photosensitizingOverride=photoSetting==="yes"?true:photoSetting==="no"?false:null;const mteSetting=card.querySelector("[data-practical-mte]")?.value;p.mteOverride=mteSetting==="yes"?true:mteSetting==="no"?false:null;card.querySelectorAll("[data-show-field]").forEach(input=>p[input.dataset.showField]=input.checked);card.querySelectorAll("[data-pfield]").forEach(input=>p[input.dataset.pfield]=input.value.trim());p.cipBoxes=[...card.querySelectorAll("[data-cip-pack-row]")].map(row=>({cip:row.querySelector("[data-cip-value]").value.trim(),pack:row.querySelector("[data-pack-value]").value.trim()})).filter(x=>x.cip||x.pack);p.cip=p.cipBoxes[0]?.cip||"";return p})}
 function tableRows(content){
  const rows=String(content||"").split("\n").filter(line=>line.trim()).map(line=>line.split(/\s+\|\s+/).map(cell=>cell.trim()));
  if(!rows.length)return [["",""],["",""]];
@@ -4761,7 +4808,7 @@ document.addEventListener("keydown",event=>{
  if(!event.repeat)saveEditor(editorId);
 });
 function duplicateMed(id){if(!requireAdmin())return;const m=meds.find(x=>x.id===id);if(!m)return;const copy=clone(m);copy.id=crypto.randomUUID();copy.name=m.name+" (copie)";copy.status="À vérifier";copy.updated="";copy.published=false;meds.unshift(copy);selectedId=copy.id;renderFilters();renderResults();renderEditor(copy.id);saveLocalDraft();toast("Copie créée : enregistre-la pour la synchroniser")}
-async function deleteMed(id){if(!requireAdmin())return;const target=meds.find(m=>m.id===id);if(target&&isGroup(target)&&meds.some(m=>!isSourcesRecord(m)&&parentGroupId(m)===id)){toast("Détache d’abord les fiches médicaments de ce groupe avant de le supprimer.");return}if(!confirm("Supprimer définitivement cette fiche de la base en ligne ?"))return;const {error}=await supabaseClient.from("medications").delete().eq("id",id);if(error){console.error(error);toast("Suppression refusée par Supabase");return}clearLocalDraft();pendingPresentationPhotos.delete(id);editorId=null;meds=meds.filter(m=>m.id!==id);selectedId=null;openedSearchFiche=false;$("editor").classList.add("hidden");$("detail").classList.remove("hidden");renderFilters();renderResults();navigateToView("explore");toast("Fiche supprimée de la base en ligne")}
+async function deleteMed(id){if(!requireAdmin())return;const target=meds.find(m=>m.id===id);if(target&&isGroup(target)&&meds.some(m=>!isSourcesRecord(m)&&parentGroupId(m)===id)){toast("Détache d’abord les fiches médicaments de ce groupe avant de le supprimer.");return}if(!confirm("Supprimer définitivement cette fiche de la base en ligne ?"))return;const {error}=await supabaseClient.from("medications").delete().eq("id",id);if(error){console.error(error);toast("Suppression refusée par Supabase");return}clearLocalDraft();pendingPresentationPhotos.delete(id);pendingTabletPhotos.delete(id);editorId=null;meds=meds.filter(m=>m.id!==id);selectedId=null;openedSearchFiche=false;$("editor").classList.add("hidden");$("detail").classList.remove("hidden");renderFilters();renderResults();navigateToView("explore");toast("Fiche supprimée de la base en ligne")}
 
 // Les références communes sont stockées dans un enregistrement dédié de la table existante.
 // Il est exclu des recherches et du catalogue médicaments.
