@@ -1509,6 +1509,24 @@ body.info-page main{display:none!important}
 .memo-theme-arrow{font-size:1.25rem;color:#548065;flex-shrink:0}
 .memo-theme-empty{padding:22px;border:1px dashed #ccd9cf;border-radius:12px;color:#64746a}
 
+
+/* V43 : pied de page, navigation compacte, classement réglementaire et suivi */
+.memo-v43-footer{margin:24px 0 18px;padding:18px 20px;border:1px solid #d7e7db;border-radius:14px;background:#eff7f1;color:#244c39;line-height:1.55}
+.memo-v43-footer strong{font-size:1.02rem}.memo-v43-footer p{margin:8px 0 0;font-size:.93rem}
+#adminDashboard .memo-v43-task-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+#memoV43TaskPane.is-folded #memoV43TaskBody{display:none}
+#memoV43TaskPane .dash-list-heading{align-items:center;gap:10px}
+.memo-v43-regulation{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 12px;background:#f4f8f5;border:1px solid #dfe9e1;border-radius:10px;margin:8px 0 12px}
+.memo-v43-regulation label{font-weight:650}.memo-v43-regulation select{min-width:155px;max-width:230px}
+.memo-practical-badge.memo-v43-list-i{background:#f8dfdb;color:#8f3029;border:0}
+.memo-practical-badge.memo-v43-list-i:hover{background:#eebcb4;color:#76221b;border:0}
+.memo-practical-badge.memo-v43-list-ii{background:#dcecf7;color:#235779;border:0}
+.memo-practical-badge.memo-v43-list-ii:hover{background:#bad8ee;color:#17435f;border:0}
+body.header-search-active #headerSearchSlot{position:relative;z-index:100}
+body.header-search-active #headerSearchSlot .searchcard{position:relative;overflow:visible}
+body.header-search-active #headerSearchSlot .search-suggestions:not(.hidden){display:block;position:absolute;top:calc(100% + 5px);left:0;right:0;z-index:150;max-height:min(60vh,480px);overflow-y:auto;background:#fff;box-shadow:0 12px 28px #193f342b}
+body.header-search-active #headerSearchSlot .search-suggestions .results{max-height:390px;overflow-y:auto}
+
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -1754,7 +1772,7 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
  <div class="dash-stats dash-stats-general"><button type="button" class="dash-stat" data-dash-filter="all" aria-label="Afficher la liste : Fiches créées"><b id="dashTotal">0</b><span>Fiches créées</span></button><button type="button" class="dash-stat" data-dash-filter="published" aria-label="Afficher la liste : Fiches publiées"><b id="dashPublished">0</b><span>Fiches publiées</span></button><button type="button" class="dash-stat dash-stat-review" data-dash-filter="review" aria-label="Afficher la liste : À vérifier"><b id="dashReview">0</b><span>À vérifier</span></button></div>
  <div class="dash-stats dash-stats-types" aria-label="Répartition des fiches par catégorie"><button type="button" class="dash-stat dash-stat-group" data-dash-filter="groups" aria-label="Afficher la liste : Fiches groupes"><b id="dashGroups">0</b><span>Fiches groupes</span></button><button type="button" class="dash-stat dash-stat-molecule" data-dash-filter="molecules" aria-label="Afficher la liste : Fiches molécules"><b id="dashMolecules">0</b><span>Fiches molécules</span></button><button type="button" class="dash-stat dash-stat-dosage" data-dash-filter="dosages" aria-label="Afficher la liste : Fiches dosage/forme"><b id="dashDosages">0</b><span>Fiches dosage/forme</span></button><button type="button" class="dash-stat dash-stat-specialite" data-dash-filter="specialites" aria-label="Afficher la liste : Fiches spécialités"><b id="dashSpecialites">0</b><span>Fiches spécialités</span></button><button type="button" class="dash-stat dash-stat-conseil" data-dash-filter="conseils" aria-label="Afficher la liste : Fiches conseil"><b id="dashConseils">0</b><span>Fiches conseil</span></button></div>
  <div id="dashSyncStatus" class="dash-sync-status" role="status">Sauvegarde locale disponible · Synchronisation en attente</div><section id="dashStatList" hidden aria-live="polite"><div class="dash-list-head"><h3 id="dashStatListTitle">Liste des fiches</h3><button class="dash-list-close" id="dashStatListClose" type="button">✕ Fermer</button></div><div id="dashStatListItems"></div></section>
- <div class="dash-panels"><div class="dash-pane"><div class="dash-list-heading"><h3>📋 Ma liste de suivi <small id="dashTaskCount" class="muted"></small></h3><button id="dashToggleEditor" type="button" class="soft">✏️ Modifier ma liste</button></div><div class="dash-progress"><div id="dashProgressBar" style="width:0%"></div></div><div id="dashProgressText" class="muted">Aucune tâche</div><div id="dashTaskTree" class="dash-tree" style="margin-top:12px"></div><div id="dashInlineActions" class="dash-tools hidden"><button type="button" id="dashInlineAdd">＋ Nouvelle entrée</button><button type="button" class="primary" id="dashInlineSave">Enregistrer et trier A → Z (Ctrl+S)</button><button type="button" id="dashInlineCancel">Annuler</button><button type="button" id="dashInlineExport">Exporter</button></div></div>
+ <div class="dash-panels"><div class="dash-pane" id="memoV43TaskPane"><div class="dash-list-heading"><h3>📋 Ma liste de suivi <small id="dashTaskCount" class="muted"></small></h3><div class="memo-v43-task-actions"><button id="memoV43TaskFold" type="button" class="soft" aria-expanded="true" aria-controls="memoV43TaskBody" title="Réduire la liste de suivi">⌃ Réduire</button><button id="dashToggleEditor" type="button" class="soft">✏️ Modifier ma liste</button></div></div><div id="memoV43TaskBody"><div class="dash-progress"><div id="dashProgressBar" style="width:0%"></div></div><div id="dashProgressText" class="muted">Aucune tâche</div><div id="dashTaskTree" class="dash-tree" style="margin-top:12px"></div><div id="dashInlineActions" class="dash-tools hidden"><button type="button" id="dashInlineAdd">＋ Nouvelle entrée</button><button type="button" class="primary" id="dashInlineSave">Enregistrer et trier A → Z (Ctrl+S)</button><button type="button" id="dashInlineCancel">Annuler</button><button type="button" id="dashInlineExport">Exporter</button></div></div></div>
  <div class="dash-pane hidden" id="dashEditorPane"><h3>✏️ Éditer mes projets</h3><label for="dashTextarea" class="muted">Une ligne = une tâche. Deux espaces supplémentaires = un sous-niveau. Ctrl+S (ou ⌘S sur Mac) pour enregistrer.</label><div id="dashFormatToolbar" class="dash-format-toolbar" aria-label="Mise en forme de la liste"><button type="button" data-dash-format="bold" title="Gras (Ctrl+B)"><b>G</b></button><button type="button" data-dash-format="italic" title="Italique (Ctrl+I)"><i>I</i></button><button type="button" data-dash-format="underline" title="Souligné (Ctrl+U)"><u>S</u></button><button type="button" data-dash-format="link">🔗 Lien</button><button type="button" data-dash-format="bullets">• Liste</button><button type="button" data-dash-format="numbers">1. Liste</button><select data-dash-style="align" aria-label="Alignement"><option value="">Aligner…</option><option value="left">Gauche</option><option value="center">Centré</option><option value="right">Droite</option><option value="justify">Justifié</option></select><select data-dash-style="size" aria-label="Taille"><option value="">Taille…</option><option value="12">12 px</option><option value="14">14 px</option><option value="16">16 px</option><option value="18">18 px</option><option value="20">20 px</option><option value="24">24 px</option><option value="28">28 px</option></select><select data-dash-style="color" aria-label="Couleur"><option value="">Couleur…</option><option value="default">Défaut</option><option value="green">Vert</option><option value="red">Rouge</option><option value="orange">Orange</option><option value="blue">Bleu</option><option value="gray">Gris</option><option value="pink">Rose</option></select></div><textarea id="dashTextarea" spellcheck="false" placeholder="Antibiotiques&#10;  Amoxicilline&#10;    Vérifier les sources&#10;    Compléter la posologie&#10;Antianémiques&#10;  Tardyferon"></textarea><div class="dash-tools"><button type="button" class="primary" id="dashSave">Enregistrer et trier A → Z</button><button type="button" id="dashExport">Exporter ma liste</button><button type="button" id="dashImport">Importer une liste</button><input id="dashImportFile" type="file" accept=".json,application/json" class="hidden"></div><p class="dash-note">Les éléments sont classés par ordre alphabétique à chaque niveau. Les cases cochées sont mémorisées sur ce navigateur. Synchronisation Supabase disponible après installation de la table SQL dédiée. Les données restent également conservées localement.</p></div></div>
  <div class="dash-suggestions">
  <h3>💡 Suggestions de modifications</h3>
@@ -1788,8 +1806,7 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
     <section class="panel" aria-live="polite"><div id="detail" class="detail"><div class="empty">Choisis une fiche dans la bibliothèque pour afficher son contenu.</div></div><div id="editor" class="detail admin hidden"></div></section>
     <div id="memo-combined-sources-slot" class="memo-external-sources hidden" aria-label="Références documentaires"></div>
   </div>
-  </section><section id="exploreView" class="hidden"><div class="explore-heading"><h2>Explorer les fiches</h2><p>Parcourez les fiches communes et leurs spécialités associées.</p></div><div class="explore-search"><label for="exploreSearch">Rechercher dans les fiches</label><div class="explore-search-row"><input id="exploreSearch" type="search" autocomplete="off" placeholder="Ex. : amoxicilline, oubli de prise, CIP, conservation…"><button id="clearExploreSearch" type="button">Effacer</button></div><p id="exploreSearchCount" class="muted" aria-live="polite"></p></div><div class="explore-controls"><label>Classe thérapeutique<select id="exploreClass"></select></label><label>Indication thérapeutique<select id="exploreIndication"></select></label><label>Forme pharmaceutique<select id="exploreForm"></select></label><label>Badge pharmaceutique<select id="exploreBadge"><option value="">Tous les badges</option><option value="mte">⚠ MTE</option><option value="photo">☀ Photosensibilisant</option><option value="cold">❄ Conservation au froid</option><option value="after">◷ Conservation après ouverture</option></select></label><button id="resetExplore" type="button">Effacer les filtres</button></div> <div id="memoThemeIntro" class="memo-theme-intro hidden" aria-live="polite"></div><div id="exploreCards" class="explore-cards"></div></section><section id="sourcesView" class="hidden"><div class="explore-heading"><h2>Sources documentaires</h2><p>Références communes utilisées pour construire et vérifier les fiches de Mémopharm.</p></div><div id="sourcesList" class="sources-list"></div><div id="sourcesAdmin" class="panel hidden" style="padding:18px;margin-top:18px"></div></section><p class="foot">Les fiches finales devront être renseignées à partir des sources officielles (notices et RCP notamment), avec date de mise à jour et statut de vérification. Mémopharm est une aide documentaire : elle ne remplace ni le jugement professionnel ni la vérification de la spécialité exacte.</p>
-  <div class="notice"><strong>Base documentaire en construction :</strong> seules les fiches publiées sont visibles publiquement. Les contenus doivent être vérifiés à partir des sources officielles et ne remplacent pas la vérification de la spécialité exacte ni le jugement professionnel.</div>
+  </section><section id="exploreView" class="hidden"><div class="explore-heading"><h2>Explorer les fiches</h2><p>Parcourez les fiches communes et leurs spécialités associées.</p></div><div class="explore-search"><label for="exploreSearch">Rechercher dans les fiches</label><div class="explore-search-row"><input id="exploreSearch" type="search" autocomplete="off" placeholder="Ex. : amoxicilline, oubli de prise, CIP, conservation…"><button id="clearExploreSearch" type="button">Effacer</button></div><p id="exploreSearchCount" class="muted" aria-live="polite"></p></div><div class="explore-controls"><label>Classe thérapeutique<select id="exploreClass"></select></label><label>Indication thérapeutique<select id="exploreIndication"></select></label><label>Forme pharmaceutique<select id="exploreForm"></select></label><label>Badge pharmaceutique<select id="exploreBadge"><option value="">Tous les badges</option><option value="mte">⚠ MTE</option><option value="photo">☀ Photosensibilisant</option><option value="cold">❄ Conservation au froid</option><option value="after">◷ Conservation après ouverture</option><option value="listI">Liste I</option><option value="listII">Liste II</option></select></label><button id="resetExplore" type="button">Effacer les filtres</button></div> <div id="memoThemeIntro" class="memo-theme-intro hidden" aria-live="polite"></div><div id="exploreCards" class="explore-cards"></div></section><section id="sourcesView" class="hidden"><div class="explore-heading"><h2>Sources documentaires</h2><p>Références communes utilisées pour construire et vérifier les fiches de Mémopharm.</p></div><div id="sourcesList" class="sources-list"></div><div id="sourcesAdmin" class="panel hidden" style="padding:18px;margin-top:18px"></div></section><div class="memo-v43-footer"><strong>📖 Une ressource pratique pour les professionnels de santé</strong><p>Mémopharm est une base documentaire indépendante conçue pour faciliter l’accès aux informations essentielles sur les médicaments et accompagner la pratique quotidienne des professionnels de santé.</p><p>Les fiches sont enrichies progressivement à partir de sources de référence. Les dates de mise à jour et de vérification permettent d’en apprécier l’actualité. Pour toute décision de prise en charge, les informations doivent être confrontées aux référentiels officiels en vigueur et aux données de la spécialité concernée.</p></div>
 <div id="dashMobileToolbar" role="toolbar" aria-label="Outils de modification de la liste">
 <button type="button" data-dash-mobile="outdent" aria-label="Retirer un niveau">← Retrait</button>
 <button type="button" data-dash-mobile="indent" aria-label="Ajouter un niveau">→ Tabulation</button>
@@ -2293,6 +2310,8 @@ function memoBadgeMatches(m,kind){
   if(kind==="photo")return practicalPhotosensitive(x)||ps.some(p=>practicalPhotosensitive(x,p));
   if(kind==="cold")return ps.some(p=>p.coldStorage===true);
   if(kind==="after")return ps.some(p=>p.afterOpening===true);
+  if(kind==="listI")return ps.some(p=>p.regulatoryList==="I");
+  if(kind==="listII")return ps.some(p=>p.regulatoryList==="II");
   return true;
  });
 }
@@ -2323,13 +2342,17 @@ const memoThemeMeta={
  mte:{title:"Médicaments à marge thérapeutique étroite",description:"Molécules, formes et spécialités renseignées comme MTE dans Mémopharm."},
  photo:{title:"Médicaments photosensibilisants",description:"Molécules, formes et spécialités renseignées comme photosensibilisantes."},
  cold:{title:"Médicaments à conserver au froid",description:"Présentations commerciales avec conservation au froid renseignée."},
- after:{title:"Conservation après ouverture",description:"Présentations commerciales avec une durée de conservation après ouverture renseignée."}
+ after:{title:"Conservation après ouverture",description:"Présentations commerciales avec une durée de conservation après ouverture renseignée."},
+ listI:{title:"Médicaments de Liste I",description:"Spécialités commerciales classées en Liste I dans Mémopharm."},
+ listII:{title:"Médicaments de Liste II",description:"Spécialités commerciales classées en Liste II dans Mémopharm."}
 };
 function memoThemeMatchesPresentation(m,p,kind){
  if(kind==="mte")return practicalMTE(m,p);
  if(kind==="photo")return practicalPhotosensitive(m,p);
  if(kind==="cold")return p?.coldStorage===true;
  if(kind==="after")return p?.afterOpening===true;
+ if(kind==="listI")return p?.regulatoryList==="I";
+ if(kind==="listII")return p?.regulatoryList==="II";
  return false;
 }
 function memoRenderThemeList(entries,kind){
@@ -2947,7 +2970,7 @@ function previewSearchResult(item){
  $('results').querySelectorAll('.result').forEach(el=>el.classList.toggle('preview-selected',el.dataset.id===String(m.id)&&el.dataset.section===(sec?.id||'')&&el.dataset.presentation===(pres===null?'':String(pres))));
 }
 function syncSearchWorkspace(query,found){
- const active=currentView==='home'&&!openedSearchFiche&&!editorId&&!!query;
+ const active=currentView==='home'&&!admin&&!openedSearchFiche&&!editorId&&!!query;
  $('homeView').classList.toggle('search-work-active',active);
  $('searchWorkspace').classList.toggle('hidden',!active);
  const dropdown=$('searchSuggestions');const target=active?$('searchResultsSlot'):$('mainSearchCard');
@@ -3358,6 +3381,8 @@ function practicalMTE(m,p=null){
 }
 function practicalBadges(m,p=null){
  const flags=p||practicalFlags(m),out=[];
+ if(p&&p.regulatoryList==="I")out.push('<button type="button" class="memo-practical-badge memo-v43-list-i" data-filter-badge="listI">Liste I</button>');
+ if(p&&p.regulatoryList==="II")out.push('<button type="button" class="memo-practical-badge memo-v43-list-ii" data-filter-badge="listII">Liste II</button>');
  if(p&&p.coldStorage===true)out.push('<button type="button" class="memo-practical-badge" data-filter-badge="cold" title="Consulter les conditions exactes dans le RCP">❄ conservation au froid</button>');
  if(practicalMTE(m,p))out.push('<button type="button" class="memo-practical-badge memo-mte" data-filter-badge="mte" title="Médicament à marge thérapeutique étroite : vérifier les précautions et les règles de substitution applicables">⚠ MTE</button>');
  if(practicalPhotosensitive(m,p))out.push('<button type="button" class="memo-practical-badge memo-light" data-filter-badge="photo" title="Photosensibilisation : vérifier les précautions selon la forme et la voie">☀ photosensibilisant</button>');
@@ -3429,6 +3454,7 @@ function presentationEditor(p,i){
  const field=(key,label,showKey)=>`<div class="full presentation-edit-row">${check(showKey,label)}<input aria-label="${label}" data-pfield="${key}" ${key==="lab"?'data-memo-kind="lab" list="memo-labs"':""} value="${esc(p[key]||"")}" placeholder="${label}"></div>`;
  return `<div class="presentation-card" data-presentation="${i}"><div class="section-editor-head"><strong>Présentation ${i+1}</strong><button type="button" data-remove-presentation="${i}" class="danger">Retirer</button></div>
  <div class="presentation-kind-row"><span>Statut de la présentation :</span><label><input type="checkbox" data-pkind="princeps" ${p.presentationKind==="princeps"?"checked":""}> Princeps</label><label><input type="checkbox" data-pkind="generic" ${p.presentationKind==="generic"?"checked":""}> Générique</label></div>
+ <div class="memo-v43-regulation"><label for="memo-v43-reg-${i}">Classement réglementaire</label><select id="memo-v43-reg-${i}" data-regulation><option value="" ${!p.regulatoryList?"selected":""}>Non renseigné</option><option value="I" ${p.regulatoryList==="I"?"selected":""}>Liste I</option><option value="II" ${p.regulatoryList==="II"?"selected":""}>Liste II</option><option value="none" ${p.regulatoryList==="none"?"selected":""}>Non listé</option></select></div>
  <div class="memo-practical-editor">
  <label><input type="checkbox" data-practical-cold ${p.coldStorage===true?"checked":""}> ❄ Conservation au froid</label>
  <label><input type="checkbox" data-practical-after ${p.afterOpening===true?"checked":""}> ◷ Durée après ouverture</label>
@@ -3966,7 +3992,7 @@ function renderEditor(id){
     cannotOpen:!!card.querySelector('[data-cannot-open]')?.checked,
     coldStorage:!!card.querySelector('[data-practical-cold]')?.checked,
     afterOpening:!!card.querySelector('[data-practical-after]')?.checked,
-    afterOpeningDuration:card.querySelector('[data-practical-duration]')?.value.trim()||''};
+    afterOpeningDuration:card.querySelector('[data-practical-duration]')?.value.trim()||'',regulatoryList:card.querySelector('[data-regulation]')?.value||''};
    const photo=card.querySelector('[data-practical-photo]')?.value;
    const mte=card.querySelector('[data-practical-mte]')?.value;
    if(photo!==undefined)p.photosensitizingOverride=photo==='yes'?true:photo==='no'?false:null;
@@ -4246,7 +4272,7 @@ function renderEditor(id){
  $("editor").onchange=saveLocalDraft;
  $("saveMed").onclick=async()=>{if(isMolecule(m)){variantReadAll();m._variantDrafts=[...variantDrafts.values()].map(clone)}await saveEditor(m.id)};$("duplicateMed").onclick=()=>duplicateMed(m.id);$("deleteMed").onclick=()=>deleteMed(m.id);
 }
-function readPresentationEditors(m){const cards=[...$("presentationEditors").querySelectorAll("[data-presentation]")];m.presentations=cards.map((card,i)=>{const p={imageUrl:m.presentations?.[i]?.imageUrl||"",presentationKind:card.querySelector("[data-pkind]:checked")?.dataset.pkind||"",canSplit:card.querySelector("[data-can-split]")?.checked===true,canCrush:card.querySelector("[data-can-crush]")?.checked===true,canOpen:card.querySelector("[data-can-open]")?.checked===true,cannotSplit:card.querySelector("[data-cannot-split]")?.checked===true,cannotCrush:card.querySelector("[data-cannot-crush]")?.checked===true,cannotOpen:card.querySelector("[data-cannot-open]")?.checked===true};p.coldStorage=!!card.querySelector("[data-practical-cold]")?.checked;p.afterOpening=!!card.querySelector("[data-practical-after]")?.checked;p.afterOpeningDuration=card.querySelector("[data-practical-duration]")?.value.trim()||"";const photoSetting=card.querySelector("[data-practical-photo]")?.value;p.photosensitizingOverride=photoSetting==="yes"?true:photoSetting==="no"?false:null;const mteSetting=card.querySelector("[data-practical-mte]")?.value;p.mteOverride=mteSetting==="yes"?true:mteSetting==="no"?false:null;card.querySelectorAll("[data-show-field]").forEach(input=>p[input.dataset.showField]=input.checked);card.querySelectorAll("[data-pfield]").forEach(input=>p[input.dataset.pfield]=input.value.trim());p.cipBoxes=[...card.querySelectorAll("[data-cip-pack-row]")].map(row=>({cip:row.querySelector("[data-cip-value]").value.trim(),pack:row.querySelector("[data-pack-value]").value.trim()})).filter(x=>x.cip||x.pack);p.cip=p.cipBoxes[0]?.cip||"";return p})}
+function readPresentationEditors(m){const cards=[...$("presentationEditors").querySelectorAll("[data-presentation]")];m.presentations=cards.map((card,i)=>{const p={imageUrl:m.presentations?.[i]?.imageUrl||"",presentationKind:card.querySelector("[data-pkind]:checked")?.dataset.pkind||"",canSplit:card.querySelector("[data-can-split]")?.checked===true,canCrush:card.querySelector("[data-can-crush]")?.checked===true,canOpen:card.querySelector("[data-can-open]")?.checked===true,cannotSplit:card.querySelector("[data-cannot-split]")?.checked===true,cannotCrush:card.querySelector("[data-cannot-crush]")?.checked===true,cannotOpen:card.querySelector("[data-cannot-open]")?.checked===true};p.coldStorage=!!card.querySelector("[data-practical-cold]")?.checked;p.afterOpening=!!card.querySelector("[data-practical-after]")?.checked;p.afterOpeningDuration=card.querySelector("[data-practical-duration]")?.value.trim()||"";p.regulatoryList=card.querySelector("[data-regulation]")?.value||"";const photoSetting=card.querySelector("[data-practical-photo]")?.value;p.photosensitizingOverride=photoSetting==="yes"?true:photoSetting==="no"?false:null;const mteSetting=card.querySelector("[data-practical-mte]")?.value;p.mteOverride=mteSetting==="yes"?true:mteSetting==="no"?false:null;card.querySelectorAll("[data-show-field]").forEach(input=>p[input.dataset.showField]=input.checked);card.querySelectorAll("[data-pfield]").forEach(input=>p[input.dataset.pfield]=input.value.trim());p.cipBoxes=[...card.querySelectorAll("[data-cip-pack-row]")].map(row=>({cip:row.querySelector("[data-cip-value]").value.trim(),pack:row.querySelector("[data-pack-value]").value.trim()})).filter(x=>x.cip||x.pack);p.cip=p.cipBoxes[0]?.cip||"";return p})}
 function tableRows(content){
  const rows=String(content||"").split("\n").filter(line=>line.trim()).map(line=>line.split(/\s+\|\s+/).map(cell=>cell.trim()));
  if(!rows.length)return [["",""],["",""]];
@@ -4957,7 +4983,15 @@ function dashEditToggle(){
  dashInlineEditing=true;$("dashEditorPane").classList.add("hidden");dashRender();
  const first=$("dashTaskTree").querySelector(".dash-edit-text");if(first)first.focus();
 }
-$("dashToggleEditor").onclick=dashEditToggle;
+const MEMO_V43_FOLD_KEY="memopharm_dashboard_tasks_folded_v43";
+function memoV43SetTaskFold(folded){
+ const pane=$("memoV43TaskPane"),btn=$("memoV43TaskFold");if(!pane||!btn)return;
+ pane.classList.toggle("is-folded",folded);btn.setAttribute("aria-expanded",String(!folded));btn.textContent=folded?"⌄ Développer":"⌃ Réduire";
+ try{localStorage.setItem(MEMO_V43_FOLD_KEY,folded?"1":"0")}catch(_){ }
+}
+$("memoV43TaskFold").onclick=()=>memoV43SetTaskFold(!$("memoV43TaskPane").classList.contains("is-folded"));
+try{memoV43SetTaskFold(localStorage.getItem(MEMO_V43_FOLD_KEY)==="1")}catch(_){memoV43SetTaskFold(false)}
+$("dashToggleEditor").onclick=()=>{if($("memoV43TaskPane").classList.contains("is-folded"))memoV43SetTaskFold(false);dashEditToggle()};
 // Conserver le curseur de la liste de suivi quand la fenêtre perd le focus.
 let dashLastFocus=null,dashReturnFocus=false;
 function dashRememberFocus(){
