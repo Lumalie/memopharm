@@ -3312,7 +3312,7 @@ function memoReproBadges(m){
   const description=label+' : '+labels[r.status];
   const note=r.note?`<span class="memo-repro-tip-note">${esc(r.note)}</span>`:'<span class="memo-repro-tip-note">Aucune précision renseignée.</span>';
   const date=r.checked?`Vérifié le ${esc(r.checked)}`:'Date de vérification non renseignée';
-  const tip=`<span class="memo-repro-tooltip" role="tooltip"><span class="memo-repro-tip-title">${esc(label)} · ${esc(labels[r.status])}</span>${note}<span class="memo-repro-tip-meta">${date}</span><span class="memo-repro-tip-action">${url?'Consulter la source ↗':'Lien source non renseigné'}</span></span>`;
+  const tip=`<span class="memo-repro-tooltip" role="tooltip"><span class="memo-repro-tip-title">${esc(label)} · ${esc(labels[r.status])}</span>${note}<span class="memo-repro-tip-meta">${date}</span><span class="memo-repro-tip-action">${url?'Cliquer pour consulter la source':'Lien source non renseigné'}</span></span>`;
   return `<a class="memo-repro" data-state="${esc(r.status)}" ${url?`href="${esc(url)}" target="_blank" rel="noopener noreferrer"`:'tabindex="0" role="img"'} aria-label="${esc(description)}${url?' — ouvrir la source':' — source non disponible'}"><span class="memo-repro-icon lucide-official ${icon}" aria-hidden="true"></span>${tip}</a>`;
  }).join('')+'</div>';
 }
