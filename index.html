@@ -1462,7 +1462,8 @@ body.info-page main{display:none!important}
 .presentation-v37-lightbox[hidden]{display:none!important}
 .presentation-v37-lightbox{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:54px 22px 25px;box-sizing:border-box;background:rgba(16,29,23,.82)}
 .presentation-v37-lightbox img{display:block;max-width:min(96vw,1100px);max-height:calc(100vh - 95px);width:auto;height:auto;object-fit:contain;background:#fff;border-radius:9px;box-shadow:0 12px 45px rgba(0,0,0,.25)}
-.presentation-v37-close{position:absolute;top:13px;right:18px;display:flex;align-items:center;justify-content:center;width:39px;height:39px;border:1px solid rgba(255,255,255,.55);border-radius:50%;background:#fff;color:#204b3c;font-size:26px;cursor:pointer}
+.presentation-v37-close{position:absolute;top:13px;right:18px;display:flex;align-items:center;justify-content:center;width:39px;height:39px;border:1px solid rgba(255,255,255,.55);border-radius:50%;background:#fff;color:#204b3c;font-size:0;line-height:0;padding:0;cursor:pointer}
+.presentation-v37-close svg{display:block;width:19px;height:19px;flex:none}
 .presentation-v37-close:hover{background:#e3efe7}
 
 
@@ -1540,6 +1541,16 @@ body.header-search-active #headerSearchSlot .search-suggestions .results{max-hei
 .detail .molecule-pack-strip .molecule-tab[aria-selected="true"]:hover{background:#bddaf8!important}
 .detail .molecule-pack-strip .molecule-tab:focus-visible{outline-color:#4388c8}
 .detail .molecule-pack-strip[hidden]{display:none!important}
+
+/* V48 — identité commerciale compacte et CIP lié à la sélection. */
+.detail .memo-v48-identity{display:grid;grid-template-columns:minmax(0,3fr) minmax(210px,2fr);gap:12px;align-items:end}
+.detail .memo-v48-selector,.detail .memo-v48-cip{min-width:0}
+.detail .memo-v48-selector select{width:100%;min-width:0;margin:0}
+.detail .memo-v48-cip .label{display:block;margin-bottom:7px}
+.detail .memo-v48-cip [data-v48-cip]{min-height:43px;display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+.detail .memo-v48-has-photo .memo-v48-identity{grid-template-columns:minmax(0,1fr);max-width:500px;gap:8px}
+.detail .memo-v48-has-photo .memo-v48-cip [data-v48-cip]{min-height:0}
+@media(max-width:650px){.detail .memo-v48-identity{grid-template-columns:minmax(0,1fr);gap:8px}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -3273,7 +3284,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
    if(sourcesSlot){sourcesSlot.innerHTML=ficheCombinedSources(m,documentationSections,child);sourcesSlot.classList.toggle("hidden",!sourcesSlot.innerHTML.trim());memoLinkifyCips(sourcesSlot);}
    panel.querySelectorAll("[data-group-open]").forEach(b=>b.onclick=()=>openMedication(b.dataset.groupOpen));
    memoV44Banner(panel,child,selectedTitle);
-   panel.querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=panel.querySelector("#presentation-info");memoSetViewChoice(child.id,{presentation:sel.value});const choice=memoV44Chosen(child);if(target)target.innerHTML=choice?presentationInfo(choice.p,child):"";memoWireBadgeClicks(target);memoV44Banner(panel,child,selectedTitle)});
+   panel.querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=panel.querySelector("#presentation-info");memoSetViewChoice(child.id,{presentation:sel.value});const choice=memoV44Chosen(child);if(target)target.innerHTML=choice?presentationInfo(choice.p,child):"";memoV48Sync(sel.closest("#presentations-details"),choice?.p);memoWireBadgeClicks(target);memoV44Banner(panel,child,selectedTitle)});
   };
   const setupPacks=child=>{
    const options=memoV44Options(child);
@@ -3446,12 +3457,22 @@ function memoV44Banner(panel,child,title){
  const badge=panel.querySelector(".memo-v44-regulatory");
  if(badge){const status=chosen?.regulatoryList||"";badge.innerHTML=status==="I"?'<button type="button" class="memo-practical-badge memo-v43-list-i" data-filter-badge="listI">Liste I</button>':status==="II"?'<button type="button" class="memo-practical-badge memo-v43-list-ii" data-filter-badge="listII">Liste II</button>':"";memoWireBadgeClicks(badge)}
 }
+// V48 — le CIP suit la présentation sélectionnée, sans répéter le boîtage.
+function memoV48Cip(p){
+ return p&&p.showCip===true?(cipBadges(p)||'<span class="muted">Non renseigné</span>'):'<span class="muted">Non affiché</span>';
+}
+function memoV48Sync(section,p){
+ if(!section)return;
+ const hasPhoto=!!(p&&p.showPhoto===true&&safeHttp(p.imageUrl||""));
+ section.classList.toggle("memo-v48-has-photo",hasPhoto);
+ const cip=section.querySelector("[data-v48-cip]");
+ if(cip)cip.innerHTML=memoV48Cip(p);
+}
 function presentationInfo(p,m=null){
  if(!p)return '<p class="muted">Aucune présentation documentée.</p>';
  const img=safeHttp(p.imageUrl||"");
  const line=(key,label,value)=>p[key]===true?`<p><strong>${label} :</strong> ${esc(value)}</p>`:"";
  const rows=[
-  p.showCip===true?`<div class="presentation-cip-list"><strong>CIP / conditionnements :</strong> ${cipBadges(p)||"Non renseigné"}</div>`:"",
   line("showLab","Laboratoire",p.lab||"À renseigner"),
   line("showAspect","Aspect",p.description||"Non documenté"),
   line("showMarking","Marquage / sécabilité",p.marking||"Non documenté"),
@@ -3484,7 +3505,7 @@ function memoSetViewChoice(id,patch){
 }
 function renderPresentations(m,targetPresentationIndex=null,selectedPack=null){
  const options=memoV44Options(m).filter(x=>selectedPack===null||x.pack===selectedPack),saved=memoV44Chosen(m),chosen=options.find(x=>x.key===saved?.key)||options[0]||null;
- return `<section class="section presentation-fixed" id="presentations-details"><h3>💊 Présentation</h3>${options.length?`${options.length>1?`<label class="label" for="presentation-choice">Choisir une présentation</label><select id="presentation-choice" data-presentation-select>${options.map(x=>`<option value="${esc(x.key)}" ${chosen?.key===x.key?"selected":""}>${esc(presentationLabel(x.p,m,Number(x.key.split(":")[0])))}</option>`).join("")}</select>`:""}<div id="presentation-info" style="margin-top:12px">${chosen?presentationInfo(chosen.p,m):""}</div>`:'<p class="muted">Aucune présentation renseignée.</p>'}</section>`
+ return `<section class="section presentation-fixed ${chosen?.p?.showPhoto===true&&safeHttp(chosen.p.imageUrl||"")?'memo-v48-has-photo':''}" id="presentations-details"><h3>💊 Présentation</h3>${options.length?`<div class="memo-v48-identity"><div class="memo-v48-selector"><label class="label" for="presentation-choice">Médicament commercial</label><select id="presentation-choice" data-presentation-select ${options.length===1?'aria-label="Médicament commercial"':''}>${options.map(x=>`<option value="${esc(x.key)}" ${chosen?.key===x.key?"selected":""}>${esc(presentationLabel(x.p,m,Number(x.key.split(":")[0])))}</option>`).join("")}</select></div><div class="memo-v48-cip"><span class="label">Code CIP</span><div data-v48-cip>${memoV48Cip(chosen?.p)}</div></div></div><div id="presentation-info" style="margin-top:12px">${chosen?presentationInfo(chosen.p,m):""}</div>`:'<p class="muted">Aucune présentation renseignée.</p>'}</section>`
 }
 
 const MEMO_CHOICES_KEY="memofficine_field_choices_v1";
@@ -5385,7 +5406,7 @@ const MEMOPHARM_CONTACT_ENDPOINT = `${SUPABASE_URL}/functions/v1/memopharm-conta
     overlay=document.createElement('div');
     overlay.id='presentation-v37-lightbox';overlay.className='presentation-v37-lightbox';overlay.hidden=true;
     overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','Photographie agrandie de la présentation');
-    overlay.innerHTML='<button type="button" class="presentation-v37-close" aria-label="Fermer la photographie">×</button><img alt="Photographie agrandie de la présentation">';
+    overlay.innerHTML='<button type="button" class="presentation-v37-close" aria-label="Fermer la photographie"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6L18 18M18 6L6 18"/></svg></button><img alt="Photographie agrandie de la présentation">';
     document.body.appendChild(overlay);
    }
    previousFocus=trigger;
