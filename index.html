@@ -1857,20 +1857,20 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
 /* V62 : pictogrammes visibles, infobulles lisibles */
 .memo-repro-badges{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap;margin:0}
 .memo-repro{position:relative;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:56px;height:52px;flex:none;border:0;border-radius:13px;background:#e7eeea;color:#4a6556;text-decoration:none;cursor:pointer;transition:background .15s,color .15s,transform .15s,box-shadow .15s}
-.memo-repro[data-state="compatible"]{background:#ccebd6;color:#17653b}
-.memo-repro[data-state="precautions"]{background:#ffe2a4;color:#885408}
-.memo-repro[data-state="contre-indique"]{background:#f8c7c1;color:#9e302c}
+.memo-repro[data-state="compatible"]{background:#bce6ca;color:#17653b}
+.memo-repro[data-state="precautions"]{background:#ffdda0;color:#885408}
+.memo-repro[data-state="contre-indique"]{background:#f7c0b9;color:#9e302c}
 .memo-repro[data-state="non-renseigne"]{background:#e4e8e6;color:#596962}
 .memo-repro:hover,.memo-repro:focus-visible{transform:translateY(-1px);box-shadow:0 2px 9px #0002;outline-offset:3px}
 .memo-repro[data-state="compatible"]:hover,.memo-repro[data-state="compatible"]:focus-visible{background:#a4dbb8;color:#0b4829}
 .memo-repro[data-state="precautions"]:hover,.memo-repro[data-state="precautions"]:focus-visible{background:#f5cb6e;color:#663c00}
 .memo-repro[data-state="contre-indique"]:hover,.memo-repro[data-state="contre-indique"]:focus-visible{background:#eda6a0;color:#78201c}
-.memo-repro-icon{display:block;font-size:29px;line-height:1;filter:saturate(1.18)}
-.memo-repro-tooltip{position:absolute;box-sizing:border-box;right:0;top:calc(100% + 10px);z-index:200;width:310px;max-width:min(310px,calc(100vw - 32px));padding:15px 17px;border-radius:12px;background:#203b31;color:#fff;font-size:13px;font-weight:400;line-height:1.6;text-align:left;white-space:normal;overflow-wrap:break-word;box-shadow:0 8px 25px #0004;opacity:0;visibility:hidden;pointer-events:none;transform:translateY(-4px);transition:opacity .12s,transform .12s}
-.memo-repro-tooltip .memo-repro-tip-title{display:block;font-size:14px;font-weight:750;line-height:1.35;margin-bottom:9px;color:#fff}
-.memo-repro-tooltip .memo-repro-tip-note{display:block;font-size:13px;line-height:1.55;margin-bottom:11px;color:#f0f5f1}
-.memo-repro-tooltip .memo-repro-tip-meta{display:block;font-size:11.5px;color:#c9dfd2;border-top:1px solid #ffffff2a;padding-top:9px;margin-top:7px}
-.memo-repro-tooltip .memo-repro-tip-action{display:block;margin-top:8px;font-size:12px;font-weight:700;color:#d1f2dc}
+.memo-repro-icon{display:flex;align-items:center;justify-content:center;width:34px;height:34px;line-height:1}.memo-repro-icon svg{display:block;flex:none}
+.memo-repro-tooltip{position:absolute;box-sizing:border-box;right:0;top:calc(100% + 10px);z-index:200;width:310px;max-width:min(310px,calc(100vw - 32px));padding:15px 17px;border-radius:12px;background:#fffdf9;color:#293b32;border:1px solid #d7e2d9;font-size:13px;font-weight:400;line-height:1.6;text-align:left;white-space:normal;overflow-wrap:break-word;box-shadow:0 9px 28px #1b352221;opacity:0;visibility:hidden;pointer-events:none;transform:translateY(-4px);transition:opacity .12s,transform .12s}
+.memo-repro-tooltip .memo-repro-tip-title{display:block;font-size:14px;font-weight:750;line-height:1.35;margin-bottom:9px;color:#245c43}
+.memo-repro-tooltip .memo-repro-tip-note{display:block;font-size:13px;line-height:1.55;margin-bottom:11px;color:#36463d}
+.memo-repro-tooltip .memo-repro-tip-meta{display:block;font-size:11.5px;color:#66786c;border-top:1px solid #e0e9e1;padding-top:9px;margin-top:7px}
+.memo-repro-tooltip .memo-repro-tip-action{display:block;margin-top:8px;font-size:12px;font-weight:700;color:#24764c}
 .memo-repro:hover .memo-repro-tooltip,.memo-repro:focus-visible .memo-repro-tooltip{opacity:1;visibility:visible;transform:translateY(0)}
 .memo-repro:not([href]){cursor:default}
 .memo-repro-editor{border:1px solid #d8e4da;border-radius:12px;padding:12px;margin-top:12px}
@@ -3302,7 +3302,7 @@ function memoReproSourceUrl(value){
 }
 function memoReproBadges(m){
  if(!isMolecule(m))return '';
- const info=memoReproInfo(m),names={pregnancy:['🤰','Grossesse'],breastfeeding:['🍼','Allaitement']};
+ const info=memoReproInfo(m),names={pregnancy:['<svg viewBox="0 0 32 32" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="16" cy="7" r="3.2"/><path d="M12 12.5c-3 2-4 5.5-4 9.5v5h16v-5c0-4-1-7.5-4-9.5"/><path d="M12 15c5-2 12 2 12 7-1 3-4 4-8 4"/><path d="M8 22H5m19 0h3"/></svg>','Grossesse'],breastfeeding:['<svg viewBox="0 0 32 32" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="7" r="3"/><path d="M6 27v-9c0-4 2-6 5-6 4 0 6 3 6 7"/><circle cx="21" cy="17" r="3"/><path d="M12 22c2-2 5-2 7-1l5 2m-14 4c3-3 7-4 12-2l3 2"/><path d="M26 14l2-2"/></svg>','Allaitement']};
  const labels={'compatible':'Compatible','precautions':'Sous conditions / précautions','contre-indique':'Contre-indiqué','non-renseigne':'Non renseigné'};
  return '<div class="memo-repro-badges" aria-label="Grossesse et allaitement">'+Object.entries(names).map(([key,[icon,label]])=>{
   const r=info[key],url=memoReproSourceUrl(r.source);
