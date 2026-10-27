@@ -1652,13 +1652,13 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
 /* V33 — Présentation commerciale : détails + photographie côte à côte */
 .detail .presentation-v33-content{display:block;min-width:0}
 .detail .presentation-v33-name{font-size:1.13rem;line-height:1.35;color:#234f3d;margin:3px 0 10px;font-weight:800}
-.detail .presentation-v33-content .memo-practical-badges{margin:9px 0 15px}
+.detail .presentation-v33-content .memo-practical-badges{margin:5px 0 16px}
 .detail .presentation-v33-layout{display:block}
-.detail .presentation-v33-layout.has-photo{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(220px,.75fr);gap:20px;align-items:start}
+.detail .presentation-v33-layout.has-photo{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(200px,.65fr);gap:16px;align-items:start}
 .detail .presentation-v33-fields{min-width:0}
-.detail .presentation-v33-fields>p,.detail .presentation-v33-fields>.presentation-cip-list{margin:0 0 12px;line-height:1.55}
-.detail .presentation-v33-photo{margin:0;padding:14px;background:#f7faf7;border:1px solid #dce6df;border-radius:13px;min-width:0;display:flex;justify-content:center;align-items:center;min-height:180px}
-.detail .presentation-v33-photo img{display:block;max-width:100%;max-height:310px;width:auto;height:auto;object-fit:contain;border-radius:5px}
+.detail .presentation-v33-fields>p,.detail .presentation-v33-fields>.presentation-cip-list{margin:0 0 15px;line-height:1.55}
+.detail .presentation-v33-photo{margin:0;padding:10px;background:#f7faf7;border:1px solid #dce6df;border-radius:13px;min-width:0;display:flex;justify-content:center;align-items:center;min-height:180px}
+.detail .presentation-v33-photo img{display:block;max-width:100%;max-height:270px;width:auto;height:auto;object-fit:contain;border-radius:5px}
 .detail .presentation-v33-warning{margin:16px 0 0!important;padding-top:10px;border-top:1px solid #e3ebe5}
 @media(max-width:700px){.detail .presentation-v33-layout.has-photo{grid-template-columns:minmax(0,1fr);gap:12px}.detail .presentation-v33-photo{max-width:440px;width:100%;box-sizing:border-box}.detail .presentation-v33-photo img{max-height:290px}}
 
@@ -3094,23 +3094,27 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
    const sourcesSlot=$("memo-combined-sources-slot");
    if(sourcesSlot){sourcesSlot.innerHTML=ficheCombinedSources(m,documentationSections,child);sourcesSlot.classList.toggle("hidden",!sourcesSlot.innerHTML.trim());memoLinkifyCips(sourcesSlot);}
    panel.querySelectorAll("[data-group-open]").forEach(b=>b.onclick=()=>openMedication(b.dataset.groupOpen));
-   panel.querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=panel.querySelector("#presentation-info");const index=sel.value===""?null:Number(sel.value);if(target)target.innerHTML=index!==null&&child.presentations?.[index]?presentationInfo(child.presentations[index],child):""});
+   panel.querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=panel.querySelector("#presentation-info");const index=sel.value===""?null:Number(sel.value);memoSetViewChoice(child.id,{presentation:index});if(target)target.innerHTML=index!==null&&child.presentations?.[index]?presentationInfo(child.presentations[index],child):"";memoWireBadgeClicks(target)});
   };
   const chooseForm=(group,preferredId)=>{
+   if(!group)return;
+   memoSetViewChoice(m.id,{form:group.form});
    [...formStrip.querySelectorAll("[data-molecule-form]")].forEach(b=>{const active=b.dataset.moleculeForm===group.form;b.setAttribute("aria-selected",String(active));b.tabIndex=active?0:-1});
    doseStrip.style.setProperty("--memo-tabs-count",group.items.length);
    doseStrip.innerHTML=group.items.map((child,i)=>`<button type="button" role="tab" class="molecule-tab" data-molecule-dose="${esc(child.id)}" aria-selected="false" tabindex="-1">${esc(dosageLabel(child))}</button>`).join("");
    const chooseDose=id=>{
     [...doseStrip.querySelectorAll("[data-molecule-dose]")].forEach(b=>{const active=b.dataset.moleculeDose===String(id);b.setAttribute("aria-selected",String(active));b.tabIndex=active?0:-1});
-    renderChild(group.items.find(x=>String(x.id)===String(id)));
+    const child=group.items.find(x=>String(x.id)===String(id));
+    if(child){memoSetViewChoice(m.id,{form:group.form,doseId:String(id)});renderChild(child)}
    };
    doseStrip.querySelectorAll("[data-molecule-dose]").forEach(b=>b.onclick=()=>chooseDose(b.dataset.moleculeDose));
-   chooseDose(preferredId||group.items[0].id);
+   const restoredId=preferredId||memoGetViewChoice(m.id).doseId;
+   chooseDose(group.items.some(x=>String(x.id)===String(restoredId))?restoredId:group.items[0].id);
   };
   formStrip.style.setProperty("--memo-tabs-count",groups.length);
   formStrip.innerHTML=groups.map(g=>`<button type="button" role="tab" class="molecule-tab" data-molecule-form="${esc(g.form)}" aria-selected="false" tabindex="-1">${esc(g.form)}</button>`).join("");
   formStrip.querySelectorAll("[data-molecule-form]").forEach(b=>b.onclick=()=>chooseForm(groups.find(g=>g.form===b.dataset.moleculeForm)));
-  if(groups.length)chooseForm(groups[0]);
+  if(groups.length){const saved=memoGetViewChoice(m.id);chooseForm(groups.find(g=>g.form===saved.form)||groups[0]);}
  }
  $("detail").querySelectorAll("[data-group-open]").forEach(b=>b.onclick=()=>openMedication(b.dataset.groupOpen));
  $("detail").querySelectorAll(".associated-molecule-toggle").forEach(button=>button.onclick=()=>{
@@ -3125,8 +3129,8 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  $("detail").querySelectorAll("[data-fiche-indication]").forEach(btn=>btn.onclick=()=>memoNavigateExplorerFilter("indication",btn.dataset.ficheIndication));
  $("detail").querySelectorAll("[data-fiche-form]").forEach(btn=>btn.onclick=()=>memoNavigateExplorerFilter("form",btn.dataset.ficheForm));
  if(admin&&$("editBtn"))$("editBtn").onclick=()=>renderEditor(m.id);
- $("detail").querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=$("presentation-info");if(!target)return;const index=sel.value===""?null:Number(sel.value);target.innerHTML=index!==null&&m.presentations?.[index]?presentationInfo(m.presentations[index],m):"";memoWireBadgeClicks(target)});
- if(targetPresentationIndex!==null&&!targetSectionId){const details=$("presentations-details");if(details){details.open=true;const choice=$("presentation-choice");if(choice&&m.presentations?.[targetPresentationIndex]){choice.value=String(targetPresentationIndex);$("presentation-info").innerHTML=presentationInfo(m.presentations[targetPresentationIndex],m);memoWireBadgeClicks($("presentation-info"))}requestAnimationFrame(()=>details.scrollIntoView({behavior:"smooth",block:"start"}))}}
+ $("detail").querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=$("presentation-info");if(!target)return;const index=sel.value===""?null:Number(sel.value);memoSetViewChoice(m.id,{presentation:index});target.innerHTML=index!==null&&m.presentations?.[index]?presentationInfo(m.presentations[index],m):"";memoWireBadgeClicks(target)});
+ if(targetPresentationIndex!==null&&!targetSectionId){const details=$("presentations-details");if(details){details.open=true;const choice=$("presentation-choice");if(choice&&m.presentations?.[targetPresentationIndex]){memoSetViewChoice(m.id,{presentation:targetPresentationIndex});choice.value=String(targetPresentationIndex);$("presentation-info").innerHTML=presentationInfo(m.presentations[targetPresentationIndex],m);memoWireBadgeClicks($("presentation-info"))}requestAnimationFrame(()=>details.scrollIntoView({behavior:"smooth",block:"start"}))}}
  if(targetSectionId){
    // La restauration de défilement de la vue se fait sur plusieurs frames.
    // Le saut ciblé intervient ensuite, et est réajusté après le rendu des polices/images.
@@ -3223,7 +3227,7 @@ function presentationInfo(p,m=null){
  const photo=p.showPhoto===true&&img?`<figure class="presentation-v33-photo"><img src="${esc(img)}" alt="Photographie documentée de la présentation" loading="lazy"></figure>`:"";
  const badges=m?practicalBadges(m,p):"";
  if(!rows.length&&!photo&&!badges&&!p.name)return '<p class="muted">Aucun critère de présentation affiché pour le moment.</p>';
- const title=p.showName===true&&p.name?`<h4 class="presentation-v33-name">${esc(p.name)}</h4>`:"";
+ const title="";
  return `<div class="presentation-v33-content">${title}${badges}<div class="presentation-v33-layout${photo?' has-photo':''}"><div class="presentation-v33-fields">${rows.join('')}</div>${photo}</div><p class="hint presentation-v33-warning">L’aspect seul ne permet pas d’identifier avec certitude un médicament. Vérifier la concordance avec la présentation exacte.</p></div>`;
 }
 function presentationLabel(p,m,i){
@@ -3232,9 +3236,18 @@ function presentationLabel(p,m,i){
  const showLab=true;
  const form=(p.form||"").trim();
  const dosage=(p.dosage||m.dosage||"").trim();
- return [name,showLab&&lab?lab:"",dosage,form].filter(Boolean).join(" · ")||"Présentation "+(i+1);
+ return [name,showLab&&lab?lab:""].filter(Boolean).join(" · ")||"Présentation "+(i+1);
 }
-function renderPresentations(m,targetPresentationIndex=null){const ps=m.presentations||[];const chosen=targetPresentationIndex!==null&&ps[targetPresentationIndex]?targetPresentationIndex:null;return `<section class="section presentation-fixed" id="presentations-details"><h3>💊 Présentation</h3>${ps.length?`${ps.length>1?`<label class="label" for="presentation-choice">Choisir une présentation</label><select id="presentation-choice" data-presentation-select><option value="" ${chosen===null?"selected":""}>— Choisir une présentation —</option>${ps.map((p,i)=>`<option value="${i}" ${i===chosen?"selected":""}>${esc(presentationLabel(p,m,i))}</option>`).join("")}</select>`:""}<div id="presentation-info" style="margin-top:12px">${chosen!==null?presentationInfo(ps[chosen],m):ps.length===1?presentationInfo(ps[0],m):""}</div>`:'<p class="muted">Aucune présentation renseignée.</p>'}</section>`}
+// V34 — choix de consultation conservés par fiche et par navigateur.
+const MEMO_VIEW_CHOICE_KEY="memopharm-consultation-choices-v34";
+function memoGetViewChoice(id){
+ try{const all=JSON.parse(localStorage.getItem(MEMO_VIEW_CHOICE_KEY)||"{}");return all&&typeof all==="object"?all[String(id)]||{}:{}}catch(_){return {}}
+}
+function memoSetViewChoice(id,patch){
+ if(!id)return;
+ try{const all=JSON.parse(localStorage.getItem(MEMO_VIEW_CHOICE_KEY)||"{}");const safe=all&&typeof all==="object"?all:{};safe[String(id)]={...(safe[String(id)]||{}),...patch};localStorage.setItem(MEMO_VIEW_CHOICE_KEY,JSON.stringify(safe))}catch(_){/* Navigation possible sans stockage local. */}
+}
+function renderPresentations(m,targetPresentationIndex=null){const ps=m.presentations||[];const remembered=memoGetViewChoice(m.id).presentation;const restored=targetPresentationIndex!==null?targetPresentationIndex:remembered;const chosen=restored!==null&&restored!==undefined&&ps[Number(restored)]?Number(restored):null;return `<section class="section presentation-fixed" id="presentations-details"><h3>💊 Présentation</h3>${ps.length?`${ps.length>1?`<label class="label" for="presentation-choice">Choisir une présentation</label><select id="presentation-choice" data-presentation-select><option value="" ${chosen===null?"selected":""}>— Choisir une présentation —</option>${ps.map((p,i)=>`<option value="${i}" ${i===chosen?"selected":""}>${esc(presentationLabel(p,m,i))}</option>`).join("")}</select>`:""}<div id="presentation-info" style="margin-top:12px">${chosen!==null?presentationInfo(ps[chosen],m):ps.length===1?presentationInfo(ps[0],m):""}</div>`:'<p class="muted">Aucune présentation renseignée.</p>'}</section>`}
 
 const MEMO_CHOICES_KEY="memofficine_field_choices_v1";
 function memoChoices(kind){
