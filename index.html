@@ -2301,7 +2301,7 @@ function cipConditionnements(p){
  if(cleaned.length)return cleaned;
  return p?.cip?[{cip:String(p.cip).trim(),pack:String(p.pack||"").trim()}]:[];
 }
-function cipBadges(p){return cipConditionnements(p).filter(x=>x.cip).map(x=>`<span class="cip-pack-item"><button type="button" class="explore-cip-copy" data-copy-cip="${esc(x.cip)}" title="Copier le CIP ${esc(x.cip)}" aria-label="Copier le CIP ${esc(x.cip)}"><span>CIP</span> ${esc(x.cip)} <span aria-hidden="true">⧉</span></button>${x.pack?`<span class="cip-pack-label">${esc(x.pack)}</span>`:""}</span>`).join("")}
+function cipBadges(p){return cipConditionnements(p).filter(x=>x.cip).map(x=>`<span class="cip-pack-item"><button type="button" class="explore-cip-copy" data-copy-cip="${esc(x.cip)}" title="Copier le CIP ${esc(x.cip)}" aria-label="Copier le CIP ${esc(x.cip)}"><span>CIP</span> ${esc(x.cip)} <span aria-hidden="true">⧉</span></button></span>`).join("")}
 // Presentation et badges communs aux résultats et aux enfants d'arborescence.
 function searchPresentationLine(m,p,i,child=false){
  const name=String(p.name||m.name||'').trim();
@@ -3484,7 +3484,7 @@ function memoSetViewChoice(id,patch){
 }
 function renderPresentations(m,targetPresentationIndex=null,selectedPack=null){
  const options=memoV44Options(m).filter(x=>selectedPack===null||x.pack===selectedPack),saved=memoV44Chosen(m),chosen=options.find(x=>x.key===saved?.key)||options[0]||null;
- return `<section class="section presentation-fixed" id="presentations-details"><h3>💊 Présentation</h3>${options.length?`${options.length>1?`<label class="label" for="presentation-choice">Choisir une présentation</label><select id="presentation-choice" data-presentation-select>${options.map(x=>`<option value="${esc(x.key)}" ${chosen?.key===x.key?"selected":""}>${esc(presentationLabel(x.p,m,Number(x.key.split(":")[0])))}${x.pack?" · "+esc(x.pack):""}</option>`).join("")}</select>`:""}<div id="presentation-info" style="margin-top:12px">${chosen?presentationInfo(chosen.p,m):""}</div>`:'<p class="muted">Aucune présentation renseignée.</p>'}</section>`
+ return `<section class="section presentation-fixed" id="presentations-details"><h3>💊 Présentation</h3>${options.length?`${options.length>1?`<label class="label" for="presentation-choice">Choisir une présentation</label><select id="presentation-choice" data-presentation-select>${options.map(x=>`<option value="${esc(x.key)}" ${chosen?.key===x.key?"selected":""}>${esc(presentationLabel(x.p,m,Number(x.key.split(":")[0])))}</option>`).join("")}</select>`:""}<div id="presentation-info" style="margin-top:12px">${chosen?presentationInfo(chosen.p,m):""}</div>`:'<p class="muted">Aucune présentation renseignée.</p>'}</section>`
 }
 
 const MEMO_CHOICES_KEY="memofficine_field_choices_v1";
