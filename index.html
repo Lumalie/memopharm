@@ -1648,6 +1648,20 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
 .memo-practical-badge.memo-duration:hover{background:#ced7e0!important;color:#394a5c!important}
 .tag.tag-category:hover{border:0!important;outline:none!important;outline-offset:0!important;box-shadow:none!important;background:#cce4d2!important;filter:none!important}
 .tag.tag-category:focus-visible{border:0!important;outline:2px solid #245d4b!important;outline-offset:2px!important}
+
+/* V33 — Présentation commerciale : détails + photographie côte à côte */
+.detail .presentation-v33-content{display:block;min-width:0}
+.detail .presentation-v33-name{font-size:1.13rem;line-height:1.35;color:#234f3d;margin:3px 0 10px;font-weight:800}
+.detail .presentation-v33-content .memo-practical-badges{margin:9px 0 15px}
+.detail .presentation-v33-layout{display:block}
+.detail .presentation-v33-layout.has-photo{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(220px,.75fr);gap:20px;align-items:start}
+.detail .presentation-v33-fields{min-width:0}
+.detail .presentation-v33-fields>p,.detail .presentation-v33-fields>.presentation-cip-list{margin:0 0 12px;line-height:1.55}
+.detail .presentation-v33-photo{margin:0;padding:14px;background:#f7faf7;border:1px solid #dce6df;border-radius:13px;min-width:0;display:flex;justify-content:center;align-items:center;min-height:180px}
+.detail .presentation-v33-photo img{display:block;max-width:100%;max-height:310px;width:auto;height:auto;object-fit:contain;border-radius:5px}
+.detail .presentation-v33-warning{margin:16px 0 0!important;padding-top:10px;border-top:1px solid #e3ebe5}
+@media(max-width:700px){.detail .presentation-v33-layout.has-photo{grid-template-columns:minmax(0,1fr);gap:12px}.detail .presentation-v33-photo{max-width:440px;width:100%;box-sizing:border-box}.detail .presentation-v33-photo img{max-height:290px}}
+
 </style>
 </head>
 <body>
@@ -3198,17 +3212,19 @@ function presentationInfo(p,m=null){
  const img=safeHttp(p.imageUrl||"");
  const line=(key,label,value)=>p[key]===true?`<p><strong>${label} :</strong> ${esc(value)}</p>`:"";
  const rows=[
-  line("showName","Nom",p.name||"Non renseigné"),
   p.showCip===true?`<div class="presentation-cip-list"><strong>CIP / conditionnements :</strong> ${cipBadges(p)||"Non renseigné"}</div>`:"",
   line("showLab","Laboratoire",p.lab||"À renseigner"),
   line("showAspect","Aspect",p.description||"Non documenté"),
   line("showMarking","Marquage / sécabilité",p.marking||"Non documenté"),
   p.showSplit===true?`<p><strong>Fractionnement :</strong> <span class="${p.cannotSplit===true?"presentation-status-note":""}">${p.cannotSplit===true?"Impossible":p.canSplit===true?"Possible selon vérification":"Non confirmé — vérifier"}${p.splitReason?` — ${esc(p.splitReason)}`:""}</span></p>`:"",
   p.showCrush===true?`<p><strong>Écrasement :</strong> <span class="${p.cannotCrush===true?"presentation-status-note":""}">${p.cannotCrush===true?"Impossible":p.canCrush===true?"Possible selon vérification":"Non confirmé — vérifier"}${p.crushReason?` — ${esc(p.crushReason)}`:""}</span></p>`:"",
-  p.showOpen===true?`<p><strong>Ouverture de la gélule :</strong> <span class="${p.cannotOpen===true?"presentation-status-note":""}">${p.cannotOpen===true?"Impossible":p.canOpen===true?"Possible selon vérification":"Non confirmé — vérifier"}${p.openReason?` — ${esc(p.openReason)}`:""}</span></p>`:"",
-  p.showPhoto===true&&img?`<figure class="section-image"><img src="${esc(img)}" alt="Photographie documentée de la présentation"><figcaption>Vérifier la concordance avec la présentation exacte.</figcaption></figure>`:""
+  p.showOpen===true?`<p><strong>Ouverture de la gélule :</strong> <span class="${p.cannotOpen===true?"presentation-status-note":""}">${p.cannotOpen===true?"Impossible":p.canOpen===true?"Possible selon vérification":"Non confirmé — vérifier"}${p.openReason?` — ${esc(p.openReason)}`:""}</span></p>`:""
  ].filter(Boolean);
- return (rows.length||(m&&practicalBadges(m,p)))?(m?practicalBadges(m,p):"")+rows.join("")+'<p class="hint">L’aspect seul ne permet pas d’identifier avec certitude un médicament. Vérifier les informations pour la présentation exacte.</p>':'<p class="muted">Aucun critère de présentation affiché pour le moment.</p>';
+ const photo=p.showPhoto===true&&img?`<figure class="presentation-v33-photo"><img src="${esc(img)}" alt="Photographie documentée de la présentation" loading="lazy"></figure>`:"";
+ const badges=m?practicalBadges(m,p):"";
+ if(!rows.length&&!photo&&!badges&&!p.name)return '<p class="muted">Aucun critère de présentation affiché pour le moment.</p>';
+ const title=p.showName===true&&p.name?`<h4 class="presentation-v33-name">${esc(p.name)}</h4>`:"";
+ return `<div class="presentation-v33-content">${title}${badges}<div class="presentation-v33-layout${photo?' has-photo':''}"><div class="presentation-v33-fields">${rows.join('')}</div>${photo}</div><p class="hint presentation-v33-warning">L’aspect seul ne permet pas d’identifier avec certitude un médicament. Vérifier la concordance avec la présentation exacte.</p></div>`;
 }
 function presentationLabel(p,m,i){
  const name=(p.name||m.name||"").trim();
