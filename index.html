@@ -1442,6 +1442,12 @@ body.info-page main{display:none!important}
 .memo-practical-badge:focus-visible{outline:2px solid #365f8c;outline-offset:2px}
 .tag.tag-category,.tag.tag-form,.badge-button{border:0!important;transition:background-color .16s ease}
 .tag.tag-category:hover,.tag.tag-form:hover,.badge-button:hover{filter:brightness(.94)}
+
+/* V36 — photographie rapprochée des données, sans vide excessif */
+.detail .presentation-v33-layout.has-photo{grid-template-columns:minmax(0, 1fr) minmax(180px, 280px);gap:18px;max-width:800px;align-items:start}
+.detail .presentation-v33-photo{min-height:0;padding:9px;align-self:start}
+.detail .presentation-v33-photo img{max-height:250px}
+@media(max-width:700px){.detail .presentation-v33-layout.has-photo{grid-template-columns:minmax(0,1fr);max-width:100%}.detail .presentation-v33-photo{max-width:300px}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -3245,7 +3251,7 @@ function presentationInfo(p,m=null){
 function presentationLabel(p,m,i){
  const name=(p.name||m.name||"").trim();
  const lab=(p.lab||"").trim();
- const showLab=true;
+ const showLab=p.presentationKind!=="princeps";
  const form=(p.form||"").trim();
  const dosage=(p.dosage||m.dosage||"").trim();
  return [name,showLab&&lab?lab:""].filter(Boolean).join(" · ")||"Présentation "+(i+1);
@@ -3305,7 +3311,7 @@ function presentationEditor(p,i){
  <div class="full presentation-edit-row">${check("showCrush","Écrasement")}<div class="presentation-status-row"><label class="presentation-verified"><input type="checkbox" data-can-crush ${p.canCrush===true&&!p.cannotCrush?"checked":""}>Possible (confirmé)</label><label class="presentation-verified"><input type="checkbox" data-cannot-crush ${p.cannotCrush===true?"checked":""}>Impossible (confirmé)</label><input type="text" data-pfield="crushReason" value="${esc(p.crushReason||"")}" placeholder="Pourquoi ? (facultatif)" data-reason-for="crush"></div></div>
  <div class="full presentation-edit-row">${check("showOpen","Ouverture de la gélule")}<div class="presentation-status-row"><label class="presentation-verified"><input type="checkbox" data-can-open ${p.canOpen===true&&!p.cannotOpen?"checked":""}>Possible (confirmé)</label><label class="presentation-verified"><input type="checkbox" data-cannot-open ${p.cannotOpen===true?"checked":""}>Impossible (confirmé)</label><input type="text" data-pfield="openReason" value="${esc(p.openReason||"")}" placeholder="Pourquoi ? (facultatif)" data-reason-for="open"></div></div>
  <div class="full presentation-edit-row">${check("showPhoto","Photo")}<input type="file" accept="image/jpeg,image/png,image/webp" data-photo-file="${i}"><div class="hint" data-photo-hint="${i}">${pending?"Photo sélectionnée : "+esc(pending.name):currentPhoto?"Photo enregistrée : visible ci-dessous":"JPG, PNG ou WebP · maximum 2 Mo. Envoyée lors de l’enregistrement de la fiche."}</div>${currentPhoto?`<img class="image-preview" src="${esc(currentPhoto)}" alt="Photo enregistrée de la présentation">`:""}</div>
- <div class="full"><details><summary>Informations internes de la présentation (non affichées dans l'encart)</summary><div class="presentation-fields">${[["dosage","Dosage"],["form","Forme"],["cis","Code CIS"],["sourceUrl","URL de la source officielle (https)"]].map(([key,label])=>`<div><label>${label}</label><input data-pfield="${key}" ${key==="form"?'data-memo-kind="form" list="memo-forms"':""} value="${esc(p[key]||"")}"></div>`).join("")}</div></details></div>
+ ${["dosage","form","cis","sourceUrl"].map(key=>`<input type="hidden" data-pfield="${key}" value="${esc(p[key]||"")}">`).join("")}
  <p class="hint full">Sans case « Possible » ni « Impossible », le statut reste « non confirmé ». Vérifier chaque présentation auprès d’une source fiable.</p>
  </div></div>`;
 }
