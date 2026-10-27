@@ -1852,6 +1852,24 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
 @media(max-width:700px){.detail .presentation-v33-layout.has-photo{grid-template-columns:minmax(0,1fr);gap:12px}.detail .presentation-v33-photo{max-width:440px;width:100%;box-sizing:border-box}.detail .presentation-v33-photo img{max-height:290px}}
 
 </style>
+
+<style>
+.memo-repro-badges{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-bottom:8px}
+.memo-repro{position:relative;min-width:100px}
+.memo-repro summary{list-style:none;cursor:pointer;border:1px solid #cbd5d0;border-radius:12px;padding:8px 10px;text-align:center;background:#f2f4f3;color:#4e5c54;font-size:.82rem;font-weight:700}
+.memo-repro summary::-webkit-details-marker{display:none}
+.memo-repro summary .memo-repro-icon{display:block;font-size:20px;margin-bottom:2px}
+.memo-repro[data-state="compatible"] summary{background:#e7f2e9;border-color:#b1d2b8;color:#285d3d}
+.memo-repro[data-state="precautions"] summary{background:#fff3db;border-color:#e9cb89;color:#805a19}
+.memo-repro[data-state="contre-indique"] summary{background:#fae6e4;border-color:#e3b1ac;color:#953e39}
+.memo-repro-content{position:absolute;z-index:12;right:0;top:calc(100% + 5px);width:min(310px,80vw);padding:12px;background:white;border:1px solid #ccd9cf;border-radius:12px;box-shadow:0 8px 25px #0002;font-size:.83rem;font-weight:400;overflow-wrap:anywhere}
+.memo-repro-content p{margin:5px 0}
+.memo-repro-editor{border:1px solid #d8e4da;border-radius:12px;padding:12px;margin-top:12px}
+.memo-repro-editor h4{margin:0 0 8px}
+.memo-repro-editor-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.memo-repro-editor-grid textarea{min-height:65px}
+@media(max-width:700px){.memo-repro-editor-grid{grid-template-columns:1fr}.memo-repro-badges{justify-content:flex-start}.memo-repro-content{right:auto;left:0}}
+</style>
 </head>
 <body>
 <header><div class="wrap">
@@ -3263,6 +3281,30 @@ function memoSetupDetailCips(){
  memoLinkifyCips(root);
 }
 
+
+function memoReproInfo(m){
+ const d=m?.sections?.[0]?.reproSafety||{};
+ const normalize=(v)=>['compatible','precautions','contre-indique'].includes(v)?v:'non-renseigne';
+ return {pregnancy:{status:normalize(d.pregnancy?.status),note:String(d.pregnancy?.note||''),source:String(d.pregnancy?.source||''),checked:String(d.pregnancy?.checked||'')},breastfeeding:{status:normalize(d.breastfeeding?.status),note:String(d.breastfeeding?.note||''),source:String(d.breastfeeding?.source||''),checked:String(d.breastfeeding?.checked||'')}};
+}
+function memoReproBadges(m){
+ if(!isMolecule(m))return '';
+ const info=memoReproInfo(m),names={pregnancy:['🤰','Grossesse'],breastfeeding:['🍼','Allaitement']};
+ const labels={'compatible':'Compatible','precautions':'Sous conditions','contre-indique':'Contre-indiqué','non-renseigne':'Non renseigné'};
+ return '<div class="memo-repro-badges">'+Object.entries(names).map(([key,[icon,label]])=>{
+ const r=info[key];
+ return `<details class="memo-repro" data-state="${esc(r.status)}"><summary aria-label="${label} : ${labels[r.status]}"><span class="memo-repro-icon" aria-hidden="true">${icon}</span>${label}<br><small>${labels[r.status]}</small></summary><div class="memo-repro-content"><strong>${label} — ${labels[r.status]}</strong><p>${r.note?esc(r.note):'Aucune précision renseignée.'}</p>${r.source?`<p><strong>Source :</strong> ${esc(r.source)}</p>`:''}${r.checked?`<p><strong>Vérifié le :</strong> ${esc(r.checked)}</p>`:''}<p style="color:#64736a">Vérifier les conditions d’utilisation selon la présentation et le contexte clinique.</p></div></details>`;
+ }).join('')+'</div>';
+}
+function memoReproEditor(m){
+ if(!isMolecule(m))return '';
+ const info=memoReproInfo(m);
+ return `<div class="full memo-repro-editor" id="memo-repro-editor"><h4>🤰 Grossesse et allaitement</h4><div class="memo-repro-editor-grid">${[['pregnancy','Grossesse'],['breastfeeding','Allaitement']].map(([key,label])=>{
+ const r=info[key];
+ return `<div><label>${label} — statut</label><select data-repro="${key}" data-repro-field="status">${[['non-renseigne','Non renseigné'],['compatible','Compatible'],['precautions','Sous conditions / précautions'],['contre-indique','Contre-indiqué']].map(([v,t])=>`<option value="${v}" ${r.status===v?'selected':''}>${t}</option>`).join('')}</select><label style="margin-top:8px">Précisions et limites</label><textarea data-repro="${key}" data-repro-field="note" placeholder="Trimestre, voie, dose, durée…">${esc(r.note)}</textarea><label style="margin-top:8px">Source</label><input data-repro="${key}" data-repro-field="source" value="${esc(r.source)}" placeholder="CRAT, RCP…"><label style="margin-top:8px">Date de vérification</label><input type="date" data-repro="${key}" data-repro-field="checked" value="${esc(r.checked)}"></div>`;
+ }).join('')}</div><p class="muted">Évaluation générale de la molécule : préciser les restrictions éventuelles. Ne pas considérer ce statut comme valable pour toutes les formes et présentations sans vérification.</p></div>`;
+}
+
 function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  editorId=null;
  const m=meds.find(x=>x.id===selectedId);
@@ -3303,7 +3345,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  const activeIngredientsHtml=ingredientEntries.length?`<div class="detail-dci"><span class="detail-dci-label">DCI / substances actives :</span> ${ingredientEntries.map(e=>`<span class="detail-dci-item">${esc(e.name||"")}${e.dose?` — <strong>${esc(e.dose)}</strong>`:""}</span>`).join(" · ")}${ingredientEntries.filter(e=>e.salt||e.saltDose).map(e=>`<div class="ingredient-salt">${esc(e.name||"Substance active")} : ${esc(e.salt||"Sel non précisé")}${e.saltDose?` — ${esc(e.saltDose)}`:""}</div>`).join("")}</div>`:"";
  const formBadge=!isGroup(m)&&presentationForms.length
    ? presentationForms.length===1?`<button type="button" class="tag tag-form" data-fiche-form="${esc(presentationForms[0])}" title="Explorer cette forme">${esc(presentationForms[0])}</button>`:`<span class="tag tag-form">Plusieurs formes</span>`:"";
- $("detail").innerHTML=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker" style="${entityTreeStyle(m)}color:var(--group-fg)">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche spécialité"}</div><h2 style="${entityTreeStyle(m)}color:var(--group-fg)">${esc(displayMedName(m))}</h2><div class="tags"><button type="button" class="tag tag-category" data-fiche-category="${esc(m.category||"")}" title="Explorer cette classe thérapeutique">${esc(m.category||"Famille à définir")}</button>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${practicalBadges(m)}${ficheDateLabel(m)}</div><div class="header-actions" id="detailPublicActions" style="align-items:center">${admin?`<button class="primary" id="editBtn" type="button">Modifier la fiche</button>`:""}</div></div>
+ $("detail").innerHTML=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker" style="${entityTreeStyle(m)}color:var(--group-fg)">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche spécialité"}</div><h2 style="${entityTreeStyle(m)}color:var(--group-fg)">${esc(displayMedName(m))}</h2><div class="tags"><button type="button" class="tag tag-category" data-fiche-category="${esc(m.category||"")}" title="Explorer cette classe thérapeutique">${esc(m.category||"Famille à définir")}</button>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${practicalBadges(m)}${ficheDateLabel(m)}</div><div class="header-actions" id="detailPublicActions" style="align-items:center;flex-direction:column">${memoReproBadges(m)}${admin?`<button class="primary" id="editBtn" type="button">Modifier la fiche</button>`:""}</div></div>
  ${alertSection&&String(alertSection.content||"").trim()?`<div class="priority-card priority-alert">${renderPrioritySection(alertSection,targetSectionId)}</div>`:""}
  ${prioritySection&&String(prioritySection.content||"").trim()?`<div class="group-glance">${renderPrioritySection(prioritySection,targetSectionId)}</div>`:""}
  ${adviceSection&&String(adviceSection.content||"").trim()?`<div class="priority-card priority-advice">${renderPrioritySection(adviceSection,targetSectionId)}</div>`:""}
@@ -4001,6 +4043,7 @@ function renderEditor(id){
  });
  const editorTop=editorRoot.querySelector(".detailtop");editorTop.after(nav,...tabDefinitions.map(([key])=>panels[key]));
  panels.identity.appendChild(identityGrid);
+ if(isMolecule(m))identityGrid.insertAdjacentHTML("beforeend",memoReproEditor(m));
  // Type de fiche visible en premier, puis nom et badges côte à côte.
  const typeField=$("f-entry-type")?.closest(".full");
  if(typeField){identityGrid.prepend(typeField);typeField.classList.add("memo-type-prominent")}
@@ -4584,6 +4627,17 @@ function captureEditorFields(m){
  if(kind==='specialite'&&m.sections?.length){m.sections.forEach(sec=>sec.ingredientDosages=ingredientData);m.dosage=ingredientRows.map(e=>e.dose).filter(Boolean).join('/')||m.dosage;}
  if((kind==='dci'||kind==='molecule')&&m.sections?.length){m.sections[0].ingredientDosages={showInTitle:ingredientData.showInTitle,entries:[]};}
 
+ if(kind==="molecule"&&$("memo-repro-editor")){
+  const data={};
+  for(const key of ["pregnancy","breastfeeding"]){
+   data[key]={};
+   for(const field of ["status","note","source","checked"]){
+    data[key][field]=$("memo-repro-editor").querySelector(`[data-repro="${key}"][data-repro-field="${field}"]`)?.value||"";
+   }
+  }
+  if(!m.sections?.length)m.sections=[{id:"notes",title:"Notes",type:"text",content:"",enabled:false}];
+  m.sections[0].reproSafety=data;
+ }
  if(!m.sections?.length)m.sections=[{id:"notes",title:"Notes",type:"text",content:"",enabled:false}];
  if(kind!=="groupe"){
   m.sections[0].moleculeRoot=kind==="molecule";
