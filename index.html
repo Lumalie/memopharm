@@ -2334,30 +2334,59 @@ function memoThemeMatchesPresentation(m,p,kind){
 }
 function memoRenderThemeList(entries,kind){
  const meta=memoThemeMeta[kind];if(!meta)return false;
- const intro=$("memoThemeIntro");
- const items=[],seen=new Set();
+ const intro=$("memoThemeIntro"),items=[],seen=new Set();
  const all=publicMeds();
- for(const m of entries){
-  const linked=[m,...all.filter(x=>String(x.parent_id||x.parentId||x.molecule_id||x.moleculeId||"")===String(m.id))];
-  for(const med of linked){
-   const presentations=med.presentations||[];
-   presentations.forEach((p,i)=>{
+ const byId=new Map(all.map(m=>[String(m.id),m]));
+ const roots=new Map();
+ // Le résultat le plus haut est privilégié : molécule, puis forme/dosage,
+ // puis présentation commerciale si le badge n'existe qu'à ce niveau.
+ for(const med of entries){
+  const parentId=String(moleculeParentId(med)||"");
+  const root=parentId&&byId.has(parentId)?byId.get(parentId):med;
+  if(!roots.has(String(root.id)))roots.set(String(root.id),root);
+ }
+ const push=(med,index,title,subtitle)=>{
+  const key=String(med.id)+":"+(index===null?"general":index);
+  if(seen.has(key))return;
+  seen.add(key);items.push({id:med.id,index,title,subtitle});
+ };
+ for(const root of roots.values()){
+  const descendants=all.filter(x=>String(moleculeParentId(x)||"")===String(root.id));
+  const branch=[root,...descendants];
+  if(kind==="mte"||kind==="photo"){
+   // Un badge au niveau molécule remplace ses déclinaisons héritées.
+   // Une exception explicite « Non » reste exclue des correspondances.
+   if(memoThemeMatchesPresentation(root,null,kind)){
+    push(root,null,displayMedName(root),"Molécule · caractéristique générale");
+    continue;
+   }
+   for(const med of branch){
+    if(med!==root&&memoThemeMatchesPresentation(med,null,kind)){
+     push(med,null,displayMedName(med),"Forme / dosage concerné");
+     continue;
+    }
+    (med.presentations||[]).forEach((p,i)=>{
+     if(!memoThemeMatchesPresentation(med,p,kind))return;
+     const name=String(p.name||med.name||"Présentation").trim();
+     const lab=p.lab&&p.presentationKind!=="princeps"?" · "+p.lab:"";
+     const context=[med.name!==name?med.name:"",p.dosage||med.dosage,p.form||med.form].filter(Boolean).join(" · ");
+     push(med,i,name+lab,context||"Présentation commerciale");
+    });
+   }
+  }else{
+   // Conservation : donnée propre à la présentation commerciale.
+   for(const med of branch)(med.presentations||[]).forEach((p,i)=>{
     if(!memoThemeMatchesPresentation(med,p,kind))return;
-    const key=String(med.id)+":"+i;if(seen.has(key))return;seen.add(key);
     const name=String(p.name||med.name||"Présentation").trim();
     const lab=p.lab&&p.presentationKind!=="princeps"?" · "+p.lab:"";
     const context=[med.name!==name?med.name:"",p.dosage||med.dosage,p.form||med.form].filter(Boolean).join(" · ");
-    items.push({id:med.id,index:i,title:name+lab,subtitle:context||"Présentation commerciale"});
+    push(med,i,name+lab,context||"Présentation commerciale");
    });
-   if((kind==="mte"||kind==="photo")&&!presentations.some(p=>memoThemeMatchesPresentation(med,p,kind))&&memoThemeMatchesPresentation(med,null,kind)){
-    const key=String(med.id)+":general";
-    if(!seen.has(key)){seen.add(key);items.push({id:med.id,index:null,title:displayMedName(med),subtitle:"Fiche molécule / forme et dosage"})}
-   }
   }
  }
  items.sort((a,b)=>a.title.localeCompare(b.title,"fr"));
  intro.classList.remove("hidden");
- intro.innerHTML=`<h3>${esc(meta.title)}</h3><p>${esc(meta.description)} ${items.length} résultat${items.length===1?"":"s"} dans les fiches renseignées. Cette liste n'est pas exhaustive et ne remplace pas une source réglementaire officielle.</p>`;
+ intro.innerHTML=`<h3>${esc(meta.title)}</h3><p>${esc(meta.description)} ${items.length} résultat${items.length===1?"":"s"} dans les fiches renseignées. Les résultats hérités sont regroupés au niveau le plus haut. Cette liste n'est pas exhaustive et ne remplace pas une source réglementaire officielle.</p>`;
  $("exploreCards").innerHTML=items.length?`<div class="memo-theme-list">${items.map(x=>`<button type="button" class="memo-theme-item" data-open-med="${esc(x.id)}" ${x.index!==null?`data-open-pres="${x.index}"`:""}><span><strong>${esc(x.title)}</strong><small>${esc(x.subtitle)}</small></span><span class="memo-theme-arrow" aria-hidden="true">›</span></button>`).join("")}</div>`:'<div class="memo-theme-empty">Aucune fiche renseignée avec cette caractéristique pour le moment.</div>';
  $("exploreCards").querySelectorAll("[data-open-med]").forEach(b=>b.onclick=e=>openExplorerResult(e,b,b.hasAttribute("data-open-pres")?Number(b.dataset.openPres):null));
  return true;
