@@ -1882,6 +1882,20 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
 .memo-repro-editor-grid textarea{min-height:65px}
 @media(max-width:700px){.memo-repro-editor-grid{grid-template-columns:1fr}.memo-repro-tooltip{right:0}}
 </style>
+<style>
+/* V67 — vigilance : deux rangées de badges alignées à droite */
+.memo-v67-vigilance{display:flex;flex-direction:column;align-items:flex-end;gap:9px}
+.memo-v67-practical{display:flex;justify-content:flex-end;gap:10px;min-height:0}
+.memo-v67-practical:empty{display:none}
+#molecule-tab-content .memo-practical-badge[data-filter-badge="mte"],#molecule-tab-content .memo-practical-badge[data-filter-badge="photo"]{display:none}
+.memo-v67-alert{position:relative;display:inline-flex;align-items:center;justify-content:center;width:56px;height:52px;border:0;border-radius:13px;background:#ffdda0;color:#885408;cursor:pointer;transition:background .15s,color .15s,transform .15s,box-shadow .15s}
+.memo-v67-alert:hover,.memo-v67-alert:focus-visible{background:#f5cb6e;color:#663c00;transform:translateY(-1px);box-shadow:0 2px 9px #0002;outline-offset:3px}
+.memo-v67-alert .memo-repro-tooltip{right:0}
+.memo-v67-alert:hover .memo-repro-tooltip,.memo-v67-alert:focus-visible .memo-repro-tooltip{opacity:1;visibility:visible;transform:translateY(0)}
+.memo-v67-alert .memo-v67-mte{font-weight:800;font-size:17px;letter-spacing:.2px}
+.memo-v67-alert .memo-v67-sun{width:35px;height:35px;display:block;background:currentColor;-webkit-mask:url("https://cdn.jsdelivr.net/npm/lucide-static@0.468.0/icons/sun.svg") center/contain no-repeat;mask:url("https://cdn.jsdelivr.net/npm/lucide-static@0.468.0/icons/sun.svg") center/contain no-repeat}
+@media(max-width:700px){.memo-v67-vigilance{align-items:flex-end}}
+</style>
 </head>
 <body>
 <header><div class="wrap">
@@ -3316,6 +3330,11 @@ function memoReproBadges(m){
   return `<a class="memo-repro" data-state="${esc(r.status)}" ${url?`href="${esc(url)}" target="_blank" rel="noopener noreferrer"`:'tabindex="0" role="img"'} aria-label="${esc(description)}${url?' — ouvrir la source':' — source non disponible'}"><span class="memo-repro-icon lucide-official ${icon}" aria-hidden="true"></span>${tip}</a>`;
  }).join('')+'</div>';
 }
+function memoV67Alerts(m,p=null){
+ const specs=[['mte',practicalMTE(m,p),'MTE','Médicament à marge thérapeutique étroite','Vérifier les précautions et les règles de substitution applicables.'],['photo',practicalPhotosensitive(m,p),'Photosensibilisant','Photosensibilisation','Vérifier les précautions selon la forme et la voie.']];
+ return specs.filter(x=>x[1]).map(([kind,_,label,title,note])=>`<button type="button" class="memo-v67-alert" data-filter-badge="${kind}" aria-label="${title} — explorer les fiches concernées">${kind==='mte'?'<span class="memo-v67-mte">MTE</span>':'<span class="memo-v67-sun" aria-hidden="true"></span>'}<span class="memo-repro-tooltip" role="tooltip"><span class="memo-repro-tip-title">${title}</span><span class="memo-repro-tip-note">${note}</span><span class="memo-repro-tip-action">Cliquer pour explorer les fiches concernées</span></span></button>`).join('');
+}
+function memoV67Refresh(m,p=null){const slot=document.getElementById('memo-v67-practical');if(!slot)return;slot.innerHTML=memoV67Alerts(m,p);memoWireBadgeClicks(slot)}
 function memoReproEditor(m){
  if(!isMolecule(m))return '';
  const info=memoReproInfo(m);
@@ -3365,7 +3384,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  const activeIngredientsHtml=ingredientEntries.length?`<div class="detail-dci"><span class="detail-dci-label">DCI / substances actives :</span> ${ingredientEntries.map(e=>`<span class="detail-dci-item">${esc(e.name||"")}${e.dose?` — <strong>${esc(e.dose)}</strong>`:""}</span>`).join(" · ")}${ingredientEntries.filter(e=>e.salt||e.saltDose).map(e=>`<div class="ingredient-salt">${esc(e.name||"Substance active")} : ${esc(e.salt||"Sel non précisé")}${e.saltDose?` — ${esc(e.saltDose)}`:""}</div>`).join("")}</div>`:"";
  const formBadge=!isGroup(m)&&presentationForms.length
    ? presentationForms.length===1?`<button type="button" class="tag tag-form" data-fiche-form="${esc(presentationForms[0])}" title="Explorer cette forme">${esc(presentationForms[0])}</button>`:`<span class="tag tag-form">Plusieurs formes</span>`:"";
- $("detail").innerHTML=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker" style="${entityTreeStyle(m)}color:var(--group-fg)">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche spécialité"}</div><h2 style="${entityTreeStyle(m)}color:var(--group-fg)">${esc(displayMedName(m))}</h2><div class="tags"><button type="button" class="tag tag-category" data-fiche-category="${esc(m.category||"")}" title="Explorer cette classe thérapeutique">${esc(m.category||"Famille à définir")}</button>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${practicalBadges(m)}${ficheDateLabel(m)}</div><div class="header-actions" id="detailPublicActions" style="align-items:center;flex-direction:column">${memoReproBadges(m)}${admin?`<button class="primary" id="editBtn" type="button">Modifier la fiche</button>`:""}</div></div>
+ $("detail").innerHTML=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker" style="${entityTreeStyle(m)}color:var(--group-fg)">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche spécialité"}</div><h2 style="${entityTreeStyle(m)}color:var(--group-fg)">${esc(displayMedName(m))}</h2><div class="tags"><button type="button" class="tag tag-category" data-fiche-category="${esc(m.category||"")}" title="Explorer cette classe thérapeutique">${esc(m.category||"Famille à définir")}</button>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${isMolecule(m)?"":practicalBadges(m)}${ficheDateLabel(m)}</div><div class="header-actions" id="detailPublicActions" style="align-items:center;flex-direction:column"><div class="memo-v67-vigilance">${memoReproBadges(m)}${isMolecule(m)?`<div class="memo-v67-practical" id="memo-v67-practical">${memoV67Alerts(m)}</div>`:""}</div>${admin?`<button class="primary" id="editBtn" type="button">Modifier la fiche</button>`:""}</div></div>
  ${alertSection&&String(alertSection.content||"").trim()?`<div class="priority-card priority-alert">${renderPrioritySection(alertSection,targetSectionId)}</div>`:""}
  ${prioritySection&&String(prioritySection.content||"").trim()?`<div class="group-glance">${renderPrioritySection(prioritySection,targetSectionId)}</div>`:""}
  ${adviceSection&&String(adviceSection.content||"").trim()?`<div class="priority-card priority-advice">${renderPrioritySection(adviceSection,targetSectionId)}</div>`:""}
@@ -3405,6 +3424,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
   };
   const renderChild=(child,selectedPack=null)=>{
    if(!child||!panel)return;
+   memoV67Refresh(child,memoV44Chosen(child)?.p||null);
    const childSections=(child.sections||[]).filter(x=>x.enabled!==false&&!isDocumentationSection(x)&&String(x.content||" ").trim()).map(x=>resolveSharedSection(child,x));
    // Toutes les rubriques actives propres à la présentation sont visibles,
    // y compris les trois encarts prioritaires lorsque l'éditeur les active.
@@ -3427,7 +3447,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
    if(sourcesSlot){sourcesSlot.innerHTML=ficheCombinedSources(m,documentationSections,child);sourcesSlot.classList.toggle("hidden",!sourcesSlot.innerHTML.trim());memoLinkifyCips(sourcesSlot);}
    panel.querySelectorAll("[data-group-open]").forEach(b=>b.onclick=()=>openMedication(b.dataset.groupOpen));
    memoV44Banner(panel,child,selectedTitle);
-   panel.querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=panel.querySelector("#presentation-info");memoSetViewChoice(child.id,{presentation:sel.value});const choice=memoV44Chosen(child);if(target)target.innerHTML=choice?presentationInfo(choice.p,child):"";memoV48Sync(sel.closest("#presentations-details"),choice?.p);memoWireBadgeClicks(target);memoV44Banner(panel,child,selectedTitle)});
+   panel.querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=panel.querySelector("#presentation-info");memoSetViewChoice(child.id,{presentation:sel.value});const choice=memoV44Chosen(child);if(target)target.innerHTML=choice?presentationInfo(choice.p,child):"";memoV48Sync(sel.closest("#presentations-details"),choice?.p);memoWireBadgeClicks(target);memoV44Banner(panel,child,selectedTitle);memoV67Refresh(child,choice?.p||null)});
   };
   const setupPacks=child=>{
    const options=memoV44Options(child);
