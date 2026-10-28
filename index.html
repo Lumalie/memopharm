@@ -2785,7 +2785,7 @@ function isMolecule(m){return !isGroup(m)&&!!m.sections?.[0]?.moleculeRoot}
 function isSpecialiteFiche(m){return !isGroup(m)&&!isMolecule(m)&&hierarchyMeta(m).memofficineKind!=="conseil"&&m.entry_type==="specialite"}
 // V113 : distinguer les variantes encore utiles des anciennes fiches dosage/forme autonomes.
 // Les variantes sont des enregistrements techniques liés à une molécule ; elles ne sont
-// jamais proposées comme fiches autonomes dans la recherche générale.
+// présentées dans les recherches en conservant leur lien avec la molécule parente.
 // Un seul prédicat pour les anciens enregistrements dosage/forme :
 // seul le rattachement à une molécule distingue une variante active d'une archive.
 function isDosageRecord(m){return !isGroup(m)&&!isMolecule(m)&&hierarchyMeta(m).memofficineKind!=="conseil"&&m.entry_type==="dci"}
@@ -2924,9 +2924,6 @@ function publicMeds(){
   return dosageRecord&&publishedMoleculeIds.has(parentId);
  });
 }
-// Les variantes rattachées sont recherchables et explorables comme les autres fiches.
-// publicMeds() exclut déjà les anciennes fiches dosage/forme autonomes.
-function visibleStandaloneMeds(){return publicMeds()}
 function specialtyItems(m){
  return (m.presentations||[]).map((p,i)=>({p,i,name:(p.name||m.name||"").trim()})).filter(x=>x.name);
 }
@@ -3124,7 +3121,7 @@ function memoRenderThemeList(entries,kind){
  return true;
 }
 function renderExplorer(){
- const entries=visibleStandaloneMeds();
+ const entries=publicMeds();
  const classes=[...new Set(entries.flatMap(explorerClasses).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"fr"));
  const indications=[...new Set(entries.flatMap(indicationTags))].sort((a,b)=>a.localeCompare(b,"fr"));
  const forms=[...new Set(entries.flatMap(medicationForms))].sort((a,b)=>a.localeCompare(b,"fr",{sensitivity:"base"}));
@@ -3526,7 +3523,7 @@ function getSearchMatches(queryOverride=null){
  // La recherche de l’accueil indexe les variantes VIA leur molécule parente.
  // Ne pas produire de résultat autonome de variante : le moteur V112 utilise
  // childText et moleculeChildren() pour sélectionner la bonne présentation/rubrique.
- visibleStandaloneMeds().filter(m=>!isVariantFiche(m)).forEach(m=>{
+ publicMeds().filter(m=>!isVariantFiche(m)).forEach(m=>{
   const base=norm([m.name,m.dosage,m.dci,m.parent_dci,m.category,m.aliases,...indicationTags(m),...explorerClasses(m),...medicationForms(m),...(isGroup(m)?["fiche groupe","groupe therapeutique","famille de medicaments"]:[])].join(" "));
   const presentations=specialtyItems(m);
   const presText=x=>norm([x.name,x.p.dosage,x.p.lab,x.p.lab?"laboratoire":"",x.p.form,x.p.cip,...cipConditionnements(x.p).flatMap(c=>[c.cip,c.pack]),cipConditionnements(x.p).length?"cip":"",x.p.cis,x.p.cis?"cis":"",x.p.description,x.p.marking].join(" "));
