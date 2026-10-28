@@ -3318,7 +3318,7 @@ function previewSearchResult(item){
  const activeIngredients=!isGroup(m)&&m.entry_type!=="dci"?splitDci(m.dci||m.parent_dci):[];
  const ingredientEntries=info?.entries?.length?info.entries:activeIngredients.map(name=>({name,dose:"",salt:"",saltDose:""}));
  const activeIngredientsHtml=ingredientEntries.length?`<div class="detail-dci"><span class="detail-dci-label">DCI / substances actives :</span> ${ingredientEntries.map(e=>`<span class="detail-dci-item">${esc(e.name||"")}${e.dose?` — <strong>${esc(e.dose)}</strong>`:""}</span>`).join(" · ")}${ingredientEntries.filter(e=>e.salt||e.saltDose).map(e=>`<div class="ingredient-salt">${esc(e.name||"Substance active")} : ${esc(e.salt||"Sel non précisé")}${e.saltDose?` — ${esc(e.saltDose)}`:""}</div>`).join("")}</div>`:"";
- const headerHtml=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker" style="${entityTreeStyle(m)}color:var(--group-fg)">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche spécialité"}</div><h2 style="${entityTreeStyle(m)}color:var(--group-fg)"><button type="button" class="search-preview-title-link" data-preview-open-title title="Ouvrir la fiche complète" style="color:inherit">${esc(displayMedName(m))}</button></h2><div class="tags"><span class="tag tag-category">${esc(m.category||"Famille à définir")}</span>${formBadge}${indicationTags(m).map(t=>`<span class="tag tag-indication">${esc(t)}</span>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${isMolecule(m)?"":practicalBadges(m)}</div>${isMolecule(m)?`<div class="memo-preview-vigilance" aria-label="Badges de vigilance"><div class="memo-v67-practical">${memoV67Alerts(m)}</div>${memoReproBadges(m)}</div>`:""}</div>`;
+ const headerHtml=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker" style="${entityTreeStyle(m)}color:var(--group-fg)">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche spécialité"}</div><h2 style="${entityTreeStyle(m)}color:var(--group-fg)"><button type="button" class="search-preview-title-link" data-preview-open-title title="Ouvrir la fiche complète" style="color:inherit">${esc(displayMedName(m))}</button></h2><div class="tags"><span class="tag tag-category">${esc(m.category||"Famille à définir")}</span>${formBadge}${indicationTags(m).map(t=>`<span class="tag tag-indication">${esc(t)}</span>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${isMolecule(m)||isSpecialiteFiche(m)?"":practicalBadges(m)}</div>${isMolecule(m)||isSpecialiteFiche(m)?`<div class="memo-preview-vigilance" aria-label="Badges de vigilance"><div class="memo-v67-practical">${memoV67Alerts(m)}</div>${memoReproBadges(m)}</div>`:""}</div>`;
  const sections=sec&&!isDocumentationSection(sec)?[sec]:(m.sections||[]).filter(x=>x.enabled!==false&&!isDocumentationSection(x)&&String(x.content||'').trim()).slice(0,7);
  // Les encarts prioritaires de l'aperçu utilisent exactement le rendu de la fiche complète.
  const safeSection=section=>{
@@ -3562,7 +3562,7 @@ function memoReproSourceUrl(value){
  try{const u=new URL(raw);return ['https:','http:'].includes(u.protocol)?u.href:'';}catch(e){return '';}
 }
 function memoReproBadges(m){
- if(!isMolecule(m))return '';
+ if(!isMolecule(m)&&!isSpecialiteFiche(m))return '';
  const info=memoReproInfo(m),names={pregnancy:['lucide-baby','Grossesse'],breastfeeding:['lucide-heart-handshake','Allaitement']};
  const labels={'compatible':'Compatible','precautions':'Sous conditions / précautions','contre-indique':'Contre-indiqué','non-renseigne':'Non renseigné'};
  return '<div class="memo-repro-badges" aria-label="Grossesse et allaitement">'+Object.entries(names).map(([key,[icon,label]])=>{
@@ -3575,17 +3575,17 @@ function memoReproBadges(m){
  }).join('')+'</div>';
 }
 function memoV67Alerts(m,p=null){
- const specs=[['mte',practicalMTE(m,p),'MTE','Médicament à marge thérapeutique étroite','Vérifier les précautions et les règles de substitution applicables.'],['photo',practicalPhotosensitive(m,p),'Photosensibilisant','Photosensibilisation','Vérifier les précautions selon la forme et la voie.'],['exception',practicalFlags(isMolecule(m)?m:moleculeForDosage(m)).exception===true,'EXC','Médicament d’exception','Vérifier les conditions réglementaires de prescription et de prise en charge pour la spécialité.'],['stup',practicalFlags(isMolecule(m)?m:moleculeForDosage(m)).stup===true,'STUP','Stupéfiant','Vérifier les règles de prescription, de délivrance et de traçabilité applicables à la spécialité.']];
+ const specs=[['mte',practicalMTE(m,p),'MTE','Médicament à marge thérapeutique étroite','Vérifier les précautions et les règles de substitution applicables.'],['photo',practicalPhotosensitive(m,p),'Photosensibilisant','Photosensibilisation','Vérifier les précautions selon la forme et la voie.'],['exception',practicalFlags((isMolecule(m)||isSpecialiteFiche(m))?m:moleculeForDosage(m)).exception===true,'EXC','Médicament d’exception','Vérifier les conditions réglementaires de prescription et de prise en charge pour la spécialité.'],['stup',practicalFlags((isMolecule(m)||isSpecialiteFiche(m))?m:moleculeForDosage(m)).stup===true,'STUP','Stupéfiant','Vérifier les règles de prescription, de délivrance et de traçabilité applicables à la spécialité.']];
  return specs.filter(x=>x[1]).map(([kind,_,label,title,note])=>`<button type="button" class="memo-v67-alert memo-v69-${kind}" data-filter-badge="${kind}" aria-label="${title} — explorer les fiches concernées">${kind==='photo'?'<span class="memo-v67-sun" aria-hidden="true"></span>':`<span class="memo-v67-mte">${label}</span>`}<span class="memo-repro-tooltip" role="tooltip"><span class="memo-repro-tip-title">${title}</span><span class="memo-repro-tip-note">${note}</span><span class="memo-repro-tip-action">Cliquer pour explorer les fiches concernées</span></span></button>`).join('');
 }
 function memoV67Refresh(m,p=null){const slot=document.getElementById('memo-v67-practical');if(!slot)return;slot.innerHTML=memoV67Alerts(m,p);memoWireBadgeClicks(slot)}
 function memoReproEditor(m){
- if(!isMolecule(m))return '';
+ if(!isMolecule(m)&&!isSpecialiteFiche(m))return '';
  const info=memoReproInfo(m);
  return `<div class="full memo-repro-editor" id="memo-repro-editor"><h4>🤰 Grossesse et allaitement</h4><div class="memo-repro-editor-grid">${[['pregnancy','Grossesse'],['breastfeeding','Allaitement']].map(([key,label])=>{
  const r=info[key];
  return `<div><label>${label} — statut</label><select data-repro="${key}" data-repro-field="status">${[['non-renseigne','Non renseigné'],['compatible','Compatible'],['precautions','Sous conditions / précautions'],['contre-indique','Contre-indiqué']].map(([v,t])=>`<option value="${v}" ${r.status===v?'selected':''}>${t}</option>`).join('')}</select><label style="margin-top:8px">Précisions et limites</label><textarea data-repro="${key}" data-repro-field="note" placeholder="Trimestre, voie, dose, durée…">${esc(r.note)}</textarea><label style="margin-top:8px">Source</label><input data-repro="${key}" data-repro-field="source" value="${esc(r.source)}" placeholder="https://… (lien direct vers la source)"><label style="margin-top:8px">Date de vérification</label><input type="date" data-repro="${key}" data-repro-field="checked" value="${esc(r.checked)}"></div>`;
- }).join('')}</div><p class="muted">Évaluation générale de la molécule : préciser les restrictions éventuelles. Ne pas considérer ce statut comme valable pour toutes les formes et présentations sans vérification.</p></div>`;
+ }).join('')}</div><p class="muted">Évaluation de cette fiche : préciser les restrictions éventuelles. Vérifier les différences selon les formes et présentations.</p></div>`;
 }
 
 function moleculeForSpecialtyV85(m){
@@ -3692,7 +3692,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  const activeIngredientsHtml=ingredientEntries.length?`<div class="detail-dci"><span class="detail-dci-label">DCI / substances actives :</span> ${ingredientEntries.map(e=>`<span class="detail-dci-item">${esc(e.name||"")}${e.dose?` — <strong>${esc(e.dose)}</strong>`:""}</span>`).join(" · ")}${ingredientEntries.filter(e=>e.salt||e.saltDose).map(e=>`<div class="ingredient-salt">${esc(e.name||"Substance active")} : ${esc(e.salt||"Sel non précisé")}${e.saltDose?` — ${esc(e.saltDose)}`:""}</div>`).join("")}</div>`:"";
  const formBadge=!isGroup(m)&&presentationForms.length
    ? presentationForms.length===1?`<button type="button" class="tag tag-form" data-fiche-form="${esc(presentationForms[0])}" title="Explorer cette forme">${esc(presentationForms[0])}</button>`:`<span class="tag tag-form">Plusieurs formes</span>`:"";
- $("detail").innerHTML=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker" style="${entityTreeStyle(m)}color:var(--group-fg)">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche spécialité"}</div><h2 style="${entityTreeStyle(m)}color:var(--group-fg)">${esc(displayMedName(m))}</h2><div class="tags"><button type="button" class="tag tag-category" data-fiche-category="${esc(m.category||"")}" title="Explorer cette classe thérapeutique">${esc(m.category||"Famille à définir")}</button>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${isMolecule(m)||isSpecialiteFiche(m)?"":practicalBadges(m)}${ficheDateLabel(m)}</div><div class="header-actions" id="detailPublicActions" style="align-items:center;flex-direction:column"><div class="memo-v67-vigilance">${isMolecule(m)||isSpecialiteFiche(m)?`<div class="memo-v67-practical" id="memo-v67-practical">${memoV67Alerts(m)}</div>`:""}${memoReproBadges(isSpecialiteFiche(m)?(moleculeForSpecialtyV85(m)||m):m)}</div>${admin?`<button class="primary" id="editBtn" type="button">Modifier la fiche</button>`:""}</div></div>
+ $("detail").innerHTML=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker" style="${entityTreeStyle(m)}color:var(--group-fg)">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche spécialité"}</div><h2 style="${entityTreeStyle(m)}color:var(--group-fg)">${esc(displayMedName(m))}</h2><div class="tags"><button type="button" class="tag tag-category" data-fiche-category="${esc(m.category||"")}" title="Explorer cette classe thérapeutique">${esc(m.category||"Famille à définir")}</button>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${isMolecule(m)||isSpecialiteFiche(m)?"":practicalBadges(m)}${ficheDateLabel(m)}</div><div class="header-actions" id="detailPublicActions" style="align-items:center;flex-direction:column"><div class="memo-v67-vigilance">${isMolecule(m)||isSpecialiteFiche(m)?`<div class="memo-v67-practical" id="memo-v67-practical">${memoV67Alerts(m)}</div>`:""}${memoReproBadges(m)}</div>${admin?`<button class="primary" id="editBtn" type="button">Modifier la fiche</button>`:""}</div></div>
  ${alertSection&&String(alertSection.content||"").trim()?`<div class="priority-card priority-alert">${renderPrioritySection(alertSection,targetSectionId)}</div>`:""}
  ${prioritySection&&String(prioritySection.content||"").trim()?`<div class="group-glance">${renderPrioritySection(prioritySection,targetSectionId)}</div>`:""}
  ${adviceSection&&String(adviceSection.content||"").trim()?`<div class="priority-card priority-advice">${renderPrioritySection(adviceSection,targetSectionId)}</div>`:""}
@@ -3894,7 +3894,7 @@ function safeHttp(url){try{const u=new URL(url);return ["https:","http:"].includ
 function practicalFlags(m){return m?.sections?.[0]?.practicalFlags||{}}
 function moleculeForDosage(m){return meds.find(x=>String(x.id)===String(moleculeParentId(m)))||null}
 function practicalPhotosensitive(m,p=null){
- const root=isMolecule(m)?m:moleculeForDosage(m);
+ const root=(isMolecule(m)||isSpecialiteFiche(m))?m:moleculeForDosage(m);
  const inherited=!!practicalFlags(root).photosensitizing;
  const specific=practicalFlags(m).photosensitizingOverride;
  const effective=specific===true?true:specific===false?false:inherited;
@@ -3902,7 +3902,7 @@ function practicalPhotosensitive(m,p=null){
  return effective;
 }
 function practicalMTE(m,p=null){
- const root=isMolecule(m)?m:moleculeForDosage(m);
+ const root=(isMolecule(m)||isSpecialiteFiche(m))?m:moleculeForDosage(m);
  const inherited=!!practicalFlags(root).mte;
  const specific=practicalFlags(m).mteOverride;
  const effective=specific===true?true:specific===false?false:inherited;
@@ -4358,12 +4358,12 @@ function renderEditor(id){
  $("editor").innerHTML=`<div class="detailtop"><div><h2>${!m.published && m.name==="Nouvelle fiche"?"Nouvelle fiche":"Modifier la fiche"}</h2><div class="muted">Clique sur Enregistrer pour synchroniser les changements avec Supabase.</div></div><div class="editor-top-actions"><button type="button" id="backBtn">Retour à la fiche</button><button type="button" class="primary" id="saveMed">Enregistrer</button><button type="button" id="duplicateMed">Dupliquer</button><button type="button" class="danger" id="deleteMed">Supprimer la fiche</button></div></div>
  <div class="admin-grid" style="margin-top:18px">
   <div class="full"><label for="f-entry-type">Type de fiche</label><select id="f-entry-type"><option value="groupe" ${isGroup(m)?"selected":""}>Fiche groupe</option><option value="molecule" ${isMolecule(m)?"selected":""}>Fiche molécule</option>${isDosageFiche(m)?`<option value="dci" selected>Fiche dosage/forme (archive)</option>`:""}<option value="specialite" ${isSpecialiteFiche(m)?"selected":""}>Fiche spécialité</option></select><div class="muted" style="margin-top:5px">Les formes et dosages se gèrent dans l’onglet de la fiche molécule. Les anciennes fiches dosage/forme sont conservées dans les archives administrateur, sans suppression de données.</div></div>
-  <div class="full molecule-editor-fields" id="molecule-settings"><label for="f-molecule-parent">Fiche molécule liée (pour une fiche dosage/forme)</label><select id="f-molecule-parent"><option value="">Aucune molécule liée</option>${meds.filter(x=>x.id!==m.id&&isMolecule(x)).sort((a,b)=>a.name.localeCompare(b.name,'fr')).map(x=>`<option value="${esc(x.id)}" ${moleculeParentId(m)===String(x.id)?"selected":""}>${esc(displayMedName(x))}</option>`).join("")}</select><p class="muted">Une fiche molécule contient les données communes ; ses fiches liées conservent les dosages, formes et présentations spécifiques.</p></div>
+
   <div class="full" id="parent-group-wrap"><label for="f-parent-group">Groupe parent (facultatif)</label><select id="f-parent-group"><option value="">Aucun groupe</option>${groupOptions(m).map(g=>`<option value="${esc(g.id)}" ${parentGroupId(m)===g.id?"selected":""}>${esc(g.name)} — ${esc(g.category)}</option>`).join("")}</select><div class="muted" id="group-parent-help">Choisis librement un groupe parent, quelle que soit sa classe thérapeutique.</div></div>
-  <div><label id="f-name-label" for="f-name">Nom de la spécialité</label><input id="f-name" value="${esc(m.name)}" placeholder="Ex. : Tardyferon"></div><div id="f-dci-form-wrap"><label class="field-label-inline" for="f-dci-form">Forme pharmaceutique <span class="field-inline-choice"><input type="checkbox" data-explorer-visibility="forms" ${explorerBadgeVisible(m,"forms")?"checked":""} aria-label="Afficher la forme pharmaceutique dans Explorer"> <span>Afficher dans Explorer</span></span></label><input id="f-dci-form" data-memo-kind="form" list="memo-forms" value="${esc(m.sections?.[0]?.dciForm||m.form||"")}" placeholder="Ex. : Comprimé, gélule, solution buvable"></div><div id="f-dose-title-wrap" class="full hidden"></div><div id="f-dosage-wrap"><label class="field-label-inline" for="f-dosage">Dosage <span class="field-inline-choice"><input type="checkbox" id="f-dose-in-title"> <span>Afficher dans le titre</span></span></label><div class="dosage-fields"><input id="f-dosage" value="${esc(dosageParts(m.dosage).value)}" placeholder="Ex. : 80"><select id="f-dosage-unit" aria-label="Unité de dosage">${["mg","g","µg","mL","UI","mg/mL","µg/mL","g/L","%","autre"].map(u=>`<option value="${u}" ${dosageParts(m.dosage).unit===u?"selected":""}>${u}</option>`).join("")}</select></div></div><div id="f-dci-wrap" class="full"><label>DCI / substances actives et dosages</label><div id="dciEntries"></div><button type="button" id="addDciEntry" class="soft" style="margin-top:8px">+ Ajouter une DCI</button><p class="muted">Une ligne par substance active. Le sel et sa quantité sont facultatifs et apparaîtront en gris conseil. Ne pas confondre la quantité de sel et celle de substance active.</p></div>
+  <div><label id="f-name-label" for="f-name">Nom de la spécialité</label><input id="f-name" value="${esc(m.name)}" placeholder="Ex. : Tardyferon"></div><div id="f-dci-form-wrap"><label class="field-label-inline" for="f-dci-form">Forme pharmaceutique <span class="field-inline-choice"><input type="checkbox" data-explorer-visibility="forms" ${explorerBadgeVisible(m,"forms")?"checked":""} aria-label="Afficher la forme pharmaceutique dans Explorer"> <span>Afficher dans Explorer</span></span></label><input id="f-dci-form" data-memo-kind="form" list="memo-forms" value="${esc(m.sections?.[0]?.dciForm||m.form||"")}" placeholder="Ex. : Comprimé, gélule, solution buvable"></div><div id="f-dose-title-wrap" class="full hidden"></div><div id="f-dosage-wrap"><label class="field-label-inline" for="f-dosage">Dosage <span class="field-inline-choice"><input type="checkbox" id="f-dose-in-title"> <span>Afficher dans le titre</span></span></label><div class="dosage-fields"><input id="f-dosage" value="${esc((ingredientInfo(m)?.entries||[]).map(e=>String(e.dose||" ").trim()).filter(Boolean).join("/")||m.dosage||"")}" readonly aria-label="Dosage calculé depuis les DCI" title="Calculé automatiquement depuis les champs Dosage actif"></div><p class="muted">Calculé depuis les champs « Dosage actif » ci-dessous. Plusieurs dosages sont séparés par /.</p></div><div id="f-dci-wrap" class="full"><label>DCI / substances actives et dosages</label><div id="dciEntries"></div><button type="button" id="addDciEntry" class="soft" style="margin-top:8px">+ Ajouter une DCI</button><p class="muted">Une ligne par substance active. Le sel et sa quantité sont facultatifs et apparaîtront en gris conseil. Ne pas confondre la quantité de sel et celle de substance active.</p></div>
  <div class="full explorer-class-custom" id="princeps-editor-wrap"><label for="f-princeps">Princeps</label><input id="f-princeps" list="princeps-suggestions" value="${esc((m.sections?.[0]?.princepsNames||[]).join(', '))}" placeholder="Ex. : Nom de spécialité 1, Nom de spécialité 2" autocomplete="off"><datalist id="princeps-suggestions">${[...new Set(meds.flatMap(x=>x.sections?.[0]?.princepsNames||[]))].sort((a,b)=>a.localeCompare(b,'fr')).map(x=>`<option value="${esc(x)}"></option>`).join('')}</datalist><p class="muted">Sépare les noms de spécialités par des virgules. Plusieurs noms peuvent être renseignés pour une même DCI. Vérifier le statut de princeps de chaque spécialité.</p></div>
  <div class="full explorer-class-custom"><label class="explorer-section-heading" for="f-extra-classes">Classe·s thérapeutique·s</label><input id="f-extra-classes" list="class-suggestions" value="${esc(explorerClasses(m).filter(t=>t!=="Autres"||explorerClasses(m).length===1).join(", "))}" placeholder="Ex. : Antibiotiques, Pénicillines" autocomplete="off"><datalist id="class-suggestions">${[...new Set(meds.flatMap(explorerClasses))].sort((a,b)=>a.localeCompare(b,"fr")).map(t=>`<option value="${esc(t)}"></option>`).join("")}</datalist><div id="explorer-class-choices" class="explorer-class-choices"></div><p class="muted">Sépare les étiquettes par des virgules. Coche uniquement les badges à afficher dans Explorer. Les autres restent enregistrés et utilisables dans les filtres.</p></div>
- <div class="full memo-practical-editor" id="molecule-practical-flags"><label><input type="checkbox" id="f-mte" ${practicalFlags(m).mte===true?"checked":""}> ⚠ MTE — Marge thérapeutique étroite</label><label><input type="checkbox" id="f-photosensitizing" ${practicalFlags(m).photosensitizing===true?"checked":""}> ☀ Photosensibilisant</label><label><input type="checkbox" id="f-exception" ${practicalFlags(m).exception===true?"checked":""}> EXC — Médicament d’exception</label><label><input type="checkbox" id="f-stup" ${practicalFlags(m).stup===true?"checked":""}> STUP — Stupéfiant</label><span class="hint">À renseigner sur la fiche molécule si pertinent ; chaque présentation peut ensuite conserver ou désactiver ce badge selon la voie d'administration.</span></div>
+ <div class="full memo-practical-editor" id="molecule-practical-flags"><label><input type="checkbox" id="f-mte" ${practicalFlags(m).mte===true?"checked":""}> ⚠ MTE — Marge thérapeutique étroite</label><label><input type="checkbox" id="f-photosensitizing" ${practicalFlags(m).photosensitizing===true?"checked":""}> ☀ Photosensibilisant</label><label><input type="checkbox" id="f-exception" ${practicalFlags(m).exception===true?"checked":""}> EXC — Médicament d’exception</label><label><input type="checkbox" id="f-stup" ${practicalFlags(m).stup===true?"checked":""}> STUP — Stupéfiant</label><span class="hint">À renseigner pour cette fiche selon les sources vérifiées. Les particularités propres à une forme restent à documenter séparément.</span></div>
  <div class="full explorer-class-custom"><label class="explorer-section-heading" for="f-indications">Indication·s thérapeutique·s</label><input id="f-indications" list="indication-suggestions" value="${esc(indicationTags(m).join(", "))}" placeholder="Ex. : Infection bactérienne, Carence en fer" autocomplete="off"><datalist id="indication-suggestions">${[...new Set(meds.flatMap(indicationTags))].sort((a,b)=>a.localeCompare(b,"fr")).map(t=>`<option value="${esc(t)}"></option>`).join("")}</datalist><div id="explorer-indication-choices" class="explorer-class-choices"></div><p class="muted">Sépare les étiquettes par des virgules. Coche uniquement les badges à afficher dans Explorer. Les autres restent enregistrés et utilisables dans les filtres.</p></div>
  
  
@@ -4405,7 +4405,7 @@ function renderEditor(id){
  });
  const editorTop=editorRoot.querySelector(".detailtop");editorTop.after(nav,...tabDefinitions.map(([key])=>panels[key]));
  panels.identity.appendChild(identityGrid);
- if(isMolecule(m))identityGrid.insertAdjacentHTML("beforeend",memoReproEditor(m));
+ if(isMolecule(m)||isSpecialiteFiche(m))identityGrid.insertAdjacentHTML("beforeend",memoReproEditor(m));
  // Type de fiche visible en premier, puis nom et badges côte à côte.
  const typeField=$("f-entry-type")?.closest(".full");
  if(typeField){identityGrid.prepend(typeField);typeField.classList.add("memo-type-prominent")}
@@ -4426,8 +4426,8 @@ function renderEditor(id){
    }
    parentField.before(nameRow);
  }
- // Les badges ne concernent que les fiches molécules ; les autres types gardent leurs champs enregistrables.
- const showFlags=()=>{if(flagsField)flagsField.classList.toggle("hidden",$("f-entry-type").value!=="molecule")};
+ // Les mêmes badges sont disponibles pour les molécules et les spécialités.
+ const showFlags=()=>{if(flagsField)flagsField.classList.toggle("hidden",!["molecule","specialite"].includes($("f-entry-type").value))};
  $("f-entry-type").addEventListener("change",showFlags);
  showFlags();
  const generalHeading=document.createElement("div");generalHeading.className="memo-editor-panel-heading";generalHeading.textContent="Rubriques de cette fiche";
@@ -4495,8 +4495,7 @@ function renderEditor(id){
   const isDci = $("f-entry-type").value === "dci" || isMoleculeType || isGroupType;
   $("presentation-editor-wrap").classList.toggle("hidden",isGroupType||isMoleculeType);
   $("molecule-variants-editor").classList.toggle("hidden",!isMoleculeType);
-  $("molecule-settings").classList.toggle("hidden",isGroupType||isMoleculeType);
-  $("f-molecule-parent").disabled=isMoleculeType;
+
   $("parent-group-wrap").classList.remove("hidden");
   $("princeps-editor-wrap").classList.toggle("hidden",$("f-entry-type").value!=="dci" && !isMoleculeType);
   $("f-dci-form-wrap").classList.toggle("hidden",$("f-entry-type").value!=="dci");
@@ -4784,6 +4783,10 @@ function renderEditor(id){
  const initialDci=splitDci(m.dci);
  const storedEntries=storedIngredientInfo?.entries||[];
  renderDciEntries(initialDci.map((name,i)=>({name,...(storedEntries.find(e=>e.name===name)||storedEntries[i]||{})})).map((e,i)=>({...e,name:initialDci[i]})));
+ const refreshIdentityDosage=()=>{const output=$("f-dosage");if(output)output.value=[...dciRoot.querySelectorAll("[data-ingredient-dose]")].map(el=>el.value.trim()).filter(Boolean).join("/");};
+ dciRoot.addEventListener("input",e=>{if(e.target.matches("[data-ingredient-dose]"))refreshIdentityDosage()});
+ const dciObserver=new MutationObserver(refreshIdentityDosage);dciObserver.observe(dciRoot,{childList:true});
+ refreshIdentityDosage();
  $("f-dose-in-title").checked=storedIngredientInfo?!!storedIngredientInfo.showInTitle:!!m.dosage;
  $("addDciEntry").onclick=()=>{renderDciEntries([...readIngredientEntries(),{name:"",dose:"",salt:"",saltDose:""}]);[...dciRoot.querySelectorAll("[data-dci-entry]")].at(-1)?.focus();};
  const parentSelect=$("f-parent-group");
@@ -5021,7 +5024,7 @@ function captureEditorFields(m){
  if(get("f-entry-type")===undefined)return;
  const kind=get("f-entry-type");
  m.entry_type=kind==="groupe"||kind==="molecule"?"dci":kind;
- setHierarchy(m,kind,get("f-parent-group")||"");m.name=(get("f-name")||"").trim()||"Fiche sans nom";m.dosage=kind==="groupe"?"":(get("f-dosage")||"").trim();if(m.dosage&&get("f-dosage-unit")!=="autre")m.dosage+=" "+get("f-dosage-unit");
+ setHierarchy(m,kind,get("f-parent-group")||"");m.name=(get("f-name")||"").trim()||"Fiche sans nom";m.dosage=kind==="groupe"?"":(get("f-dosage")||"").trim();
  m.dci=m.entry_type==="dci"?"":[...($("dciEntries")?.querySelectorAll("[data-dci-entry]")||[])].map(input=>input.value.trim()).filter(Boolean).join(" + ");
  m.parent_dci=m.entry_type==="dci"?"":m.dci;
  const ingredientRows=[...($('dciEntries')?.querySelectorAll('.ingredient-editor-row')||[])].map(row=>({name:row.querySelector('[data-dci-entry]')?.value.trim()||"",dose:row.querySelector('[data-ingredient-dose]')?.value.trim()||"",salt:row.querySelector('[data-ingredient-salt]')?.value.trim()||"",saltDose:row.querySelector('[data-salt-dose]')?.value.trim()||""})).filter(e=>e.name);
@@ -5029,7 +5032,7 @@ function captureEditorFields(m){
  if(kind==='specialite'&&m.sections?.length){m.sections.forEach(sec=>sec.ingredientDosages=ingredientData);m.dosage=ingredientRows.map(e=>e.dose).filter(Boolean).join('/')||m.dosage;}
  if((kind==='dci'||kind==='molecule')&&m.sections?.length){m.sections[0].ingredientDosages={showInTitle:ingredientData.showInTitle,entries:[]};}
 
- if(kind==="molecule"&&$("memo-repro-editor")){
+ if((kind==="molecule"||kind==="specialite")&&$("memo-repro-editor")){
   const data={};
   for(const key of ["pregnancy","breastfeeding"]){
    data[key]={};
@@ -5043,13 +5046,13 @@ function captureEditorFields(m){
  if(!m.sections?.length)m.sections=[{id:"notes",title:"Notes",type:"text",content:"",enabled:false}];
  if(kind!=="groupe"){
   m.sections[0].moleculeRoot=kind==="molecule";
-  m.sections[0].moleculeParentId=kind==="molecule"?"":(get("f-molecule-parent")||"");
+  m.sections[0].moleculeParentId=kind==="molecule"?"":(get("f-molecule-parent")??m.sections[0].moleculeParentId??"");
  }else{delete m.sections[0].moleculeRoot;delete m.sections[0].moleculeParentId;}
  if(kind==="dci"||kind==="molecule"){
   m.sections[0].dciForm=(get("f-dci-form")||"").trim();
   m.form=m.sections[0].dciForm;
  }
- if(kind==="molecule")m.sections[0].practicalFlags={...practicalFlags(m),photosensitizing:!!$("f-photosensitizing")?.checked,mte:!!$("f-mte")?.checked,exception:!!$("f-exception")?.checked,stup:!!$("f-stup")?.checked};
+ if(kind==="molecule"||kind==="specialite")m.sections[0].practicalFlags={...practicalFlags(m),photosensitizing:!!$("f-photosensitizing")?.checked,mte:!!$("f-mte")?.checked,exception:!!$("f-exception")?.checked,stup:!!$("f-stup")?.checked};
  if(kind==="dci"||kind==="molecule")m.sections[0].princepsNames=[...new Set((get("f-princeps")||"").split(",").map(x=>x.trim()).filter(Boolean))];
  m.sections[0].explorerVisibility=Object.fromEntries([...$("editor").querySelectorAll("[data-explorer-visibility]")].filter(input=>!input.closest(".hidden")).map(input=>[input.dataset.explorerVisibility,input.checked]));
  const classes=[...new Set((get("f-extra-classes")||"").split(",").map(t=>t.trim()).filter(Boolean))];
