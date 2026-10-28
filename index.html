@@ -2677,6 +2677,9 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
 .memo-equiv-reset{text-align:center;margin:16px auto}
 .memo-equiv-reset button{border:1px solid #d6e2d8;border-radius:9px;background:#fff;padding:9px 16px;color:#426b55}
 @media(max-width:730px){.memo-equiv-columns{grid-template-columns:1fr;gap:14px}.memo-equiv-heading h2{font-size:1.65rem}.memo-equiv-column{padding:16px}}
+/* V115.2 — Libellés explicites, formulation DCI avec dosage */
+.memo-equiv-dci .memo-equiv-entry summary{color:#795098}
+.memo-equiv-entry summary span:first-child{overflow-wrap:anywhere}
 </style>
 </head>
 <body>
@@ -2691,7 +2694,7 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
   </div>
 </a>
     <div id="headerSearchSlot" class="header-search-slot"></div>
-    <div class="header-action-stack"><div class="header-actions"><button id="equivNav" type="button" title="Rechercher une correspondance entre un nom commercial et une DCI">Princeps ⇋ Générique</button><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="loginBtn" type="button" class="admin-lock" title="Administration (Ctrl + Alt + A)" aria-label="Connexion administrateur" aria-keyshortcuts="Control+Alt+A"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="10" width="17" height="11.5" rx="2.5"/><path d="M7.5 10V7a4.5 4.5 0 0 1 9 0v3"/><path d="M12 15.1v2.9"/><circle cx="12" cy="14.8" r="1" fill="currentColor" stroke="none"/></svg></button><button id="logoutBtn" type="button" class="header-logout hidden">Déconnexion</button></div><div class="header-admin-actions hidden" id="headerAdminActions"><button id="addMedBtn" type="button" class="header-new-fiche hidden">+ Nouvelle fiche</button><details class="header-json-menu" id="headerJsonMenu"><summary>JSON <span aria-hidden="true">⌄</span></summary><div class="header-json-items"><button id="exportBtn" type="button">Exporter JSON</button><button id="importBtn" type="button">Importer JSON</button></div></details><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
+    <div class="header-action-stack"><div class="header-actions"><button id="equivNav" type="button" title="Rechercher une correspondance entre un nom commercial et une DCI">Spécialité ⇋ DCI</button><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="loginBtn" type="button" class="admin-lock" title="Administration (Ctrl + Alt + A)" aria-label="Connexion administrateur" aria-keyshortcuts="Control+Alt+A"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="10" width="17" height="11.5" rx="2.5"/><path d="M7.5 10V7a4.5 4.5 0 0 1 9 0v3"/><path d="M12 15.1v2.9"/><circle cx="12" cy="14.8" r="1" fill="currentColor" stroke="none"/></svg></button><button id="logoutBtn" type="button" class="header-logout hidden">Déconnexion</button></div><div class="header-admin-actions hidden" id="headerAdminActions"><button id="addMedBtn" type="button" class="header-new-fiche hidden">+ Nouvelle fiche</button><details class="header-json-menu" id="headerJsonMenu"><summary>JSON <span aria-hidden="true">⌄</span></summary><div class="header-json-items"><button id="exportBtn" type="button">Exporter JSON</button><button id="importBtn" type="button">Importer JSON</button></div></details><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
   </div>
   <p>Une base de repères pour retrouver rapidement les informations utiles sur les médicaments, leurs modalités de prise et les points de vigilance.</p>
 </div></header>
@@ -2738,23 +2741,23 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
   </div>
   </section><section id="equivView" class="hidden" aria-label="Recherche des correspondances commerciales et DCI">
  <div class="memo-equiv-page">
-  <div class="memo-equiv-heading"><h2>Princeps ⇋ Générique</h2><p>Retrouvez les noms commerciaux et les molécules associées dans Mémopharm.</p></div>
+  <div class="memo-equiv-heading"><h2>Spécialités ⇋ DCI</h2><p>Retrouvez les noms commerciaux et leurs formulations en DCI, avec les présentations détaillées sur demande.</p></div>
   <div class="memo-equiv-columns">
    <section class="memo-equiv-column memo-equiv-commercial">
-    <h3>Princeps <span class="memo-equiv-heading-sub">/ noms commerciaux</span></h3>
+    <h3>Spécialités <span class="memo-equiv-heading-sub">/ noms commerciaux</span></h3>
     <label for="equivPrincepsSearch">Rechercher un nom commercial</label>
     <input type="search" id="equivPrincepsSearch" placeholder="Ex. : Clamoxyl…" autocomplete="off">
     <div id="equivPrincepsResults" class="memo-equiv-column-results" aria-live="polite"></div>
    </section>
    <section class="memo-equiv-column memo-equiv-dci">
-    <h3>Générique <span class="memo-equiv-heading-sub">/ DCI</span></h3>
+    <h3>DCI <span class="memo-equiv-heading-sub">/ molécules et dosages</span></h3>
     <label for="equivDciSearch">Rechercher une molécule</label>
     <input type="search" id="equivDciSearch" placeholder="Ex. : Amoxicilline…" autocomplete="off">
     <div id="equivDciResults" class="memo-equiv-column-results" aria-live="polite"></div>
    </section>
   </div>
   <div class="memo-equiv-reset"><button id="equivClear" type="button">Effacer la recherche</button></div>
-  <p class="memo-equiv-note">Correspondances fondées sur les fiches enregistrées dans Mémopharm. Un nom commercial associé à une DCI ne constitue pas à lui seul une preuve de substituabilité.</p>
+  <p class="memo-equiv-note">Correspondances issues des fiches Mémopharm. La colonne « Spécialités » regroupe tous les noms commerciaux, sans présumer leur statut de princeps. Une DCI commune ne prouve pas la substituabilité.</p>
  </div>
  </section><section id="exploreView" class="hidden"><div class="explore-heading"><h2>Explorer les fiches</h2><p>Parcourez les fiches communes et leurs spécialités associées.</p></div><div class="explore-search"><label for="exploreSearch">Rechercher dans les fiches</label><div class="explore-search-row"><input id="exploreSearch" type="search" autocomplete="off" placeholder="Ex. : amoxicilline, oubli de prise, CIP, conservation…"><button id="clearExploreSearch" type="button">Effacer</button></div><p id="exploreSearchCount" class="muted" aria-live="polite"></p></div><div class="explore-controls"><label>Classe thérapeutique<select id="exploreClass"></select></label><label>Indication thérapeutique<select id="exploreIndication"></select></label><label>Forme pharmaceutique<select id="exploreForm"></select></label><label>Badge pharmaceutique<select id="exploreBadge"><option value="">Tous les badges</option><option value="mte">⚠ MTE</option><option value="photo">☀ Photosensibilisant</option><option value="exception">EXC · Médicament d’exception</option><option value="stup">STUP · Stupéfiant</option><option value="cold">❄ Conservation au froid</option><option value="after">◷ Conservation après ouverture</option><option value="listI">Liste I</option><option value="listII">Liste II</option></select></label><button id="resetExplore" type="button">Effacer les filtres</button></div> <div id="memoThemeIntro" class="memo-theme-intro hidden" aria-live="polite"></div><div id="exploreCards" class="explore-cards"></div></section><section id="sourcesView" class="hidden"><div class="explore-heading"><h2>Sources documentaires</h2><p>Références communes utilisées pour construire et vérifier les fiches de Mémopharm.</p></div><div id="sourcesList" class="sources-list"></div><div id="sourcesAdmin" class="panel hidden" style="padding:18px;margin-top:18px"></div></section><div class="memo-v43-footer"><strong>📖 Une ressource pratique pour les professionnels de santé</strong><p>Mémopharm est une base documentaire indépendante conçue pour faciliter l’accès aux informations essentielles sur les médicaments et accompagner la pratique quotidienne des professionnels de santé.</p><p>Les fiches sont enrichies progressivement à partir de sources de référence. Les dates de mise à jour et de vérification permettent d’en apprécier l’actualité. Pour toute décision de prise en charge, les informations doivent être confrontées aux référentiels officiels en vigueur et aux données de la spécialité concernée.</p></div>
 <div id="dashMobileToolbar" role="toolbar" aria-label="Outils de modification de la liste">
@@ -3823,7 +3826,7 @@ function memoEquivRecords(){
   if(!root||!name||norm(name)===norm(root.name))return;
   const group=groupFor(root),key=norm(name);
   if(!group.names.has(key))group.names.set(key,{name,items:[]});
-  if(detail)group.names.get(key).items.push({source,detail,presentation});
+  group.names.get(key).items.push({source,detail,presentation});
  };
  // Les présentations des variantes sont les associations les plus précises.
  variants.forEach(v=>{
@@ -3835,7 +3838,10 @@ function memoEquivRecords(){
  visible.filter(isSpecialiteFiche).forEach(m=>{
   const raw=String(m.parent_dci||m.dci||'').trim();
   const root=byId.get(raw)||byName.get(norm(raw));
-  if(root){add(root,m.name,m,displayMedName(m));(m.presentations||[]).forEach(p=>add(root,p.name||'',m,displayMedName(m),p));}
+  if(root){
+   add(root,m.name,m,displayMedName(m));
+   (m.presentations||[]).forEach(p=>add(root,p.name||m.name,m,displayMedName(m),p));
+  }
  });
  // Si une présentation est enregistrée directement sur une fiche molécule.
  roots.forEach(root=>(root.presentations||[]).forEach(p=>add(root,p.name||'',root,displayMedName(root),p)));
@@ -3860,23 +3866,42 @@ function memoEquivPresentationDetails(items){
   </div>`;
  }).join('');
 }
+function memoEquivDciFormulations(group,items){
+ const variants=items.filter(item=>isVariantFiche(item.source));
+ const labels=new Map();
+ variants.forEach(item=>{
+  const label=displayMedName(item.source);
+  if(label&&!labels.has(norm(label)))labels.set(norm(label),{label,source:item.source,items:[]});
+  if(label)labels.get(norm(label)).items.push(item);
+ });
+ // Specialty-only entries may carry their own dosage without a variant record.
+ items.filter(item=>!isVariantFiche(item.source)).forEach(item=>{
+  const p=item.presentation;
+  const dose=String(p?.dosage||'').trim();
+  const label=dose?`${group.root.name} ${dose}`:group.root.name;
+  if(!labels.has(norm(label)))labels.set(norm(label),{label,source:item.source,items:[]});
+  labels.get(norm(label)).items.push(item);
+ });
+ if(!labels.size)labels.set(norm(group.root.name),{label:group.root.name,source:group.root,items:[]});
+ return [...labels.values()].sort((a,b)=>a.label.localeCompare(b.label,'fr'));
+}
 function renderEquivalences(){
  const left=$("equivPrincepsResults"),right=$("equivDciResults");
  if(!left||!right)return;
  const q=norm(($("equivPrincepsSearch").value||$("equivDciSearch").value||'').trim()).trim();
  if(!q){
   left.innerHTML='<p class="memo-equiv-empty">Les noms commerciaux apparaîtront ici.</p>';
-  right.innerHTML='<p class="memo-equiv-empty">Les molécules associées apparaîtront ici.</p>';
+  right.innerHTML='<p class="memo-equiv-empty">Les formulations en DCI apparaîtront ici.</p>';
   return;
  }
  const hits=memoEquivRecords().map(g=>{
-  const rootMatch=norm(g.root.name).includes(q);
+  const rootMatch=norm(g.root.name).includes(q)||[...g.names.values()].some(n=>n.items.some(item=>norm(item.detail).includes(q)));
   const matchingNames=[...g.names.values()].filter(n=>norm(n.name).includes(q));
   return {...g,rootMatch,matchingNames};
  }).filter(g=>g.rootMatch||g.matchingNames.length).sort((a,b)=>Number(b.rootMatch)-Number(a.rootMatch)||a.root.name.localeCompare(b.root.name,'fr'));
  if(!hits.length){
   left.innerHTML='<p class="memo-equiv-empty">Aucune correspondance renseignée.</p>';
-  right.innerHTML='<p class="memo-equiv-empty">Aucune molécule associée trouvée.</p>';
+  right.innerHTML='<p class="memo-equiv-empty">Aucune formulation en DCI trouvée.</p>';
   return;
  }
  // Une ligne par nom commercial, sans répéter les dosages avant ouverture.
@@ -3887,14 +3912,15 @@ function renderEquivalences(){
   </details>`);
  }).join('');
  right.innerHTML=hits.map(g=>{
-  const names=[...g.names.values()];
-  const generics=names.flatMap(n=>n.items.filter(item=>item.presentation?.presentationKind==='generic'));
-  return `<details class="memo-equiv-entry"><summary><span>${esc(g.root.name)}</span><span class="memo-equiv-chevron">⌄</span></summary>
+  const names=g.rootMatch?[...g.names.values()]:g.matchingNames;
+  const items=names.flatMap(n=>n.items);
+  const formulations=memoEquivDciFormulations(g,items);
+  return formulations.map(f=>`<details class="memo-equiv-entry"><summary><span>${esc(f.label)}</span><span class="memo-equiv-chevron">⌄</span></summary>
    <div class="memo-equiv-entry-body">
-    <button type="button" class="memo-equiv-open-fiche" data-equiv-open="${esc(g.root.id)}">Ouvrir la fiche molécule ↗</button>
-    ${generics.length?`<h4>Présentations génériques renseignées</h4>${memoEquivPresentationDetails(generics)}`:''}
+    <button type="button" class="memo-equiv-open-fiche" data-equiv-open="${esc(f.source.id)}">Ouvrir la fiche ↗</button>
+    ${f.items.length?memoEquivPresentationDetails(f.items):'<p class="memo-equiv-related">Aucune présentation détaillée renseignée.</p>'}
     <p class="memo-equiv-related">Noms commerciaux liés : ${esc(names.map(n=>n.name).join(', '))}</p>
-   </div></details>`;
+   </div></details>`).join('');
  }).join('');
  document.querySelectorAll('#equivView [data-equiv-open]').forEach(btn=>btn.onclick=()=>openMedication(btn.dataset.equivOpen));
  document.querySelectorAll('#equivView [data-copy-cip]').forEach(btn=>btn.onclick=async e=>{
