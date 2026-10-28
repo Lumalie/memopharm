@@ -1963,17 +1963,30 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
 #searchPreview .memo-v77-empty{font-size:12px;color:#777}
 @media(max-width:480px){#searchPreview .memo-v77-form{display:block}#searchPreview .memo-v77-form-name{display:block;max-width:none;margin-bottom:6px}}
 
+/* V78 — badges d’aperçu : reprendre le conteneur de styles des alertes de la fiche complète. */
+#searchPreview .memo-preview-vigilance>.memo-v67-practical{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:nowrap;order:0}
+#searchPreview .memo-preview-vigilance>.memo-repro-badges{order:1}
+#searchPreview .memo-preview-vigilance .memo-v67-practical .memo-v67-alert{width:46px;height:46px;border-radius:11px;border-width:1.5px;background:#fffdf9}
+#searchPreview .memo-preview-vigilance .memo-v67-practical .memo-v67-alert.memo-v69-exception,
+#searchPreview .memo-preview-vigilance .memo-v67-practical .memo-v67-alert.memo-v69-stup{background:#fff}
+#searchPreview .memo-preview-vigilance .memo-v67-practical .memo-v67-alert:hover,
+#searchPreview .memo-preview-vigilance .memo-v67-practical .memo-v67-alert:focus-visible{background:#f5cb6e}
+#searchPreview .memo-preview-vigilance .memo-v67-practical .memo-v69-exception:hover,
+#searchPreview .memo-preview-vigilance .memo-v67-practical .memo-v69-exception:focus-visible{background:#cbe7fa}
+#searchPreview .memo-preview-vigilance .memo-v67-practical .memo-v69-stup:hover,
+#searchPreview .memo-preview-vigilance .memo-v67-practical .memo-v69-stup:focus-visible{background:#e4d6f8}
+#searchPreview .memo-preview-vigilance .memo-v67-practical .memo-v67-mte{font-size:15px}
+#searchPreview .memo-preview-vigilance .memo-v67-practical .memo-v69-stup .memo-v67-mte{font-size:13px}
+#searchPreview .memo-preview-vigilance .memo-v67-practical .memo-v67-sun{width:29px;height:29px}
+#searchPreview .memo-preview-vigilance .memo-repro{width:46px;height:46px;border-radius:11px}
+#searchPreview .memo-preview-vigilance .memo-repro-icon.lucide-official{width:29px;height:29px}
+@media(max-width:700px){#searchPreview .memo-preview-vigilance{flex-wrap:wrap;justify-content:flex-start}}
+
 /* V76 — aperçu d'accueil : mêmes badges que la fiche molécule, en format compact. */
 #searchPreview .search-preview-header .detailtop{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 #searchPreview .search-preview-header .detailtop>div:first-child{min-width:0;flex:1}
 #searchPreview .memo-preview-vigilance{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap;max-width:100%;flex-shrink:0}
 #searchPreview .memo-preview-vigilance>.memo-repro-badges{gap:6px;flex-wrap:nowrap}
-#searchPreview .memo-preview-vigilance .memo-v67-alert,
-#searchPreview .memo-preview-vigilance .memo-repro{width:40px;height:38px;border-radius:10px}
-#searchPreview .memo-preview-vigilance .memo-v67-mte{font-size:13px}
-#searchPreview .memo-preview-vigilance .memo-v69-stup .memo-v67-mte{font-size:11px}
-#searchPreview .memo-preview-vigilance .memo-v67-sun,
-#searchPreview .memo-preview-vigilance .memo-repro-icon.lucide-official{width:25px;height:25px}
 #searchPreview .memo-preview-vigilance .memo-repro-tooltip{width:280px;max-width:min(280px,calc(100vw - 40px))}
 @media(max-width:600px){#searchPreview .search-preview-header .detailtop{flex-wrap:wrap}#searchPreview .memo-preview-vigilance{justify-content:flex-start}}
 </style>
@@ -3182,7 +3195,7 @@ function previewSearchResult(item){
  const activeIngredients=!isGroup(m)&&m.entry_type!=="dci"?splitDci(m.dci||m.parent_dci):[];
  const ingredientEntries=info?.entries?.length?info.entries:activeIngredients.map(name=>({name,dose:"",salt:"",saltDose:""}));
  const activeIngredientsHtml=ingredientEntries.length?`<div class="detail-dci"><span class="detail-dci-label">DCI / substances actives :</span> ${ingredientEntries.map(e=>`<span class="detail-dci-item">${esc(e.name||"")}${e.dose?` — <strong>${esc(e.dose)}</strong>`:""}</span>`).join(" · ")}${ingredientEntries.filter(e=>e.salt||e.saltDose).map(e=>`<div class="ingredient-salt">${esc(e.name||"Substance active")} : ${esc(e.salt||"Sel non précisé")}${e.saltDose?` — ${esc(e.saltDose)}`:""}</div>`).join("")}</div>`:"";
- const headerHtml=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker" style="${entityTreeStyle(m)}color:var(--group-fg)">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche spécialité"}</div><h2 style="${entityTreeStyle(m)}color:var(--group-fg)"><button type="button" class="search-preview-title-link" data-preview-open-title title="Ouvrir la fiche complète" style="color:inherit">${esc(displayMedName(m))}</button></h2><div class="tags"><span class="tag tag-category">${esc(m.category||"Famille à définir")}</span>${formBadge}${indicationTags(m).map(t=>`<span class="tag tag-indication">${esc(t)}</span>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${isMolecule(m)?"":practicalBadges(m)}</div>${isMolecule(m)?`<div class="memo-preview-vigilance" aria-label="Badges de vigilance">${memoV67Alerts(m)}${memoReproBadges(m)}</div>`:""}</div>`;
+ const headerHtml=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker" style="${entityTreeStyle(m)}color:var(--group-fg)">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche spécialité"}</div><h2 style="${entityTreeStyle(m)}color:var(--group-fg)"><button type="button" class="search-preview-title-link" data-preview-open-title title="Ouvrir la fiche complète" style="color:inherit">${esc(displayMedName(m))}</button></h2><div class="tags"><span class="tag tag-category">${esc(m.category||"Famille à définir")}</span>${formBadge}${indicationTags(m).map(t=>`<span class="tag tag-indication">${esc(t)}</span>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${isMolecule(m)?"":practicalBadges(m)}</div>${isMolecule(m)?`<div class="memo-preview-vigilance" aria-label="Badges de vigilance"><div class="memo-v67-practical">${memoV67Alerts(m)}</div>${memoReproBadges(m)}</div>`:""}</div>`;
  const sections=sec&&!isDocumentationSection(sec)?[sec]:(m.sections||[]).filter(x=>x.enabled!==false&&!isDocumentationSection(x)&&String(x.content||'').trim()).slice(0,7);
  // Les encarts prioritaires de l'aperçu utilisent exactement le rendu de la fiche complète.
  const safeSection=section=>{
@@ -3197,7 +3210,7 @@ function previewSearchResult(item){
  const childMeds=isMolecule(m)?moleculeChildren(m):[];
  const directGroupChildren=isGroup(m)?visible.filter(x=>String(parentGroupId(x))===String(m.id)&&(isGroup(x)||isMolecule(x)||(!moleculeParentId(x))))
   .sort((a,b)=>{const rank=x=>isGroup(x)?0:isMolecule(x)?1:2;return rank(a)-rank(b)||displayMedName(a).localeCompare(displayMedName(b),'fr',{numeric:true,sensitivity:'base'});}):[];
- const previewChildren=isGroup(m)?directGroupChildren:childMeds;
+ const previewChildren=isGroup(m)?directGroupChildren:[]; // V78 : aucune fiche dosage/forme autonome dans l’aperçu molécule
  const previewChildrenHtml=previewChildren.length?`<div class="search-preview-related search-preview-children">${previewChildren.map(x=>`<button type="button" class="search-preview-child ${isGroup(x)?'search-preview-child-group':isMolecule(x)?'search-preview-child-molecule':isSpecialiteFiche(x)?'search-preview-child-specialite':'search-preview-child-dose'}" ${isGroup(x)||isMolecule(x)||isSpecialiteFiche(x)?`style="${entityTreeStyle(x)}"`:''} data-preview-child="${esc(x.id)}">${esc(displayMedName(x))} <span aria-hidden="true">↗</span></button>`).join('')}</div>`:'';
 
  // V77 : récapitulatif non interactif pour les formes, accès direct à chaque dosage.
