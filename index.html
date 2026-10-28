@@ -3206,7 +3206,7 @@ function renderExplorer(){
       return `<div class="explore-search-child explore-search-child-med explore-search-child-specialty">${presentations.map(({p,i})=>searchPresentationLine(child,p,i,true)).join("")}</div>`;
      }
      const badges=explorerClasses(child).filter(t=>explorerClassVisible(child,t)).map(t=>`<span class="badge-button badge-class">${esc(t)}</span>`).join("")+indicationTags(child).map(t=>`<span class="badge-button badge-indication">${esc(t)}</span>`).join("");
-     return `<div class="explore-search-child explore-search-child-med ${isMolecule(child)?"explore-result-molecule":child.entry_type==="dci"?"explore-result-dose":isSpecialiteFiche(child)?"explore-result-specialite":"explore-result-presentation"}"><div class="explore-search-child-line"><span class="explore-search-child-spacer" aria-hidden="true"></span><button type="button" class="explore-search-child-link" data-open-med="${esc(child.id)}">● ${esc(displayMedName(child))} ↗</button></div>${badges?`<div class="search-pres-badges">${badges}</div>`:''}</div>`;
+     return `<div class="explore-search-child explore-search-child-med ${isMolecule(child)?"explore-result-molecule":isVariantFiche(child)?"explore-result-dose":isSpecialiteFiche(child)?"explore-result-specialite":"explore-result-presentation"}"><div class="explore-search-child-line"><span class="explore-search-child-spacer" aria-hidden="true"></span><button type="button" class="explore-search-child-link" data-open-med="${esc(child.id)}">● ${esc(displayMedName(child))} ↗</button></div>${badges?`<div class="search-pres-badges">${badges}</div>`:''}</div>`;
     }
     return `<div class="explore-search-child ${isGroup(child)?"explore-search-child-group":"explore-search-child-med"}">
      <div class="explore-search-child-line">
@@ -3284,7 +3284,7 @@ function renderExplorer(){
     return `<article class="explore-hit explore-hit-med explore-specialty-direct explore-result-specialite">${available.map(i=>m.presentations?.[i]?searchPresentationLine(m,m.presentations[i],i):'').join('')}${preview}</article>`;
    }
    const presentationToggle=presentationRows?`<button type="button" class="explore-grouped-toggle" data-presentation-toggle aria-expanded="false"><span aria-hidden="true">▸</span> ${hitGroup.presentations.length} présentation${hitGroup.presentations.length>1?"s":""}</button><div class="explore-grouped-children" hidden>${presentationRows}</div>`:"";
-   return `<article class="explore-hit explore-hit-${kind} explore-hit-grouped ${isMolecule(m)?"explore-result-molecule":m.entry_type==="dci"?"explore-result-dose":isSpecialiteFiche(m)?"explore-result-specialite":"explore-result-presentation"}">
+   return `<article class="explore-hit explore-hit-${kind} explore-hit-grouped ${isMolecule(m)?"explore-result-molecule":isVariantFiche(m)?"explore-result-dose":isSpecialiteFiche(m)?"explore-result-specialite":"explore-result-presentation"}">
     <div class="explore-hit-main">
      <button type="button" class="explore-hit-open" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec?.id||"")}" data-hit-pres="${hit.presentation===null?"":hit.presentation}" aria-label="Ouvrir ${esc(isPresentation?presTitle:m.name)}${sec?" à la rubrique "+esc(sec.title):""}">
       <span class="explore-hit-heading"><span class="explore-hit-symbol" aria-hidden="true">${group?"▸":"●"}</span><strong class="explore-hit-name">${esc(isPresentation?presTitle:searchResultLabel(hit))}</strong><span class="explore-hit-arrow" aria-hidden="true">↗</span></span>
