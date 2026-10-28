@@ -3498,7 +3498,10 @@ function getSearchMatches(queryOverride=null){
  const synonyms={oubli:["oubli","oublie","oubliee"],prise:["prise","repas","jeun","manger"],interactions:["interaction","association"],conservation:["conservation","conserver","frigo"],posologie:["posologie","poso","dose"],ecrasement:["ecraser","broyer","piler","ecrasement"]};
  const fieldMatch=(t,sec)=>norm(sec.id+" "+sec.title+" "+sec.content).includes(t)||Object.entries(synonyms).some(([key,terms])=>terms.includes(t)&&norm(sec.id+" "+sec.title).includes(key));
  const found=[];
- visibleStandaloneMeds().forEach(m=>{
+ // La recherche de l’accueil indexe les variantes VIA leur molécule parente.
+ // Ne pas produire de résultat autonome de variante : le moteur V112 utilise
+ // childText et moleculeChildren() pour sélectionner la bonne présentation/rubrique.
+ visibleStandaloneMeds().filter(m=>!isVariantFiche(m)).forEach(m=>{
   const base=norm([m.name,m.dosage,m.dci,m.parent_dci,m.category,m.aliases,...indicationTags(m),...explorerClasses(m),...medicationForms(m),...(isGroup(m)?["fiche groupe","groupe therapeutique","famille de medicaments"]:[])].join(" "));
   const presentations=specialtyItems(m);
   const presText=x=>norm([x.name,x.p.dosage,x.p.lab,x.p.lab?"laboratoire":"",x.p.form,x.p.cip,...cipConditionnements(x.p).flatMap(c=>[c.cip,c.pack]),cipConditionnements(x.p).length?"cip":"",x.p.cis,x.p.cis?"cis":"",x.p.description,x.p.marking].join(" "));
