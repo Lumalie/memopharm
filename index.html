@@ -2920,7 +2920,6 @@ function isSpecialiteFiche(m){return !isGroup(m)&&!isMolecule(m)&&hierarchyMeta(
 // jamais proposées comme fiches autonomes dans la recherche générale.
 function isVariantFiche(m){return !isGroup(m)&&!isMolecule(m)&&hierarchyMeta(m).memofficineKind!=="conseil"&&m.entry_type==="dci"&&!!moleculeParentId(m)}
 function isObsoleteDosageFiche(m){return !isGroup(m)&&!isMolecule(m)&&hierarchyMeta(m).memofficineKind!=="conseil"&&m.entry_type==="dci"&&!moleculeParentId(m)}
-function isDosageFiche(m){return isVariantFiche(m)}
 function moleculeParentId(m){return m.sections?.[0]?.moleculeParentId||""}
 function moleculeChildren(m){return publicMeds().filter(x=>!isGroup(x)&&moleculeParentId(x)===String(m.id)).sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),'fr'))}
 function moleculeDosageColumns(children){
@@ -2953,9 +2952,7 @@ function resolveSharedSection(m,s,visited=new Set()){
 }
 function isGroup(m){return hierarchyMeta(m).memofficineKind==="groupe"}
 function parentGroupId(m){return hierarchyMeta(m).memofficineParentGroup||""}
-function dosageParts(raw){const v=String(raw||"").trim();const m=v.match(/^([\d.,]+)\s*(mg\/mL|µg\/mL|g\/L|mg|g|µg|mL|UI|%)$/i);return m?{value:m[1],unit:m[2]}:{value:v,unit:v?"autre":"mg"}}
 function splitDci(value){return String(value||"").split(/\s+\+\s+/).map(x=>x.trim()).filter(Boolean)}
-function groupChildren(group,visible=publicMeds()){return visible.filter(m=>!isGroup(m)&&parentGroupId(m)===group.id).sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),"fr",{sensitivity:"base"}))}
 function setHierarchy(m,kind,parent){
  if(!m.sections?.length)m.sections=clone(DEFAULT_SECTIONS);
  const target=(m.sections||[]).find(s=>s.id==="indications")||m.sections[0];
@@ -2984,10 +2981,6 @@ function groupOptions(m){
  const forbidden=groupDescendantIds(m.id);
  return meds.filter(g=>!isSourcesRecord(g)&&isGroup(g)&&!forbidden.has(g.id))
   .sort((a,b)=>a.name.localeCompare(b.name,"fr",{sensitivity:"base"}));
-}
-function childGroups(group,visible=publicMeds()){
- return visible.filter(m=>isGroup(m)&&parentGroupId(m)===group.id)
- .sort((a,b)=>a.name.localeCompare(b.name,"fr",{sensitivity:"base"}));
 }
 // Palette unique pour tous les groupes, quelle que soit leur profondeur.
 // V6.27 : une couleur stable par nature de fiche, et non par profondeur.
@@ -3024,10 +3017,6 @@ function ficheParent(m,visible=publicMeds()){
  if(molecule&&isMolecule(molecule)&&String(molecule.id)!==String(m.id))return molecule;
  const group=byId.get(String(parentGroupId(m)||""));
  return group&&isGroup(group)&&String(group.id)!==String(m.id)?group:null;
-}
-function ficheParentButton(parent,preview=false){
- if(!parent)return "";
- return `<div class="fiche-parent-navigation${preview?' search-preview-parent-return':''}"><button type="button" class="molecule-parent-title-link" style="${entityTreeStyle(parent)}" data-group-open="${esc(parent.id)}" title="Revenir à ${esc(displayMedName(parent))}">↖ ${esc(displayMedName(parent))}</button></div>`;
 }
 function ficheBreadcrumb(m){
  const visible=publicMeds(),byId=new Map(visible.map(x=>[String(x.id),x]));
@@ -3102,11 +3091,6 @@ function medicationForms(m){
  const presentationForms=(m.presentations||[]).map(p=>String(p.form||"").trim()).filter(Boolean);
  const dciForm=m.entry_type==="dci"&&!isGroup(m)?String(m.sections?.[0]?.dciForm||m.form||"").trim():"";
  return [...new Set([...presentationForms,...(dciForm?[dciForm]:[])])];
-}
-function explorerFormLabel(m){
- const forms=medicationForms(m);
- if(!forms.length)return "";
- return `<span class="explore-form-inline">${esc(forms.join(" · "))}</span>`;
 }
 const exploreExpandedGroups=new Set();
 function explorerBadgeVisible(m,kind){
@@ -3554,13 +3538,6 @@ function displayMedName(m){const name=String(m.name||"Sans nom").trim(),info=ing
 function esc(s=""){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function norm(s=""){return String(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()}
 // Liens directs stables fondés sur l'identifiant Supabase de la fiche.
-function ficheUrl(id){const url=new URL(window.location.href);url.searchParams.set("fiche",id);return url.href}
-function selectFiche(id,addHistory=true){
- if(!meds.some(m=>m.id===id))return;
- selectedId=id;
- if(addHistory){const url=new URL(window.location.href);url.searchParams.set("fiche",id);history.pushState({fiche:id},"",url)}
- renderResults();
-}
 // L'historique suit la page réellement consultée, et pas seulement la fiche sélectionnée.
 function rememberNavigation(){try{localStorage.setItem("memofficine-last-location-v1",location.pathname+location.search+location.hash)}catch(e){}}
 function editorLocation(id){
@@ -4031,11 +4008,6 @@ function ficheDateLabel(m){
  const verified=String(m.updated||'').trim();
  return `<span class="memo-date-row">🗓️ Dernière modification : ${date?esc(formatDateFR(date)):'non renseignée'}${verified?` <span class="memo-verified-date">· Dernière vérification : ${esc(formatDateFR(verified))}</span>`:''}</span>`;
 }
-function ficheDocumentation(m,sections){
- const content=ficheSourceContent(m,sections);
- if(!content)return '';
- return `<aside class="fiche-documentation" aria-label="Sources et références"><div class="documentation-source">${content}</div></aside>`;
-}
 function ficheCombinedSources(m,sections,child=null){
  const general=ficheSourceContent(m,sections);
  const specific=child?ficheSourceContent(child,child.sections||[]):'';
@@ -4142,11 +4114,6 @@ function memoReproEditor(m){
  }).join('')}</div><p class="muted">Évaluation de cette fiche : préciser les restrictions éventuelles. Vérifier les différences selon les formes et présentations.</p></div>`;
 }
 
-function moleculeForSpecialtyV85(m){
- const wanted=norm(String(m.parent_dci||m.dci||""));
- if(!wanted)return null;
- return meds.find(x=>isMolecule(x)&&norm(x.name)===wanted)||null;
-}
 // V86 : informations propres à chaque formulation de spécialité, stockées dans
 // la présentation existante. Aucune modification du schéma Supabase.
 const MEMO_V86_FIELDS=[
@@ -4935,13 +4902,6 @@ function applyGroupTemplate(m){
  m.sections=[...normalized,...extras];
  setHierarchy(m,"groupe",oldParent);
  return true;
-}
-function addGroup(){if(!requireAdmin())return;
- if(!admin)return;
- addMedication();
- const m=meds.find(x=>x.id===selectedId);if(!m)return;
- m.name="Nouveau groupe";m.entry_type="dci";m.sections=clone(GROUP_SECTIONS);setHierarchy(m,"groupe","");
- renderEditor(m.id);saveLocalDraft();scrollToNewEditor();
 }
 let memoEditorActiveTab="identity";
 let memoEditorOpenSection=null;
