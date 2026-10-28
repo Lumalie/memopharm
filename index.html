@@ -1949,6 +1949,34 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
 .memo-v67-practical .memo-v67-alert.memo-v69-stup:hover,.memo-v67-practical .memo-v67-alert.memo-v69-stup:focus-visible{background:#e4d6f8;color:#51287e}
 .memo-v67-practical .memo-v67-alert.memo-v69-stup .memo-v67-mte{font-size:15px}
 </style>
+<style>
+
+/* V77 — Vue d’ensemble sobre des formes et dosages dans l’aperçu. */
+#searchPreview .memo-v77-overview{margin:13px 0 8px;padding:0 2px}
+#searchPreview .memo-v77-heading{font-size:12px;font-weight:750;color:#456c58;letter-spacing:.035em;margin:0 0 6px}
+#searchPreview .memo-v77-form{display:flex;align-items:baseline;gap:9px;padding:9px 0;border-bottom:1px solid rgba(83,112,95,.16)}
+#searchPreview .memo-v77-form:last-child{border-bottom:0}
+#searchPreview .memo-v77-form-name{font-weight:700;font-size:13px;color:#326c50;min-width:105px;max-width:45%;overflow-wrap:anywhere}
+#searchPreview .memo-v77-doses{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+#searchPreview .memo-v77-dose{border:1px solid #e2c0ad;border-radius:8px;background:#fff8f3;color:#92523b;padding:5px 9px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:background .15s,border-color .15s}
+#searchPreview .memo-v77-dose:hover,#searchPreview .memo-v77-dose:focus-visible{background:#f7dfd1;border-color:#c28a6e;outline-offset:2px}
+#searchPreview .memo-v77-empty{font-size:12px;color:#777}
+@media(max-width:480px){#searchPreview .memo-v77-form{display:block}#searchPreview .memo-v77-form-name{display:block;max-width:none;margin-bottom:6px}}
+
+/* V76 — aperçu d'accueil : mêmes badges que la fiche molécule, en format compact. */
+#searchPreview .search-preview-header .detailtop{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+#searchPreview .search-preview-header .detailtop>div:first-child{min-width:0;flex:1}
+#searchPreview .memo-preview-vigilance{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap;max-width:100%;flex-shrink:0}
+#searchPreview .memo-preview-vigilance>.memo-repro-badges{gap:6px;flex-wrap:nowrap}
+#searchPreview .memo-preview-vigilance .memo-v67-alert,
+#searchPreview .memo-preview-vigilance .memo-repro{width:40px;height:38px;border-radius:10px}
+#searchPreview .memo-preview-vigilance .memo-v67-mte{font-size:13px}
+#searchPreview .memo-preview-vigilance .memo-v69-stup .memo-v67-mte{font-size:11px}
+#searchPreview .memo-preview-vigilance .memo-v67-sun,
+#searchPreview .memo-preview-vigilance .memo-repro-icon.lucide-official{width:25px;height:25px}
+#searchPreview .memo-preview-vigilance .memo-repro-tooltip{width:280px;max-width:min(280px,calc(100vw - 40px))}
+@media(max-width:600px){#searchPreview .search-preview-header .detailtop{flex-wrap:wrap}#searchPreview .memo-preview-vigilance{justify-content:flex-start}}
+</style>
 </head>
 <body>
 <header><div class="wrap">
@@ -3154,7 +3182,7 @@ function previewSearchResult(item){
  const activeIngredients=!isGroup(m)&&m.entry_type!=="dci"?splitDci(m.dci||m.parent_dci):[];
  const ingredientEntries=info?.entries?.length?info.entries:activeIngredients.map(name=>({name,dose:"",salt:"",saltDose:""}));
  const activeIngredientsHtml=ingredientEntries.length?`<div class="detail-dci"><span class="detail-dci-label">DCI / substances actives :</span> ${ingredientEntries.map(e=>`<span class="detail-dci-item">${esc(e.name||"")}${e.dose?` — <strong>${esc(e.dose)}</strong>`:""}</span>`).join(" · ")}${ingredientEntries.filter(e=>e.salt||e.saltDose).map(e=>`<div class="ingredient-salt">${esc(e.name||"Substance active")} : ${esc(e.salt||"Sel non précisé")}${e.saltDose?` — ${esc(e.saltDose)}`:""}</div>`).join("")}</div>`:"";
- const headerHtml=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker" style="${entityTreeStyle(m)}color:var(--group-fg)">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche spécialité"}</div><h2 style="${entityTreeStyle(m)}color:var(--group-fg)"><button type="button" class="search-preview-title-link" data-preview-open-title title="Ouvrir la fiche complète" style="color:inherit">${esc(displayMedName(m))}</button></h2><div class="tags"><span class="tag tag-category">${esc(m.category||"Famille à définir")}</span>${formBadge}${indicationTags(m).map(t=>`<span class="tag tag-indication">${esc(t)}</span>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${practicalBadges(m)}</div></div>`;
+ const headerHtml=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker" style="${entityTreeStyle(m)}color:var(--group-fg)">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche spécialité"}</div><h2 style="${entityTreeStyle(m)}color:var(--group-fg)"><button type="button" class="search-preview-title-link" data-preview-open-title title="Ouvrir la fiche complète" style="color:inherit">${esc(displayMedName(m))}</button></h2><div class="tags"><span class="tag tag-category">${esc(m.category||"Famille à définir")}</span>${formBadge}${indicationTags(m).map(t=>`<span class="tag tag-indication">${esc(t)}</span>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${isMolecule(m)?"":practicalBadges(m)}</div>${isMolecule(m)?`<div class="memo-preview-vigilance" aria-label="Badges de vigilance">${memoV67Alerts(m)}${memoReproBadges(m)}</div>`:""}</div>`;
  const sections=sec&&!isDocumentationSection(sec)?[sec]:(m.sections||[]).filter(x=>x.enabled!==false&&!isDocumentationSection(x)&&String(x.content||'').trim()).slice(0,7);
  // Les encarts prioritaires de l'aperçu utilisent exactement le rendu de la fiche complète.
  const safeSection=section=>{
@@ -3172,13 +3200,22 @@ function previewSearchResult(item){
  const previewChildren=isGroup(m)?directGroupChildren:childMeds;
  const previewChildrenHtml=previewChildren.length?`<div class="search-preview-related search-preview-children">${previewChildren.map(x=>`<button type="button" class="search-preview-child ${isGroup(x)?'search-preview-child-group':isMolecule(x)?'search-preview-child-molecule':isSpecialiteFiche(x)?'search-preview-child-specialite':'search-preview-child-dose'}" ${isGroup(x)||isMolecule(x)||isSpecialiteFiche(x)?`style="${entityTreeStyle(x)}"`:''} data-preview-child="${esc(x.id)}">${esc(displayMedName(x))} <span aria-hidden="true">↗</span></button>`).join('')}</div>`:'';
 
+ // V77 : récapitulatif non interactif pour les formes, accès direct à chaque dosage.
+ const previewDosageGroups=isMolecule(m)?moleculeDosageColumns(childMeds):[];
+ const previewDosageHtml=previewDosageGroups.length?`<section class="memo-v77-overview" aria-label="Formes et dosages disponibles"><div class="memo-v77-heading">FORMES ET DOSAGES DISPONIBLES</div>${previewDosageGroups.map(group=>`<div class="memo-v77-form"><span class="memo-v77-form-name">${esc(group.form)}</span><div class="memo-v77-doses">${group.items.map(child=>{const dose=String(child.dosage||ingredientTitleDose(child)||"").trim();const fallback=displayMedName(child).match(/(\d+(?:[.,]\d+)?\s*(?:µg|mcg|mg|g|UI|mL|ml)(?:\s*\/\s*(?:µg|mcg|mg|g|UI|mL|ml))?)\b/i);const label=dose||(fallback?fallback[1]:displayMedName(child));return `<button type="button" class="memo-v77-dose" data-v77-dose="${esc(child.id)}" data-v77-form="${esc(group.form)}" title="Ouvrir ${esc(displayMedName(m))} — ${esc(group.form)} — ${esc(label)}">${esc(label)} <span aria-hidden="true">↗</span></button>`}).join("")}</div></div>`).join("")}</section>`:"";
  const foundFooter=sec?`<div class="search-preview-found"><div class="search-preview-found-label">Rubrique trouvée dans cette fiche</div><button type="button" class="search-preview-found-link" data-preview-section="${esc(sec.id)}">↗ Afficher « ${esc(sec.title||'la rubrique')} » dans l’aperçu</button></div>`:'';
- $('searchPreview').innerHTML=`<div class="search-preview-header">${headerHtml}</div>${previewChildrenHtml}${sections.map(x=>`<button type="button" class="search-preview-section" data-preview-section="${esc(x.id)}" title="Ouvrir cette rubrique"><span class="search-preview-arrow">↗</span>${safeSection(x)}</button>`).join('')||'<p class="empty">Aucune rubrique renseignée pour cette fiche.</p>'}${foundFooter}${ficheDocumentation(m,(m.sections||[]).filter(x=>x.enabled!==false&&isDocumentationSection(x)))}`;
+ $('searchPreview').innerHTML=`<div class="search-preview-header">${headerHtml}</div>${previewChildrenHtml}${previewDosageHtml}${sections.map(x=>`<button type="button" class="search-preview-section" data-preview-section="${esc(x.id)}" title="Ouvrir cette rubrique"><span class="search-preview-arrow">↗</span>${safeSection(x)}</button>`).join('')||'<p class="empty">Aucune rubrique renseignée pour cette fiche.</p>'}${foundFooter}${ficheDocumentation(m,(m.sections||[]).filter(x=>x.enabled!==false&&isDocumentationSection(x)))}`;
  // Les liens de fil d'Ariane et de retour à la molécule restent dans le volet d'aperçu.
  $('searchPreview').querySelectorAll('[data-group-open]').forEach(b=>b.onclick=e=>{e.stopPropagation();const target=visible.find(x=>String(x.id)===String(b.dataset.groupOpen));if(target)navigatePreview({med:target,section:null,presentation:null});});
+ memoWireBadgeClicks($('searchPreview'));
  $('searchPreview').querySelector('[data-preview-open-title]')?.addEventListener('click',()=>openMedication(m.id,pres,sec?.id||null));
  $('searchPreview').querySelectorAll('[data-preview-section]').forEach(b=>b.onclick=()=>{const target=(m.sections||[]).find(x=>String(x.id)===String(b.dataset.previewSection));navigatePreview({med:m,section:target||null,presentation:pres});});
  $('searchPreview').querySelectorAll('[data-preview-child]').forEach(b=>b.onclick=()=>{const target=visible.find(x=>String(x.id)===String(b.dataset.previewChild));if(target){navigatePreview({med:target,section:null,presentation:null});}});
+ $('searchPreview').querySelectorAll('[data-v77-dose]').forEach(b=>b.addEventListener('click',()=>{
+  // La fiche complète restaure ce dosage depuis le choix mémorisé, sans modifier Supabase.
+  memoSetViewChoice(m.id,{form:b.dataset.v77Form,doseId:b.dataset.v77Dose});
+  openMedication(m.id);
+ }));
  $('searchPreview').querySelectorAll('[data-preview-presentation]').forEach(b=>b.onclick=()=>{navigatePreview({med:m,section:null,presentation:Number(b.dataset.previewPresentation)});});
  $('results').querySelectorAll('.result').forEach(el=>el.classList.toggle('preview-selected',el.dataset.id===String(m.id)&&el.dataset.section===(sec?.id||'')&&el.dataset.presentation===(pres===null?'':String(pres))));
 }
