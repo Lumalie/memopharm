@@ -2412,6 +2412,20 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
 #detail #detailPublicActions .memo-v67-vigilance .memo-repro:focus-visible,
 #detail #detailPublicActions .memo-v67-vigilance .memo-v67-alert:hover,
 #detail #detailPublicActions .memo-v67-vigilance .memo-v67-alert:focus-visible{z-index:30}
+
+/* V113 — Actions de suppression : visibles au survol, au clavier et sur écran tactile. */
+#editor .memo-v113-pill-wrap{position:relative;display:inline-flex;align-items:stretch;max-width:100%;min-width:0;isolation:isolate}
+#editor .memo-v16-list .memo-v113-pill-wrap{display:block;width:100%;min-width:0}
+#editor .memo-v16-list .memo-v113-pill-wrap>.memo-v16-choice{width:100%;padding-right:29px}
+#editor .memo-v26-commercial-pills .memo-v113-pill-wrap>button[data-v26-select-commercial]{padding-right:25px}
+#editor .memo-v113-delete-mini,
+#editor .memo-v26-commercial-pills .memo-v113-delete-mini{position:absolute;top:2px;right:2px;z-index:2;display:flex;align-items:center;justify-content:center;width:24px;height:24px;min-width:24px;padding:0;border:1px solid #d8a7a0;border-radius:50%;background:#fff7f5;color:#a5463f;font-size:19px;font-weight:600;line-height:1;cursor:pointer;box-shadow:0 1px 4px #263c3020;opacity:0;transform:scale(.84);pointer-events:none;transition:opacity .14s ease,transform .14s ease,background .14s ease}
+#editor .memo-v113-pill-wrap:hover>.memo-v113-delete-mini,
+#editor .memo-v113-pill-wrap:focus-within>.memo-v113-delete-mini,
+#editor .memo-v113-delete-mini:focus-visible{opacity:1;transform:scale(1);pointer-events:auto}
+#editor .memo-v113-delete-mini:hover{background:#fce5e2;color:#892d2d}
+#editor .memo-v113-delete-mini:focus-visible{outline:2px solid #a5463f;outline-offset:2px}
+@media(hover:none),(pointer:coarse){#editor .memo-v113-delete-mini{opacity:1;transform:none;pointer-events:auto}}
 </style>
 </head>
 <body>
@@ -5055,7 +5069,7 @@ function renderEditor(id){
   if(variantCommercialIndex>=presentations.length)variantCommercialIndex=Math.max(0,presentations.length-1);
   return `<div class="memo-v26-commercial">
    <div class="memo-v26-commercial-header"><strong>Médicaments commerciaux</strong></div>
-   <div class="memo-v26-commercial-pills">${presentations.map((p,i)=>`<button type="button" class="${i===variantCommercialIndex?'is-active':''}" data-v26-select-commercial="${i}">${esc(p.name||'Médicament '+(i+1))}</button>`).join('')}<button type="button" class="memo-variant-add-round" data-v26-add-commercial title="Ajouter un médicament commercial" aria-label="Ajouter un médicament commercial"><svg class="memo-add-plus-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
+   <div class="memo-v26-commercial-pills">${presentations.map((p,i)=>`<span class="memo-v113-pill-wrap"><button type="button" class="${i===variantCommercialIndex?'is-active':''}" data-v26-select-commercial="${i}">${esc(p.name||'Médicament '+(i+1))}</button><button type="button" class="memo-v113-delete-mini" data-v113-remove-commercial="${i}" aria-label="Supprimer le médicament commercial ${esc(p.name||'Médicament '+(i+1))}" title="Supprimer ce médicament commercial">×</button></span>`).join('')}<button type="button" class="memo-variant-add-round" data-v26-add-commercial title="Ajouter un médicament commercial" aria-label="Ajouter un médicament commercial"><svg class="memo-add-plus-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
    <div data-variant-commercial-root>${presentations.length?presentationEditor(presentations[variantCommercialIndex],variantCommercialIndex):''}</div>
   </div>`;
  }
@@ -5071,13 +5085,30 @@ function renderEditor(id){
   root.querySelectorAll('[data-v26-select-commercial]').forEach(btn=>btn.onclick=()=>{
    variantReadCommercial();variantCommercialIndex=Number(btn.dataset.v26SelectCommercial);variantRender();saveLocalDraft();
   });
-  root.querySelector('[data-remove-presentation]')?.addEventListener('click',()=>{
-   variantReadCommercial();const child=variantDrafts.get(variantActiveId);
-   child.presentations.splice(variantCommercialIndex,1);
-   const photos=pendingPresentationPhotos.get(child.id);
-   if(photos){const shifted=new Map();for(const [i,file] of photos)if(i!==variantCommercialIndex)shifted.set(i>variantCommercialIndex?i-1:i,file);pendingPresentationPhotos.set(child.id,shifted)}const tabletOld=pendingTabletPhotos.get(child.id);if(tabletOld){const shifted=new Map();for(const [i,file] of tabletOld)if(i!==variantCommercialIndex)shifted.set(i>variantCommercialIndex?i-1:i,file);pendingTabletPhotos.set(child.id,shifted)}
-   variantCommercialIndex=0;variantRender();
+  // Même action depuis la croix sur la pastille et le bouton « Retirer » du formulaire.
+  // Les changements ne sont envoyés à Supabase qu'à l'enregistrement de la molécule.
+  function removeCommercialAt(index){
+   if(!requireAdmin())return;
+   const child=variantDrafts.get(variantActiveId);
+   const p=child?.presentations?.[index];if(!p)return;
+   const label=p.name||'Médicament '+(index+1);
+   if(!confirm('Supprimer « '+label+' » de cette variante ?\n\nLa suppression sera enregistrée dans Supabase lorsque tu cliqueras sur « Enregistrer » sur la fiche molécule.'))return;
+   variantReadCommercial();
+   child.presentations.splice(index,1);
+   for(const cache of [pendingPresentationPhotos,pendingTabletPhotos]){
+    const old=cache.get(child.id);if(!old)continue;
+    const shifted=new Map();
+    for(const [i,file] of old)if(i!==index)shifted.set(i>index?i-1:i,file);
+    if(shifted.size)cache.set(child.id,shifted);else cache.delete(child.id);
+   }
+   variantCommercialIndex=Math.max(0,Math.min(index,child.presentations.length-1));
+   variantRender();saveLocalDraft();
+   toast('Médicament commercial retiré du brouillon — clique sur Enregistrer.');
+  }
+  root.querySelectorAll('[data-v113-remove-commercial]').forEach(btn=>btn.onclick=e=>{
+   e.preventDefault();e.stopPropagation();removeCommercialAt(Number(btn.dataset.v113RemoveCommercial));
   });
+  root.querySelector('[data-remove-presentation]')?.addEventListener('click',()=>removeCommercialAt(variantCommercialIndex));
   root.querySelector('[data-add-cip-pack]')?.addEventListener('click',e=>{
    const rows=e.currentTarget.closest('.cip-pack-rows');
    const first=rows.querySelector('[data-cip-pack-row]');
@@ -5154,7 +5185,7 @@ function renderEditor(id){
   const items=[...variantDrafts.values()];
   if(!variantDrafts.has(variantActiveId))variantActiveId=String(items[0]?.id||'');
   const child=variantDrafts.get(variantActiveId);
-  variantRoot.innerHTML=`<div class="memo-v16-layout"><div class="memo-v16-list" role="group" aria-label="Choisir une présentation">${items.map(item=>`<button type="button" class="memo-v16-choice ${String(item.id)===variantActiveId?'is-active':''}" data-variant-choice="${esc(item.id)}"><strong>${esc(variantLabel(item))}</strong><small>${item.sections?.filter(sec=>variantIsVisible(sec)&&!variantIsSource(sec)).length||0} rubrique(s) spécifique(s)</small></button>`).join('')||'<p class="muted">Aucune présentation liée.</p>'}<button type="button" id="variant-add" class="memo-variant-add-round" title="Ajouter une forme ou un dosage" aria-label="Ajouter une forme ou un dosage"><svg class="memo-add-plus-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div><div class="memo-v16-editor-area">${child?`<div class="memo-v16-editor"><h4>${esc(variantLabel(child))}</h4><div class="admin-grid"><label>Forme pharmaceutique<input data-variant-form list="memo-forms" value="${esc(child.form||child.sections?.[0]?.dciForm||'')}" placeholder="Ex. : gélule"></label><label>Dosage<input data-variant-dose value="${esc(child.dosage||'')}" placeholder="Ex. : 500 mg"></label></div><div class="memo-v26-tabs"><button type="button" data-v26-tab="particularites" class="${variantSubtab==='particularites'?'is-active':''}">Particularités</button><button type="button" data-v26-tab="commerciaux" class="${variantSubtab==='commerciaux'?'is-active':''}">Médicaments commerciaux (${(child.presentations||[]).length})</button></div><div ${variantSubtab==='particularites'?'':'hidden'}>${variantBadgePanel(child)}<div class="memo-v16-sections">${(child.sections||[]).map((sec,i)=>variantIsSource(sec)||sec.id==='variant-meta'?'':variantSectionHTML(sec,i,child.sections.length)).join('')}</div><div class="memo-v16-actions"><button type="button" class="soft" data-variant-add-section>+ Rubrique texte</button><button type="button" class="soft" data-variant-add-table>+ Tableau</button></div></div>${variantSubtab==='commerciaux'?variantCommercialMarkup(child):''}</div>`:''}</div></div>`;
+  variantRoot.innerHTML=`<div class="memo-v16-layout"><div class="memo-v16-list" role="group" aria-label="Choisir une présentation">${items.map(item=>`<span class="memo-v113-pill-wrap"><button type="button" class="memo-v16-choice ${String(item.id)===variantActiveId?'is-active':''}" data-variant-choice="${esc(item.id)}"><strong>${esc(variantLabel(item))}</strong><small>${item.sections?.filter(sec=>variantIsVisible(sec)&&!variantIsSource(sec)).length||0} rubrique(s) spécifique(s)</small></button><button type="button" class="memo-v113-delete-mini" data-v113-remove-variant="${esc(item.id)}" title="Supprimer cette forme et ce dosage" aria-label="Supprimer la variante ${esc(variantLabel(item))}">×</button></span>`).join('')}||'<p class="muted">Aucune présentation liée.</p>'}<button type="button" id="variant-add" class="memo-variant-add-round" title="Ajouter une forme ou un dosage" aria-label="Ajouter une forme ou un dosage"><svg class="memo-add-plus-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div><div class="memo-v16-editor-area">${child?`<div class="memo-v16-editor"><h4>${esc(variantLabel(child))}</h4><div class="admin-grid"><label>Forme pharmaceutique<input data-variant-form list="memo-forms" value="${esc(child.form||child.sections?.[0]?.dciForm||'')}" placeholder="Ex. : gélule"></label><label>Dosage<input data-variant-dose value="${esc(child.dosage||'')}" placeholder="Ex. : 500 mg"></label></div><div class="memo-v26-tabs"><button type="button" data-v26-tab="particularites" class="${variantSubtab==='particularites'?'is-active':''}">Particularités</button><button type="button" data-v26-tab="commerciaux" class="${variantSubtab==='commerciaux'?'is-active':''}">Médicaments commerciaux (${(child.presentations||[]).length})</button></div><div ${variantSubtab==='particularites'?'':'hidden'}>${variantBadgePanel(child)}<div class="memo-v16-sections">${(child.sections||[]).map((sec,i)=>variantIsSource(sec)||sec.id==='variant-meta'?'':variantSectionHTML(sec,i,child.sections.length)).join('')}</div><div class="memo-v16-actions"><button type="button" class="soft" data-variant-add-section>+ Rubrique texte</button><button type="button" class="soft" data-variant-add-table>+ Tableau</button></div></div>${variantSubtab==='commerciaux'?variantCommercialMarkup(child):''}</div>`:''}</div></div>`;
   variantSources.innerHTML=child?(child.sections||[]).map((sec,i)=>variantIsSource(sec)?variantSectionHTML(sec,i,child.sections.length):'').join(''):'';
   const sourceHeading=document.getElementById('memo-variant-sources-heading');
   if(sourceHeading)sourceHeading.hidden=!variantSources.children.length;
@@ -5163,6 +5194,21 @@ function renderEditor(id){
   const addRound=variantRoot.querySelector("#variant-add");
   if(addRound)addRound.onclick=variantAddNew;
   variantRoot.querySelectorAll('[data-variant-choice]').forEach(btn=>btn.onclick=()=>{variantReadAll();variantActiveId=btn.dataset.variantChoice;variantOpenSection=null;variantCommercialIndex=0;variantRender()});
+  variantRoot.querySelectorAll('[data-v113-remove-variant]').forEach(btn=>btn.onclick=e=>{
+   e.preventDefault();e.stopPropagation();
+   if(!requireAdmin())return;
+   const id=btn.dataset.v113RemoveVariant;
+   const child=variantDrafts.get(id);if(!child)return;
+   if(!confirm('Supprimer la variante « '+variantLabel(child)+' » et tous ses médicaments commerciaux ?\n\nLa suppression définitive dans Supabase aura lieu quand tu enregistreras la fiche molécule.'))return;
+   // Sauvegarder les champs de la variante active avant de changer la liste.
+   variantReadAll();
+   variantDrafts.delete(id);
+   pendingPresentationPhotos.delete(id);pendingTabletPhotos.delete(id);
+   if(variantActiveId===id)variantActiveId=String(variantDrafts.keys().next().value||'');
+   variantOpenSection=null;variantCommercialIndex=0;
+   variantRender();saveLocalDraft();
+   toast('Variante retirée du brouillon — clique sur Enregistrer.');
+  });
   variantRoot.querySelectorAll('[data-v26-tab]').forEach(btn=>btn.onclick=()=>{variantReadAll();variantSubtab=btn.dataset.v26Tab;variantRender()});
   variantWireCommercial();
   const allRoot=[variantRoot,variantSources];
@@ -5577,6 +5623,14 @@ async function saveEditor(id){if(!requireAdmin())return;
  try{
   captureEditorFields(m);
   const variants=prepareMoleculeVariants(m);
+  // Les variantes sont des lignes Supabase distinctes : les retirer de l'interface
+  // ne les efface pas à lui seul. Identifier uniquement les anciennes variantes
+  // qui appartiennent à CETTE molécule et qui sont absentes du nouveau brouillon.
+  const retainedVariantIds=new Set((variants||[]).map(child=>String(child.id)));
+  const removedVariantIds=variants===null?[]:meds.filter(child=>
+   isVariantFiche(child)&&String(moleculeParentId(child))===String(m.id)&&
+   !retainedVariantIds.has(String(child.id))
+  ).map(child=>String(child.id));
   // Ne retirer les brouillons qu'après la réussite de toutes les écritures.
   await uploadPresentationPhotos(m);
   await syncMedication(m);
@@ -5584,6 +5638,16 @@ async function saveEditor(id){if(!requireAdmin())return;
    for(const child of variants){
     await uploadPresentationPhotos(child);
     await syncMedication(child);
+   }
+   // Supprimer les variantes abandonnées uniquement APRÈS les enregistrements
+   // réussis, pour limiter les risques de perte de données en cas d'échec.
+   for(const childId of removedVariantIds){
+    const {data,error}=await supabaseClient.from('medications').delete().eq('id',childId).select('id');
+    if(error)throw new Error('Suppression de variante refusée par Supabase : '+error.message);
+    if(!data?.some(row=>String(row.id)===childId))throw new Error('Suppression de variante non confirmée dans Supabase.');
+    meds=meds.filter(item=>String(item.id)!==childId);
+    pendingPresentationPhotos.delete(childId);
+    pendingTabletPhotos.delete(childId);
    }
    selectedId=m.id;
   }
