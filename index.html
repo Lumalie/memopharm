@@ -1677,6 +1677,19 @@ body.header-search-active #headerSearchSlot .search-suggestions .results{max-hei
 #detail.detail .memo-v74-rubric-tools button:hover{background:#f2f7f3;border-color:#dce9df}
 @media(max-width:520px){#detail.detail details.memo-v74-rubric>summary{padding:13px 4px}}
 
+
+/* V79 — aperçu : synthèse légère, titre de même famille que « FICHE MOLÉCULE ». */
+#searchPreview .memo-v77-overview{margin:23px 0 22px;padding:0 2px}
+#searchPreview .memo-v77-heading{
+ font-variant:all-small-caps;letter-spacing:.09em;font-weight:800;
+ font-size:1.08rem;line-height:1.2;color:#ad6c50;margin:0 0 9px;
+}
+#searchPreview .memo-v77-form{display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid rgba(83,112,95,.14)}
+#searchPreview .memo-v77-form:last-child{border-bottom:0}
+#searchPreview .memo-v77-form-name{font-weight:700;font-size:13px;color:#326c50;min-width:132px;max-width:45%;overflow-wrap:anywhere}
+#searchPreview .memo-v77-doses{gap:5px}
+#searchPreview .memo-v77-dose{padding:4px 9px}
+@media(max-width:480px){#searchPreview .memo-v77-form-name{min-width:0;max-width:none;margin-bottom:4px}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -3216,7 +3229,7 @@ function previewSearchResult(item){
  // V77 : récapitulatif non interactif pour les formes, accès direct à chaque dosage.
  const previewDosageGroups=isMolecule(m)?moleculeDosageColumns(childMeds):[];
  const previewDosageHtml=previewDosageGroups.length?`<section class="memo-v77-overview" aria-label="Formes et dosages disponibles"><div class="memo-v77-heading">FORMES ET DOSAGES DISPONIBLES</div>${previewDosageGroups.map(group=>`<div class="memo-v77-form"><span class="memo-v77-form-name">${esc(group.form)}</span><div class="memo-v77-doses">${group.items.map(child=>{const dose=String(child.dosage||ingredientTitleDose(child)||"").trim();const fallback=displayMedName(child).match(/(\d+(?:[.,]\d+)?\s*(?:µg|mcg|mg|g|UI|mL|ml)(?:\s*\/\s*(?:µg|mcg|mg|g|UI|mL|ml))?)\b/i);const label=dose||(fallback?fallback[1]:displayMedName(child));return `<button type="button" class="memo-v77-dose" data-v77-dose="${esc(child.id)}" data-v77-form="${esc(group.form)}" title="Ouvrir ${esc(displayMedName(m))} — ${esc(group.form)} — ${esc(label)}">${esc(label)} <span aria-hidden="true">↗</span></button>`}).join("")}</div></div>`).join("")}</section>`:"";
- const foundFooter=sec?`<div class="search-preview-found"><div class="search-preview-found-label">Rubrique trouvée dans cette fiche</div><button type="button" class="search-preview-found-link" data-preview-section="${esc(sec.id)}">↗ Afficher « ${esc(sec.title||'la rubrique')} » dans l’aperçu</button></div>`:'';
+ const foundFooter=""; // V79 : supprimer le renvoi redondant et son encadré.
  $('searchPreview').innerHTML=`<div class="search-preview-header">${headerHtml}</div>${previewChildrenHtml}${previewDosageHtml}${sections.map(x=>`<button type="button" class="search-preview-section" data-preview-section="${esc(x.id)}" title="Ouvrir cette rubrique"><span class="search-preview-arrow">↗</span>${safeSection(x)}</button>`).join('')||'<p class="empty">Aucune rubrique renseignée pour cette fiche.</p>'}${foundFooter}${ficheDocumentation(m,(m.sections||[]).filter(x=>x.enabled!==false&&isDocumentationSection(x)))}`;
  // Les liens de fil d'Ariane et de retour à la molécule restent dans le volet d'aperçu.
  $('searchPreview').querySelectorAll('[data-group-open]').forEach(b=>b.onclick=e=>{e.stopPropagation();const target=visible.find(x=>String(x.id)===String(b.dataset.groupOpen));if(target)navigatePreview({med:target,section:null,presentation:null});});
@@ -3228,6 +3241,13 @@ function previewSearchResult(item){
   // La fiche complète restaure ce dosage depuis le choix mémorisé, sans modifier Supabase.
   memoSetViewChoice(m.id,{form:b.dataset.v77Form,doseId:b.dataset.v77Dose});
   openMedication(m.id);
+  // V79 : amener le lecteur à la présentation effectivement sélectionnée,
+  // après le rendu des onglets, sans modifier les données enregistrées.
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+   const selected=$('detail')?.querySelector('#molecule-tab-content .memo-selected-presentation');
+   const target=selected||$('detail')?.querySelector('#molecule-tabs');
+   if(target)target.scrollIntoView({behavior:'smooth',block:'start'});
+  }));
  }));
  $('searchPreview').querySelectorAll('[data-preview-presentation]').forEach(b=>b.onclick=()=>{navigatePreview({med:m,section:null,presentation:Number(b.dataset.previewPresentation)});});
  $('results').querySelectorAll('.result').forEach(el=>el.classList.toggle('preview-selected',el.dataset.id===String(m.id)&&el.dataset.section===(sec?.id||'')&&el.dataset.presentation===(pres===null?'':String(pres))));
