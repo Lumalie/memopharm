@@ -5259,9 +5259,9 @@ function renderEditor(id){
   target._variantUi={activeId:variantActiveId,subtab:variantSubtab,commercialIndex:variantCommercialIndex};
  };
  variantRender();
- // Les variantes conservent entry_type='dci' pour rester compatibles avec le schéma Supabase existant.
+ // Les variantes restent de type « dci » en mémoire ; Supabase stocke « variant ».
  function variantAddNew(){
-  variantReadAll();const child={id:crypto.randomUUID(),name:m.name,entry_type:'dci',dosage:'',dci:'',parent_dci:'',form:'',category:m.category,presentations:[],status:'à vérifier',updated:'',published:false,sections:[{id:'variant-meta',title:'Métadonnées',type:'text',content:'',enabled:false,moleculeParentId:String(m.id)},...variantSectionCatalog()]};
+  variantReadAll();const child={id:crypto.randomUUID(),name:m.name,entry_type:'dci',_storageEntryType:'variant',dosage:'',dci:'',parent_dci:'',form:'',category:m.category,presentations:[],status:'à vérifier',updated:'',published:false,sections:[{id:'variant-meta',title:'Métadonnées',type:'text',content:'',enabled:false,moleculeParentId:String(m.id)},...variantSectionCatalog()]};
   variantDrafts.set(String(child.id),child);variantActiveId=String(child.id);variantOpenSection=null;variantCommercialIndex=0;variantRender();
   variantRoot.querySelector('[data-variant-form]')?.focus();
  };
@@ -5618,8 +5618,7 @@ function prepareMoleculeVariants(m){
   child.sections[0].moleculeParentId=String(m.id);
   child.sections[0].dciForm=child.form;
   child.entry_type='dci'; // Type interne de compatibilité pendant la transition.
-  // Préserver le type « variant » si cette ligne a déjà été migrée.
-  // Les nouvelles variantes restent « dci » tant que Supabase n'est pas prêt.
+  child._storageEntryType='variant'; // Enregistrer les variantes avec le type SQL dédié.
   child.name=m.name+' '+child.dosage;
   child.category=m.category;
   child.published=Boolean(m.published); // Même visibilité que la molécule.
