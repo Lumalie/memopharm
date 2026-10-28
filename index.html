@@ -2451,6 +2451,31 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
 .search-suggestions .result-dose{--hit-ink:#895342;--hit-line:#c48f79;--hit-rgb:248,235,228}
 #searchWorkspace #searchSuggestions .result-dose{--hit-ink:#895342;--hit-line:#c48f79;--hit-rgb:248,235,228}
 .header-search-active #headerSearchSlot .search-suggestions .result-dose{--hit-ink:#895342;--hit-line:#c48f79;--hit-rgb:248,235,228}
+
+/* V114.7 — Fil d'Ariane arborescent, menus récursifs au survol ou au clic */
+.memo-tree-breadcrumb{position:relative;overflow:visible;z-index:15}
+.memo-tree-breadcrumb .memo-crumb-dropdown{position:relative;display:inline-flex;align-items:center;flex:0 0 auto}
+.memo-tree-breadcrumb .memo-crumb-trigger{appearance:none;border:0;background:transparent;cursor:pointer;padding:1px 5px;border-radius:6px;color:#547b6b;font:inherit;font-size:1.3em;line-height:1.15}
+.memo-tree-breadcrumb .memo-crumb-trigger:hover,.memo-tree-breadcrumb .memo-crumb-trigger:focus-visible,.memo-tree-breadcrumb .memo-crumb-open>.memo-crumb-trigger{background:#e5f1ea;color:#24563d}
+.memo-tree-breadcrumb .memo-crumb-popup{display:none;position:absolute;left:0;top:100%;min-width:240px;max-width:min(340px,85vw);padding-top:7px;z-index:200}
+.memo-tree-breadcrumb .memo-crumb-open>.memo-crumb-popup{display:block}
+.memo-tree-breadcrumb .memo-crumb-menu-items{padding:6px;background:#fff;border:1px solid #cadbd1;border-radius:12px;box-shadow:0 12px 30px #153a2a29;max-height:min(65vh,460px);overflow:visible}
+.memo-tree-breadcrumb .memo-crumb-node{position:relative;display:flex;align-items:center;min-width:0;border-radius:7px}
+.memo-tree-breadcrumb .memo-crumb-node:hover,.memo-tree-breadcrumb .memo-crumb-node:focus-within{background:#f0f6f2}
+.memo-tree-breadcrumb .memo-crumb-destination{appearance:none;background:transparent;border:0;flex:1;min-width:0;text-align:left;padding:9px 10px;color:var(--group-fg,#315f4d);font:inherit;font-weight:600;cursor:pointer;white-space:normal;overflow-wrap:anywhere}
+.memo-tree-breadcrumb .memo-crumb-expand{appearance:none;background:transparent;border:0;color:#668779;font-size:1.25em;cursor:pointer;padding:6px 10px}
+.memo-tree-breadcrumb .memo-crumb-submenu{display:none;position:absolute;left:calc(100% - 2px);top:-6px;min-width:240px;max-width:min(340px,85vw);padding-left:7px;z-index:210}
+@media(hover:hover) and (pointer:fine){
+ .memo-tree-breadcrumb .memo-crumb-has-children:hover>.memo-crumb-submenu,
+ .memo-tree-breadcrumb .memo-crumb-has-children:focus-within>.memo-crumb-submenu{display:block}
+}
+.memo-tree-breadcrumb .memo-crumb-expanded>.memo-crumb-submenu{display:block}
+@media(max-width:700px){
+ .memo-tree-breadcrumb .memo-crumb-submenu{position:static;min-width:0;max-width:none;padding:0 0 0 12px;flex-basis:100%}
+ .memo-tree-breadcrumb .memo-crumb-expanded{flex-wrap:wrap}
+ .memo-tree-breadcrumb .memo-crumb-popup{left:auto;right:-20px}
+ .memo-tree-breadcrumb .memo-crumb-menu-items{max-height:55vh;overflow-y:auto}
+}
 </style>
 </head>
 <body>
@@ -2903,6 +2928,27 @@ function ficheParent(m,visible=publicMeds()){
  const group=byId.get(String(parentGroupId(m)||""));
  return group&&isGroup(group)&&String(group.id)!==String(m.id)?group:null;
 }
+// Navigation arborescente récursive : niveaux illimités, données Supabase visibles.
+function memoTreeChildren(parentId,visible=publicMeds()){
+ return visible.filter(x=>{
+  if(isGroup(x)||isMolecule(x))return String(parentGroupId(x)||"")===String(parentId||"");
+  if(isVariantFiche(x))return String(moleculeParentId(x)||"")===String(parentId||"");
+  return false;
+ }).sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),"fr"));
+}
+function memoBreadcrumbBranch(parentId,visible,ancestors=new Set(),depth=0){
+ if(depth>25)return "";
+ const children=memoTreeChildren(parentId,visible).filter(x=>!ancestors.has(String(x.id)));
+ if(!children.length)return "";
+ return `<div class="memo-crumb-menu-items" role="menu">${children.map(node=>{
+  const next=new Set(ancestors);next.add(String(node.id));
+  const nested=memoBreadcrumbBranch(node.id,visible,next,depth+1);
+  return `<div class="memo-crumb-node${nested?' memo-crumb-has-children':''}">
+   <button type="button" class="memo-crumb-destination" role="menuitem" data-crumb-destination="${esc(node.id)}" style="${entityTreeStyle(node)}" title="Ouvrir ${esc(displayMedName(node))}">${esc(displayMedName(node))}</button>
+   ${nested?`<button type="button" class="memo-crumb-expand" aria-label="Afficher les sous-niveaux de ${esc(displayMedName(node))}" aria-expanded="false" title="Afficher les sous-niveaux">›</button><div class="memo-crumb-submenu">${nested}</div>`:""}
+  </div>`;
+ }).join("")}</div>`;
+}
 function ficheBreadcrumb(m){
  const visible=publicMeds(),byId=new Map(visible.map(x=>[String(x.id),x]));
  const chain=[],seen=new Set([String(m.id)]);
@@ -2911,9 +2957,45 @@ function ficheBreadcrumb(m){
   seen.add(String(parent));const node=byId.get(String(parent));
   if(!node||(!isGroup(node)&&!isMolecule(node)))break;
   chain.unshift(node);
-  parent=isMolecule(node)||isGroup(node)?parentGroupId(node):"";
+  parent=parentGroupId(node);
  }
- return `<nav class="fiche-breadcrumb" aria-label="Chemin de la fiche">${chain.map((g,i)=>`<button type="button" class="breadcrumb-link breadcrumb-group-level${i===chain.length-1?' breadcrumb-nearest-parent':' breadcrumb-ancestor'}" style="${entityTreeStyle(g)}" data-group-open="${esc(g.id)}" title="Ouvrir ${esc(g.name)}">${esc(g.name)}</button><span class="breadcrumb-separator${i===chain.length-1?' breadcrumb-nearest-separator':' breadcrumb-ancestor-separator'}" aria-hidden="true">›</span>`).join("")}<span class="breadcrumb-current ${isGroup(m)||isMolecule(m)?"breadcrumb-current-group-level":"breadcrumb-current-med"}" ${`style="${entityTreeStyle(m)}"`} aria-current="page">${esc(displayMedName(m))}</span></nav>`;
+ const path=[...chain,m];
+ return `<nav class="fiche-breadcrumb memo-tree-breadcrumb" aria-label="Chemin de la fiche">${path.map((node,i)=>{
+  const last=i===path.length-1;
+  const label=last?`<span class="breadcrumb-current ${isGroup(node)||isMolecule(node)?"breadcrumb-current-group-level":"breadcrumb-current-med"}" style="${entityTreeStyle(node)}" aria-current="page">${esc(displayMedName(node))}</span>`:`<button type="button" class="breadcrumb-link breadcrumb-group-level${i===path.length-2?' breadcrumb-nearest-parent':' breadcrumb-ancestor'}" style="${entityTreeStyle(node)}" data-group-open="${esc(node.id)}" title="Ouvrir ${esc(displayMedName(node))}">${esc(displayMedName(node))}</button>`;
+  if(last)return label;
+  // Le chevron propose les enfants du niveau affiché et leurs descendants.
+  const menu=memoBreadcrumbBranch(node.id,visible,new Set([String(node.id)]));
+  return `${label}<span class="memo-crumb-dropdown${i===path.length-2?' breadcrumb-nearest-separator':' breadcrumb-ancestor-separator'}"><button type="button" class="breadcrumb-separator memo-crumb-trigger" aria-label="Explorer les sous-niveaux de ${esc(displayMedName(node))}" aria-expanded="false" title="Explorer les sous-niveaux">›</button>${menu?`<div class="memo-crumb-popup">${menu}</div>`:""}</span>`;
+ }).join("")}</nav>`;
+}
+function memoWireBreadcrumb(root,openTarget){
+ if(!root)return;
+ root.querySelectorAll('.memo-crumb-trigger').forEach(btn=>btn.addEventListener('click',e=>{
+  e.stopPropagation();
+  const wrapper=btn.closest('.memo-crumb-dropdown');
+  const wasOpen=wrapper.classList.contains('memo-crumb-open');
+  root.querySelectorAll('.memo-crumb-open,.memo-crumb-expanded').forEach(el=>el.classList.remove('memo-crumb-open','memo-crumb-expanded'));
+  root.querySelectorAll('[aria-expanded]').forEach(el=>el.setAttribute('aria-expanded','false'));
+  if(!wasOpen){wrapper.classList.add('memo-crumb-open');btn.setAttribute('aria-expanded','true');}
+ }));
+ root.querySelectorAll('.memo-crumb-expand').forEach(btn=>btn.addEventListener('click',e=>{
+  e.stopPropagation();const node=btn.closest('.memo-crumb-node');
+  const open=!node.classList.contains('memo-crumb-expanded');
+  node.classList.toggle('memo-crumb-expanded',open);
+  btn.setAttribute('aria-expanded',String(open));
+ }));
+ root.querySelectorAll('[data-crumb-destination]').forEach(btn=>btn.addEventListener('click',e=>{
+  e.stopPropagation();openTarget(btn.dataset.crumbDestination);
+ }));
+ if(!root._memoCrumbDismiss){
+  root._memoCrumbDismiss=e=>{
+   if(root.contains(e.target))return;
+   root.querySelectorAll('.memo-crumb-open,.memo-crumb-expanded').forEach(el=>el.classList.remove('memo-crumb-open','memo-crumb-expanded'));
+   root.querySelectorAll('[aria-expanded]').forEach(el=>el.setAttribute('aria-expanded','false'));
+  };
+  document.addEventListener('pointerdown',root._memoCrumbDismiss);
+ }
 }
 
 function indicationTags(m){
@@ -3781,6 +3863,7 @@ function previewSearchResult(item){
  $('searchPreview').innerHTML=`<div class="search-preview-header">${headerHtml}</div>${previewBodyHtml}${foundFooter}`;
  // Les liens de fil d'Ariane et de retour à la molécule restent dans le volet d'aperçu.
  $('searchPreview').querySelectorAll('[data-group-open]').forEach(b=>b.onclick=e=>{e.stopPropagation();const target=visible.find(x=>String(x.id)===String(b.dataset.groupOpen));if(target)navigatePreview({med:target,section:null,presentation:null});});
+ memoWireBreadcrumb($('searchPreview'),id=>{const target=visible.find(x=>String(x.id)===String(id));if(target)navigatePreview({med:target,section:null,presentation:null});});
  memoWireBadgeClicks($('searchPreview'));
  $('searchPreview').querySelectorAll('[data-filter-class]').forEach(b=>b.onclick=e=>{e.stopPropagation();memoNavigateExplorerFilter('class',b.dataset.filterClass)});
  $('searchPreview').querySelectorAll('[data-filter-ind]').forEach(b=>b.onclick=e=>{e.stopPropagation();memoNavigateExplorerFilter('indication',b.dataset.filterInd)});
@@ -4322,6 +4405,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDo
   }
  }
  $("detail").querySelectorAll("[data-group-open]").forEach(b=>b.onclick=()=>openMedication(b.dataset.groupOpen));
+ memoWireBreadcrumb($("detail"),id=>openMedication(id));
  $("detail").querySelectorAll(".associated-molecule-toggle").forEach(button=>button.onclick=()=>{
   const panel=button.closest(".associated-molecule")?.querySelector(".associated-molecule-children");
   if(!panel)return;
