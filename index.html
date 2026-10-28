@@ -2019,6 +2019,54 @@ body.header-search-active #headerSearchSlot .search-suggestions .results{max-hei
  #detail #presentations-details.presentation-fixed .memo-v48-identity{flex-wrap:wrap!important}
  #detail #presentations-details.presentation-fixed .memo-v102-commercial-storage{margin-left:auto!important}
 }
+
+/* V103 — conservation : badges compacts, alignés à droite sans décaler le sélecteur */
+#detail #presentations-details.presentation-fixed{position:relative!important}
+#detail #presentations-details.presentation-fixed .memo-v48-identity{
+ position:static!important;display:block!important;
+}
+#detail #presentations-details.presentation-fixed .memo-v48-selector{
+ width:min(500px,calc(100% - 220px))!important;max-width:500px!important;
+}
+#detail #presentations-details.presentation-fixed .memo-v102-commercial-storage{
+ position:absolute!important;top:62px!important;right:20px!important;
+ display:flex!important;align-items:center!important;justify-content:flex-end!important;
+ width:auto!important;gap:8px!important;margin:0!important;z-index:8!important;
+}
+#detail #presentations-details.presentation-fixed .memo-v102-commercial-storage .memo-v93-storage-badge{
+ width:43px!important;height:42px!important;border-radius:11px!important;
+}
+#detail #presentations-details.presentation-fixed .memo-v102-commercial-storage .memo-v93-storage-badge svg{
+ width:25px!important;height:25px!important;flex:none!important;
+}
+/* Gris pour la durée après ouverture, sur spécialité ET molécule */
+#detail .memo-v93-storage-badge.memo-v93-after{
+ background:#edf0f2!important;color:#526575!important;
+ width:auto!important;min-width:56px!important;
+ padding:0 11px!important;gap:7px!important;white-space:nowrap!important;
+}
+#detail .memo-v93-storage-badge.memo-v93-after:hover,
+#detail .memo-v93-storage-badge.memo-v93-after:focus-visible{
+ background:#dce3e8!important;
+}
+#detail .memo-v93-storage-badge.memo-v93-after svg{
+ width:25px!important;height:25px!important;flex:none!important;
+}
+#detail .memo-v93-storage-badge .memo-v103-duration{
+ font-size:.81rem!important;font-weight:700!important;line-height:1.15!important;
+ letter-spacing:0!important;white-space:nowrap!important;
+}
+#detail #presentations-details.presentation-fixed .memo-v102-commercial-storage .memo-v93-storage-badge.memo-v93-after{
+ width:auto!important;min-width:43px!important;height:42px!important;
+}
+@media(max-width:650px){
+ #detail #presentations-details.presentation-fixed .memo-v48-selector{
+  width:100%!important;max-width:100%!important;
+ }
+ #detail #presentations-details.presentation-fixed .memo-v102-commercial-storage{
+  position:static!important;margin:8px 0 0 auto!important;
+ }
+}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -3857,13 +3905,17 @@ function memoV67Alerts(m,p=null){
  const specs=[['mte',practicalMTE(m,p),'MTE','Médicament à marge thérapeutique étroite','Vérifier les précautions et les règles de substitution applicables.'],['photo',practicalPhotosensitive(m,p),'Photosensibilisant','Photosensibilisation','Vérifier les précautions selon la forme et la voie.'],['exception',practicalFlags((isMolecule(m)||isSpecialiteFiche(m))?m:moleculeForDosage(m)).exception===true,'EXC','Médicament d’exception','Vérifier les conditions réglementaires de prescription et de prise en charge pour la spécialité.'],['stup',practicalFlags((isMolecule(m)||isSpecialiteFiche(m))?m:moleculeForDosage(m)).stup===true,'STUP','Stupéfiant','Vérifier les règles de prescription, de délivrance et de traçabilité applicables à la spécialité.']];
  return specs.filter(x=>x[1]).map(([kind,_,label,title,note])=>`<button type="button" class="memo-v67-alert memo-v69-${kind}" data-filter-badge="${kind}" aria-label="${title} — explorer les fiches concernées">${kind==='photo'?'<span class="memo-v67-sun" aria-hidden="true"></span>':`<span class="memo-v67-mte">${label}</span>`}<span class="memo-repro-tooltip" role="tooltip"><span class="memo-repro-tip-title">${title}</span><span class="memo-repro-tip-note">${note}</span><span class="memo-repro-tip-action">Cliquer pour explorer les fiches concernées</span></span></button>`).join('');
 }
+function memoV103DurationLabel(value){
+ const v=String(value??"").trim();
+ return v?`<span class="memo-v103-duration">${esc(v)}</span>`:"";
+}
 function memoV93StorageBadges(m){
  if(!isSpecialiteFiche(m))return "";
  const st=m?.sections?.[0]?.specialtyStorage||{};
  const snow=`<svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10 20-1.25-2.5L6 18"/><path d="M10 4 8.75 6.5 6 6"/><path d="m14 20 1.25-2.5L18 18"/><path d="m14 4 1.25 2.5L18 6"/><path d="m17 21-3-6h-4"/><path d="m17 3-3 6 1.5 3"/><path d="M2 12h6.5L10 9"/><path d="m20 10-1.5 2 1.5 2"/><path d="M22 12h-6.5L14 15"/><path d="m4 10 1.5 2L4 14"/><path d="m7 21 3-6-1.5-3"/><path d="m7 3 3 6h4"/></svg>`;
  const clock=`<svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`;
  const tip=(title,note)=>`<span class="memo-repro-tooltip" role="tooltip"><span class="memo-repro-tip-title">${title}</span><span class="memo-repro-tip-note">${note}</span></span>`;
- return `<div class="memo-v93-storage-row" aria-label="Conservation de la spécialité">${st.coldStorage===true?`<span class="memo-v93-storage-badge memo-v93-cold" tabindex="0" aria-label="Conservation au froid">${snow}${tip("Conservation au froid","Vérifier les conditions exactes dans le RCP.")}</span>`:""}${st.afterOpening===true?`<span class="memo-v93-storage-badge memo-v93-after" tabindex="0" aria-label="Durée après ouverture">${clock}${tip("Durée après ouverture",st.afterOpeningDuration?esc(st.afterOpeningDuration):"Durée non précisée — vérifier le RCP.")}</span>`:""}</div>`;
+ return `<div class="memo-v93-storage-row" aria-label="Conservation de la spécialité">${st.coldStorage===true?`<span class="memo-v93-storage-badge memo-v93-cold" tabindex="0" aria-label="Conservation au froid">${snow}${tip("Conservation au froid","Vérifier les conditions exactes dans le RCP.")}</span>`:""}${st.afterOpening===true?`<span class="memo-v93-storage-badge memo-v93-after" tabindex="0" aria-label="Durée après ouverture${st.afterOpeningDuration?` : ${esc(st.afterOpeningDuration)}`:""}">${clock}${memoV103DurationLabel(st.afterOpeningDuration)}${tip("Durée après ouverture",st.afterOpeningDuration?esc(st.afterOpeningDuration):"Durée non précisée — vérifier le RCP.")}</span>`:""}</div>`;
 }
 function memoV67Refresh(m,p=null){const slot=document.getElementById('memo-v67-practical');if(!slot)return;slot.innerHTML=memoV67Alerts(m,p);memoWireBadgeClicks(slot)}
 function memoReproEditor(m){
@@ -4319,7 +4371,7 @@ function memoV102CommercialStorageBadges(p){
  const snow=`<svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10 20-1.25-2.5L6 18"/><path d="M10 4 8.75 6.5 6 6"/><path d="m14 20 1.25-2.5L18 18"/><path d="m14 4 1.25 2.5L18 6"/><path d="m17 21-3-6h-4"/><path d="m17 3-3 6 1.5 3"/><path d="M2 12h6.5L10 9"/><path d="m20 10-1.5 2 1.5 2"/><path d="M22 12h-6.5L14 15"/><path d="m4 10 1.5 2L4 14"/><path d="m7 21 3-6-1.5-3"/><path d="m7 3 3 6h4"/></svg>`;
  const clock=`<svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`;
  const tip=(title,note)=>`<span class="memo-repro-tooltip" role="tooltip"><span class="memo-repro-tip-title">${title}</span><span class="memo-repro-tip-note">${note}</span></span>`;
- return `<div class="memo-v102-commercial-storage memo-v93-storage-row">${p.coldStorage===true?`<span class="memo-v93-storage-badge memo-v93-cold" tabindex="0" aria-label="Conservation au froid">${snow}${tip("Conservation au froid","Vérifier les conditions exactes dans le RCP.")}</span>`:""}${p.afterOpening===true?`<span class="memo-v93-storage-badge memo-v93-after" tabindex="0" aria-label="Durée après ouverture">${clock}${tip("Durée après ouverture",p.afterOpeningDuration?esc(p.afterOpeningDuration):"Durée non précisée — vérifier le RCP.")}</span>`:""}</div>`;
+ return `<div class="memo-v102-commercial-storage memo-v93-storage-row">${p.coldStorage===true?`<span class="memo-v93-storage-badge memo-v93-cold" tabindex="0" aria-label="Conservation au froid">${snow}${tip("Conservation au froid","Vérifier les conditions exactes dans le RCP.")}</span>`:""}${p.afterOpening===true?`<span class="memo-v93-storage-badge memo-v93-after" tabindex="0" aria-label="Durée après ouverture${p.afterOpeningDuration?` : ${esc(p.afterOpeningDuration)}`:""}">${clock}${memoV103DurationLabel(p.afterOpeningDuration)}${tip("Durée après ouverture",p.afterOpeningDuration?esc(p.afterOpeningDuration):"Durée non précisée — vérifier le RCP.")}</span>`:""}</div>`;
 }
 function memoV102SyncStorage(section,p){
  const badges=section?.querySelector(".memo-v102-commercial-storage");
