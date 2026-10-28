@@ -2761,8 +2761,11 @@ function isSpecialiteFiche(m){return !isGroup(m)&&!isMolecule(m)&&hierarchyMeta(
 // V113 : distinguer les variantes encore utiles des anciennes fiches dosage/forme autonomes.
 // Les variantes sont des enregistrements techniques liés à une molécule ; elles ne sont
 // jamais proposées comme fiches autonomes dans la recherche générale.
-function isVariantFiche(m){return !isGroup(m)&&!isMolecule(m)&&hierarchyMeta(m).memofficineKind!=="conseil"&&m.entry_type==="dci"&&!!moleculeParentId(m)}
-function isObsoleteDosageFiche(m){return !isGroup(m)&&!isMolecule(m)&&hierarchyMeta(m).memofficineKind!=="conseil"&&m.entry_type==="dci"&&!moleculeParentId(m)}
+// Un seul prédicat pour les anciens enregistrements dosage/forme :
+// seul le rattachement à une molécule distingue une variante active d'une archive.
+function isDosageRecord(m){return !isGroup(m)&&!isMolecule(m)&&hierarchyMeta(m).memofficineKind!=="conseil"&&m.entry_type==="dci"}
+function isVariantFiche(m){return isDosageRecord(m)&&!!moleculeParentId(m)}
+function isObsoleteDosageFiche(m){return isDosageRecord(m)&&!moleculeParentId(m)}
 function moleculeParentId(m){return m.sections?.[0]?.moleculeParentId||""}
 function moleculeChildren(m){return publicMeds().filter(x=>!isGroup(x)&&moleculeParentId(x)===String(m.id)).sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),'fr'))}
 function moleculeDosageColumns(children){
