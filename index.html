@@ -1763,6 +1763,20 @@ body.header-search-active #headerSearchSlot .search-suggestions .results{max-hei
 .memo-v90-pack-row>span:first-child{font-weight:600;color:#245c4b}
 .memo-v90-commercial+.memo-v90-commercial{margin-top:22px;padding-top:12px;border-top:1px solid #dce5de}
 #memo-v90-storage{margin-top:4px}
+
+/* V91 — Les options de conservation partagent le même encart et la même typographie que les badges de vigilance. */
+#editor .memo-name-flags-row #memo-v90-storage.memo-storage-flags-row{
+  flex-basis:100%;width:100%;display:flex;align-items:center;flex-wrap:wrap;
+  gap:10px 18px;margin:0;padding:2px 0 0;border:0;background:transparent;box-shadow:none;
+}
+#editor .memo-name-flags-row #memo-v90-storage label{
+  display:inline-flex;align-items:center;gap:5px;white-space:nowrap;
+  margin:0;font-size:inherit;font-weight:500;
+}
+#editor .memo-name-flags-row #memo-v90-storage input[type=checkbox]{width:auto;flex:none;margin:0}
+#editor .memo-name-flags-row #memo-v90-storage input[type=text]{
+  width:145px;max-width:100%;padding:7px 9px;margin:0;
+}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -4437,10 +4451,10 @@ function renderEditor(id){
   const cold=stored.coldStorage??first.coldStorage??false;
   const after=stored.afterOpening??first.afterOpening??false;
   const duration=stored.afterOpeningDuration??first.afterOpeningDuration??"";
-  const area=document.createElement("div");area.id="memo-v90-storage";area.className="full memo-practical-editor";
+  const area=document.createElement("div");area.id="memo-v90-storage";area.className="memo-storage-flags-row";
   area.innerHTML=`<label><input type="checkbox" id="f-v90-cold" ${cold?"checked":""}> ❄ Conservation au froid</label><label><input type="checkbox" id="f-v90-after" ${after?"checked":""}> ◷ Durée après ouverture</label><input id="f-v90-duration" type="text" maxlength="45" placeholder="Ex. : 4 semaines" aria-label="Durée après ouverture" value="${esc(duration)}">`;
   const flags=identityGrid.querySelector("#molecule-practical-flags");
-  if(flags)flags.insertAdjacentElement("afterend",area);else identityGrid.append(area);
+  if(flags)flags.appendChild(area);else identityGrid.append(area);
  }
 
  // Type de fiche visible en premier, puis nom et badges côte à côte.
