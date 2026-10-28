@@ -2919,7 +2919,12 @@ function showView(view){
 function hierarchyMeta(m){return (m.sections||[]).find(s=>s.memofficineKind||s.memofficineParentGroup)||(m.sections||[]).find(s=>s.id==="indications")||(m.sections||[])[0]||{}}
 function isMolecule(m){return !isGroup(m)&&!!m.sections?.[0]?.moleculeRoot}
 function isSpecialiteFiche(m){return !isGroup(m)&&!isMolecule(m)&&hierarchyMeta(m).memofficineKind!=="conseil"&&m.entry_type==="specialite"}
-function isDosageFiche(m){return !isGroup(m)&&!isMolecule(m)&&hierarchyMeta(m).memofficineKind!=="conseil"&&m.entry_type==="dci"}
+// V113 : distinguer les variantes encore utiles des anciennes fiches dosage/forme autonomes.
+// Les variantes sont des enregistrements techniques liés à une molécule ; elles ne sont
+// jamais proposées comme fiches autonomes dans la recherche générale.
+function isVariantFiche(m){return !isGroup(m)&&!isMolecule(m)&&hierarchyMeta(m).memofficineKind!=="conseil"&&m.entry_type==="dci"&&!!moleculeParentId(m)}
+function isObsoleteDosageFiche(m){return !isGroup(m)&&!isMolecule(m)&&hierarchyMeta(m).memofficineKind!=="conseil"&&m.entry_type==="dci"&&!moleculeParentId(m)}
+function isDosageFiche(m){return isVariantFiche(m)}
 function moleculeParentId(m){return m.sections?.[0]?.moleculeParentId||""}
 function moleculeChildren(m){return publicMeds().filter(x=>!isGroup(x)&&moleculeParentId(x)===String(m.id)).sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),'fr'))}
 function moleculeDosageColumns(children){
@@ -3045,12 +3050,11 @@ function indicationTags(m){
  const raw=(m.sections||[]).find(s=>s.id==="indications")?.indicationTags||[];
  return Array.isArray(raw)?raw.filter(Boolean):[];
 }
-// V72 : les anciennes fiches dosage/forme restent en base et accessibles par lien direct
-// ou dans les archives administrateur, mais ne sont plus des résultats autonomes.
-function memoLegacyDosage(m){return isDosageFiche(m)}
-// V73 : conserver les fiches dosage dans les données internes : les onglets de la molécule en dépendent.
-function publicMeds(){return meds.filter(m=>!isSourcesRecord(m)&&(admin||m.published))}
-function visibleStandaloneMeds(){return publicMeds().filter(m=>!memoLegacyDosage(m))}
+// V113 : les fiches dosage/forme autonomes obsolètes sont exclues de la navigation.
+// Les variantes liées aux molécules restent disponibles pour leurs onglets,
+// leurs particularités et leurs médicaments commerciaux. Aucune donnée n'est effacée.
+function publicMeds(){return meds.filter(m=>!isSourcesRecord(m)&&!isObsoleteDosageFiche(m)&&(admin||m.published))}
+function visibleStandaloneMeds(){return publicMeds().filter(m=>!isVariantFiche(m))}
 function specialtyItems(m){
  return (m.presentations||[]).map((p,i)=>({p,i,name:(p.name||m.name||"").trim()})).filter(x=>x.name);
 }
@@ -3419,7 +3423,7 @@ function renderExplorer(){
     <div class="explore-hit-main">
      <button type="button" class="explore-hit-open" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec?.id||"")}" data-hit-pres="${hit.presentation===null?"":hit.presentation}" aria-label="Ouvrir ${esc(isPresentation?presTitle:m.name)}${sec?" à la rubrique "+esc(sec.title):""}">
       <span class="explore-hit-heading"><span class="explore-hit-symbol" aria-hidden="true">${group?"▸":"●"}</span><strong class="explore-hit-name">${esc(isPresentation?presTitle:searchResultLabel(hit))}</strong><span class="explore-hit-arrow" aria-hidden="true">↗</span></span>
-      ${isPresentation?"":`<span class="explore-hit-meta">${group?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche spécialité"} · ${esc(m.category||"Sans famille")}</span><span class="explore-hit-path">${path.map((part,i)=>`<span>${esc(part)}</span>${i<path.length-1?'<span aria-hidden="true">›</span>':''}`).join("")}</span>`}
+      ${isPresentation?"":`<span class="explore-hit-meta">${group?"Fiche groupe":isMolecule(m)?"Fiche molécule":isVariantFiche(m)?"Variante de présentation":"Fiche spécialité"} · ${esc(m.category||"Sans famille")}</span><span class="explore-hit-path">${path.map((part,i)=>`<span>${esc(part)}</span>${i<path.length-1?'<span aria-hidden="true">›</span>':''}`).join("")}</span>`}
      </button>
      ${isPresentation?`<div class="explore-pres-info">${presBadge}${presLab}${cipButton}</div>`:""}
     </div>
@@ -3800,7 +3804,7 @@ function previewSearchResult(item){
  const activeIngredients=!isGroup(m)&&m.entry_type!=="dci"?splitDci(m.dci||m.parent_dci):[];
  const ingredientEntries=info?.entries?.length?info.entries:activeIngredients.map(name=>({name,dose:"",salt:"",saltDose:""}));
  const activeIngredientsHtml=ingredientEntries.length?`<div class="detail-dci"><span class="detail-dci-label">DCI / substances actives :</span> ${ingredientEntries.map(e=>`<span class="detail-dci-item">${esc(e.name||"")}${e.dose?` — <strong>${esc(e.dose)}</strong>`:""}</span>`).join(" · ")}${ingredientEntries.filter(e=>e.salt||e.saltDose).map(e=>`<div class="ingredient-salt">${esc(e.name||"Substance active")} : ${esc(e.salt||"Sel non précisé")}${e.saltDose?` — ${esc(e.saltDose)}`:""}</div>`).join("")}</div>`:"";
- const headerHtml=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker" style="${entityTreeStyle(m)}color:var(--group-fg)">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche spécialité"}</div><h2 style="${entityTreeStyle(m)}color:var(--group-fg)"><button type="button" class="search-preview-title-link" data-preview-open-title title="Ouvrir la fiche complète" style="color:inherit">${esc(displayMedName(m))}</button></h2><div class="tags"><span class="tag tag-category">${esc(m.category||"Famille à définir")}</span>${formBadge}${indicationTags(m).map(t=>`<span class="tag tag-indication">${esc(t)}</span>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${isMolecule(m)||isSpecialiteFiche(m)?"":practicalBadges(m)}</div>${isMolecule(m)||isSpecialiteFiche(m)?`<div class="memo-preview-vigilance" aria-label="Badges de vigilance"><div class="memo-v67-practical">${memoV67Alerts(m)}</div>${memoReproBadges(m)}</div>`:""}</div>`;
+ const headerHtml=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker" style="${entityTreeStyle(m)}color:var(--group-fg)">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":isVariantFiche(m)?"Variante de présentation":"Fiche spécialité"}</div><h2 style="${entityTreeStyle(m)}color:var(--group-fg)"><button type="button" class="search-preview-title-link" data-preview-open-title title="Ouvrir la fiche complète" style="color:inherit">${esc(displayMedName(m))}</button></h2><div class="tags"><span class="tag tag-category">${esc(m.category||"Famille à définir")}</span>${formBadge}${indicationTags(m).map(t=>`<span class="tag tag-indication">${esc(t)}</span>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${isMolecule(m)||isSpecialiteFiche(m)?"":practicalBadges(m)}</div>${isMolecule(m)||isSpecialiteFiche(m)?`<div class="memo-preview-vigilance" aria-label="Badges de vigilance"><div class="memo-v67-practical">${memoV67Alerts(m)}</div>${memoReproBadges(m)}</div>`:""}</div>`;
  // V109 : analyser séparément le nom, le dosage et la rubrique demandée.
  const queryNorm=norm($('search')?.value||'');
  const queryTokens=queryNorm.split(/\s+/).filter(Boolean);
@@ -4264,7 +4268,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  const activeIngredientsHtml=ingredientEntries.length?`<div class="detail-dci"><span class="detail-dci-label">DCI / substances actives :</span> ${ingredientEntries.map(e=>`<span class="detail-dci-item">${esc(e.name||"")}${e.dose?` — <strong>${esc(e.dose)}</strong>`:""}</span>`).join(" · ")}${ingredientEntries.filter(e=>e.salt||e.saltDose).map(e=>`<div class="ingredient-salt">${esc(e.name||"Substance active")} : ${esc(e.salt||"Sel non précisé")}${e.saltDose?` — ${esc(e.saltDose)}`:""}</div>`).join("")}</div>`:"";
  const formBadge=!isGroup(m)&&presentationForms.length
    ? presentationForms.length===1?`<button type="button" class="tag tag-form" data-fiche-form="${esc(presentationForms[0])}" title="Explorer cette forme">${esc(presentationForms[0])}</button>`:`<span class="tag tag-form">Plusieurs formes</span>`:"";
- $("detail").innerHTML=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker" style="${entityTreeStyle(m)}color:var(--group-fg)">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche spécialité"}</div><h2 style="${entityTreeStyle(m)}color:var(--group-fg)">${esc(displayMedName(m))}</h2><div class="tags"><button type="button" class="tag tag-category" data-fiche-category="${esc(m.category||"")}" title="Explorer cette classe thérapeutique">${esc(m.category||"Famille à définir")}</button>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${isMolecule(m)||isSpecialiteFiche(m)?"":practicalBadges(m)}${ficheDateLabel(m)}</div><div class="header-actions" id="detailPublicActions" style="align-items:flex-end;flex-direction:column"><div class="memo-v67-vigilance">${isMolecule(m)||isSpecialiteFiche(m)?`<div class="memo-v67-practical" id="memo-v67-practical">${memoV67Alerts(m)}</div>`:""}${memoReproBadges(m)}</div>${memoV93StorageBadges(m)}${admin?`<button class="primary" id="editBtn" type="button">Modifier la fiche</button>`:""}</div></div>
+ $("detail").innerHTML=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker" style="${entityTreeStyle(m)}color:var(--group-fg)">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":isVariantFiche(m)?"Variante de présentation":"Fiche spécialité"}</div><h2 style="${entityTreeStyle(m)}color:var(--group-fg)">${esc(displayMedName(m))}</h2><div class="tags"><button type="button" class="tag tag-category" data-fiche-category="${esc(m.category||"")}" title="Explorer cette classe thérapeutique">${esc(m.category||"Famille à définir")}</button>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${isMolecule(m)||isSpecialiteFiche(m)?"":practicalBadges(m)}${ficheDateLabel(m)}</div><div class="header-actions" id="detailPublicActions" style="align-items:flex-end;flex-direction:column"><div class="memo-v67-vigilance">${isMolecule(m)||isSpecialiteFiche(m)?`<div class="memo-v67-practical" id="memo-v67-practical">${memoV67Alerts(m)}</div>`:""}${memoReproBadges(m)}</div>${memoV93StorageBadges(m)}${admin?`<button class="primary" id="editBtn" type="button">Modifier la fiche</button>`:""}</div></div>
  ${alertSection&&String(alertSection.content||"").trim()?`<div class="priority-card priority-alert">${renderPrioritySection(alertSection,targetSectionId)}</div>`:""}
  ${prioritySection&&String(prioritySection.content||"").trim()?`<div class="group-glance">${renderPrioritySection(prioritySection,targetSectionId)}</div>`:""}
  ${adviceSection&&String(adviceSection.content||"").trim()?`<div class="priority-card priority-advice">${renderPrioritySection(adviceSection,targetSectionId)}</div>`:""}
@@ -5372,6 +5376,7 @@ function renderEditor(id){
   target._variantUi={activeId:variantActiveId,subtab:variantSubtab,commercialIndex:variantCommercialIndex};
  };
  variantRender();
+ // Les variantes conservent entry_type='dci' pour rester compatibles avec le schéma Supabase existant.
  function variantAddNew(){
   variantReadAll();const child={id:crypto.randomUUID(),name:m.name,entry_type:'dci',dosage:'',dci:'',parent_dci:'',form:'',category:m.category,presentations:[],status:'à vérifier',updated:'',published:false,sections:[{id:'variant-meta',title:'Métadonnées',type:'text',content:'',enabled:false,moleculeParentId:String(m.id)},...variantSectionCatalog()]};
   variantDrafts.set(String(child.id),child);variantActiveId=String(child.id);variantOpenSection=null;variantCommercialIndex=0;variantRender();
