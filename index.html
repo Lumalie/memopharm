@@ -2636,8 +2636,8 @@ function restoreLocalDraft(){
 // V113 étape 13 — Adaptateur de lecture du futur type Supabase « variant ».
  // Le moteur existant continue à manipuler « dci » en mémoire pour préserver
  // recherche, aperçus, Explorer et éditeur. Aucun changement SQL à cette étape.
-function rowToMed(row){return { _storageEntryType:row.entry_type==="variant"?"variant":null,parent_dci:row.parent_dci||"",presentations:Array.isArray(row.presentations)?row.presentations:[],id:row.id,name:row.name||"",dosage:row.dosage||"",dci:row.dci||"",category:row.category||"Autres",form:row.form||"",aliases:Array.isArray(row.aliases)?row.aliases.join(", "):(row.aliases||""),entry_type:row.entry_type==="variant"?"dci":(row.entry_type||"specialite"),status:row.review_status||"À vérifier",updated:row.verified_at||"",modifiedAt:row.updated_at||"",source:row.source_url||"",sections:Array.isArray(row.sections)?row.sections:clone(DEFAULT_SECTIONS),published:row.status==="published"}}
-function medToRow(m){return {parent_dci:m.entry_type==="dci"?null:(m.parent_dci||null),presentations:m.presentations||[],id:m.id,name:m.name,dosage:m.dosage||null,dci:m.entry_type==="dci"?null:(m.dci||null),entry_type:m._storageEntryType==="variant"?"variant":(m.entry_type||"specialite"),category:m.category||"Autres",form:m.form||null,aliases:String(m.aliases||"").split(",").map(x=>x.trim()).filter(Boolean),review_status:m.status||"À vérifier",verified_at:m.updated||null,source_url:m.source||null,sections:(m.sections||[]).map(({imageData,...section})=>section),status:m.published?"published":"draft"}}
+function rowToMed(row){return {parent_dci:row.parent_dci||"",presentations:Array.isArray(row.presentations)?row.presentations:[],id:row.id,name:row.name||"",dosage:row.dosage||"",dci:row.dci||"",category:row.category||"Autres",form:row.form||"",aliases:Array.isArray(row.aliases)?row.aliases.join(", "):(row.aliases||""),entry_type:row.entry_type||"specialite",status:row.review_status||"À vérifier",updated:row.verified_at||"",modifiedAt:row.updated_at||"",source:row.source_url||"",sections:Array.isArray(row.sections)?row.sections:clone(DEFAULT_SECTIONS),published:row.status==="published"}}
+function medToRow(m){return {parent_dci:m.entry_type==="dci"||m.entry_type==="variant"?null:(m.parent_dci||null),presentations:m.presentations||[],id:m.id,name:m.name,dosage:m.dosage||null,dci:m.entry_type==="dci"||m.entry_type==="variant"?null:(m.dci||null),entry_type:m.entry_type||"specialite",category:m.category||"Autres",form:m.form||null,aliases:String(m.aliases||"").split(",").map(x=>x.trim()).filter(Boolean),review_status:m.status||"À vérifier",verified_at:m.updated||null,source_url:m.source||null,sections:(m.sections||[]).map(({imageData,...section})=>section),status:m.published?"published":"draft"}}
 async function loadCloudMeds(){
  const {data,error}=await supabaseClient.from("medications").select("*").order("name");
  if(error){console.error(error);toast("Impossible de charger les fiches : vérifie la configuration SQL");return}
@@ -2786,11 +2786,10 @@ function showView(view){
 function hierarchyMeta(m){return (m.sections||[]).find(s=>s.memofficineKind||s.memofficineParentGroup)||(m.sections||[]).find(s=>s.id==="indications")||(m.sections||[])[0]||{}}
 function isMolecule(m){return !isGroup(m)&&!!m.sections?.[0]?.moleculeRoot}
 function isSpecialiteFiche(m){return !isGroup(m)&&!isMolecule(m)&&hierarchyMeta(m).memofficineKind!=="conseil"&&m.entry_type==="specialite"}
-// Les variantes SQL « variant » sont temporairement normalisées en « dci »
-// par rowToMed ; ce prédicat centralise leur identification dans l'interface.
-// La présence du rattachement à la molécule évite de confondre les fiches parentes.
-function isDosageRecord(m){return !isGroup(m)&&!isMolecule(m)&&hierarchyMeta(m).memofficineKind!=="conseil"&&m.entry_type==="dci"}
+// Les variantes sont désormais un type autonome dans Supabase et en mémoire.
+function isDosageRecord(m){return !isGroup(m)&&!isMolecule(m)&&hierarchyMeta(m).memofficineKind!=="conseil"&&m.entry_type==="variant"}
 function isVariantFiche(m){return isDosageRecord(m)&&!!moleculeParentId(m)}
+function isContentFicheType(m){return m.entry_type==="dci"||m.entry_type==="variant"||m.entry_type==="specialite"}
 function moleculeParentId(m){return m.sections?.[0]?.moleculeParentId||""}
 function moleculeChildren(m){return publicMeds().filter(x=>!isGroup(x)&&moleculeParentId(x)===String(m.id)).sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),'fr'))}
 function moleculeDosageColumns(children){
@@ -2966,7 +2965,7 @@ function openExplorerResult(event,button,presentationIndex=null,sectionId=null){
 }
 function medicationForms(m){
  const presentationForms=(m.presentations||[]).map(p=>String(p.form||"").trim()).filter(Boolean);
- const dciForm=m.entry_type==="dci"&&!isGroup(m)?String(m.sections?.[0]?.dciForm||m.form||"").trim():"";
+ const dciForm=(m.entry_type==="dci"||m.entry_type==="variant")&&!isGroup(m)?String(m.sections?.[0]?.dciForm||m.form||"").trim():"";
  return [...new Set([...presentationForms,...(dciForm?[dciForm]:[])])];
 }
 const exploreExpandedGroups=new Set();
@@ -3157,7 +3156,7 @@ function renderExplorer(){
   }
   // Trier les résultats par type de fiche et adapter la priorité à l'intention.
   const q=norm(query).trim();
-  const categoryOf=g=>isGroup(g.med)?"groups":g.med.entry_type==="dci"?"dci":g.med.entry_type==="specialite"?"specialties":"medications";
+  const categoryOf=g=>isGroup(g.med)?"groups":(g.med.entry_type==="dci"||g.med.entry_type==="variant")?"dci":g.med.entry_type==="specialite"?"specialties":"medications";
   const nameOf=g=>norm(g.med.name||"");
   const scoreOf=g=>{
    const n=nameOf(g);
@@ -3248,7 +3247,7 @@ function renderExplorer(){
    const presLab=""; // Le laboratoire du générique est intégré au titre.
    const presBadge=princeps?'<span class="explore-pres-princeps">Princeps</span>':"";
    const cipButton=cipBadges(p);
-   const showSectionContent=!!sec&&(m.entry_type==="dci"||m.entry_type==="specialite")&&!group;
+   const showSectionContent=!!sec&&isContentFicheType(m)&&!group;
    const preview=showSectionContent?`<div class="explore-preview-direct"><button type="button" class="explore-preview-link" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec.id)}" aria-label="Ouvrir ${esc(sec.title)} dans la fiche ${esc(m.name)}"><span class="explore-preview-title">↳ ${esc(sec.title)}</span> <span aria-hidden="true">↗</span></button>${searchSectionPreview(resolveSharedSection(m,sec))}</div>`:"";
    if(group){
     const tags=`${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}`;
@@ -3368,7 +3367,7 @@ function renderExplorer(){
   const ancestorMeds=[...ancestors].map(id=>visibleById.get(id)).filter(Boolean);
   const inheritedClasses=new Set(ancestorMeds.flatMap(x=>explorerClasses(x).filter(t=>explorerClassVisible(x,t)).map(norm)));
   const inheritedIndications=new Set(ancestorMeds.flatMap(x=>indicationTags(x).filter(t=>!((x.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(norm)));
-  const inheritedForms=new Set(ancestorMeds.flatMap(x=>((x.entry_type==="dci"?explorerBadgeVisible(x,"forms"):true)?medicationForms(x):[]).map(norm)));
+  const inheritedForms=new Set(ancestorMeds.flatMap(x=>(((x.entry_type==="dci"||x.entry_type==="variant")?explorerBadgeVisible(x,"forms"):true)?medicationForms(x):[]).map(norm)));
   const kids=isGroup(m)||isMolecule(m)?childrenOf(m.id):[];
   const forms=medicationForms(m);
   const isMatch=filtered.some(x=>x.id===m.id);
@@ -3388,7 +3387,7 @@ function renderExplorer(){
     
    </div>
    ${specialtyPresentations.length>1?`<div class="explore-tree-presentations">${specialtyPresentations.map(({p,i})=>`<button type="button" class="explore-tree-presentation" data-open-med="${esc(m.id)}" data-open-pres="${i}"><span aria-hidden="true">↳</span> ${esc(presentationTitle(p))}${p.presentationKind==="princeps"?'<span class="explore-pres-princeps-inline">Princeps</span>':""}</button>`).join("")}</div>`:""}
-   ${isMatch?`<div class="explore-tree-tags">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)&&!inheritedClasses.has(norm(t))).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)&&!inheritedIndications.has(norm(t))).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}${((m.entry_type==="dci"?explorerBadgeVisible(m,"forms"):true)?forms:[]).filter(t=>!inheritedForms.has(norm(t))).map(t=>`<button type="button" class="badge-button badge-form" data-filter-form="${esc(t)}">${esc(t)}</button>`).join("")}</div>`:""}
+   ${isMatch?`<div class="explore-tree-tags">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)&&!inheritedClasses.has(norm(t))).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)&&!inheritedIndications.has(norm(t))).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}${(((m.entry_type==="dci"||m.entry_type==="variant")?explorerBadgeVisible(m,"forms"):true)?forms:[]).filter(t=>!inheritedForms.has(norm(t))).map(t=>`<button type="button" class="badge-button badge-form" data-filter-form="${esc(t)}">${esc(t)}</button>`).join("")}</div>`:""}
    ${kids.length?`<div class="explore-tree-children" id="tree-children-${esc(m.id)}" ${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)?"":"hidden"}>${kids.map(child=>renderNode(child,depth+1,next)).join("")}</div>`:""}
   </div>`;
  };
@@ -3667,7 +3666,7 @@ function previewSearchResult(item){
  const formBadge=!isGroup(m)&&presentationForms.length
   ?presentationForms.length===1?`<span class="tag tag-form">${esc(presentationForms[0])}</span>`:`<span class="tag tag-form">Plusieurs formes</span>`:"";
  const info=ingredientInfo(m);
- const activeIngredients=!isGroup(m)&&m.entry_type!=="dci"?splitDci(m.dci||m.parent_dci):[];
+ const activeIngredients=!isGroup(m)&&m.entry_type!=="dci"&&m.entry_type!=="variant"?splitDci(m.dci||m.parent_dci):[];
  const ingredientEntries=info?.entries?.length?info.entries:activeIngredients.map(name=>({name,dose:"",salt:"",saltDose:""}));
  const activeIngredientsHtml=ingredientEntries.length?`<div class="detail-dci"><span class="detail-dci-label">DCI / substances actives :</span> ${ingredientEntries.map(e=>`<span class="detail-dci-item">${esc(e.name||"")}${e.dose?` — <strong>${esc(e.dose)}</strong>`:""}</span>`).join(" · ")}${ingredientEntries.filter(e=>e.salt||e.saltDose).map(e=>`<div class="ingredient-salt">${esc(e.name||"Substance active")} : ${esc(e.salt||"Sel non précisé")}${e.saltDose?` — ${esc(e.saltDose)}`:""}</div>`).join("")}</div>`:"";
  const headerHtml=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker" style="${entityTreeStyle(m)}color:var(--group-fg)">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":isVariantFiche(m)?"Variante de présentation":"Fiche spécialité"}</div><h2 style="${entityTreeStyle(m)}color:var(--group-fg)"><button type="button" class="search-preview-title-link" data-preview-open-title title="Ouvrir la fiche complète" style="color:inherit">${esc(displayMedName(m))}</button></h2><div class="tags"><span class="tag tag-category">${esc(m.category||"Famille à définir")}</span>${formBadge}${indicationTags(m).map(t=>`<span class="tag tag-indication">${esc(t)}</span>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${isMolecule(m)||isSpecialiteFiche(m)?"":practicalBadges(m)}</div>${isMolecule(m)||isSpecialiteFiche(m)?`<div class="memo-preview-vigilance" aria-label="Badges de vigilance"><div class="memo-v67-practical">${memoV67Alerts(m)}</div>${memoReproBadges(m)}</div>`:""}</div>`;
@@ -3813,11 +3812,11 @@ function renderResults(){
   const mergedCip=item.mergedPresentationIndexes?.length?
    [...new Map(item.mergedPresentationIndexes.flatMap(i=>cipConditionnements(m.presentations?.[i]||{})).filter(c=>c.cip).map(c=>[String(c.cip),c])).values()]
     .map(c=>cipBadges({showCip:true,cip:c.cip,cipBoxes:[c]})).join(""):"";
-  const dciBadges=m.entry_type==="dci"&&!isPresentation?`<div class="result-dci-badges">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<span class="badge-button badge-class">${esc(t)}</span>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<span class="badge-button badge-indication">${esc(t)}</span>`).join("")}</div>`:"";
-  const sectionDetail=sec&&(m.entry_type==="dci"||m.entry_type==="specialite")&&!isPresentation?`<div class="result-section-direct"><span class="result-section-title">↳ ${esc(sec.title)}</span></div>`:"";
+  const dciBadges=(m.entry_type==="dci"||m.entry_type==="variant")&&!isPresentation?`<div class="result-dci-badges">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<span class="badge-button badge-class">${esc(t)}</span>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<span class="badge-button badge-indication">${esc(t)}</span>`).join("")}</div>`:"";
+  const sectionDetail=sec&&isContentFicheType(m)&&!isPresentation?`<div class="result-section-direct"><span class="result-section-title">↳ ${esc(sec.title)}</span></div>`:"";
   return `<div class="result result-${kind}" role="option" aria-selected="false" tabindex="-1" data-id="${esc(m.id)}" data-section="${esc(sec?.id||'')}" data-presentation="${item.presentation===null?'':item.presentation}">
    <strong><span class="result-dot" aria-hidden="true">●</span>${esc(isPresentation?presentationTitle:name)}<span class="result-arrow" aria-hidden="true">↗</span></strong>
-   ${isPresentation?`<div class="result-presentation-info">${badge}${cip}</div>`:mergedCip?`<div class="result-presentation-info memo-v106-merged-cip">${mergedCip}</div>`:m.entry_type==="dci"?dciBadges:group?"":`<div class="sub">${esc(m.category||"Sans famille")}</div>`}
+   ${isPresentation?`<div class="result-presentation-info">${badge}${cip}</div>`:mergedCip?`<div class="result-presentation-info memo-v106-merged-cip">${mergedCip}</div>`:(m.entry_type==="dci"||m.entry_type==="variant")?dciBadges:group?"":`<div class="sub">${esc(m.category||"Sans famille")}</div>`}
    ${sectionDetail}
   </div>`;
  }).join(''):'<div class="empty">Aucun résultat. Essaie un autre terme ou change de famille.</div>';
@@ -4114,11 +4113,11 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  const dosageRelated=relatedVisible.filter(x=>isVariantFiche(x)&&
    (descendants.has(String(parentGroupId(x)))||moleculeIds.has(String(moleculeParentId(x)))));
  const standaloneDosages=dosageRelated.filter(x=>!moleculeIds.has(String(moleculeParentId(x)))).sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),'fr',{numeric:true}));
- const specialtyRelated=allRelated.filter(x=>!isGroup(x)&&!isMolecule(x)&&x.entry_type!=='dci').sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),'fr'));
+ const specialtyRelated=allRelated.filter(x=>isSpecialiteFiche(x)).sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),'fr'));
  const children=[...moleculeRelated,...dosageRelated,...specialtyRelated];
  const hasSourcesSection=sections.some(s=>s.id==="sources"||/sources\s+et\s+mise\s+[àa]\s+jour/i.test(s.title||""));
  const presentationForms=medicationForms(m);
- const activeIngredients=!isGroup(m)&&m.entry_type!=="dci"?splitDci(m.dci||m.parent_dci):[];
+ const activeIngredients=!isGroup(m)&&m.entry_type!=="dci"&&m.entry_type!=="variant"?splitDci(m.dci||m.parent_dci):[];
  const info=ingredientInfo(m);
  const ingredientEntries=info?.entries?.length?info.entries:activeIngredients.map(name=>({name,dose:"",salt:"",saltDose:""}));
  const activeIngredientsHtml=ingredientEntries.length?`<div class="detail-dci"><span class="detail-dci-label">DCI / substances actives :</span> ${ingredientEntries.map(e=>`<span class="detail-dci-item">${esc(e.name||"")}${e.dose?` — <strong>${esc(e.dose)}</strong>`:""}</span>`).join(" · ")}${ingredientEntries.filter(e=>e.salt||e.saltDose).map(e=>`<div class="ingredient-salt">${esc(e.name||"Substance active")} : ${esc(e.salt||"Sel non précisé")}${e.saltDose?` — ${esc(e.saltDose)}`:""}</div>`).join("")}</div>`:"";
@@ -4128,7 +4127,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  ${alertSection&&String(alertSection.content||"").trim()?`<div class="priority-card priority-alert">${renderPrioritySection(alertSection,targetSectionId)}</div>`:""}
  ${prioritySection&&String(prioritySection.content||"").trim()?`<div class="group-glance">${renderPrioritySection(prioritySection,targetSectionId)}</div>`:""}
  ${adviceSection&&String(adviceSection.content||"").trim()?`<div class="priority-card priority-advice">${renderPrioritySection(adviceSection,targetSectionId)}</div>`:""}
- ${m.entry_type==="dci"&&!isGroup(m)&&(m.sections?.[0]?.princepsNames||[]).length?`<div class="callout"><strong>Princeps :</strong> ${m.sections[0].princepsNames.map(n=>`<span class="princeps-name">${esc(n)}</span>`).join(", ")}</div>`:""}
+ ${(m.entry_type==="dci"||m.entry_type==="variant")&&!isGroup(m)&&(m.sections?.[0]?.princepsNames||[]).length?`<div class="callout"><strong>Princeps :</strong> ${m.sections[0].princepsNames.map(n=>`<span class="princeps-name">${esc(n)}</span>`).join(", ")}</div>`:""}
 
  ${isGroup(m)&& (subgroups.length||children.length)?`<div class="group-associations"><div class="group-members"><h3>Fiches associées</h3>
  ${subgroups.length?`<div class="associated-section"><h4>Sous-groupes (${subgroups.length})</h4><div class="associated-items">${subgroups.map(g=>`<button class="associated-item associated-group" style="${entityTreeStyle(g)}" type="button" data-group-open="${esc(g.id)}">${esc(g.name)} <span aria-hidden="true">↗</span></button>`).join("")}</div></div>`:""}
@@ -5259,7 +5258,7 @@ function renderEditor(id){
  variantRender();
  // Les variantes restent de type « dci » en mémoire ; Supabase stocke « variant ».
  function variantAddNew(){
-  variantReadAll();const child={id:crypto.randomUUID(),name:m.name,entry_type:'dci',_storageEntryType:'variant',dosage:'',dci:'',parent_dci:'',form:'',category:m.category,presentations:[],status:'à vérifier',updated:'',published:false,sections:[{id:'variant-meta',title:'Métadonnées',type:'text',content:'',enabled:false,moleculeParentId:String(m.id)},...variantSectionCatalog()]};
+  variantReadAll();const child={id:crypto.randomUUID(),name:m.name,entry_type:'variant',dosage:'',dci:'',parent_dci:'',form:'',category:m.category,presentations:[],status:'à vérifier',updated:'',published:false,sections:[{id:'variant-meta',title:'Métadonnées',type:'text',content:'',enabled:false,moleculeParentId:String(m.id)},...variantSectionCatalog()]};
   variantDrafts.set(String(child.id),child);variantActiveId=String(child.id);variantOpenSection=null;variantCommercialIndex=0;variantRender();
   variantRoot.querySelector('[data-variant-form]')?.focus();
  };
@@ -5615,8 +5614,7 @@ function prepareMoleculeVariants(m){
   if(!child.sections.length)child.sections=[{id:'variant-meta',title:'Métadonnées',type:'text',content:'',enabled:false}];
   child.sections[0].moleculeParentId=String(m.id);
   child.sections[0].dciForm=child.form;
-  child.entry_type='dci'; // Représentation interne conservée jusqu'au retrait de l'adaptateur.
-  child._storageEntryType='variant'; // Enregistrer les variantes avec le type SQL dédié.
+  child.entry_type='variant'; // Type unique en mémoire et dans Supabase.
   child.name=m.name+' '+child.dosage;
   child.category=m.category;
   child.published=Boolean(m.published); // Même visibilité que la molécule.
