@@ -1809,6 +1809,16 @@ body.header-search-active #headerSearchSlot .search-suggestions .results{max-hei
 #detail #detailPublicActions{align-items:flex-end!important;text-align:right}
 #detail #detailPublicActions .memo-v67-vigilance{justify-content:flex-end}
 #detail #detailPublicActions .memo-v93-storage-row{justify-content:flex-end;margin-left:auto;margin-right:0}
+
+/* V96 — photographie au niveau des CIP, sans éloigner le texte */
+#detail .memo-v92-specialty-presentations .memo-v90-commercial{position:relative;padding-right:300px;min-height:190px}
+#detail .memo-v92-specialty-presentations .memo-v90-commercial .presentation-v33-layout.has-photo{display:block!important}
+#detail .memo-v92-specialty-presentations .memo-v90-commercial .presentation-v33-fields{width:100%!important;max-width:100%!important;flex:auto!important}
+#detail .memo-v92-specialty-presentations .memo-v90-commercial .presentation-v33-photo.memo-v52-gallery{position:absolute!important;top:0!important;right:0!important;margin:0!important;width:280px!important;max-width:280px!important}
+@media(max-width:700px){
+ #detail .memo-v92-specialty-presentations .memo-v90-commercial{padding-right:0;min-height:0}
+ #detail .memo-v92-specialty-presentations .memo-v90-commercial .presentation-v33-photo.memo-v52-gallery{position:static!important;margin:12px 0 0!important;width:auto!important;max-width:100%!important}
+}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -3729,6 +3739,32 @@ function memoV85WireSpecialty(m,targetIndex=null){
  refresh();
  if(targetIndex!==null)requestAnimationFrame(()=>section.scrollIntoView({behavior:"smooth",block:"start"}));
 }
+const MEMO_V96_DETAILS_PREFIX="memopharm-v96-accordions:";
+function memoV96DetailsKey(id){return MEMO_V96_DETAILS_PREFIX+String(id)}
+function memoV96RestoreDetails(id,root){
+ try{
+  const raw=sessionStorage.getItem(memoV96DetailsKey(id));
+  if(!raw)return;
+  const state=JSON.parse(raw);
+  root.querySelectorAll("details").forEach((node,index)=>{
+   const key=node.id||"index:"+index;
+   if(Object.prototype.hasOwnProperty.call(state,key))node.open=!!state[key];
+  });
+ }catch(_){}
+}
+function memoV96SaveDetails(id,root){
+ if(!id||!root)return;
+ try{
+  const state={};
+  root.querySelectorAll("details").forEach((node,index)=>{state[node.id||"index:"+index]=node.open});
+  sessionStorage.setItem(memoV96DetailsKey(id),JSON.stringify(state));
+ }catch(_){}
+}
+document.addEventListener("toggle",event=>{
+ const root=document.getElementById("detail");
+ if(!root||!root.contains(event.target)||event.target.tagName!=="DETAILS"||!selectedId)return;
+ memoV96SaveDetails(selectedId,root);
+},true);
 function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  editorId=null;
  const m=meds.find(x=>x.id===selectedId);
@@ -3787,9 +3823,10 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
 
 
  ${!isSpecialiteFiche(m)&&!isGroup(m)&&!isMolecule(m)?renderPresentations(m):""}
- ${isMolecule(m)&&moleculeDosages.length?`<details class="molecule-general" id="molecule-general" ${targetSectionId?"open":""}><summary>📖 Informations générales</summary><div class="molecule-general-inner">${displaySections.map(s=>renderSection(s,targetSectionId)).join("")}</div></details>`:isSpecialiteFiche(m)?`<details class="molecule-general memo-v92-specialty-general" id="molecule-general" ${targetSectionId?"open":""}><summary>📖 Informations générales</summary><div class="molecule-general-inner memo-v85-specialty-rubrics">${displaySections.length>1?`<div class="memo-v74-rubric-tools"><span>Rubriques · ${displaySections.length}</span><div><button type="button" data-v85-expand="all">Tout déplier</button><button type="button" data-v85-expand="none">Tout replier</button></div></div>`:""}${displaySections.map((s,i)=>`<details class="memo-v74-rubric" ${i===0||s.id===targetSectionId?"open":""}><summary>${esc(s.title||"Information")}<span class="memo-v74-chevron" aria-hidden="true"></span></summary><div class="memo-v74-rubric-content">${renderSection(s,targetSectionId)}</div></details>`).join("")}</div></details>${memoV90SpecialtyPresentations(m)}`:displaySections.map(s=>renderSection(s,targetSectionId)).join("")}
+ ${isMolecule(m)&&moleculeDosages.length?`<details class="molecule-general" id="molecule-general" ${targetSectionId?"open":""}><summary>📖 Informations générales</summary><div class="molecule-general-inner">${displaySections.map(s=>renderSection(s,targetSectionId)).join("")}</div></details>`:isSpecialiteFiche(m)?`<details class="molecule-general memo-v92-specialty-general" id="molecule-general" ${targetSectionId?"open":""}><summary>📖 Informations générales</summary><div class="molecule-general-inner memo-v85-specialty-rubrics">${displaySections.map((s,i)=>`<details class="memo-v74-rubric" open><summary>${esc(s.title||"Information")}<span class="memo-v74-chevron" aria-hidden="true"></span></summary><div class="memo-v74-rubric-content">${renderSection(s,targetSectionId)}</div></details>`).join("")}</div></details>${memoV90SpecialtyPresentations(m)}`:displaySections.map(s=>renderSection(s,targetSectionId)).join("")}
   ${isMolecule(m)&&moleculeDosages.length?`<section class="molecule-tabs" id="molecule-tabs" aria-label="Présentations"><div class="molecule-tabs-inner"><div class="molecule-tab-strip molecule-form-strip" role="tablist" aria-label="Formes pharmaceutiques de ${esc(displayMedName(m))}"></div><div class="molecule-tab-strip molecule-dose-strip" role="tablist" aria-label="Dosages disponibles"></div><div class="molecule-tab-strip molecule-pack-strip" role="tablist" aria-label="Conditionnements disponibles"></div><div class="molecule-tab-content" id="molecule-tab-content"></div></div></section>`:""}
 `;
+ memoV96RestoreDetails(m.id,$("detail"));
  const memoExternalSources=$("memo-combined-sources-slot");
  if(memoExternalSources){memoExternalSources.innerHTML=ficheCombinedSources(m,documentationSections);memoExternalSources.classList.toggle("hidden",!memoExternalSources.innerHTML.trim());}
  memoLinkifyCips($("detail"));
