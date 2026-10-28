@@ -4110,8 +4110,8 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  // Fiches molécules appartenant au groupe ou à l'un de ses sous-groupes.
  const moleculeRelated=allRelated.filter(isMolecule).sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),'fr',{sensitivity:"base"}));
  const moleculeIds=new Set(moleculeRelated.map(x=>String(x.id)));
- // Les fiches dosage/forme liées apparaissent sous leur molécule, jamais en double.
- const dosageRelated=relatedVisible.filter(x=>!isGroup(x)&&!isMolecule(x)&&x.entry_type==='dci'&&
+ // Les variantes liées apparaissent sous leur molécule, jamais en double.
+ const dosageRelated=relatedVisible.filter(x=>isVariantFiche(x)&&
    (descendants.has(String(parentGroupId(x)))||moleculeIds.has(String(moleculeParentId(x)))));
  const standaloneDosages=dosageRelated.filter(x=>!moleculeIds.has(String(moleculeParentId(x)))).sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),'fr',{numeric:true}));
  const specialtyRelated=allRelated.filter(x=>!isGroup(x)&&!isMolecule(x)&&x.entry_type!=='dci').sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),'fr'));
