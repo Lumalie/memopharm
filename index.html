@@ -2377,7 +2377,9 @@ function indicationTags(m){
 // V72 : les anciennes fiches dosage/forme restent en base et accessibles par lien direct
 // ou dans les archives administrateur, mais ne sont plus des résultats autonomes.
 function memoLegacyDosage(m){return isDosageFiche(m)}
-function publicMeds(){return meds.filter(m=>!isSourcesRecord(m)&&!memoLegacyDosage(m)&&(admin||m.published))}
+// V73 : conserver les fiches dosage dans les données internes : les onglets de la molécule en dépendent.
+function publicMeds(){return meds.filter(m=>!isSourcesRecord(m)&&(admin||m.published))}
+function visibleStandaloneMeds(){return publicMeds().filter(m=>!memoLegacyDosage(m))}
 function specialtyItems(m){
  return (m.presentations||[]).map((p,i)=>({p,i,name:(p.name||m.name||"").trim()})).filter(x=>x.name);
 }
@@ -2580,7 +2582,7 @@ function memoRenderThemeList(entries,kind){
  return true;
 }
 function renderExplorer(){
- const entries=publicMeds();
+ const entries=visibleStandaloneMeds();
  const classes=[...new Set(entries.flatMap(explorerClasses).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"fr"));
  const indications=[...new Set(entries.flatMap(indicationTags))].sort((a,b)=>a.localeCompare(b,"fr"));
  const forms=[...new Set(entries.flatMap(medicationForms))].sort((a,b)=>a.localeCompare(b,"fr",{sensitivity:"base"}));
@@ -2986,7 +2988,7 @@ function getSearchMatches(queryOverride=null){
  const synonyms={oubli:["oubli","oublie","oubliee"],prise:["prise","repas","jeun","manger"],interactions:["interaction","association"],conservation:["conservation","conserver","frigo"],posologie:["posologie","dose"],ecrasement:["ecraser","broyer","piler","ecrasement"]};
  const fieldMatch=(t,sec)=>norm(sec.id+" "+sec.title+" "+sec.content).includes(t)||Object.entries(synonyms).some(([key,terms])=>terms.includes(t)&&norm(sec.id+" "+sec.title).includes(key));
  const found=[];
- publicMeds().forEach(m=>{
+ visibleStandaloneMeds().forEach(m=>{
   const base=norm([m.name,m.dosage,m.dci,m.parent_dci,m.category,m.aliases,...indicationTags(m),...explorerClasses(m),...medicationForms(m),...(isGroup(m)?["fiche groupe","groupe therapeutique","famille de medicaments"]:[])].join(" "));
   const presentations=specialtyItems(m);
   const presText=x=>norm([x.name,x.p.dosage,x.p.lab,x.p.lab?"laboratoire":"",x.p.form,x.p.cip,...cipConditionnements(x.p).flatMap(c=>[c.cip,c.pack]),cipConditionnements(x.p).length?"cip":"",x.p.cis,x.p.cis?"cis":"",x.p.description,x.p.marking].join(" "));
@@ -3387,7 +3389,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  const moleculeRelated=allRelated.filter(isMolecule).sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),'fr',{sensitivity:"base"}));
  const moleculeIds=new Set(moleculeRelated.map(x=>String(x.id)));
  // Les fiches dosage/forme liées apparaissent sous leur molécule, jamais en double.
- const dosageRelated=relatedVisible.filter(x=>!memoLegacyDosage(x)&&!isGroup(x)&&!isMolecule(x)&&x.entry_type==='dci'&&
+ const dosageRelated=relatedVisible.filter(x=>!isGroup(x)&&!isMolecule(x)&&x.entry_type==='dci'&&
    (descendants.has(String(parentGroupId(x)))||moleculeIds.has(String(moleculeParentId(x)))));
  const standaloneDosages=dosageRelated.filter(x=>!moleculeIds.has(String(moleculeParentId(x)))).sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),'fr',{numeric:true}));
  const specialtyRelated=allRelated.filter(x=>!isGroup(x)&&!isMolecule(x)&&x.entry_type!=='dci').sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),'fr'));
