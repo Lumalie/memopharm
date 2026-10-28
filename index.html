@@ -2444,6 +2444,9 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
 #modalRoot .modalback{z-index:1}
 #modalRoot .modal{position:relative;z-index:2}
 #molecule-presentations{scroll-margin-top:16px}
+/* V114.4 — Les badges de l’aperçu gardent le comportement des fiches. */
+#searchPreview .tag[data-filter-ind]{cursor:pointer;font:inherit}
+#searchPreview .tag[data-filter-ind]:hover{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -3028,7 +3031,7 @@ function searchPresentationLine(m,p,i,child=false){
  const title=[full,...(dose&&!norm(full).includes(norm(dose))?[dose]:[]),...(form&&!norm(full).includes(norm(form))?[form]:[])].filter(Boolean).join(' · ');
  const princeps=p.presentationKind==='princeps'?'<span class="explore-pres-princeps">Princeps</span>':'';
  const cip=cipBadges(p);
- const badges=explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<span class="badge-button badge-class">${esc(t)}</span>`).join('')+indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<span class="badge-button badge-indication">${esc(t)}</span>`).join('');
+ const badges=explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join('')+indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join('');
  return `<div class="search-pres-direct ${child?'search-pres-child':''}"><button type="button" class="search-pres-title" data-open-med="${esc(m.id)}" data-hit-pres="${i}" aria-label="Ouvrir ${esc(title)}"><span aria-hidden="true">●</span> ${esc(title)} <span aria-hidden="true">↗</span></button><div class="search-pres-details">${princeps}${cip}${badges?`<div class="search-pres-badges">${badges}</div>`:''}</div></div>`;
 }
 let explorerVisibleLimit=20;
@@ -3234,7 +3237,7 @@ function renderExplorer(){
      if(child.entry_type==="specialite"&&presentations.length){
       return `<div class="explore-search-child explore-search-child-med explore-search-child-specialty">${presentations.map(({p,i})=>searchPresentationLine(child,p,i,true)).join("")}</div>`;
      }
-     const badges=explorerClasses(child).filter(t=>explorerClassVisible(child,t)).map(t=>`<span class="badge-button badge-class">${esc(t)}</span>`).join("")+indicationTags(child).map(t=>`<span class="badge-button badge-indication">${esc(t)}</span>`).join("");
+     const badges=explorerClasses(child).filter(t=>explorerClassVisible(child,t)).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")+indicationTags(child).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("");
      return `<div class="explore-search-child explore-search-child-med ${isMolecule(child)?"explore-result-molecule":isVariantFiche(child)?"explore-result-dose":isSpecialiteFiche(child)?"explore-result-specialite":"explore-result-presentation"}"><div class="explore-search-child-line"><span class="explore-search-child-spacer" aria-hidden="true"></span><button type="button" class="explore-search-child-link" data-open-med="${esc(child.id)}">● ${esc(displayMedName(child))} ↗</button></div>${badges?`<div class="search-pres-badges">${badges}</div>`:''}</div>`;
     }
     return `<div class="explore-search-child ${isGroup(child)?"explore-search-child-group":"explore-search-child-med"}">
@@ -3544,6 +3547,15 @@ window.addEventListener("popstate",e=>{if(restorePreviewHistory(e.state))return;
 function toast(msg){$("toastRoot").innerHTML='<div class="toast">'+esc(msg)+'</div>';setTimeout(()=>{$("toastRoot").innerHTML=""},2600)}
 function categories(){return ["Toutes",...new Set(meds.filter(m=>!isSourcesRecord(m)).map(m=>m.category).filter(Boolean).sort((a,b)=>a.localeCompare(b,"fr")))]}
 function renderFilters(){ $("filters").innerHTML=categories().map(c=>`<button data-cat="${esc(c)}" class="${c===activeCategory?'active':''}">${esc(c)}</button>`).join("");$("filters").querySelectorAll("button").forEach(b=>b.onclick=()=>{activeCategory=b.dataset.cat;renderFilters();renderResults()})}
+function memoSearchTokenMatch(text,token){
+ const hay=norm(text),t=norm(token);
+ if(hay.includes(t))return true;
+ if(/^\\d+$/.test(t)&&t.length<=3){
+  const escaped=t.replace(/[.*+?^${}()|[\\]\\]/g,"\\$&");
+  return new RegExp("(?:^|[^0-9])"+escaped+"[0-9]+(?:[^0-9]|$)").test(hay);
+ }
+ return false;
+}
 function getSearchMatches(queryOverride=null){
  const q=norm(queryOverride===null?$("search").value.trim():queryOverride);
  const tokens=q.split(/\s+/).filter(Boolean);
@@ -3565,7 +3577,7 @@ function getSearchMatches(queryOverride=null){
   const childText=norm(childEntries.map(c=>[c.name,c.dosage,c.form,ingredientTitleDose(c),...medicationForms(c),...(c.sections||[]).map(sec=>sec.id+" "+sec.title+" "+sec.content)].join(" ")).join(" "));
   const combined=norm([base,...presentations.map(presText),secText,childText].join(" "));
   if(!tokens.length){found.push({med:m,section:null,presentation:null});return}
-  if(!tokens.every(t=>combined.includes(t)||sections.some(sec=>fieldMatch(t,sec))||
+  if(!tokens.every(t=>memoSearchTokenMatch(combined,t)||sections.some(sec=>fieldMatch(t,sec))||
    (t==="poso"&&combined.includes("posologie"))))return;
   const matchingSections=sections.filter(sec=>{
    const st=norm(sec.id+" "+sec.title+" "+sec.content);
@@ -3574,7 +3586,7 @@ function getSearchMatches(queryOverride=null){
   // Chaque présentation doit satisfaire elle-même les termes spécifiques :
   // ne pas associer artificiellement un dosage d'une présentation au CIP d'une autre.
   const presentationMatches=x=>tokens.every(t=>
-   base.includes(t)||secText.includes(t)||presText(x).includes(t)||
+   memoSearchTokenMatch(base,t)||memoSearchTokenMatch(secText,t)||memoSearchTokenMatch(presText(x),t)||
    sections.some(sec=>fieldMatch(t,sec))
   )&&tokens.every(t=>
    t!=="cip"&&t!=="cis"||
@@ -3586,8 +3598,8 @@ function getSearchMatches(queryOverride=null){
   // En recherche libre, montrer à la fois la fiche mère (DCI/médicament)
   // et toutes les présentations pertinentes, y compris celles des fiches DCI.
   // Les fiches sans présentation restent visibles si leur propre texte correspond.
-  const baseMatches=tokens.every(t=>base.includes(t)||secText.includes(t)||sections.some(sec=>fieldMatch(t,sec))||
-   (isMolecule(m)&&(childText.includes(t)||(t==="poso"&&childText.includes("posologie")))));
+  const baseMatches=tokens.every(t=>memoSearchTokenMatch(base,t)||memoSearchTokenMatch(secText,t)||sections.some(sec=>fieldMatch(t,sec))||
+   (isMolecule(m)&&(memoSearchTokenMatch(childText,t)||(t==="poso"&&childText.includes("posologie")))));
   const indexes=[
    ...(baseMatches&&!specificPres?[null]:[]),
    ...matchingPresentations.map(x=>x.i)
@@ -3699,7 +3711,7 @@ function previewSearchResult(item){
  const activeIngredients=!isGroup(m)&&m.entry_type!=="dci"&&m.entry_type!=="variant"?splitDci(m.dci||m.parent_dci):[];
  const ingredientEntries=info?.entries?.length?info.entries:activeIngredients.map(name=>({name,dose:"",salt:"",saltDose:""}));
  const activeIngredientsHtml=ingredientEntries.length?`<div class="detail-dci"><span class="detail-dci-label">DCI / substances actives :</span> ${ingredientEntries.map(e=>`<span class="detail-dci-item">${esc(e.name||"")}${e.dose?` — <strong>${esc(e.dose)}</strong>`:""}</span>`).join(" · ")}${ingredientEntries.filter(e=>e.salt||e.saltDose).map(e=>`<div class="ingredient-salt">${esc(e.name||"Substance active")} : ${esc(e.salt||"Sel non précisé")}${e.saltDose?` — ${esc(e.saltDose)}`:""}</div>`).join("")}</div>`:"";
- const headerHtml=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker" style="${entityTreeStyle(m)}color:var(--group-fg)">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":isVariantFiche(m)?"Variante de présentation":"Fiche spécialité"}</div><h2 style="${entityTreeStyle(m)}color:var(--group-fg)"><button type="button" class="search-preview-title-link" data-preview-open-title title="Ouvrir la fiche complète" style="color:inherit">${esc(displayMedName(m))}</button></h2><div class="tags"><span class="tag tag-category">${esc(m.category||"Famille à définir")}</span>${formBadge}${indicationTags(m).map(t=>`<span class="tag tag-indication">${esc(t)}</span>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${isMolecule(m)||isSpecialiteFiche(m)?"":practicalBadges(m)}</div>${isMolecule(m)||isSpecialiteFiche(m)?`<div class="memo-preview-vigilance" aria-label="Badges de vigilance"><div class="memo-v67-practical">${memoV67Alerts(m)}</div>${memoReproBadges(m)}</div>`:""}</div>`;
+ const headerHtml=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker" style="${entityTreeStyle(m)}color:var(--group-fg)">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":isVariantFiche(m)?"Variante de présentation":"Fiche spécialité"}</div><h2 style="${entityTreeStyle(m)}color:var(--group-fg)"><button type="button" class="search-preview-title-link" data-preview-open-title title="Ouvrir la fiche complète" style="color:inherit">${esc(displayMedName(m))}</button></h2><div class="tags"><span class="tag tag-category">${esc(m.category||"Famille à définir")}</span>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${isMolecule(m)||isSpecialiteFiche(m)?"":practicalBadges(m)}</div>${isMolecule(m)||isSpecialiteFiche(m)?`<div class="memo-preview-vigilance" aria-label="Badges de vigilance"><div class="memo-v67-practical">${memoV67Alerts(m)}</div>${memoReproBadges(m)}</div>`:""}</div>`;
  // V109 : analyser séparément le nom, le dosage et la rubrique demandée.
  const queryNorm=norm($('search')?.value||'');
  const queryTokens=queryNorm.split(/\s+/).filter(Boolean);
@@ -3714,11 +3726,22 @@ function previewSearchResult(item){
  const matchingSection=rubricTokens.length?validSections.find(x=>rubricTokens.every(t=>{const label=norm(x.id+' '+x.title);return label.includes(t)||Object.entries(sectionAliases).some(([key,arr])=>arr.includes(t)&&label.includes(key))})):null;
  const targetSection=matchingSection||sec&&rubricTokens.length?matchingSection||sec:null;
  const dosageTokens=specificTokens.filter(t=>!rubricTokens.includes(t));
- const selectedChild=forcedChild||(doseChildren.length&&dosageTokens.length?doseChildren.find(child=>{
+ const matchingChildren=dosageTokens.length?doseChildren.map(child=>{
+  const dose=norm(String(child.dosage||ingredientTitleDose(child)||''));
   const desc=norm([child.name,child.dosage,child.form,ingredientTitleDose(child),...medicationForms(child)].join(' '));
-  return dosageTokens.every(t=>desc.includes(t)||
-   (t==="500"&&/\b500\s*mg\b/.test(desc)));
- }):null);
+  if(!dosageTokens.every(t=>memoSearchTokenMatch(desc,t)))return null;
+  const score=dosageTokens.reduce((sum,t)=>{
+   if(/^\\d+$/.test(t)){
+    const doseNumbers=dose.match(/\\d+/g)||[];
+    if(doseNumbers.some(n=>n===t))return sum+100;
+    if(doseNumbers.some(n=>n.startsWith(t)))return sum+70;
+    return sum+5;
+   }
+   return sum+(dose.includes(t)?20:2);
+  },0);
+  return {child,score};
+ }).filter(Boolean).sort((a,b)=>b.score-a.score):[];
+ const selectedChild=forcedChild||(matchingChildren[0]?.child||null);
  const childSections=selectedChild?(selectedChild.sections||[]).filter(x=>x.enabled!==false&&!isDocumentationSection(x)&&String(x.content||'').trim()).map(x=>resolveSharedSection(selectedChild,x)):[];
  const childMatch=rubricTokens.length?childSections.find(x=>rubricTokens.every(t=>{const label=norm(x.id+' '+x.title);return label.includes(t)||Object.entries(sectionAliases).some(([key,arr])=>arr.includes(t)&&label.includes(key))})):null;
  const targeted=!!rubricTokens.length;
@@ -3737,15 +3760,15 @@ function previewSearchResult(item){
   const content=targeted?(childMatch?[childMatch]:[]):childSections;
   return `${banner}${presentation}${content.length?`<div class="memo-v109-dose-rubrics">${sectionList(content,m,selectedChild)}</div>`:''}`;
  })():'';
- const previewDosageGroups=isMolecule(m)&&!selectedChild&&!targeted?moleculeDosageColumns(doseChildren):[];
- const previewDosageHtml=previewDosageGroups.length?`<section class="memo-v77-overview" aria-label="Formes et dosages disponibles"><div class="group-kicker memo-v77-heading" style="color:#ad6c50">FORMES ET DOSAGES DISPONIBLES</div>${previewDosageGroups.map(group=>`<div class="memo-v77-form"><span class="memo-v77-form-name">${esc(group.form)}</span><div class="memo-v77-doses">${group.items.map(child=>`<button type="button" class="memo-v77-dose" data-v77-dose="${esc(child.id)}" data-v77-form="${esc(group.form)}">${esc(String(child.dosage||ingredientTitleDose(child)||displayMedName(child)))}</button>`).join('<span class="memo-v82-separator" aria-hidden="true"> · </span>')}</div></div>`).join('')}</section>`:'';
  const previewBodyHtml=isSpecialiteFiche(m)?`${previewGeneralHtml}${previewSpecialtyHtml}`:isMolecule(m)?selectedChild?childPreviewHtml:previewGeneralHtml:validSections.map(x=>rubric(x,m)).join('');
- const previewChildrenHtml='';
+
  const foundFooter=""; // V79 : supprimer le renvoi redondant et son encadré.
- $('searchPreview').innerHTML=`<div class="search-preview-header">${headerHtml}</div>${previewChildrenHtml}${previewDosageHtml}${previewBodyHtml}${foundFooter}`;
+ $('searchPreview').innerHTML=`<div class="search-preview-header">${headerHtml}</div>${previewBodyHtml}${foundFooter}`;
  // Les liens de fil d'Ariane et de retour à la molécule restent dans le volet d'aperçu.
  $('searchPreview').querySelectorAll('[data-group-open]').forEach(b=>b.onclick=e=>{e.stopPropagation();const target=visible.find(x=>String(x.id)===String(b.dataset.groupOpen));if(target)navigatePreview({med:target,section:null,presentation:null});});
  memoWireBadgeClicks($('searchPreview'));
+ $('searchPreview').querySelectorAll('[data-filter-class]').forEach(b=>b.onclick=e=>{e.stopPropagation();memoNavigateExplorerFilter('class',b.dataset.filterClass)});
+ $('searchPreview').querySelectorAll('[data-filter-ind]').forEach(b=>b.onclick=e=>{e.stopPropagation();memoNavigateExplorerFilter('indication',b.dataset.filterInd)});
  memoLinkifyCips($('searchPreview'));
  $('searchPreview').querySelector('[data-preview-open-title]')?.addEventListener('click',()=>openMedication(m.id,pres,sec?.id||null));
  $('searchPreview').querySelector('[data-open-selected-dosage]')?.addEventListener('click',e=>openMedication(e.currentTarget.dataset.openSelectedDosage));
@@ -3778,18 +3801,6 @@ function previewSearchResult(item){
   memoLinkifyCips(slot);
  }));
  $('searchPreview').querySelectorAll('[data-preview-child]').forEach(b=>b.onclick=()=>{const target=visible.find(x=>String(x.id)===String(b.dataset.previewChild));if(target){navigatePreview({med:target,section:null,presentation:null});}});
- $('searchPreview').querySelectorAll('[data-v77-dose]').forEach(b=>b.addEventListener('click',()=>{
-  // La fiche complète restaure ce dosage depuis le choix mémorisé, sans modifier Supabase.
-  memoSetViewChoice(m.id,{form:b.dataset.v77Form,doseId:b.dataset.v77Dose});
-  openMedication(m.id);
-  // V79 : amener le lecteur à la présentation effectivement sélectionnée,
-  // après le rendu des onglets, sans modifier les données enregistrées.
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
-   const selected=$('detail')?.querySelector('#molecule-tab-content .memo-selected-presentation');
-   const target=selected||$('detail')?.querySelector('#molecule-tabs');
-   if(target)target.scrollIntoView({behavior:'smooth',block:'start'});
-  }));
- }));
  $('searchPreview').querySelectorAll('[data-preview-presentation]').forEach(b=>b.onclick=()=>{navigatePreview({med:m,section:null,presentation:Number(b.dataset.previewPresentation)});});
  $('results').querySelectorAll('.result').forEach(el=>el.classList.toggle('preview-selected',el.dataset.id===String(m.id)&&el.dataset.section===(sec?.id||'')&&el.dataset.presentation===(pres===null?'':String(pres))));
 }
@@ -3843,7 +3854,7 @@ function renderResults(){
   const mergedCip=item.mergedPresentationIndexes?.length?
    [...new Map(item.mergedPresentationIndexes.flatMap(i=>cipConditionnements(m.presentations?.[i]||{})).filter(c=>c.cip).map(c=>[String(c.cip),c])).values()]
     .map(c=>cipBadges({showCip:true,cip:c.cip,cipBoxes:[c]})).join(""):"";
-  const dciBadges=(isDciFamilyType(m))&&!isPresentation?`<div class="result-dci-badges">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<span class="badge-button badge-class">${esc(t)}</span>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<span class="badge-button badge-indication">${esc(t)}</span>`).join("")}</div>`:"";
+  const dciBadges=(isDciFamilyType(m))&&!isPresentation?`<div class="result-dci-badges">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}</div>`:"";
   const sectionDetail=sec&&isContentFicheType(m)&&!isPresentation?`<div class="result-section-direct"><span class="result-section-title">↳ ${esc(sec.title)}</span></div>`:"";
   return `<div class="result result-${kind}" role="option" aria-selected="false" tabindex="-1" data-id="${esc(m.id)}" data-section="${esc(sec?.id||'')}" data-presentation="${item.presentation===null?'':item.presentation}">
    <strong><span class="result-dot" aria-hidden="true">●</span>${esc(isPresentation?presentationTitle:name)}<span class="result-arrow" aria-hidden="true">↗</span></strong>
@@ -3853,7 +3864,7 @@ function renderResults(){
  }).join(''):'<div class="empty">Aucun résultat. Essaie un autre terme ou change de famille.</div>';
  $('results').querySelectorAll('.result').forEach(el=>{
    const choose=e=>{
-    if(e?.target?.closest?.('[data-copy-cip]'))return;
+    if(e?.target?.closest?.('[data-copy-cip],[data-filter-class],[data-filter-ind],[data-filter-badge],a,button'))return;
     const id=el.dataset.id,section=el.dataset.section||null,pres=el.dataset.presentation===''?null:Number(el.dataset.presentation);
     if(e?.ctrlKey||e?.metaKey||e?.button===1){
      const url=new URL(location.href);url.searchParams.set("fiche",id);
@@ -3875,6 +3886,8 @@ function renderResults(){
    el.onauxclick=e=>{if(e.button===1){e.preventDefault();choose(e)}};
    el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose(e)}};
  });
+ $('results').querySelectorAll('[data-filter-class]').forEach(b=>b.onclick=e=>{e.stopPropagation();memoNavigateExplorerFilter('class',b.dataset.filterClass)});
+ $('results').querySelectorAll('[data-filter-ind]').forEach(b=>b.onclick=e=>{e.stopPropagation();memoNavigateExplorerFilter('indication',b.dataset.filterInd)});
  $('results').querySelectorAll('[data-copy-cip]').forEach(button=>button.onclick=async e=>{
   e.stopPropagation();
   const value=button.dataset.copyCip;
