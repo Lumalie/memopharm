@@ -5746,6 +5746,9 @@ async function saveEditor(id){if(!requireAdmin())return;
     child.sections[0].dciForm=child.form;
     child.name=m.name+' '+child.dosage;
     child.category=m.category;
+    // V113 : les variantes techniques suivent la publication de leur molécule.
+    // Les politiques Supabase peuvent masquer les lignes « draft » aux visiteurs.
+    child.published=Boolean(m.published);
     await uploadPresentationPhotos(child);
     await syncMedication(child);
    }
