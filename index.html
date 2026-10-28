@@ -2765,7 +2765,6 @@ function isSpecialiteFiche(m){return !isGroup(m)&&!isMolecule(m)&&hierarchyMeta(
 // seul le rattachement à une molécule distingue une variante active d'une archive.
 function isDosageRecord(m){return !isGroup(m)&&!isMolecule(m)&&hierarchyMeta(m).memofficineKind!=="conseil"&&m.entry_type==="dci"}
 function isVariantFiche(m){return isDosageRecord(m)&&!!moleculeParentId(m)}
-function isObsoleteDosageFiche(m){return isDosageRecord(m)&&!moleculeParentId(m)}
 function moleculeParentId(m){return m.sections?.[0]?.moleculeParentId||""}
 function moleculeChildren(m){return publicMeds().filter(x=>!isGroup(x)&&moleculeParentId(x)===String(m.id)).sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),'fr'))}
 function moleculeDosageColumns(children){
@@ -2888,10 +2887,17 @@ function indicationTags(m){
 // Une molécule publiée doit montrer ses formes/dosages même si les lignes techniques « dci »
 // restent en brouillon. Une molécule non publiée ne rend pas ses variantes publiques.
 function publicMeds(){
+ // Les variantes restent des composants techniques de leur molécule :
+ // on exclut les anciens dosages autonomes, mais pas les variantes rattachées.
  const publishedMoleculeIds=new Set(meds.filter(m=>isMolecule(m)&&m.published).map(m=>String(m.id)));
- return meds.filter(m=>!isSourcesRecord(m)&&!isObsoleteDosageFiche(m)&&(
-  admin||m.published||(isVariantFiche(m)&&publishedMoleculeIds.has(String(moleculeParentId(m))))
- ));
+ return meds.filter(m=>{
+  if(isSourcesRecord(m))return false;
+  const dosageRecord=isDosageRecord(m);
+  const parentId=dosageRecord?String(moleculeParentId(m)):'';
+  if(dosageRecord&&!parentId)return false;
+  if(admin||m.published)return true;
+  return dosageRecord&&publishedMoleculeIds.has(parentId);
+ });
 }
 function visibleStandaloneMeds(){return publicMeds().filter(m=>!isVariantFiche(m))}
 function specialtyItems(m){
