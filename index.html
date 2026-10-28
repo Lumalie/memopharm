@@ -1804,6 +1804,11 @@ body.header-search-active #headerSearchSlot .search-suggestions .results{max-hei
 #detail .memo-v92-specialty-presentations .presentation-v33-photo.memo-v52-gallery{flex:0 0 auto!important;width:auto!important;max-width:280px!important;min-height:0!important;align-self:flex-start!important;margin:0!important;padding:0!important}
 #detail .memo-v92-specialty-presentations .presentation-v33-photo img{max-height:260px}
 @media(max-width:700px){#detail .memo-v92-specialty-presentations .presentation-v33-layout.has-photo{flex-direction:column!important}#detail .memo-v92-specialty-presentations .presentation-v33-fields{flex:0 1 auto!important}#detail .memo-v92-specialty-presentations .presentation-v33-photo.memo-v52-gallery{max-width:100%!important}}
+
+/* V94 : toutes les rangées de badges alignées sur le bord droit */
+#detail #detailPublicActions{align-items:flex-end!important;text-align:right}
+#detail #detailPublicActions .memo-v67-vigilance{justify-content:flex-end}
+#detail #detailPublicActions .memo-v93-storage-row{justify-content:flex-end;margin-left:auto;margin-right:0}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -2166,6 +2171,16 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
 #searchPreview .memo-v77-doses{align-items:center!important}
 #searchPreview .memo-v77-dose{font-size:14px!important;font-weight:600!important}
 @media(max-width:480px){#searchPreview .memo-v77-form{display:flex!important;flex-wrap:wrap!important}}
+</style>
+
+<style>
+/* V95 : les infobulles de la première ligne passent au-dessus de la deuxième. */
+#detail #detailPublicActions .memo-v67-vigilance{position:relative;z-index:20;isolation:isolate}
+#detail #detailPublicActions .memo-v93-storage-row{position:relative;z-index:1}
+#detail #detailPublicActions .memo-v67-vigilance .memo-repro:hover,
+#detail #detailPublicActions .memo-v67-vigilance .memo-repro:focus-visible,
+#detail #detailPublicActions .memo-v67-vigilance .memo-v67-alert:hover,
+#detail #detailPublicActions .memo-v67-vigilance .memo-v67-alert:focus-visible{z-index:30}
 </style>
 </head>
 <body>
@@ -3754,7 +3769,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  const activeIngredientsHtml=ingredientEntries.length?`<div class="detail-dci"><span class="detail-dci-label">DCI / substances actives :</span> ${ingredientEntries.map(e=>`<span class="detail-dci-item">${esc(e.name||"")}${e.dose?` — <strong>${esc(e.dose)}</strong>`:""}</span>`).join(" · ")}${ingredientEntries.filter(e=>e.salt||e.saltDose).map(e=>`<div class="ingredient-salt">${esc(e.name||"Substance active")} : ${esc(e.salt||"Sel non précisé")}${e.saltDose?` — ${esc(e.saltDose)}`:""}</div>`).join("")}</div>`:"";
  const formBadge=!isGroup(m)&&presentationForms.length
    ? presentationForms.length===1?`<button type="button" class="tag tag-form" data-fiche-form="${esc(presentationForms[0])}" title="Explorer cette forme">${esc(presentationForms[0])}</button>`:`<span class="tag tag-form">Plusieurs formes</span>`:"";
- $("detail").innerHTML=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker" style="${entityTreeStyle(m)}color:var(--group-fg)">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche spécialité"}</div><h2 style="${entityTreeStyle(m)}color:var(--group-fg)">${esc(displayMedName(m))}</h2><div class="tags"><button type="button" class="tag tag-category" data-fiche-category="${esc(m.category||"")}" title="Explorer cette classe thérapeutique">${esc(m.category||"Famille à définir")}</button>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${isMolecule(m)||isSpecialiteFiche(m)?"":practicalBadges(m)}${ficheDateLabel(m)}</div><div class="header-actions" id="detailPublicActions" style="align-items:center;flex-direction:column"><div class="memo-v67-vigilance">${isMolecule(m)||isSpecialiteFiche(m)?`<div class="memo-v67-practical" id="memo-v67-practical">${memoV67Alerts(m)}</div>`:""}${memoReproBadges(m)}</div>${memoV93StorageBadges(m)}${admin?`<button class="primary" id="editBtn" type="button">Modifier la fiche</button>`:""}</div></div>
+ $("detail").innerHTML=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker" style="${entityTreeStyle(m)}color:var(--group-fg)">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche spécialité"}</div><h2 style="${entityTreeStyle(m)}color:var(--group-fg)">${esc(displayMedName(m))}</h2><div class="tags"><button type="button" class="tag tag-category" data-fiche-category="${esc(m.category||"")}" title="Explorer cette classe thérapeutique">${esc(m.category||"Famille à définir")}</button>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${isMolecule(m)||isSpecialiteFiche(m)?"":practicalBadges(m)}${ficheDateLabel(m)}</div><div class="header-actions" id="detailPublicActions" style="align-items:flex-end;flex-direction:column"><div class="memo-v67-vigilance">${isMolecule(m)||isSpecialiteFiche(m)?`<div class="memo-v67-practical" id="memo-v67-practical">${memoV67Alerts(m)}</div>`:""}${memoReproBadges(m)}</div>${memoV93StorageBadges(m)}${admin?`<button class="primary" id="editBtn" type="button">Modifier la fiche</button>`:""}</div></div>
  ${alertSection&&String(alertSection.content||"").trim()?`<div class="priority-card priority-alert">${renderPrioritySection(alertSection,targetSectionId)}</div>`:""}
  ${prioritySection&&String(prioritySection.content||"").trim()?`<div class="group-glance">${renderPrioritySection(prioritySection,targetSectionId)}</div>`:""}
  ${adviceSection&&String(adviceSection.content||"").trim()?`<div class="priority-card priority-advice">${renderPrioritySection(adviceSection,targetSectionId)}</div>`:""}
