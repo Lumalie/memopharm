@@ -2899,7 +2899,9 @@ function publicMeds(){
   return dosageRecord&&publishedMoleculeIds.has(parentId);
  });
 }
-function visibleStandaloneMeds(){return publicMeds().filter(m=>!isVariantFiche(m))}
+// Les variantes rattachées sont recherchables et explorables comme les autres fiches.
+// publicMeds() exclut déjà les anciennes fiches dosage/forme autonomes.
+function visibleStandaloneMeds(){return publicMeds()}
 function specialtyItems(m){
  return (m.presentations||[]).map((p,i)=>({p,i,name:(p.name||m.name||"").trim()})).filter(x=>x.name);
 }
