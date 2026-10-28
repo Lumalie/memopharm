@@ -2637,7 +2637,7 @@ function restoreLocalDraft(){
  // Le moteur existant continue à manipuler « dci » en mémoire pour préserver
  // recherche, aperçus, Explorer et éditeur. Aucun changement SQL à cette étape.
 function rowToMed(row){return {parent_dci:row.parent_dci||"",presentations:Array.isArray(row.presentations)?row.presentations:[],id:row.id,name:row.name||"",dosage:row.dosage||"",dci:row.dci||"",category:row.category||"Autres",form:row.form||"",aliases:Array.isArray(row.aliases)?row.aliases.join(", "):(row.aliases||""),entry_type:row.entry_type||"specialite",status:row.review_status||"À vérifier",updated:row.verified_at||"",modifiedAt:row.updated_at||"",source:row.source_url||"",sections:Array.isArray(row.sections)?row.sections:clone(DEFAULT_SECTIONS),published:row.status==="published"}}
-function medToRow(m){return {parent_dci:m.entry_type==="dci"||m.entry_type==="variant"?null:(m.parent_dci||null),presentations:m.presentations||[],id:m.id,name:m.name,dosage:m.dosage||null,dci:m.entry_type==="dci"||m.entry_type==="variant"?null:(m.dci||null),entry_type:m.entry_type||"specialite",category:m.category||"Autres",form:m.form||null,aliases:String(m.aliases||"").split(",").map(x=>x.trim()).filter(Boolean),review_status:m.status||"À vérifier",verified_at:m.updated||null,source_url:m.source||null,sections:(m.sections||[]).map(({imageData,...section})=>section),status:m.published?"published":"draft"}}
+function medToRow(m){return {parent_dci:isDciFamilyType(m)?null:(m.parent_dci||null),presentations:m.presentations||[],id:m.id,name:m.name,dosage:m.dosage||null,dci:isDciFamilyType(m)?null:(m.dci||null),entry_type:m.entry_type||"specialite",category:m.category||"Autres",form:m.form||null,aliases:String(m.aliases||"").split(",").map(x=>x.trim()).filter(Boolean),review_status:m.status||"À vérifier",verified_at:m.updated||null,source_url:m.source||null,sections:(m.sections||[]).map(({imageData,...section})=>section),status:m.published?"published":"draft"}}
 async function loadCloudMeds(){
  const {data,error}=await supabaseClient.from("medications").select("*").order("name");
  if(error){console.error(error);toast("Impossible de charger les fiches : vérifie la configuration SQL");return}
@@ -2789,7 +2789,8 @@ function isSpecialiteFiche(m){return !isGroup(m)&&!isMolecule(m)&&hierarchyMeta(
 // Les variantes sont désormais un type autonome dans Supabase et en mémoire.
 function isDosageRecord(m){return !isGroup(m)&&!isMolecule(m)&&hierarchyMeta(m).memofficineKind!=="conseil"&&m.entry_type==="variant"}
 function isVariantFiche(m){return isDosageRecord(m)&&!!moleculeParentId(m)}
-function isContentFicheType(m){return m.entry_type==="dci"||m.entry_type==="variant"||m.entry_type==="specialite"}
+function isDciFamilyType(m){return m.entry_type==="dci"||m.entry_type==="variant"}
+function isContentFicheType(m){return isDciFamilyType(m)||m.entry_type==="specialite"}
 function moleculeParentId(m){return m.sections?.[0]?.moleculeParentId||""}
 function moleculeChildren(m){return publicMeds().filter(x=>!isGroup(x)&&moleculeParentId(x)===String(m.id)).sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),'fr'))}
 function moleculeDosageColumns(children){
@@ -2908,9 +2909,9 @@ function indicationTags(m){
 // V113 : les fiches dosage/forme autonomes obsolètes sont exclues de la navigation.
 // Les variantes liées aux molécules restent disponibles pour leurs onglets,
 // leurs particularités et leurs médicaments commerciaux. Aucune donnée n'est effacée.
-// V113 correctif : les variantes sont des composants d’une fiche molécule, pas des publications indépendantes.
-// Une molécule publiée doit montrer ses formes/dosages même si les lignes techniques « dci »
-// restent en brouillon. Une molécule non publiée ne rend pas ses variantes publiques.
+// Les variantes sont des lignes SQL « variant » rattachées à leur molécule.
+// Attention : en mode public, Supabase RLS ne transmet que les lignes « published ».
+// Le repli sur la publication du parent ne s’applique qu’aux lignes déjà chargées.
 function publicMeds(){
  // Les variantes restent des composants techniques de leur molécule :
  // on exclut les anciens dosages autonomes, mais pas les variantes rattachées.
@@ -2965,7 +2966,7 @@ function openExplorerResult(event,button,presentationIndex=null,sectionId=null){
 }
 function medicationForms(m){
  const presentationForms=(m.presentations||[]).map(p=>String(p.form||"").trim()).filter(Boolean);
- const dciForm=(m.entry_type==="dci"||m.entry_type==="variant")&&!isGroup(m)?String(m.sections?.[0]?.dciForm||m.form||"").trim():"";
+ const dciForm=(isDciFamilyType(m))&&!isGroup(m)?String(m.sections?.[0]?.dciForm||m.form||"").trim():"";
  return [...new Set([...presentationForms,...(dciForm?[dciForm]:[])])];
 }
 const exploreExpandedGroups=new Set();
@@ -3387,7 +3388,7 @@ function renderExplorer(){
     
    </div>
    ${specialtyPresentations.length>1?`<div class="explore-tree-presentations">${specialtyPresentations.map(({p,i})=>`<button type="button" class="explore-tree-presentation" data-open-med="${esc(m.id)}" data-open-pres="${i}"><span aria-hidden="true">↳</span> ${esc(presentationTitle(p))}${p.presentationKind==="princeps"?'<span class="explore-pres-princeps-inline">Princeps</span>':""}</button>`).join("")}</div>`:""}
-   ${isMatch?`<div class="explore-tree-tags">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)&&!inheritedClasses.has(norm(t))).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)&&!inheritedIndications.has(norm(t))).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}${(((m.entry_type==="dci"||m.entry_type==="variant")?explorerBadgeVisible(m,"forms"):true)?forms:[]).filter(t=>!inheritedForms.has(norm(t))).map(t=>`<button type="button" class="badge-button badge-form" data-filter-form="${esc(t)}">${esc(t)}</button>`).join("")}</div>`:""}
+   ${isMatch?`<div class="explore-tree-tags">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)&&!inheritedClasses.has(norm(t))).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)&&!inheritedIndications.has(norm(t))).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}${(((isDciFamilyType(m))?explorerBadgeVisible(m,"forms"):true)?forms:[]).filter(t=>!inheritedForms.has(norm(t))).map(t=>`<button type="button" class="badge-button badge-form" data-filter-form="${esc(t)}">${esc(t)}</button>`).join("")}</div>`:""}
    ${kids.length?`<div class="explore-tree-children" id="tree-children-${esc(m.id)}" ${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)?"":"hidden"}>${kids.map(child=>renderNode(child,depth+1,next)).join("")}</div>`:""}
   </div>`;
  };
@@ -3812,11 +3813,11 @@ function renderResults(){
   const mergedCip=item.mergedPresentationIndexes?.length?
    [...new Map(item.mergedPresentationIndexes.flatMap(i=>cipConditionnements(m.presentations?.[i]||{})).filter(c=>c.cip).map(c=>[String(c.cip),c])).values()]
     .map(c=>cipBadges({showCip:true,cip:c.cip,cipBoxes:[c]})).join(""):"";
-  const dciBadges=(m.entry_type==="dci"||m.entry_type==="variant")&&!isPresentation?`<div class="result-dci-badges">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<span class="badge-button badge-class">${esc(t)}</span>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<span class="badge-button badge-indication">${esc(t)}</span>`).join("")}</div>`:"";
+  const dciBadges=(isDciFamilyType(m))&&!isPresentation?`<div class="result-dci-badges">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<span class="badge-button badge-class">${esc(t)}</span>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<span class="badge-button badge-indication">${esc(t)}</span>`).join("")}</div>`:"";
   const sectionDetail=sec&&isContentFicheType(m)&&!isPresentation?`<div class="result-section-direct"><span class="result-section-title">↳ ${esc(sec.title)}</span></div>`:"";
   return `<div class="result result-${kind}" role="option" aria-selected="false" tabindex="-1" data-id="${esc(m.id)}" data-section="${esc(sec?.id||'')}" data-presentation="${item.presentation===null?'':item.presentation}">
    <strong><span class="result-dot" aria-hidden="true">●</span>${esc(isPresentation?presentationTitle:name)}<span class="result-arrow" aria-hidden="true">↗</span></strong>
-   ${isPresentation?`<div class="result-presentation-info">${badge}${cip}</div>`:mergedCip?`<div class="result-presentation-info memo-v106-merged-cip">${mergedCip}</div>`:(m.entry_type==="dci"||m.entry_type==="variant")?dciBadges:group?"":`<div class="sub">${esc(m.category||"Sans famille")}</div>`}
+   ${isPresentation?`<div class="result-presentation-info">${badge}${cip}</div>`:mergedCip?`<div class="result-presentation-info memo-v106-merged-cip">${mergedCip}</div>`:(isDciFamilyType(m))?dciBadges:group?"":`<div class="sub">${esc(m.category||"Sans famille")}</div>`}
    ${sectionDetail}
   </div>`;
  }).join(''):'<div class="empty">Aucun résultat. Essaie un autre terme ou change de famille.</div>';
@@ -4127,7 +4128,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  ${alertSection&&String(alertSection.content||"").trim()?`<div class="priority-card priority-alert">${renderPrioritySection(alertSection,targetSectionId)}</div>`:""}
  ${prioritySection&&String(prioritySection.content||"").trim()?`<div class="group-glance">${renderPrioritySection(prioritySection,targetSectionId)}</div>`:""}
  ${adviceSection&&String(adviceSection.content||"").trim()?`<div class="priority-card priority-advice">${renderPrioritySection(adviceSection,targetSectionId)}</div>`:""}
- ${(m.entry_type==="dci"||m.entry_type==="variant")&&!isGroup(m)&&(m.sections?.[0]?.princepsNames||[]).length?`<div class="callout"><strong>Princeps :</strong> ${m.sections[0].princepsNames.map(n=>`<span class="princeps-name">${esc(n)}</span>`).join(", ")}</div>`:""}
+ ${(isDciFamilyType(m))&&!isGroup(m)&&(m.sections?.[0]?.princepsNames||[]).length?`<div class="callout"><strong>Princeps :</strong> ${m.sections[0].princepsNames.map(n=>`<span class="princeps-name">${esc(n)}</span>`).join(", ")}</div>`:""}
 
  ${isGroup(m)&& (subgroups.length||children.length)?`<div class="group-associations"><div class="group-members"><h3>Fiches associées</h3>
  ${subgroups.length?`<div class="associated-section"><h4>Sous-groupes (${subgroups.length})</h4><div class="associated-items">${subgroups.map(g=>`<button class="associated-item associated-group" style="${entityTreeStyle(g)}" type="button" data-group-open="${esc(g.id)}">${esc(g.name)} <span aria-hidden="true">↗</span></button>`).join("")}</div></div>`:""}
@@ -5523,8 +5524,8 @@ function captureEditorFields(m){
  const kind=get("f-entry-type");
  m.entry_type=kind==="groupe"||kind==="molecule"?"dci":kind;
  setHierarchy(m,kind,get("f-parent-group")||"");m.name=(get("f-name")||"").trim()||"Fiche sans nom";m.dosage=kind==="groupe"?"":(get("f-dosage")||"").trim();
- m.dci=m.entry_type==="dci"?"":[...($("dciEntries")?.querySelectorAll("[data-dci-entry]")||[])].map(input=>input.value.trim()).filter(Boolean).join(" + ");
- m.parent_dci=m.entry_type==="dci"?"":m.dci;
+ m.dci=isDciFamilyType(m)?"":[...($("dciEntries")?.querySelectorAll("[data-dci-entry]")||[])].map(input=>input.value.trim()).filter(Boolean).join(" + ");
+ m.parent_dci=isDciFamilyType(m)?"":m.dci;
  const ingredientRows=[...($('dciEntries')?.querySelectorAll('.ingredient-editor-row')||[])].map(row=>({name:row.querySelector('[data-dci-entry]')?.value.trim()||"",dose:row.querySelector('[data-ingredient-dose]')?.value.trim()||"",salt:row.querySelector('[data-ingredient-salt]')?.value.trim()||"",saltDose:row.querySelector('[data-salt-dose]')?.value.trim()||""})).filter(e=>e.name);
  const ingredientData={showInTitle:!!$('f-dose-in-title')?.checked,entries:ingredientRows};
  if(kind==='specialite'&&m.sections?.length){m.sections.forEach(sec=>sec.ingredientDosages=ingredientData);m.dosage=ingredientRows.map(e=>e.dose).filter(Boolean).join('/')||m.dosage;}
