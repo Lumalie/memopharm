@@ -1977,6 +1977,25 @@ body.header-search-active #headerSearchSlot .search-suggestions .results{max-hei
   height:210px!important;min-height:0!important;max-height:210px!important;
  }
 }
+
+/* V101 : même alignement que les spécialités, galerie dès les CIP. */
+#detail #presentations-details.presentation-fixed .memo-v48-cip{display:none!important}
+#detail #presentations-details.presentation-fixed #presentation-info .memo-v101-cip-block{
+ margin:0 0 7px!important;padding:0 0 7px!important;
+ border-bottom:1px solid #dce8df!important;
+}
+#detail #presentations-details.presentation-fixed #presentation-info .memo-v101-cip-block .memo-practical-badges{
+ margin:0 0 9px!important;
+}
+#detail #presentations-details.presentation-fixed #presentation-info .memo-v101-cip-line{
+ margin:0!important;padding:0!important;
+}
+#detail #presentations-details.presentation-fixed #presentation-info .presentation-v33-layout.has-photo{
+ align-items:start!important;
+}
+#detail #presentations-details.presentation-fixed #presentation-info .presentation-v33-photo.memo-v52-gallery{
+ align-self:start!important;margin-top:0!important;
+}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -4244,7 +4263,7 @@ function presentationInfo(p,m=null, specialtyBoxesHtml=""){
  const badges=m&&isSpecialiteFiche(m)?"":m?practicalBadges(m,{...p,regulatoryList:""}):"";
  if(!rows.length&&!photo&&!badges&&!p.name)return '<p class="muted">Aucun critère de présentation affiché pour le moment.</p>';
  const title="";
- return `<div class="presentation-v33-content">${title}${badges}<div class="presentation-v33-layout${photo?' has-photo':''}"><div class="presentation-v33-fields">${specialtyBoxesHtml?`<div class="memo-v97-cip-area">${specialtyBoxesHtml}</div>`:""}${rows.join('')}</div>${photo}</div><p class="hint presentation-v33-warning">L’aspect seul ne permet pas d’identifier avec certitude un médicament. Vérifier la concordance avec la présentation exacte.</p></div>`;
+ return `<div class="presentation-v33-content">${title}${m&&!isSpecialiteFiche(m)?"":badges}<div class="presentation-v33-layout${photo?' has-photo':''}"><div class="presentation-v33-fields">${m&&!isSpecialiteFiche(m)?`<div class="memo-v101-cip-block">${badges}<div class="memo-v101-cip-line">${memoV48Cip(p)}</div></div>`:""}${specialtyBoxesHtml?`<div class="memo-v97-cip-area">${specialtyBoxesHtml}</div>`:""}${rows.join('')}</div>${photo}</div><p class="hint presentation-v33-warning">L’aspect seul ne permet pas d’identifier avec certitude un médicament. Vérifier la concordance avec la présentation exacte.</p></div>`;
 }
 function presentationLabel(p,m,i){
  const name=(p.name||m.name||"").trim();
