@@ -2610,6 +2610,17 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
 .memo-tree-breadcrumb .memo-crumb-pinned>.memo-crumb-trigger{
  background:#e5f1ea;color:#24563d;
 }
+/* V114.11 — Menu plus aéré et actions admin sur les fiches */
+@media(min-width:701px){
+ .memo-tree-breadcrumb .memo-crumb-submenu{left:calc(100% + 13px)!important}
+ .memo-tree-breadcrumb .memo-crumb-submenu::before{width:16px!important}
+}
+.memo-admin-fiche-actions{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:7px}
+.memo-admin-icon-button{width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;border:1px solid #b9d4c4;background:#f5faf6;color:#27614b;border-radius:11px;cursor:pointer;transition:background .15s,border-color .15s,transform .15s}
+.memo-admin-icon-button svg{width:21px;height:21px;display:block}
+.memo-admin-icon-button:hover,.memo-admin-icon-button:focus-visible{background:#e4f2e9;border-color:#70a58a;transform:translateY(-1px)}
+.memo-admin-icon-button.memo-admin-delete{color:#b33b44;border-color:#ecc4c7;background:#fff7f7}
+.memo-admin-icon-button.memo-admin-delete:hover,.memo-admin-icon-button.memo-admin-delete:focus-visible{background:#fce8e9;border-color:#d7747a}
 </style>
 </head>
 <body>
@@ -4446,7 +4457,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDo
  const activeIngredientsHtml=ingredientEntries.length?`<div class="detail-dci"><span class="detail-dci-label">DCI / substances actives :</span> ${ingredientEntries.map(e=>`<span class="detail-dci-item">${esc(e.name||"")}${e.dose?` — <strong>${esc(e.dose)}</strong>`:""}</span>`).join(" · ")}${ingredientEntries.filter(e=>e.salt||e.saltDose).map(e=>`<div class="ingredient-salt">${esc(e.name||"Substance active")} : ${esc(e.salt||"Sel non précisé")}${e.saltDose?` — ${esc(e.saltDose)}`:""}</div>`).join("")}</div>`:"";
  const formBadge=!isGroup(m)&&presentationForms.length
    ? presentationForms.length===1?`<button type="button" class="tag tag-form" data-fiche-form="${esc(presentationForms[0])}" title="Explorer cette forme">${esc(presentationForms[0])}</button>`:`<span class="tag tag-form">Plusieurs formes</span>`:"";
- $("detail").innerHTML=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker" style="${entityTreeStyle(m)}color:var(--group-fg)">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":isVariantFiche(m)?"Variante de présentation":"Fiche spécialité"}</div><h2 style="${entityTreeStyle(m)}color:var(--group-fg)">${esc(displayMedName(m))}</h2><div class="tags"><button type="button" class="tag tag-category" data-fiche-category="${esc(m.category||"")}" title="Explorer cette classe thérapeutique">${esc(m.category||"Famille à définir")}</button>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${isMolecule(m)||isSpecialiteFiche(m)?"":practicalBadges(m)}${ficheDateLabel(m)}</div><div class="header-actions" id="detailPublicActions" style="align-items:flex-end;flex-direction:column"><div class="memo-v67-vigilance">${isMolecule(m)||isSpecialiteFiche(m)?`<div class="memo-v67-practical" id="memo-v67-practical">${memoV67Alerts(m)}</div>`:""}${memoReproBadges(m)}</div>${memoV93StorageBadges(m)}${admin?`<button class="primary" id="editBtn" type="button">Modifier la fiche</button>`:""}</div></div>
+ $("detail").innerHTML=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker" style="${entityTreeStyle(m)}color:var(--group-fg)">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":isVariantFiche(m)?"Variante de présentation":"Fiche spécialité"}</div><h2 style="${entityTreeStyle(m)}color:var(--group-fg)">${esc(displayMedName(m))}</h2><div class="tags"><button type="button" class="tag tag-category" data-fiche-category="${esc(m.category||"")}" title="Explorer cette classe thérapeutique">${esc(m.category||"Famille à définir")}</button>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${isMolecule(m)||isSpecialiteFiche(m)?"":practicalBadges(m)}${ficheDateLabel(m)}</div><div class="header-actions" id="detailPublicActions" style="align-items:flex-end;flex-direction:column"><div class="memo-v67-vigilance">${isMolecule(m)||isSpecialiteFiche(m)?`<div class="memo-v67-practical" id="memo-v67-practical">${memoV67Alerts(m)}</div>`:""}${memoReproBadges(m)}</div>${memoV93StorageBadges(m)}${admin?`<div class="memo-admin-fiche-actions"><button id="editBtn" class="memo-admin-icon-button" type="button" title="Modifier la fiche" aria-label="Modifier la fiche"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/></svg></button><button id="deleteFicheBtn" class="memo-admin-icon-button memo-admin-delete" type="button" title="Supprimer la fiche" aria-label="Supprimer la fiche"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>`:""}</div></div>
  ${alertSection&&String(alertSection.content||"").trim()?`<div class="priority-card priority-alert">${renderPrioritySection(alertSection,targetSectionId)}</div>`:""}
  ${prioritySection&&String(prioritySection.content||"").trim()?`<div class="group-glance">${renderPrioritySection(prioritySection,targetSectionId)}</div>`:""}
  ${adviceSection&&String(adviceSection.content||"").trim()?`<div class="priority-card priority-advice">${renderPrioritySection(adviceSection,targetSectionId)}</div>`:""}
@@ -4559,6 +4570,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDo
  $("detail").querySelectorAll("[data-fiche-indication]").forEach(btn=>btn.onclick=()=>memoNavigateExplorerFilter("indication",btn.dataset.ficheIndication));
  $("detail").querySelectorAll("[data-fiche-form]").forEach(btn=>btn.onclick=()=>memoNavigateExplorerFilter("form",btn.dataset.ficheForm));
  if(admin&&$("editBtn"))$("editBtn").onclick=()=>renderEditor(m.id);
+ if(admin&&$("deleteFicheBtn"))$("deleteFicheBtn").onclick=()=>deleteMed(m.id);
  if(isSpecialiteFiche(m)){
   if(!isSpecialiteFiche(m))memoV85WireSpecialty(m,targetPresentationIndex);
   else if(targetPresentationIndex!==null)requestAnimationFrame(()=>document.getElementById("presentations-details")?.scrollIntoView({behavior:"smooth",block:"start"}));
@@ -6165,7 +6177,38 @@ document.addEventListener("keydown",event=>{
  if(!event.repeat)saveEditor(editorId);
 });
 function duplicateMed(id){if(!requireAdmin())return;const m=meds.find(x=>x.id===id);if(!m)return;const copy=clone(m);copy.id=crypto.randomUUID();copy.name=m.name+" (copie)";copy.status="À vérifier";copy.updated="";copy.published=false;meds.unshift(copy);selectedId=copy.id;renderFilters();renderResults();renderEditor(copy.id);saveLocalDraft();toast("Copie créée : enregistre-la pour la synchroniser")}
-async function deleteMed(id){if(!requireAdmin())return;const target=meds.find(m=>m.id===id);if(target&&isGroup(target)&&meds.some(m=>!isSourcesRecord(m)&&parentGroupId(m)===id)){toast("Détache d’abord les fiches médicaments de ce groupe avant de le supprimer.");return}if(!confirm("Supprimer définitivement cette fiche de la base en ligne ?"))return;const {error}=await supabaseClient.from("medications").delete().eq("id",id);if(error){console.error(error);toast("Suppression refusée par Supabase");return}clearLocalDraft();pendingPresentationPhotos.delete(id);pendingTabletPhotos.delete(id);editorId=null;meds=meds.filter(m=>m.id!==id);selectedId=null;openedSearchFiche=false;$("editor").classList.add("hidden");$("detail").classList.remove("hidden");renderFilters();renderResults();navigateToView("explore");toast("Fiche supprimée de la base en ligne")}
+async function deleteMed(id){
+ if(!requireAdmin())return;
+ const target=meds.find(m=>m.id===id);
+ if(!target)return;
+ if(isGroup(target)&&meds.some(m=>!isSourcesRecord(m)&&parentGroupId(m)===id)){
+  toast("Détache d’abord les fiches médicaments de ce groupe avant de le supprimer.");return;
+ }
+ const linked=isMolecule(target)?meds.filter(m=>isVariantFiche(m)&&String(moleculeParentId(m))===String(id)):[];
+ const question=linked.length
+  ?`Supprimer définitivement « ${target.name} » et ses ${linked.length} variante(s) de présentation liée(s) de Supabase ? Cette opération est irréversible.`
+  :"Supprimer définitivement cette fiche de la base en ligne ?";
+ if(!confirm(question))return;
+ const ids=[...linked.map(m=>m.id),id];
+ // Supabase ne fournit pas de transaction multi-requêtes côté navigateur.
+ // Suppression enfants d'abord, puis parent. En cas d'erreur, arrêter immédiatement.
+ if(linked.length){
+  const {error:childError}=await supabaseClient.from("medications").delete().in("id",linked.map(m=>m.id));
+  if(childError){console.error(childError);toast("Suppression interrompue : impossible de supprimer les variantes liées.");return;}
+ }
+ const {error}=await supabaseClient.from("medications").delete().eq("id",id);
+ if(error){
+  console.error(error);
+  toast(linked.length?"Les variantes ont été supprimées, mais la fiche molécule n’a pas pu être supprimée. Recharge les données avant de réessayer.":"Suppression refusée par Supabase");
+  return;
+ }
+ clearLocalDraft();
+ ids.forEach(key=>{pendingPresentationPhotos.delete(key);pendingTabletPhotos.delete(key);});
+ editorId=null;meds=meds.filter(m=>!ids.includes(m.id));selectedId=null;openedSearchFiche=false;
+ $("editor").classList.add("hidden");$("detail").classList.remove("hidden");
+ renderFilters();renderResults();navigateToView("explore");
+ toast(linked.length?`Fiche et ${linked.length} variante(s) supprimées de la base en ligne`:"Fiche supprimée de la base en ligne");
+}
 
 // Les références communes sont stockées dans un enregistrement dédié de la table existante.
 // Il est exclu des recherches et du catalogue médicaments.
