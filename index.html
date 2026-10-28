@@ -2096,6 +2096,18 @@ body.header-search-active #headerSearchSlot .search-suggestions .results{max-hei
 /* CIP regroupés, au format compact identique aux autres résultats */
 .search-suggestions .result .memo-v106-merged-cip{display:flex;flex-wrap:wrap;align-items:center;gap:5px 10px;margin-top:7px}
 .search-suggestions .result .memo-v106-merged-cip .explore-cip-copy{display:inline-flex!important;align-items:center!important;gap:4px!important;width:auto!important;min-height:0!important;padding:3px 8px!important;font-size:.8rem!important;line-height:1.35!important;white-space:nowrap!important}
+
+/* V108 — aperçus fidèles à la fiche et badges CIP natifs */
+.search-suggestions .result .memo-v106-merged-cip .cip-pack-item{display:inline-flex;max-width:100%}
+.search-suggestions .result .memo-v106-merged-cip .explore-cip-copy{display:inline-flex!important;align-items:center!important;gap:4px!important;width:auto!important;min-height:0!important;padding:3px 8px!important;line-height:1.35!important;white-space:nowrap!important}
+#searchPreview .memo-v108-preview-general,#searchPreview .memo-v108-preview-presentations,#searchPreview .memo-v108-preview-molecule{margin:12px 0!important}
+#searchPreview .memo-v108-preview-presentations .memo-v90-commercial{max-width:860px!important}
+#searchPreview .memo-v108-preview-presentations .presentation-v33-photo.memo-v52-gallery{position:static!important}
+#searchPreview .memo-v108-preview-molecule .memo-v108-preview-commercial{padding:12px 0}
+#searchPreview .memo-v108-preview-molecule .presentation-v33-layout.has-photo{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,45%);gap:20px;align-items:start}
+#searchPreview .memo-v108-preview-molecule .presentation-v33-photo.memo-v52-gallery{position:static!important;width:100%!important;max-width:none!important;margin:0!important;display:flex!important;gap:24px!important;justify-content:center;align-items:center;border:1px solid #dce8df;border-radius:14px;padding:12px;background:#fcfefd}
+#searchPreview .memo-v108-preview-molecule .presentation-v33-photo.memo-v52-gallery img{height:200px!important;max-height:200px!important;object-fit:contain!important}
+@media(max-width:650px){#searchPreview .memo-v108-preview-molecule .presentation-v33-layout.has-photo{grid-template-columns:1fr}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -3710,11 +3722,20 @@ function previewSearchResult(item){
  // V77 : récapitulatif non interactif pour les formes, accès direct à chaque dosage.
  const previewDosageGroups=isMolecule(m)?moleculeDosageColumns(childMeds):[];
  const previewDosageHtml=previewDosageGroups.length?`<section class="memo-v77-overview" aria-label="Formes et dosages disponibles"><div class="group-kicker memo-v77-heading" style="color:#ad6c50">FORMES ET DOSAGES DISPONIBLES</div>${previewDosageGroups.map(group=>`<div class="memo-v77-form"><span class="memo-v77-form-name">${esc(group.form)}</span><div class="memo-v77-doses">${group.items.map(child=>{const dose=String(child.dosage||ingredientTitleDose(child)||"").trim();const fallback=displayMedName(child).match(/(\d+(?:[.,]\d+)?\s*(?:µg|mcg|mg|g|UI|mL|ml)(?:\s*\/\s*(?:µg|mcg|mg|g|UI|mL|ml))?)\b/i);const label=dose||(fallback?fallback[1]:displayMedName(child));return `<button type="button" class="memo-v77-dose" data-v77-dose="${esc(child.id)}" data-v77-form="${esc(group.form)}" title="Ouvrir ${esc(displayMedName(m))} — ${esc(group.form)} — ${esc(label)}">${esc(label)}</button>`}).join(`<span class="memo-v82-separator" aria-hidden="true"> · </span>`)}</div></div>`).join("")}</section>`:"";
+ const previewGeneralHtml=(isMolecule(m)||isSpecialiteFiche(m))&&sections.length?`<details class="molecule-general memo-v102-general memo-v108-preview-general"><summary>📖 Informations générales</summary><div class="molecule-general-inner memo-v85-specialty-rubrics">${sections.map(x=>`<details class="memo-v74-rubric" open><summary>${esc(x.title||"Information")}<span class="memo-v74-chevron" aria-hidden="true"></span></summary><div class="memo-v74-rubric-content">${safeSection(x)}</div></details>`).join("")}</div></details>`:"";
+ const previewSpecialtyHtml=isSpecialiteFiche(m)?memoV90SpecialtyPresentations(m).replace('id="presentations-details"','id="preview-presentations-details"').replace('class="molecule-general memo-v92-specialty-presentations"','class="molecule-general memo-v92-specialty-presentations memo-v108-preview-presentations" open'):"";
+ const previewMoleculeCommercialHtml=isMolecule(m)&&childMeds.length?(()=>{
+  const opts=memoV44Options(m),chosen=opts.find(x=>x.key===memoV44Chosen(m)?.key)||opts[0];
+  if(!chosen)return "";
+  return `<details class="molecule-general memo-v108-preview-molecule" open><summary>💊 Présentations</summary><div class="molecule-general-inner"><div class="memo-v108-preview-commercial">${presentationInfo(chosen.p,m)}</div></div></details>`;
+ })():"";
+ const previewBodyHtml=(isMolecule(m)||isSpecialiteFiche(m))?`${previewGeneralHtml}${previewSpecialtyHtml}${previewMoleculeCommercialHtml}`:sections.map(x=>`<button type="button" class="search-preview-section" data-preview-section="${esc(x.id)}" title="Ouvrir cette rubrique"><span class="search-preview-arrow">↗</span>${safeSection(x)}</button>`).join('')||'<p class="empty">Aucune rubrique renseignée pour cette fiche.</p>';
  const foundFooter=""; // V79 : supprimer le renvoi redondant et son encadré.
- $('searchPreview').innerHTML=`<div class="search-preview-header">${headerHtml}</div>${previewChildrenHtml}${previewDosageHtml}${sections.map(x=>`<button type="button" class="search-preview-section" data-preview-section="${esc(x.id)}" title="Ouvrir cette rubrique"><span class="search-preview-arrow">↗</span>${safeSection(x)}</button>`).join('')||'<p class="empty">Aucune rubrique renseignée pour cette fiche.</p>'}${foundFooter}`;
+ $('searchPreview').innerHTML=`<div class="search-preview-header">${headerHtml}</div>${previewChildrenHtml}${previewDosageHtml}${previewBodyHtml}${foundFooter}`;
  // Les liens de fil d'Ariane et de retour à la molécule restent dans le volet d'aperçu.
  $('searchPreview').querySelectorAll('[data-group-open]').forEach(b=>b.onclick=e=>{e.stopPropagation();const target=visible.find(x=>String(x.id)===String(b.dataset.groupOpen));if(target)navigatePreview({med:target,section:null,presentation:null});});
  memoWireBadgeClicks($('searchPreview'));
+ memoLinkifyCips($('searchPreview'));
  $('searchPreview').querySelector('[data-preview-open-title]')?.addEventListener('click',()=>openMedication(m.id,pres,sec?.id||null));
  $('searchPreview').querySelectorAll('[data-preview-section]').forEach(b=>b.onclick=()=>{const target=(m.sections||[]).find(x=>String(x.id)===String(b.dataset.previewSection));navigatePreview({med:m,section:target||null,presentation:pres});});
  $('searchPreview').querySelectorAll('[data-preview-child]').forEach(b=>b.onclick=()=>{const target=visible.find(x=>String(x.id)===String(b.dataset.previewChild));if(target){navigatePreview({med:target,section:null,presentation:null});}});
@@ -3782,7 +3803,7 @@ function renderResults(){
   const cip=cipBadges(p);
   const mergedCip=item.mergedPresentationIndexes?.length?
    [...new Map(item.mergedPresentationIndexes.flatMap(i=>cipConditionnements(m.presentations?.[i]||{})).filter(c=>c.cip).map(c=>[String(c.cip),c])).values()]
-    .map(c=>`<button type="button" class="explore-cip-copy" data-copy-cip="${esc(c.cip)}" title="${esc(c.pack||"Copier le CIP")}" aria-label="Copier le CIP ${esc(c.cip)}">CIP <strong>${esc(c.cip)}</strong> <span aria-hidden="true">⧉</span></button>`).join(""):"";
+    .map(c=>cipBadges({showCip:true,cip:c.cip,cipBoxes:[c]})).join(""):"";
   const dciBadges=m.entry_type==="dci"&&!isPresentation?`<div class="result-dci-badges">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<span class="badge-button badge-class">${esc(t)}</span>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<span class="badge-button badge-indication">${esc(t)}</span>`).join("")}</div>`:"";
   const sectionDetail=sec&&(m.entry_type==="dci"||m.entry_type==="specialite")&&!isPresentation?`<div class="result-section-direct"><span class="result-section-title">↳ ${esc(sec.title)}</span></div>`:"";
   return `<div class="result result-${kind}" role="option" aria-selected="false" tabindex="-1" data-id="${esc(m.id)}" data-section="${esc(sec?.id||'')}" data-presentation="${item.presentation===null?'':item.presentation}">
