@@ -3049,7 +3049,15 @@ function indicationTags(m){
 // V113 : les fiches dosage/forme autonomes obsolètes sont exclues de la navigation.
 // Les variantes liées aux molécules restent disponibles pour leurs onglets,
 // leurs particularités et leurs médicaments commerciaux. Aucune donnée n'est effacée.
-function publicMeds(){return meds.filter(m=>!isSourcesRecord(m)&&!isObsoleteDosageFiche(m)&&(admin||m.published))}
+// V113 correctif : les variantes sont des composants d’une fiche molécule, pas des publications indépendantes.
+// Une molécule publiée doit montrer ses formes/dosages même si les lignes techniques « dci »
+// restent en brouillon. Une molécule non publiée ne rend pas ses variantes publiques.
+function publicMeds(){
+ const publishedMoleculeIds=new Set(meds.filter(m=>isMolecule(m)&&m.published).map(m=>String(m.id)));
+ return meds.filter(m=>!isSourcesRecord(m)&&!isObsoleteDosageFiche(m)&&(
+  admin||m.published||(isVariantFiche(m)&&publishedMoleculeIds.has(String(moleculeParentId(m))))
+ ));
+}
 function visibleStandaloneMeds(){return publicMeds().filter(m=>!isVariantFiche(m))}
 function specialtyItems(m){
  return (m.presentations||[]).map((p,i)=>({p,i,name:(p.name||m.name||"").trim()})).filter(x=>x.name);
