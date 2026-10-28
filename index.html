@@ -1876,6 +1876,50 @@ body.header-search-active #headerSearchSlot .search-suggestions .results{max-hei
  padding:10px!important;gap:18px!important;
  }
 }
+
+/* V99 — galerie élargie jusqu'au bord droit, images de même hauteur */
+#detail .memo-v92-specialty-presentations .memo-v90-commercial{
+ max-width:none!important;width:100%!important;
+}
+#detail .memo-v92-specialty-presentations .memo-v90-commercial .presentation-v33-layout.has-photo{
+ grid-template-columns:minmax(0,1fr) minmax(360px,48%)!important;
+ gap:24px!important;
+}
+#detail .memo-v92-specialty-presentations .memo-v90-commercial .presentation-v33-photo.memo-v52-gallery{
+ width:100%!important;max-width:none!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ gap:38px!important;padding:14px 24px!important;
+}
+#detail .memo-v92-specialty-presentations .memo-v90-commercial .memo-v52-photo-tile{
+ flex:0 1 185px!important;width:185px!important;min-width:0!important;
+ margin:0!important;align-items:center!important;
+}
+#detail .memo-v92-specialty-presentations .memo-v90-commercial .memo-v52-photo-tile .presentation-v37-zoom{
+ width:100%!important;height:255px!important;min-height:255px!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+}
+#detail .memo-v92-specialty-presentations .memo-v90-commercial .memo-v52-photo-tile img{
+ display:block!important;width:100%!important;height:255px!important;
+ max-height:255px!important;max-width:100%!important;object-fit:contain!important;
+}
+#detail .memo-v92-specialty-presentations .memo-v90-commercial .memo-v97-cip-area{
+ margin-bottom:3px!important;padding-bottom:3px!important;
+}
+#detail .memo-v92-specialty-presentations .memo-v90-commercial .memo-v97-cip-area .memo-v90-pack-row{
+ padding:1px 0!important;
+}
+@media(max-width:700px){
+ #detail .memo-v92-specialty-presentations .memo-v90-commercial .presentation-v33-layout.has-photo{
+  grid-template-columns:minmax(0,1fr)!important;gap:14px!important;
+ }
+ #detail .memo-v92-specialty-presentations .memo-v90-commercial .presentation-v33-photo.memo-v52-gallery{
+  gap:18px!important;padding:12px!important;
+ }
+ #detail .memo-v92-specialty-presentations .memo-v90-commercial .memo-v52-photo-tile .presentation-v37-zoom,
+ #detail .memo-v92-specialty-presentations .memo-v90-commercial .memo-v52-photo-tile img{
+  height:210px!important;min-height:0!important;max-height:210px!important;
+ }
+}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
