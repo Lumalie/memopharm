@@ -2447,6 +2447,10 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
 /* V114.4 — Les badges de l’aperçu gardent le comportement des fiches. */
 #searchPreview .tag[data-filter-ind]{cursor:pointer;font:inherit}
 #searchPreview .tag[data-filter-ind]:hover{text-decoration:underline}
+/* V114.6 — Résultat de dosage : teinte terracotta de la présentation sélectionnée. */
+.search-suggestions .result-dose{--hit-ink:#895342;--hit-line:#c48f79;--hit-rgb:248,235,228}
+#searchWorkspace #searchSuggestions .result-dose{--hit-ink:#895342;--hit-line:#c48f79;--hit-rgb:248,235,228}
+.header-search-active #headerSearchSlot .search-suggestions .result-dose{--hit-ink:#895342;--hit-line:#c48f79;--hit-rgb:248,235,228}
 </style>
 </head>
 <body>
@@ -3053,6 +3057,17 @@ function memoBadgeMatches(m,kind){
 // Une navigation par badge crée une vraie étape dans l'historique.
 function memoNavigateExplorerFilter(filterType,filterValue){
  const filter={type:filterType,value:filterValue};
+ // Sauvegarder la recherche avant navigateToView(), qui vide le champ.
+ // L'entrée précédente permet à « Retour » de restaurer résultats et aperçu.
+ if(currentView==="home"&&!openedSearchFiche&&!editorId){
+  const query=$("search").value;
+  if(query.trim()){
+   history.replaceState({
+    ...history.state,
+    memopharmSearch:{query,category:activeCategory,previewKey:previewSearchKey}
+   },"",location.href);
+  }
+ }
  navigateToView("explore");
  history.replaceState({...history.state,memopharmExplorerFilter:filter},"",location.href);
  memoApplyExplorerFilter(filter);
@@ -3829,6 +3844,23 @@ function updateSearchHighlight(){
  els.forEach((el,i)=>el.setAttribute('aria-selected',String(i===highlightedSearchIndex)));
  if(highlightedSearchIndex>=0)els[highlightedSearchIndex]?.scrollIntoView({block:'nearest'});
 }
+// Le résultat de la molécule adopte l'identité de la variante lorsque
+// la recherche cible un dosage, tout en conservant les badges de la molécule.
+function memoSearchResultVariant(m,query){
+ if(!isMolecule(m))return null;
+ const tokens=norm(query).split(/\s+/).filter(Boolean);
+ const doseTokens=tokens.filter(t=>/^\d/.test(t));
+ if(!doseTokens.length)return null;
+ const candidates=moleculeChildren(m).map(child=>{
+  const dose=norm(String(child.dosage||ingredientTitleDose(child)||''));
+  const label=norm([child.name,child.dosage,child.form,ingredientTitleDose(child),...medicationForms(child)].join(' '));
+  if(!doseTokens.every(t=>memoSearchTokenMatch(label,t)))return null;
+  const numbers=dose.match(/\d+/g)||[];
+  const score=doseTokens.reduce((sum,t)=>sum+(numbers.some(n=>n===t)?100:numbers.some(n=>n.startsWith(t))?70:label.includes(t)?10:0),0);
+  return {child,score};
+ }).filter(Boolean).sort((a,b)=>b.score-a.score);
+ return candidates[0]?.child||null;
+}
 function renderResults(){
  const query=$('search').value.trim();
  const found=query?getSearchMatches():[];
@@ -3838,11 +3870,16 @@ function renderResults(){
  $('count').textContent=found.length+' résultat'+(found.length===1?'':'s');
  $('results').innerHTML=found.length?found.map(item=>{
   const m=item.med,sec=item.section;
+  const matchingVariant=item.presentation===null?memoSearchResultVariant(m,query):null;
   const p=item.presentation!==null?m.presentations?.[item.presentation]:null;
   const isPresentation=!!p;
   const group=isGroup(m);
-  const kind=isPresentation?"presentation":group?"group":isMolecule(m)?"molecule":isSpecialiteFiche(m)?"specialite":"fiche";
-  const name=searchResultLabel(item);
+  const kind=matchingVariant?"dose":isPresentation?"presentation":group?"group":isMolecule(m)?"molecule":isSpecialiteFiche(m)?"specialite":"fiche";
+  const name=matchingVariant?(()=>{
+   const dose=String(matchingVariant.dosage||ingredientTitleDose(matchingVariant)||'').trim();
+   const form=String(matchingVariant.form||medicationForms(matchingVariant)[0]||'').trim();
+   return [displayMedName(m),dose].filter(Boolean).join(' ')+(form?' — '+form:'');
+  })():searchResultLabel(item);
   const lab=p?.presentationKind==="generic"&&p.lab&&!norm(name).includes(norm(p.lab))?p.lab:"";
   const presName=String(p?.name||m.name||"").trim();
   const presWithLab=lab?presName+" "+lab:presName;
@@ -3856,7 +3893,7 @@ function renderResults(){
     .map(c=>cipBadges({showCip:true,cip:c.cip,cipBoxes:[c]})).join(""):"";
   const dciBadges=(isDciFamilyType(m))&&!isPresentation?`<div class="result-dci-badges">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}</div>`:"";
   const sectionDetail=sec&&isContentFicheType(m)&&!isPresentation?`<div class="result-section-direct"><span class="result-section-title">↳ ${esc(sec.title)}</span></div>`:"";
-  return `<div class="result result-${kind}" role="option" aria-selected="false" tabindex="-1" data-id="${esc(m.id)}" data-section="${esc(sec?.id||'')}" data-presentation="${item.presentation===null?'':item.presentation}">
+  return `<div class="result result-${kind}" role="option" aria-selected="false" tabindex="-1" data-id="${esc(matchingVariant?.id||m.id)}" data-preview-id="${esc(m.id)}" data-section="${esc(matchingVariant?'':sec?.id||'')}" data-presentation="${matchingVariant||item.presentation===null?'':item.presentation}">
    <strong><span class="result-dot" aria-hidden="true">●</span>${esc(isPresentation?presentationTitle:name)}<span class="result-arrow" aria-hidden="true">↗</span></strong>
    ${isPresentation?`<div class="result-presentation-info">${badge}${cip}</div>`:mergedCip?`<div class="result-presentation-info memo-v106-merged-cip">${mergedCip}</div>`:(isDciFamilyType(m))?dciBadges:group?"":`<div class="sub">${esc(m.category||"Sans famille")}</div>`}
    ${sectionDetail}
@@ -3877,8 +3914,8 @@ function renderResults(){
    // Le survol met à jour l'aperçu sans créer d'entrée d'historique.
    el.onmouseenter=()=>{
     if(currentView!=="home"||openedSearchFiche||editorId||!$('search').value.trim())return;
-    const id=el.dataset.id,section=el.dataset.section||'',pres=el.dataset.presentation===''?null:Number(el.dataset.presentation);
-    const item=found.find(x=>String(x.med.id)===String(id)&&(x.section?.id||'')===section&&x.presentation===pres);
+    const id=el.dataset.previewId||el.dataset.id,section=el.dataset.section||'',pres=el.dataset.presentation===''?null:Number(el.dataset.presentation);
+    const item=found.find(x=>String(x.med.id)===String(id)&&((el.dataset.id!==id)||((x.section?.id||'')===section))&&x.presentation===pres);
     if(item)previewSearchResult(item);
    };
    el.onclick=choose;
