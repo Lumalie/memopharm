@@ -2027,6 +2027,28 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
 #searchPreview .memo-v77-form-name{min-width:132px}
 @media(max-width:480px){#searchPreview .memo-v77-form-name{min-width:0}}
 </style>
+<style>
+/* V82 — reprise exacte du style « Fiche molécule » et dosages accolés aux formes. */
+#searchPreview .memo-v77-heading.group-kicker{
+  margin-bottom:9px;
+  font-variant:all-small-caps;
+  letter-spacing:.09em;
+  font-weight:800!important;
+  font-size:1.08rem!important;
+  line-height:normal;
+  text-transform:none;
+  color:#ad6c50!important;
+}
+#searchPreview .memo-v77-form{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
+#searchPreview .memo-v77-form-name{min-width:0!important;max-width:none!important;flex:none}
+#searchPreview .memo-v77-doses{display:inline-flex;flex-wrap:wrap;align-items:baseline;gap:0}
+#searchPreview .memo-v77-dose{padding:2px 0!important}
+#searchPreview .memo-v82-separator{color:#9a8b80;padding:0 7px;font-weight:400}
+@media(max-width:480px){
+ #searchPreview .memo-v77-form{display:flex;gap:7px}
+ #searchPreview .memo-v77-form-name{display:inline;margin:0}
+}
+</style>
 </head>
 <body>
 <header><div class="wrap">
@@ -3252,7 +3274,7 @@ function previewSearchResult(item){
 
  // V77 : récapitulatif non interactif pour les formes, accès direct à chaque dosage.
  const previewDosageGroups=isMolecule(m)?moleculeDosageColumns(childMeds):[];
- const previewDosageHtml=previewDosageGroups.length?`<section class="memo-v77-overview" aria-label="Formes et dosages disponibles"><div class="memo-v77-heading">FORMES ET DOSAGES DISPONIBLES</div>${previewDosageGroups.map(group=>`<div class="memo-v77-form"><span class="memo-v77-form-name">${esc(group.form)}</span><div class="memo-v77-doses">${group.items.map(child=>{const dose=String(child.dosage||ingredientTitleDose(child)||"").trim();const fallback=displayMedName(child).match(/(\d+(?:[.,]\d+)?\s*(?:µg|mcg|mg|g|UI|mL|ml)(?:\s*\/\s*(?:µg|mcg|mg|g|UI|mL|ml))?)\b/i);const label=dose||(fallback?fallback[1]:displayMedName(child));return `<button type="button" class="memo-v77-dose" data-v77-dose="${esc(child.id)}" data-v77-form="${esc(group.form)}" title="Ouvrir ${esc(displayMedName(m))} — ${esc(group.form)} — ${esc(label)}">${esc(label)} <span aria-hidden="true">↗</span></button>`}).join("")}</div></div>`).join("")}</section>`:"";
+ const previewDosageHtml=previewDosageGroups.length?`<section class="memo-v77-overview" aria-label="Formes et dosages disponibles"><div class="group-kicker memo-v77-heading" style="color:#ad6c50">FORMES ET DOSAGES DISPONIBLES</div>${previewDosageGroups.map(group=>`<div class="memo-v77-form"><span class="memo-v77-form-name">${esc(group.form)}</span><div class="memo-v77-doses">${group.items.map(child=>{const dose=String(child.dosage||ingredientTitleDose(child)||"").trim();const fallback=displayMedName(child).match(/(\d+(?:[.,]\d+)?\s*(?:µg|mcg|mg|g|UI|mL|ml)(?:\s*\/\s*(?:µg|mcg|mg|g|UI|mL|ml))?)\b/i);const label=dose||(fallback?fallback[1]:displayMedName(child));return `<button type="button" class="memo-v77-dose" data-v77-dose="${esc(child.id)}" data-v77-form="${esc(group.form)}" title="Ouvrir ${esc(displayMedName(m))} — ${esc(group.form)} — ${esc(label)}">${esc(label)}</button>`}).join(`<span class="memo-v82-separator" aria-hidden="true"> · </span>`)}</div></div>`).join("")}</section>`:"";
  const foundFooter=""; // V79 : supprimer le renvoi redondant et son encadré.
  $('searchPreview').innerHTML=`<div class="search-preview-header">${headerHtml}</div>${previewChildrenHtml}${previewDosageHtml}${sections.map(x=>`<button type="button" class="search-preview-section" data-preview-section="${esc(x.id)}" title="Ouvrir cette rubrique"><span class="search-preview-arrow">↗</span>${safeSection(x)}</button>`).join('')||'<p class="empty">Aucune rubrique renseignée pour cette fiche.</p>'}${foundFooter}`;
  // Les liens de fil d'Ariane et de retour à la molécule restent dans le volet d'aperçu.
