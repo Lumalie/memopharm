@@ -1650,6 +1650,33 @@ body.header-search-active #headerSearchSlot .search-suggestions .results{max-hei
 #detail .memo-v74-rubric-tools button:hover{background:#e1f0e5;border-color:#9dc6aa}
 @media(max-width:520px){#detail .memo-v74-rubric>summary{padding:13px 4px}#detail .memo-v74-rubric-tools{align-items:flex-start}}
 
+/* V75 — accordéon épuré : annule la règle générique .detail details (cartes). */
+#detail.detail details.memo-v74-rubric{
+  display:block;
+  border:0;
+  border-bottom:1px solid #e2eae4;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  padding:0;
+  margin:0;
+  overflow:visible;
+}
+#detail.detail details.memo-v74-rubric:last-of-type{border-bottom:0}
+#detail.detail details.memo-v74-rubric>summary{
+  background:transparent;
+  border:0;
+  border-radius:0;
+  padding:15px 4px;
+}
+#detail.detail details.memo-v74-rubric>summary:hover{background:#f5f9f6}
+#detail.detail .memo-v74-rubric-content{padding:0 4px 15px;background:transparent;border:0;box-shadow:none}
+#detail.detail .memo-v74-rubric-content>.section{border:0!important;box-shadow:none!important;background:transparent!important;padding:0!important;margin:0!important}
+#detail.detail .memo-v74-rubric-tools{margin-top:12px;padding:4px;color:#77887c}
+#detail.detail .memo-v74-rubric-tools button{background:transparent;border:1px solid transparent;padding:4px 7px;color:#547565}
+#detail.detail .memo-v74-rubric-tools button:hover{background:#f2f7f3;border-color:#dce9df}
+@media(max-width:520px){#detail.detail details.memo-v74-rubric>summary{padding:13px 4px}}
+
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
