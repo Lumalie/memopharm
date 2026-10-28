@@ -1920,6 +1920,63 @@ body.header-search-active #headerSearchSlot .search-suggestions .results{max-hei
   height:210px!important;min-height:0!important;max-height:210px!important;
  }
 }
+
+/* V100 — présentation commerciale des molécules : même galerie que les spécialités V99.
+   Ne touche ni aux sélecteurs forme/dosage/boîtage, ni aux données. */
+#detail #presentations-details.presentation-fixed.memo-v48-has-photo{
+ padding-right:18px!important;
+}
+#detail #presentations-details.presentation-fixed #presentation-info{
+ width:100%!important;max-width:none!important;
+}
+#detail #presentations-details.presentation-fixed #presentation-info .presentation-v33-content{
+ width:100%!important;max-width:none!important;
+}
+#detail #presentations-details.presentation-fixed #presentation-info .presentation-v33-layout.has-photo{
+ display:grid!important;grid-template-columns:minmax(0,1fr) minmax(360px,48%)!important;
+ align-items:start!important;gap:24px!important;width:100%!important;max-width:none!important;
+}
+#detail #presentations-details.presentation-fixed #presentation-info .presentation-v33-fields{
+ width:auto!important;max-width:none!important;min-width:0!important;
+}
+#detail #presentations-details.presentation-fixed #presentation-info .presentation-v33-photo.memo-v52-gallery{
+ position:static!important;top:auto!important;right:auto!important;
+ margin:0!important;transform:none!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ box-sizing:border-box!important;width:100%!important;max-width:none!important;
+ min-height:0!important;gap:38px!important;padding:14px 24px!important;
+ border:1px solid #dce8df!important;border-radius:14px!important;
+ background:#fcfefd!important;box-shadow:none!important;
+}
+#detail #presentations-details.presentation-fixed #presentation-info .memo-v52-photo-tile{
+ flex:0 1 185px!important;width:185px!important;min-width:0!important;
+ margin:0!important;align-items:center!important;
+}
+#detail #presentations-details.presentation-fixed #presentation-info .memo-v52-photo-tile .presentation-v37-zoom{
+ width:100%!important;height:255px!important;min-height:255px!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+}
+#detail #presentations-details.presentation-fixed #presentation-info .memo-v52-photo-tile img{
+ display:block!important;width:100%!important;height:255px!important;
+ max-height:255px!important;max-width:100%!important;object-fit:contain!important;
+}
+#detail #presentations-details.presentation-fixed #presentation-info .presentation-v33-warning{
+ width:100%!important;max-width:100%!important;clear:both!important;
+ margin-top:10px!important;padding-top:10px!important;
+}
+@media(max-width:700px){
+ #detail #presentations-details.presentation-fixed.memo-v48-has-photo{padding-right:12px!important}
+ #detail #presentations-details.presentation-fixed #presentation-info .presentation-v33-layout.has-photo{
+  grid-template-columns:minmax(0,1fr)!important;gap:14px!important;
+ }
+ #detail #presentations-details.presentation-fixed #presentation-info .presentation-v33-photo.memo-v52-gallery{
+  gap:18px!important;padding:12px!important;
+ }
+ #detail #presentations-details.presentation-fixed #presentation-info .memo-v52-photo-tile .presentation-v37-zoom,
+ #detail #presentations-details.presentation-fixed #presentation-info .memo-v52-photo-tile img{
+  height:210px!important;min-height:0!important;max-height:210px!important;
+ }
+}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
