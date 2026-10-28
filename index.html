@@ -5527,6 +5527,27 @@ function sectionAction(action,index,id){const m=meds.find(x=>x.id===id);if(!m)re
  if(action==="remove"){if(!confirm("Retirer cette rubrique de la fiche ?"))return;ss.splice(index,1)}
  memoEditorActiveTab="general";memoEditorOpenSection=null;renderEditor(id);saveLocalDraft()}
 function addSection(id,type){const m=meds.find(x=>x.id===id);if(!m)return;captureEditorFields(m);m.sections.push({id:"custom-"+Date.now(),title:"Nouvelle rubrique",type,content:type==="table"?"Colonne 1 | Colonne 2\nÀ renseigner | À renseigner":"À compléter à partir d’une source vérifiée.",enabled:true,imageData:"",imageUrl:"",imageCaption:""});memoEditorActiveTab="general";memoEditorOpenSection=m.sections.length-1;renderEditor(id);saveLocalDraft()}
+// V113 étape 7 : les formes/dosages sont préparés comme composants de la molécule.
+// Validation avant toute écriture cloud : une variante incomplète ne doit pas
+// laisser une molécule déjà enregistrée avec seulement une partie de ses enfants.
+function prepareMoleculeVariants(m){
+ if(!isMolecule(m)||!Array.isArray(m._variantDrafts))return null;
+ return m._variantDrafts.map(original=>{
+  const child=clone(original);
+  if(!String(child.form||'').trim()||!String(child.dosage||'').trim()){
+   throw new Error('Chaque forme/dosage doit avoir une forme pharmaceutique et un dosage.');
+  }
+  child.sections=Array.isArray(child.sections)?child.sections:[];
+  if(!child.sections.length)child.sections=[{id:'variant-meta',title:'Métadonnées',type:'text',content:'',enabled:false}];
+  child.sections[0].moleculeParentId=String(m.id);
+  child.sections[0].dciForm=child.form;
+  child.entry_type='dci'; // Compatibilité temporaire avec le schéma Supabase.
+  child.name=m.name+' '+child.dosage;
+  child.category=m.category;
+  child.published=Boolean(m.published); // Même visibilité que la molécule.
+  return child;
+ });
+}
 let editorSaveInProgress=false;
 async function saveEditor(id){if(!requireAdmin())return;
  if(editorSaveInProgress)return;
@@ -5536,27 +5557,18 @@ async function saveEditor(id){if(!requireAdmin())return;
  if(button){button.disabled=true;button.textContent="Enregistrement…"}
  try{
   captureEditorFields(m);
+  const variants=prepareMoleculeVariants(m);
+  // Ne retirer les brouillons qu'après la réussite de toutes les écritures.
   await uploadPresentationPhotos(m);
-  const variants=Array.isArray(m._variantDrafts)?m._variantDrafts:null;
-  delete m._variantDrafts;
   await syncMedication(m);
   if(variants){
    for(const child of variants){
-    if(!String(child.form||'').trim()||!String(child.dosage||'').trim())throw new Error('Chaque présentation doit avoir une forme et un dosage.');
-    child.sections=child.sections||[];
-    if(!child.sections.length)child.sections=[{id:'variant-meta',title:'Métadonnées',type:'text',content:'',enabled:false}];
-    child.sections[0].moleculeParentId=String(m.id);
-    child.sections[0].dciForm=child.form;
-    child.name=m.name+' '+child.dosage;
-    child.category=m.category;
-    // V113 : les variantes techniques suivent la publication de leur molécule.
-    // Les politiques Supabase peuvent masquer les lignes « draft » aux visiteurs.
-    child.published=Boolean(m.published);
     await uploadPresentationPhotos(child);
     await syncMedication(child);
    }
    selectedId=m.id;
   }
+  delete m._variantDrafts;
   clearLocalDraft();
   detailLocation(id);renderDetail();
   // Après la sauvegarde, afficher le début de la fiche qui vient d'être modifiée.
