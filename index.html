@@ -1819,6 +1819,41 @@ body.header-search-active #headerSearchSlot .search-suggestions .results{max-hei
  #detail .memo-v92-specialty-presentations .memo-v90-commercial{padding-right:0;min-height:0}
  #detail .memo-v92-specialty-presentations .memo-v90-commercial .presentation-v33-photo.memo-v52-gallery{position:static!important;margin:12px 0 0!important;width:auto!important;max-width:100%!important}
 }
+
+/* V97 — carte de présentation compacte, CIP + texte et photos côte à côte */
+#detail .memo-v92-specialty-presentations .memo-v90-commercial{
+ position:relative!important;box-sizing:border-box!important;
+ max-width:860px!important;width:100%!important;min-height:0!important;
+ padding:18px 20px!important;margin:10px 0 14px!important;
+ border:1px solid #dce8df!important;border-radius:15px!important;
+ background:#fcfefd!important;
+}
+#detail .memo-v92-specialty-presentations .memo-v90-commercial .presentation-v33-content{width:100%!important;margin:0!important}
+#detail .memo-v92-specialty-presentations .memo-v90-commercial .presentation-v33-layout.has-photo{
+ display:grid!important;grid-template-columns:minmax(0,1fr) minmax(210px,290px)!important;
+ gap:22px!important;align-items:start!important;max-width:none!important;width:100%!important
+}
+#detail .memo-v92-specialty-presentations .memo-v90-commercial .presentation-v33-layout:not(.has-photo){display:block!important}
+#detail .memo-v92-specialty-presentations .memo-v90-commercial .presentation-v33-fields{
+ min-width:0!important;width:auto!important;max-width:none!important;flex:none!important;padding:0!important
+}
+#detail .memo-v92-specialty-presentations .memo-v90-commercial .presentation-v33-photo.memo-v52-gallery{
+ position:static!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ gap:22px!important;top:auto!important;right:auto!important;align-self:start!important;
+ width:100%!important;max-width:none!important;margin:0!important;padding:0!important;min-height:0!important
+}
+#detail .memo-v92-specialty-presentations .memo-v90-commercial .memo-v97-cip-area{
+ margin:0 0 14px!important;padding:0 0 13px!important;border-bottom:1px solid #dce8df!important
+}
+#detail .memo-v92-specialty-presentations .memo-v90-commercial .memo-v97-cip-area .memo-v90-pack-row{padding:3px 0!important}
+#detail .memo-v92-specialty-presentations .memo-v90-commercial .presentation-v33-warning{
+ margin-top:14px!important;padding-top:12px!important;border-top:1px solid #dce8df!important
+}
+@media(max-width:700px){
+ #detail .memo-v92-specialty-presentations .memo-v90-commercial{padding:14px!important}
+ #detail .memo-v92-specialty-presentations .memo-v90-commercial .presentation-v33-layout.has-photo{grid-template-columns:1fr!important;gap:12px!important}
+ #detail .memo-v92-specialty-presentations .memo-v90-commercial .presentation-v33-photo.memo-v52-gallery{max-width:310px!important;gap:18px!important}
+}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -4067,7 +4102,7 @@ function memoV48Sync(section,p){
  const cip=section.querySelector("[data-v48-cip]");
  if(cip)cip.innerHTML=memoV48Cip(p);
 }
-function presentationInfo(p,m=null){
+function presentationInfo(p,m=null, specialtyBoxesHtml=""){
  if(!p)return '<p class="muted">Aucune présentation documentée.</p>';
  const img=safeHttp(p.imageUrl||"");
  const line=(key,label,value)=>p[key]===true?`<p><strong>${label} :</strong> ${esc(value)}</p>`:"";
@@ -4086,7 +4121,7 @@ function presentationInfo(p,m=null){
  const badges=m&&isSpecialiteFiche(m)?"":m?practicalBadges(m,{...p,regulatoryList:""}):"";
  if(!rows.length&&!photo&&!badges&&!p.name)return '<p class="muted">Aucun critère de présentation affiché pour le moment.</p>';
  const title="";
- return `<div class="presentation-v33-content">${title}${badges}<div class="presentation-v33-layout${photo?' has-photo':''}"><div class="presentation-v33-fields">${rows.join('')}</div>${photo}</div><p class="hint presentation-v33-warning">L’aspect seul ne permet pas d’identifier avec certitude un médicament. Vérifier la concordance avec la présentation exacte.</p></div>`;
+ return `<div class="presentation-v33-content">${title}${badges}<div class="presentation-v33-layout${photo?' has-photo':''}"><div class="presentation-v33-fields">${specialtyBoxesHtml?`<div class="memo-v97-cip-area">${specialtyBoxesHtml}</div>`:""}${rows.join('')}</div>${photo}</div><p class="hint presentation-v33-warning">L’aspect seul ne permet pas d’identifier avec certitude un médicament. Vérifier la concordance avec la présentation exacte.</p></div>`;
 }
 function presentationLabel(p,m,i){
  const name=(p.name||m.name||"").trim();
@@ -4110,7 +4145,7 @@ function memoV90SpecialtyPresentations(m){
  const entries=pres.map((p,i)=>{
   const boxes=cipConditionnements(p).filter(x=>x.cip||x.pack);
   const list=boxes.length?`<div class="memo-v90-pack-list">${boxes.map(b=>`<div class="memo-v90-pack-row">${p.showCip===true&&b.cip?`<span class="memo-v90-cip">${cipBadges({...p,cip:b.cip,cipBoxes:[b]})}</span>`:""}<span class="memo-v92-pack-label">${esc(b.pack||"Conditionnement non précisé")}</span></div>`).join("")}</div>`:"";
-  return `<div class="memo-v90-commercial">${pres.length>1?`<h4>Présentation ${i+1}${p.lab?" · "+esc(p.lab):""}</h4>`:""}${list}${presentationInfo({...p,showCip:false},m)}${memoV86SpecificHtml(p)}</div>`;
+  return `<div class="memo-v90-commercial">${pres.length>1?`<h4>Présentation ${i+1}${p.lab?" · "+esc(p.lab):""}</h4>`:""}${presentationInfo({...p,showCip:false},m,list)}${memoV86SpecificHtml(p)}</div>`;
  }).join("");
  return `<details class="molecule-general memo-v92-specialty-presentations" id="presentations-details"><summary>💊 Présentations</summary><div class="molecule-general-inner">${entries||'<p class="muted">Aucune présentation renseignée.</p>'}</div></details>`;
 }
