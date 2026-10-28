@@ -1712,6 +1712,30 @@ body.header-search-active #headerSearchSlot .search-suggestions .results{max-hei
 #detail .memo-v85-specialty-tabs .molecule-tab-strip:empty{display:none}
 #detail .memo-v85-specialty-tabs .molecule-tab{min-width:0}
 #detail .memo-v85-specialty-tabs .memo-v85-hint{font-size:.78rem;color:#6a7d71;margin:3px 0 9px}
+/* V87 — Editeur des spécialités : une formulation active à la fois */
+#editor .memo-v87-nav{margin:10px 0 16px}
+#editor .memo-v87-label{font-weight:700;color:#235947;font-size:.82rem;margin:12px 0 7px}
+#editor .memo-v87-buttons{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+#editor .memo-v87-buttons button{border:1px solid #d6e5dc;border-radius:10px;padding:8px 12px;background:#fff;color:#245e4a;cursor:pointer;font-weight:600}
+#editor .memo-v87-buttons button[aria-pressed="true"]{background:#dbece0;border-color:#9abfa9}
+#editor .memo-v87-doses button[aria-pressed="true"]{background:#fae9e1;border-color:#dcac94;color:#a35638}
+#editor .memo-v87-buttons .memo-v87-add{border-style:dashed;color:#43745c;font-weight:500}
+#editor .memo-v87-switch{display:flex;gap:8px;border-bottom:1px solid #dae6df;margin:15px 0 8px;padding-bottom:7px}
+#editor .memo-v87-switch button{border:0;background:transparent;padding:9px 12px;color:#597168;cursor:pointer;font-weight:600;border-radius:8px}
+#editor .memo-v87-switch button[aria-selected="true"]{background:#e3efe6;color:#225b46}
+#editor .memo-v87-empty{color:#697a70;font-size:.9rem;padding:10px 0}
+#editor .memo-v87-editor[data-mode="clinical"] .presentation-card .section-editor-head,
+#editor .memo-v87-editor[data-mode="clinical"] .presentation-card .presentation-kind-row,
+#editor .memo-v87-editor[data-mode="clinical"] .presentation-card .memo-v43-regulation,
+#editor .memo-v87-editor[data-mode="clinical"] .presentation-card .memo-practical-editor,
+#editor .memo-v87-editor[data-mode="clinical"] .presentation-card .presentation-fields > :not(.memo-v86-fields){display:none!important}
+#editor .memo-v87-editor[data-mode="commercial"] .presentation-card .memo-v86-fields{display:none!important}
+#editor .memo-v87-editor .memo-v86-fields{border:0;margin:0;padding:4px 0}
+#editor .memo-v87-editor .memo-v86-fields h4,#editor .memo-v87-editor .memo-v86-fields p.muted{display:none}
+#editor .memo-v87-editor .memo-v86-grid > div:nth-child(-n+2){display:none}
+#editor .memo-v87-editor .presentation-card{margin:0;border:0;box-shadow:none;padding:0;background:transparent}
+#editor .memo-v87-editor .presentation-card[hidden]{display:none!important}
+#editor .memo-v87-editor .memo-v87-commercial-title{font-size:.85rem;font-weight:700;color:#265e4b;margin:12px 0 8px}
 #detail .memo-v86-specific{margin:16px 0 10px;padding:0 0 5px;border-bottom:1px solid #e1eae4}
 #detail .memo-v86-specific h3{font-size:1.02rem;color:#1e7169;margin:0 0 9px}
 #detail .memo-v86-specific-row{padding:9px 0;border-top:1px solid #e8eee9}
@@ -4413,6 +4437,13 @@ function renderEditor(id){
  const variantTitleRow=document.createElement("div");variantTitleRow.className="memo-variant-title-row";
  variantTitleRow.appendChild(variantHeading);
  panels.variants.append(variantTitleRow,variantsWrap,presentationWrap);
+ if(isSpecialiteFiche(m)){
+  const nav87=document.createElement("div");nav87.id="memo-v87-nav";nav87.className="memo-v87-nav";
+  presentationWrap.insertBefore(nav87,presentationWrap.firstChild);
+  presentationWrap.classList.add("memo-v87-editor");
+  presentationWrap.dataset.mode="clinical";
+  // La navigation V87 est initialisée après le branchement des éditeurs.
+ }
  const trackingHeading=document.createElement("div");trackingHeading.className="memo-editor-panel-heading";trackingHeading.textContent="Sources, vérification et publication";
  panels.tracking.append(trackingHeading,metaGrid);
  const sourceCards=[...sectionsRoot.querySelectorAll(".section-editor")].filter(card=>{
@@ -4835,9 +4866,38 @@ function renderEditor(id){
   editorOriginalSnapshot=null;
   clearLocalDraft();detailLocation(id);renderDetail();
  };
- const refreshPresentationEditors=()=>{const root=$("presentationEditors");root.innerHTML=(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("");root.querySelectorAll("[data-remove-presentation]").forEach(b=>b.onclick=()=>{captureEditorFields(m);const removed=Number(b.dataset.removePresentation);m.presentations.splice(removed,1);const old=pendingPresentationPhotos.get(m.id);if(old){const shifted=new Map();for(const [i,file] of old)if(i!==removed)shifted.set(i>removed?i-1:i,file);pendingPresentationPhotos.set(m.id,shifted)}const tabletOld=pendingTabletPhotos.get(m.id);if(tabletOld){const shifted=new Map();for(const [i,file] of tabletOld)if(i!==removed)shifted.set(i>removed?i-1:i,file);pendingTabletPhotos.set(m.id,shifted)}refreshPresentationEditors()});wirePhotoInputs();root.querySelectorAll("[data-add-cip-pack]").forEach(b=>b.onclick=()=>{const rows=b.closest(".cip-pack-rows");const row=rows.querySelector("[data-cip-pack-row]").cloneNode(true);row.querySelectorAll("input").forEach(input=>input.value="");rows.insertBefore(row,b);row.querySelector("[data-cip-value]").focus()});root.addEventListener("click",e=>{const b=e.target.closest("[data-remove-cip-pack]");if(!b)return;const rows=b.closest(".cip-pack-rows");const all=rows.querySelectorAll("[data-cip-pack-row]");if(all.length===1){all[0].querySelectorAll("input").forEach(input=>input.value="")}else b.closest("[data-cip-pack-row]").remove()});root.querySelectorAll("[data-pkind]").forEach(input=>input.addEventListener("change",()=>{if(!input.checked)return;input.closest("[data-presentation]").querySelectorAll("[data-pkind]").forEach(other=>{if(other!==input)other.checked=false})}));root.querySelectorAll("[data-cannot-split],[data-can-split],[data-cannot-crush],[data-can-crush],[data-cannot-open],[data-can-open]").forEach(input=>input.addEventListener("change",()=>{const card=input.closest("[data-presentation]");const kind=input.hasAttribute("data-cannot-split")||input.hasAttribute("data-can-split")?"split":input.hasAttribute("data-cannot-open")||input.hasAttribute("data-can-open")?"open":"crush";const yes=card.querySelector(`[data-can-${kind}]`),no=card.querySelector(`[data-cannot-${kind}]`),reason=card.querySelector(`[data-reason-for="${kind}"]`);if(input===yes&&yes.checked)no.checked=false;if(input===no&&no.checked)yes.checked=false;reason.hidden=false;}));};
+ let memoV87Selected=0,memoV87Mode="clinical";
+ const memoV87Nav=()=>{
+  if(!isSpecialiteFiche(m))return;
+  const root=$("presentationEditors"),nav=$("memo-v87-nav");if(!root||!nav)return;
+  const cards=[...root.querySelectorAll("[data-presentation]")];
+  const data=cards.map((card,i)=>({i,form:card.querySelector('[data-pfield="form"]')?.value.trim()||"Forme à préciser",dose:card.querySelector('[data-pfield="dosage"]')?.value.trim()||"Dosage à préciser"}));
+  if(memoV87Selected>=cards.length)memoV87Selected=Math.max(0,cards.length-1);
+  const current=data[memoV87Selected];
+  const forms=[...new Set(data.map(x=>x.form))];
+  const selectedForm=current?.form||forms[0]||"";
+  const choices=data.filter(x=>x.form===selectedForm);
+  nav.innerHTML=`<div class="memo-v87-label">Formes pharmaceutiques</div><div class="memo-v87-buttons memo-v87-forms">${forms.map(f=>`<button type="button" data-v87-form="${esc(f)}" aria-pressed="${f===selectedForm}">${esc(f)}</button>`).join("")}<button type="button" class="memo-v87-add" data-v87-add-form>+ Ajouter une forme</button></div>${current?`<div class="memo-v87-label">Dosages</div><div class="memo-v87-buttons memo-v87-doses">${choices.map(x=>`<button type="button" data-v87-index="${x.i}" aria-pressed="${x.i===memoV87Selected}">${esc(x.dose)}</button>`).join("")}<button type="button" class="memo-v87-add" data-v87-add-dose>+ Ajouter un dosage</button></div><div class="memo-v87-switch"><button type="button" data-v87-mode="clinical" aria-selected="${memoV87Mode==='clinical'}">Particularités</button><button type="button" data-v87-mode="commercial" aria-selected="${memoV87Mode==='commercial'}">Médicaments commerciaux</button></div>`:`<p class="memo-v87-empty">Ajoute une forme pharmaceutique pour commencer.</p>`}`;
+  cards.forEach((card,i)=>card.hidden=i!==memoV87Selected);
+  presentationWrap.dataset.mode=memoV87Mode;
+  nav.querySelectorAll('[data-v87-form]').forEach(btn=>btn.onclick=()=>{const found=data.find(x=>x.form===btn.dataset.v87Form);if(found){memoV87Selected=found.i;memoV87Nav()}});
+  nav.querySelectorAll('[data-v87-index]').forEach(btn=>btn.onclick=()=>{memoV87Selected=Number(btn.dataset.v87Index);memoV87Nav()});
+  nav.querySelectorAll('[data-v87-mode]').forEach(btn=>btn.onclick=()=>{memoV87Mode=btn.dataset.v87Mode;memoV87Nav()});
+  const add=(form)=>{const dose=prompt("Dosage de la nouvelle formulation (ex. 80 mg) :","");if(dose===null)return;
+   readPresentationEditors(m);
+   m.presentations.push({name:m.name||"",form,dosage:dose.trim(),cipBoxes:[],clinicalSpecific:{}});
+   memoV87Selected=m.presentations.length-1;refreshPresentationEditors();saveLocalDraft();};
+  nav.querySelector('[data-v87-add-form]')?.addEventListener('click',()=>{const form=prompt("Nouvelle forme pharmaceutique (ex. comprimé, gélule) :","");if(form?.trim())add(form.trim())});
+  nav.querySelector('[data-v87-add-dose]')?.addEventListener('click',()=>add(selectedForm));
+  root.querySelectorAll('[data-pfield="form"],[data-pfield="dosage"]').forEach(input=>input.onchange=()=>memoV87Nav());
+ };
+ const refreshPresentationEditors=()=>{const root=$("presentationEditors");root.innerHTML=(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("");root.querySelectorAll("[data-remove-presentation]").forEach(b=>b.onclick=()=>{captureEditorFields(m);const removed=Number(b.dataset.removePresentation);m.presentations.splice(removed,1);const old=pendingPresentationPhotos.get(m.id);if(old){const shifted=new Map();for(const [i,file] of old)if(i!==removed)shifted.set(i>removed?i-1:i,file);pendingPresentationPhotos.set(m.id,shifted)}const tabletOld=pendingTabletPhotos.get(m.id);if(tabletOld){const shifted=new Map();for(const [i,file] of tabletOld)if(i!==removed)shifted.set(i>removed?i-1:i,file);pendingTabletPhotos.set(m.id,shifted)}refreshPresentationEditors()});wirePhotoInputs();root.querySelectorAll("[data-add-cip-pack]").forEach(b=>b.onclick=()=>{const rows=b.closest(".cip-pack-rows");const row=rows.querySelector("[data-cip-pack-row]").cloneNode(true);row.querySelectorAll("input").forEach(input=>input.value="");rows.insertBefore(row,b);row.querySelector("[data-cip-value]").focus()});root.addEventListener("click",e=>{const b=e.target.closest("[data-remove-cip-pack]");if(!b)return;const rows=b.closest(".cip-pack-rows");const all=rows.querySelectorAll("[data-cip-pack-row]");if(all.length===1){all[0].querySelectorAll("input").forEach(input=>input.value="")}else b.closest("[data-cip-pack-row]").remove()});root.querySelectorAll("[data-pkind]").forEach(input=>input.addEventListener("change",()=>{if(!input.checked)return;input.closest("[data-presentation]").querySelectorAll("[data-pkind]").forEach(other=>{if(other!==input)other.checked=false})}));root.querySelectorAll("[data-cannot-split],[data-can-split],[data-cannot-crush],[data-can-crush],[data-cannot-open],[data-can-open]").forEach(input=>input.addEventListener("change",()=>{const card=input.closest("[data-presentation]");const kind=input.hasAttribute("data-cannot-split")||input.hasAttribute("data-can-split")?"split":input.hasAttribute("data-cannot-open")||input.hasAttribute("data-can-open")?"open":"crush";const yes=card.querySelector(`[data-can-${kind}]`),no=card.querySelector(`[data-cannot-${kind}]`),reason=card.querySelector(`[data-reason-for="${kind}"]`);if(input===yes&&yes.checked)no.checked=false;if(input===no&&no.checked)yes.checked=false;reason.hidden=false;}));memoV87Nav();};
  $("addPresentation").onclick=()=>{captureEditorFields(m);m.presentations.push({name:"",showLab:false,lab:"",dosage:"",form:"",cip:"",cis:"",description:"",marking:"",imageUrl:"",sourceUrl:""});refreshPresentationEditors()};
  wirePhotoInputs();
+ if(isSpecialiteFiche(m)){
+  $("addPresentation").style.display="none";
+  memoV87Nav();
+ }
  $("editor").querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>sectionAction(b.dataset.act,Number(b.dataset.index),m.id));
  wireTextFormatting();
  wireTableGrids(m);
