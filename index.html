@@ -3629,8 +3629,13 @@ function searchPreviewKey(item){return String(item.med.id)+"|"+(item.section?.id
 function previewSearchResult(item){
  if(!item)return;
  previewSearchKey=searchPreviewKey(item);
- const m=item.med,sec=item.section,pres=item.presentation;
+ // Les variantes trouvées dans la recherche doivent être prévisualisées dans
+ // leur fiche molécule, avec la variante exacte sélectionnée (V112).
  const visible=publicMeds();
+ const searchedMed=item.med;
+ const forcedChild=isVariantFiche(searchedMed)?searchedMed:null;
+ const parent=forcedChild?visible.find(x=>isMolecule(x)&&String(x.id)===String(moleculeParentId(forcedChild))):null;
+ const m=parent||searchedMed,sec=item.section,pres=item.presentation;
  const ficheParentNode=ficheParent(m,visible);
  const presentationForms=medicationForms(m);
  const formBadge=!isGroup(m)&&presentationForms.length
@@ -3654,11 +3659,11 @@ function previewSearchResult(item){
  const matchingSection=rubricTokens.length?validSections.find(x=>rubricTokens.every(t=>{const label=norm(x.id+' '+x.title);return label.includes(t)||Object.entries(sectionAliases).some(([key,arr])=>arr.includes(t)&&label.includes(key))})):null;
  const targetSection=matchingSection||sec&&rubricTokens.length?matchingSection||sec:null;
  const dosageTokens=specificTokens.filter(t=>!rubricTokens.includes(t));
- const selectedChild=doseChildren.length&&dosageTokens.length?doseChildren.find(child=>{
+ const selectedChild=forcedChild||(doseChildren.length&&dosageTokens.length?doseChildren.find(child=>{
   const desc=norm([child.name,child.dosage,child.form,ingredientTitleDose(child),...medicationForms(child)].join(' '));
   return dosageTokens.every(t=>desc.includes(t)||
    (t==="500"&&/\b500\s*mg\b/.test(desc)));
- }):null;
+ }):null);
  const childSections=selectedChild?(selectedChild.sections||[]).filter(x=>x.enabled!==false&&!isDocumentationSection(x)&&String(x.content||'').trim()).map(x=>resolveSharedSection(selectedChild,x)):[];
  const childMatch=rubricTokens.length?childSections.find(x=>rubricTokens.every(t=>{const label=norm(x.id+' '+x.title);return label.includes(t)||Object.entries(sectionAliases).some(([key,arr])=>arr.includes(t)&&label.includes(key))})):null;
  const targeted=!!rubricTokens.length;
