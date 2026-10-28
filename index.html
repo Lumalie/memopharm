@@ -3592,7 +3592,7 @@ function renderFilters(){ $("filters").innerHTML=categories().map(c=>`<button da
 function getSearchMatches(queryOverride=null){
  const q=norm(queryOverride===null?$("search").value.trim():queryOverride);
  const tokens=q.split(/\s+/).filter(Boolean);
- const synonyms={oubli:["oubli","oublie","oubliee"],prise:["prise","repas","jeun","manger"],interactions:["interaction","association"],conservation:["conservation","conserver","frigo"],posologie:["posologie","dose"],ecrasement:["ecraser","broyer","piler","ecrasement"]};
+ const synonyms={oubli:["oubli","oublie","oubliee"],prise:["prise","repas","jeun","manger"],interactions:["interaction","association"],conservation:["conservation","conserver","frigo"],posologie:["posologie","poso","dose"],ecrasement:["ecraser","broyer","piler","ecrasement"]};
  const fieldMatch=(t,sec)=>norm(sec.id+" "+sec.title+" "+sec.content).includes(t)||Object.entries(synonyms).some(([key,terms])=>terms.includes(t)&&norm(sec.id+" "+sec.title).includes(key));
  const found=[];
  visibleStandaloneMeds().forEach(m=>{
@@ -3601,9 +3601,14 @@ function getSearchMatches(queryOverride=null){
   const presText=x=>norm([x.name,x.p.dosage,x.p.lab,x.p.lab?"laboratoire":"",x.p.form,x.p.cip,...cipConditionnements(x.p).flatMap(c=>[c.cip,c.pack]),cipConditionnements(x.p).length?"cip":"",x.p.cis,x.p.cis?"cis":"",x.p.description,x.p.marking].join(" "));
   const sections=(m.sections||[]).filter(x=>x.enabled!==false);
   const secText=norm(sections.map(x=>x.id+" "+x.title+" "+x.content).join(" "));
-  const combined=norm([base,...presentations.map(presText),secText].join(" "));
+  // V110 : les dosages et rubriques des fiches enfants doivent aussi être indexés
+  // sur la fiche molécule mère, même si la recherche comporte une abréviation.
+  const childEntries=isMolecule(m)?moleculeChildren(m):[];
+  const childText=norm(childEntries.map(c=>[c.name,c.dosage,c.form,ingredientTitleDose(c),...medicationForms(c),...(c.sections||[]).map(sec=>sec.id+" "+sec.title+" "+sec.content)].join(" ")).join(" "));
+  const combined=norm([base,...presentations.map(presText),secText,childText].join(" "));
   if(!tokens.length){found.push({med:m,section:null,presentation:null});return}
-  if(!tokens.every(t=>combined.includes(t)||sections.some(sec=>fieldMatch(t,sec))))return;
+  if(!tokens.every(t=>combined.includes(t)||sections.some(sec=>fieldMatch(t,sec))||
+   (t==="poso"&&combined.includes("posologie"))))return;
   const matchingSections=sections.filter(sec=>{
    const st=norm(sec.id+" "+sec.title+" "+sec.content);
    return tokens.some(t=>fieldMatch(t,sec)&&(!base.includes(t)||st.includes(t)&&tokens.some(other=>other!==t&&base.includes(other))));
@@ -3623,7 +3628,8 @@ function getSearchMatches(queryOverride=null){
   // En recherche libre, montrer à la fois la fiche mère (DCI/médicament)
   // et toutes les présentations pertinentes, y compris celles des fiches DCI.
   // Les fiches sans présentation restent visibles si leur propre texte correspond.
-  const baseMatches=tokens.every(t=>base.includes(t)||secText.includes(t)||sections.some(sec=>fieldMatch(t,sec)));
+  const baseMatches=tokens.every(t=>base.includes(t)||secText.includes(t)||sections.some(sec=>fieldMatch(t,sec))||
+   (isMolecule(m)&&(childText.includes(t)||(t==="poso"&&childText.includes("posologie")))));
   const indexes=[
    ...(baseMatches&&!specificPres?[null]:[]),
    ...matchingPresentations.map(x=>x.i)
@@ -3737,16 +3743,18 @@ function previewSearchResult(item){
  const names=norm([m.name,m.dosage,m.form,m.aliases||''].join(' ')).split(/\s+/).filter(Boolean);
  const sectionAliases={posologie:['poso','posologie','dose'],prise:['prise','repas'],interactions:['interaction','interactions'],oubli:['oubli'],indications:['indication','indications'],conservation:['conservation'],effets:['effet','effets'],age:['age'],grossesse:['grossesse'],allaitement:['allaitement']};
  const validSections=(m.sections||[]).filter(x=>x.enabled!==false&&!isDocumentationSection(x)&&String(x.content||'').trim());
- const sectionToken=t=>validSections.some(x=>{const label=norm(x.id+' '+x.title);return label.includes(t)||Object.entries(sectionAliases).some(([key,arr])=>arr.includes(t)&&label.includes(key))});
+ const doseChildren=isMolecule(m)?moleculeChildren(m):[];
+ const childSectionTitles=doseChildren.flatMap(c=>(c.sections||[]).filter(x=>x.enabled!==false).map(x=>norm(x.id+' '+x.title)));
+ const sectionToken=t=>[...validSections.map(x=>norm(x.id+' '+x.title)),...childSectionTitles].some(label=>label.includes(t)||Object.entries(sectionAliases).some(([key,arr])=>arr.includes(t)&&label.includes(key)));
  const specificTokens=queryTokens.filter(t=>!names.some(n=>n===t||n.startsWith(t)&&t.length>=3));
  const rubricTokens=specificTokens.filter(sectionToken);
  const matchingSection=rubricTokens.length?validSections.find(x=>rubricTokens.every(t=>{const label=norm(x.id+' '+x.title);return label.includes(t)||Object.entries(sectionAliases).some(([key,arr])=>arr.includes(t)&&label.includes(key))})):null;
  const targetSection=matchingSection||sec&&rubricTokens.length?matchingSection||sec:null;
- const doseChildren=isMolecule(m)?moleculeChildren(m):[];
  const dosageTokens=specificTokens.filter(t=>!rubricTokens.includes(t));
  const selectedChild=doseChildren.length&&dosageTokens.length?doseChildren.find(child=>{
   const desc=norm([child.name,child.dosage,child.form,ingredientTitleDose(child),...medicationForms(child)].join(' '));
-  return dosageTokens.every(t=>desc.includes(t));
+  return dosageTokens.every(t=>desc.includes(t)||
+   (t==="500"&&/\b500\s*mg\b/.test(desc)));
  }):null;
  const childSections=selectedChild?(selectedChild.sections||[]).filter(x=>x.enabled!==false&&!isDocumentationSection(x)&&String(x.content||'').trim()).map(x=>resolveSharedSection(selectedChild,x)):[];
  const childMatch=rubricTokens.length?childSections.find(x=>rubricTokens.every(t=>{const label=norm(x.id+' '+x.title);return label.includes(t)||Object.entries(sectionAliases).some(([key,arr])=>arr.includes(t)&&label.includes(key))})):null;
