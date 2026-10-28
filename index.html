@@ -2614,7 +2614,7 @@ function cipConditionnements(p){
  if(cleaned.length)return cleaned;
  return p?.cip?[{cip:String(p.cip).trim(),pack:String(p.pack||"").trim()}]:[];
 }
-function cipBadges(p){return cipConditionnements(p).filter(x=>x.cip).map(x=>`<span class="cip-pack-item"><button type="button" class="explore-cip-copy" data-copy-cip="${esc(x.cip)}" title="Copier le CIP ${esc(x.cip)}" aria-label="Copier le CIP ${esc(x.cip)}"><span>CIP</span> ${esc(x.cip)} <span aria-hidden="true">⧉</span></button></span>`).join("")}
+function cipBadges(p){return cipConditionnements(p).filter(x=>x.cip).map(x=>`<span class="cip-pack-item"><button type="button" class="explore-cip-copy" data-copy-cip="${esc(x.cip)}" title="${esc(x.pack||`Copier le CIP ${x.cip}`)}" aria-label="Copier le CIP ${esc(x.cip)}${x.pack?` — ${esc(x.pack)}`:""}"><span>CIP</span> ${esc(x.cip)} <span aria-hidden="true">⧉</span></button></span>`).join("")}
 // Presentation et badges communs aux résultats et aux enfants d'arborescence.
 function searchPresentationLine(m,p,i,child=false){
  const name=String(p.name||m.name||'').trim();
