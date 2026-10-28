@@ -2085,6 +2085,16 @@ body.header-search-active #headerSearchSlot .search-suggestions .results{max-hei
 #detail .memo-v105-molecule-presentations #presentations-details .memo-v101-cip-block{
  margin-top:0!important;
 }
+
+/* V106 : espacement compact et constant entre sélecteur, CIP et séparateur */
+#detail .memo-v105-molecule-presentations #presentations-details .memo-v101-cip-block{
+ margin-top:-10px!important;margin-bottom:0!important;padding-bottom:5px!important;
+}
+#detail .memo-v105-molecule-presentations #presentations-details .memo-v101-cip-line{
+ margin-bottom:0!important;padding-bottom:5px!important;
+}
+/* CIP regroupés sur une seule ligne de résultat */
+.result .memo-v106-merged-cip{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:7px}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -3589,8 +3599,23 @@ function getSearchMatches(queryOverride=null){
    else found.push({med:m,section:null,presentation});
   }
  });
+ // V106 : une seule carte par fiche spécialité, même lorsque le nom et
+ // ses présentations commerciales correspondent simultanément à la recherche.
+ // Les CIP restent visibles dans la carte regroupée.
+ const mergedSpecialties=new Map();
+ const mergedFound=[];
+ for(const item of found){
+  if(!isSpecialiteFiche(item.med)){mergedFound.push(item);continue;}
+  const key=String(item.med.id)+"|"+String(item.section?.id||"");
+  if(!mergedSpecialties.has(key)){
+   const group={med:item.med,section:item.section,presentation:null,mergedPresentationIndexes:[]};
+   mergedSpecialties.set(key,group);mergedFound.push(group);
+  }
+  const group=mergedSpecialties.get(key);
+  if(item.presentation!==null&&!group.mergedPresentationIndexes.includes(item.presentation))group.mergedPresentationIndexes.push(item.presentation);
+ }
  const uniqueGroups=new Set();
- return found.filter(item=>{
+ return mergedFound.filter(item=>{
   if(!isGroup(item.med))return true;
   const id=String(item.med.id);
   if(uniqueGroups.has(id))return false;
@@ -3754,11 +3779,14 @@ function renderResults(){
   const presentationTitle=[presWithLab,...(dose&&!norm(presWithLab).includes(norm(dose))?[dose]:[]),...(form&&!norm(presWithLab).includes(norm(form))?[form]:[])].filter(Boolean).join(" · ");
   const badge=p?.presentationKind==="princeps"?'<span class="explore-pres-princeps">Princeps</span>':"";
   const cip=cipBadges(p);
+  const mergedCip=item.mergedPresentationIndexes?.length?
+   [...new Map(item.mergedPresentationIndexes.flatMap(i=>cipConditionnements(m.presentations?.[i]||{})).filter(c=>c.cip).map(c=>[String(c.cip),c])).values()]
+    .map(c=>`<button type="button" class="cip-badge" data-copy-cip="${esc(c.cip)}" title="${esc(c.pack||"Copier le CIP")}">CIP <strong>${esc(c.cip)}</strong> <span aria-hidden="true">⧉</span></button>`).join(""):"";
   const dciBadges=m.entry_type==="dci"&&!isPresentation?`<div class="result-dci-badges">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<span class="badge-button badge-class">${esc(t)}</span>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<span class="badge-button badge-indication">${esc(t)}</span>`).join("")}</div>`:"";
   const sectionDetail=sec&&(m.entry_type==="dci"||m.entry_type==="specialite")&&!isPresentation?`<div class="result-section-direct"><span class="result-section-title">↳ ${esc(sec.title)}</span></div>`:"";
   return `<div class="result result-${kind}" role="option" aria-selected="false" tabindex="-1" data-id="${esc(m.id)}" data-section="${esc(sec?.id||'')}" data-presentation="${item.presentation===null?'':item.presentation}">
    <strong><span class="result-dot" aria-hidden="true">●</span>${esc(isPresentation?presentationTitle:name)}<span class="result-arrow" aria-hidden="true">↗</span></strong>
-   ${isPresentation?`<div class="result-presentation-info">${badge}${cip}</div>`:m.entry_type==="dci"?dciBadges:group?"":`<div class="sub">${esc(m.category||"Sans famille")}</div>`}
+   ${isPresentation?`<div class="result-presentation-info">${badge}${cip}</div>`:mergedCip?`<div class="result-presentation-info memo-v106-merged-cip">${mergedCip}</div>`:m.entry_type==="dci"?dciBadges:group?"":`<div class="sub">${esc(m.category||"Sans famille")}</div>`}
    ${sectionDetail}
   </div>`;
  }).join(''):'<div class="empty">Aucun résultat. Essaie un autre terme ou change de famille.</div>';
