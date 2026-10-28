@@ -1712,6 +1712,17 @@ body.header-search-active #headerSearchSlot .search-suggestions .results{max-hei
 #detail .memo-v85-specialty-tabs .molecule-tab-strip:empty{display:none}
 #detail .memo-v85-specialty-tabs .molecule-tab{min-width:0}
 #detail .memo-v85-specialty-tabs .memo-v85-hint{font-size:.78rem;color:#6a7d71;margin:3px 0 9px}
+#detail .memo-v86-specific{margin:16px 0 10px;padding:0 0 5px;border-bottom:1px solid #e1eae4}
+#detail .memo-v86-specific h3{font-size:1.02rem;color:#1e7169;margin:0 0 9px}
+#detail .memo-v86-specific-row{padding:9px 0;border-top:1px solid #e8eee9}
+#detail .memo-v86-specific-row strong{display:block;font-size:.89rem;color:#245b49;margin-bottom:3px}
+#detail .memo-v86-specific-row .memo-v86-value{white-space:pre-wrap;line-height:1.55}
+#editor .memo-v86-fields{margin:12px 0;padding:12px 0;border-top:1px solid #dbe7e0}
+#editor .memo-v86-fields h4{margin:4px 0 8px;color:#1e7169}
+#editor .memo-v86-fields .memo-v86-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#editor .memo-v86-fields .memo-v86-grid label{display:block;font-weight:600;margin-bottom:4px}
+#editor .memo-v86-fields textarea{min-height:65px;width:100%}
+@media(max-width:650px){#editor .memo-v86-fields .memo-v86-grid{grid-template-columns:1fr}}
 #detail .memo-v85-specialty-rubrics{margin-top:12px}
 #detail .memo-v85-specialty-rubrics .memo-v74-rubric{border-bottom:1px solid #e1eae4}
 #detail .memo-v85-specialty-rubrics .memo-v74-rubric:last-child{border-bottom:0}
@@ -3558,6 +3569,26 @@ function moleculeForSpecialtyV85(m){
  if(!wanted)return null;
  return meds.find(x=>isMolecule(x)&&norm(x.name)===wanted)||null;
 }
+// V86 : informations propres à chaque formulation de spécialité, stockées dans
+// la présentation existante. Aucune modification du schéma Supabase.
+const MEMO_V86_FIELDS=[
+ ["composition","Composition / substances actives et quantités"],
+ ["iron","Fer élémentaire (si applicable)"],
+ ["minAge","Âge minimum"],
+ ["posology","Posologie"],
+ ["administration","Modalités de prise"],
+ ["precautions","Précautions spécifiques"]
+];
+function memoV86Clinical(p){
+ const d=p&&typeof p.clinicalSpecific==="object"&&p.clinicalSpecific&&!Array.isArray(p.clinicalSpecific)?p.clinicalSpecific:{};
+ return d;
+}
+function memoV86SpecificHtml(p){
+ const d=memoV86Clinical(p);
+ const rows=MEMO_V86_FIELDS.filter(([key])=>String(d[key]||"").trim());
+ if(!rows.length)return "";
+ return `<section class="memo-v86-specific" aria-label="Informations spécifiques à la formulation"><h3>Informations propres à cette forme et à ce dosage</h3>${rows.map(([key,label])=>`<div class="memo-v86-specific-row"><strong>${esc(label)}</strong><div class="memo-v86-value">${esc(d[key])}</div></div>`).join("")}</section>`;
+}
 function memoV85WireSpecialty(m,targetIndex=null){
  const root=document.getElementById("memo-v85-specialty-tabs");
  const section=document.getElementById("presentations-details");
@@ -3589,6 +3620,8 @@ function memoV85WireSpecialty(m,targetIndex=null){
   const info=section.querySelector("#presentation-info");
   if(info){info.innerHTML=presentationInfo(chosen.p,m);memoWireBadgeClicks(info);memoLinkifyCips(info)}
   memoV48Sync(section,chosen.p);
+  const specific=document.getElementById("memo-v86-specific-root");
+  if(specific)specific.innerHTML=memoV86SpecificHtml(chosen.p);
   memoV67Refresh(m,chosen.p);
  };
  if(!all.length){root.hidden=true;return}
@@ -3935,7 +3968,7 @@ function memoSetViewChoice(id,patch){
 }
 function renderPresentations(m,targetPresentationIndex=null,selectedPack=null){
  const options=memoV44Options(m).filter(x=>selectedPack===null||x.pack===selectedPack),saved=memoV44Chosen(m),chosen=options.find(x=>x.key===saved?.key)||options[0]||null;
- return `<section class="section presentation-fixed ${chosen?.p&&((chosen.p.showPhoto===true&&safeHttp(chosen.p.imageUrl||""))||(chosen.p.showTabletPhoto===true&&safeHttp(chosen.p.tabletImageUrl||"")))?'memo-v48-has-photo':''}" id="presentations-details"><h3>💊 Présentation</h3>${options.length?`<div class="memo-v48-identity"><div class="memo-v48-selector"><select id="presentation-choice" aria-label="Médicament commercial" data-presentation-select ${options.length===1?'aria-label="Médicament commercial"':''}>${options.map(x=>`<option value="${esc(x.key)}" ${chosen?.key===x.key?"selected":""}>${esc(presentationLabel(x.p,m,Number(x.key.split(":")[0])))}</option>`).join("")}</select></div><div class="memo-v48-cip"><div data-v48-cip>${memoV48Cip(chosen?.p)}</div></div></div><div id="presentation-info" style="margin-top:12px">${chosen?presentationInfo(chosen.p,m):""}</div>`:'<p class="muted">Aucune présentation renseignée.</p>'}</section>`
+ return `<section class="section presentation-fixed ${chosen?.p&&((chosen.p.showPhoto===true&&safeHttp(chosen.p.imageUrl||""))||(chosen.p.showTabletPhoto===true&&safeHttp(chosen.p.tabletImageUrl||"")))?'memo-v48-has-photo':''}" id="presentations-details"><h3>💊 Présentation</h3>${options.length?`<div class="memo-v48-identity"><div class="memo-v48-selector"><select id="presentation-choice" aria-label="Médicament commercial" data-presentation-select ${options.length===1?'aria-label="Médicament commercial"':''}>${options.map(x=>`<option value="${esc(x.key)}" ${chosen?.key===x.key?"selected":""}>${esc(presentationLabel(x.p,m,Number(x.key.split(":")[0])))}</option>`).join("")}</select></div><div class="memo-v48-cip"><div data-v48-cip>${memoV48Cip(chosen?.p)}</div></div></div><div id="presentation-info" style="margin-top:12px">${chosen?presentationInfo(chosen.p,m):""}</div><div id="memo-v86-specific-root">${m.entry_type==="specialite"&&chosen?memoV86SpecificHtml(chosen.p):""}</div>`:'<p class="muted">Aucune présentation renseignée.</p>'}</section>`
 }
 
 const MEMO_CHOICES_KEY="memofficine_field_choices_v1";
@@ -3986,7 +4019,8 @@ function presentationEditor(p,i){
  <div class="full presentation-edit-row">${check("showOpen","Ouverture de la gélule")}<div class="presentation-status-row"><label class="presentation-verified"><input type="checkbox" data-can-open ${p.canOpen===true&&!p.cannotOpen?"checked":""}>Possible (confirmé)</label><label class="presentation-verified"><input type="checkbox" data-cannot-open ${p.cannotOpen===true?"checked":""}>Impossible (confirmé)</label><input type="text" data-pfield="openReason" value="${esc(p.openReason||"")}" placeholder="Pourquoi ? (facultatif)" data-reason-for="open"></div></div>
  <div class="full presentation-edit-row">${check("showPhoto","Photo de la boîte")}<input type="file" accept="image/jpeg,image/png,image/webp" data-photo-file="${i}"><div class="hint" data-photo-hint="${i}">${pending?"Photo sélectionnée : "+esc(pending.name):currentPhoto?"Photo enregistrée : visible ci-dessous":"JPG, PNG ou WebP · maximum 2 Mo. Envoyée lors de l’enregistrement de la fiche."}</div>${currentPhoto?`<img class="image-preview" src="${esc(currentPhoto)}" alt="Photo enregistrée de la présentation">`:""}</div>
  <div class="full presentation-edit-row">${check("showTabletPhoto","Photo du comprimé / de la gélule")}<input type="file" accept="image/jpeg,image/png,image/webp" data-tablet-photo-file="${i}"><div class="hint" data-tablet-photo-hint="${i}">${tabletPending?"Photo sélectionnée : "+esc(tabletPending.name):tabletPhoto?"Photo enregistrée : visible ci-dessous":"JPG, PNG ou WebP · maximum 2 Mo. Envoyée lors de l’enregistrement de la fiche."}</div>${tabletPhoto?`<img class="image-preview" src="${esc(tabletPhoto)}" alt="Photo enregistrée du comprimé ou de la gélule">`:""}</div>
- ${["dosage","form","cis","sourceUrl"].map(key=>`<input type="hidden" data-pfield="${key}" value="${esc(p[key]||"")}">`).join("")}
+ ${isSpecialiteFiche(meds.find(x=>x.id===editorId)||{})?`<div class="full memo-v86-fields"><h4>Formulation et informations spécifiques</h4><p class="muted">Chaque présentation peut avoir sa propre forme, son dosage et ses informations médicales. Renseigne les valeurs vérifiées ; laisse vide ce qui n'est pas documenté.</p><div class="memo-v86-grid"><div><label>Forme pharmaceutique</label><input data-pfield="form" data-memo-kind="form" list="memo-forms" value="${esc(p.form||"")}" placeholder="Comprimé, gélule…"></div><div><label>Dosage de cette présentation</label><input data-pfield="dosage" value="${esc(p.dosage||"")}" placeholder="Ex. : 80 mg"></div>${MEMO_V86_FIELDS.map(([key,label])=>`<div><label>${esc(label)}</label><textarea data-v86-clinical="${key}" placeholder="À renseigner selon les sources de cette présentation">${esc(memoV86Clinical(p)[key]||"")}</textarea></div>`).join("")}</div></div>`:`<input type="hidden" data-pfield="dosage" value="${esc(p.dosage||"")}"><input type="hidden" data-pfield="form" value="${esc(p.form||"")}">`}
+ ${["cis","sourceUrl"].map(key=>`<input type="hidden" data-pfield="${key}" value="${esc(p[key]||"")}">`).join("")}
  
  </div></div>`;
 }
@@ -4313,7 +4347,7 @@ function renderEditor(id){
  </div>
   <div id="presentation-editor-wrap" class="full" style="margin-top:18px">
     <h3>💊 Présentation</h3>
-    <p class="muted">Renseigner les présentations des différents laboratoires correspondant à cette substance et à ce dosage. Ajouter une URL d’image documentée si disponible.</p>
+    <p class="muted">Pour une spécialité, renseigne séparément la forme, le dosage, la composition et les informations médicales de chaque présentation. Les données déjà enregistrées sont conservées.</p>
     <div id="presentationEditors">${(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("")}</div><datalist id="memo-labs">${memoOptions("lab")}</datalist><datalist id="memo-forms">${memoOptions("form")}</datalist>
     <div class="admin-actions"><button type="button" id="addPresentation">+ Ajouter une présentation</button></div>
   </div>
@@ -4814,7 +4848,11 @@ function renderEditor(id){
  $("editor").onchange=saveLocalDraft;
  $("saveMed").onclick=async()=>{if(isMolecule(m)){variantReadAll();m._variantDrafts=[...variantDrafts.values()].map(clone)}await saveEditor(m.id)};$("duplicateMed").onclick=()=>duplicateMed(m.id);$("deleteMed").onclick=()=>deleteMed(m.id);
 }
-function readPresentationEditors(m){const cards=[...$("presentationEditors").querySelectorAll("[data-presentation]")];m.presentations=cards.map((card,i)=>{const p={imageUrl:m.presentations?.[i]?.imageUrl||"",tabletImageUrl:m.presentations?.[i]?.tabletImageUrl||"",presentationKind:card.querySelector("[data-pkind]:checked")?.dataset.pkind||"",canSplit:card.querySelector("[data-can-split]")?.checked===true,canCrush:card.querySelector("[data-can-crush]")?.checked===true,canOpen:card.querySelector("[data-can-open]")?.checked===true,cannotSplit:card.querySelector("[data-cannot-split]")?.checked===true,cannotCrush:card.querySelector("[data-cannot-crush]")?.checked===true,cannotOpen:card.querySelector("[data-cannot-open]")?.checked===true};p.coldStorage=!!card.querySelector("[data-practical-cold]")?.checked;p.afterOpening=!!card.querySelector("[data-practical-after]")?.checked;p.afterOpeningDuration=card.querySelector("[data-practical-duration]")?.value.trim()||"";p.regulatoryList=card.querySelector("[data-regulation]")?.value||"";const photoSetting=card.querySelector("[data-practical-photo]")?.value;p.photosensitizingOverride=photoSetting==="yes"?true:photoSetting==="no"?false:null;const mteSetting=card.querySelector("[data-practical-mte]")?.value;p.mteOverride=mteSetting==="yes"?true:mteSetting==="no"?false:null;card.querySelectorAll("[data-show-field]").forEach(input=>p[input.dataset.showField]=input.checked);card.querySelectorAll("[data-pfield]").forEach(input=>p[input.dataset.pfield]=input.value.trim());p.cipBoxes=[...card.querySelectorAll("[data-cip-pack-row]")].map(row=>({cip:row.querySelector("[data-cip-value]").value.trim(),pack:row.querySelector("[data-pack-value]").value.trim()})).filter(x=>x.cip||x.pack);p.cip=p.cipBoxes[0]?.cip||"";return p})}
+function readPresentationEditors(m){const cards=[...$("presentationEditors").querySelectorAll("[data-presentation]")];m.presentations=cards.map((card,i)=>{const p={imageUrl:m.presentations?.[i]?.imageUrl||"",tabletImageUrl:m.presentations?.[i]?.tabletImageUrl||"",presentationKind:card.querySelector("[data-pkind]:checked")?.dataset.pkind||"",canSplit:card.querySelector("[data-can-split]")?.checked===true,canCrush:card.querySelector("[data-can-crush]")?.checked===true,canOpen:card.querySelector("[data-can-open]")?.checked===true,cannotSplit:card.querySelector("[data-cannot-split]")?.checked===true,cannotCrush:card.querySelector("[data-cannot-crush]")?.checked===true,cannotOpen:card.querySelector("[data-cannot-open]")?.checked===true};p.coldStorage=!!card.querySelector("[data-practical-cold]")?.checked;p.afterOpening=!!card.querySelector("[data-practical-after]")?.checked;p.afterOpeningDuration=card.querySelector("[data-practical-duration]")?.value.trim()||"";p.regulatoryList=card.querySelector("[data-regulation]")?.value||"";const photoSetting=card.querySelector("[data-practical-photo]")?.value;p.photosensitizingOverride=photoSetting==="yes"?true:photoSetting==="no"?false:null;const mteSetting=card.querySelector("[data-practical-mte]")?.value;p.mteOverride=mteSetting==="yes"?true:mteSetting==="no"?false:null;card.querySelectorAll("[data-show-field]").forEach(input=>p[input.dataset.showField]=input.checked);card.querySelectorAll("[data-pfield]").forEach(input=>p[input.dataset.pfield]=input.value.trim());
+ const previous=m.presentations?.[i]||{};
+ p.clinicalSpecific={...memoV86Clinical(previous)};
+ card.querySelectorAll("[data-v86-clinical]").forEach(input=>{p.clinicalSpecific[input.dataset.v86Clinical]=input.value.trim()});
+ p.cipBoxes=[...card.querySelectorAll("[data-cip-pack-row]")].map(row=>({cip:row.querySelector("[data-cip-value]").value.trim(),pack:row.querySelector("[data-pack-value]").value.trim()})).filter(x=>x.cip||x.pack);p.cip=p.cipBoxes[0]?.cip||"";return p})}
 function tableRows(content){
  const rows=String(content||"").split("\n").filter(line=>line.trim()).map(line=>line.split(/\s+\|\s+/).map(cell=>cell.trim()));
  if(!rows.length)return [["",""],["",""]];
