@@ -1631,6 +1631,25 @@ body.header-search-active #headerSearchSlot .search-suggestions .results{max-hei
 @media (min-width:701px) and (max-width:950px){
  .detail #presentations-details.memo-v48-has-photo .presentation-v33-photo.memo-v52-gallery{margin-top:-65px}
 }
+
+/* V74 — rubriques forme/dosage repliables, sans modification des données */
+#detail .memo-v74-rubric{border-bottom:1px solid #e1eae4;margin:0;min-width:0}
+#detail .memo-v74-rubric:last-of-type{border-bottom:0}
+#detail .memo-v74-rubric>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 5px;color:#24644c;font-weight:750;font-size:1rem;border-radius:7px}
+#detail .memo-v74-rubric>summary::-webkit-details-marker{display:none}
+#detail .memo-v74-rubric>summary:hover{background:#f1f7f2}
+#detail .memo-v74-rubric>summary:focus-visible{outline:2px solid #3a8c67;outline-offset:2px}
+#detail .memo-v74-chevron{flex:none;width:9px;height:9px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);transition:transform .15s;margin-right:9px;margin-top:-4px}
+#detail .memo-v74-rubric[open] .memo-v74-chevron{transform:rotate(225deg);margin-top:4px}
+#detail .memo-v74-rubric-content{padding:0 4px 15px}
+#detail .memo-v74-rubric-content>.section{margin:0;padding:0;border:0;background:transparent}
+#detail .memo-v74-rubric-content>.section>h3{display:none}
+#detail .memo-v74-rubric-tools{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:14px;padding:7px 4px;color:#637b6c;font-size:.83rem}
+#detail .memo-v74-rubric-tools>div{display:flex;gap:7px;flex-wrap:wrap}
+#detail .memo-v74-rubric-tools button{font:inherit;color:#28674d;background:#f2f7f3;border:1px solid #d5e6d9;border-radius:7px;padding:6px 10px;cursor:pointer}
+#detail .memo-v74-rubric-tools button:hover{background:#e1f0e5;border-color:#9dc6aa}
+@media(max-width:520px){#detail .memo-v74-rubric>summary{padding:13px 4px}#detail .memo-v74-rubric-tools{align-items:flex-start}}
+
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -3454,13 +3473,19 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
     const cls=x.id==="alerte-delivrance"?"memo-priority-alert":x.id==="coup-oeil"?"memo-priority-glance":"memo-priority-advice";
     return `<div class="memo-presentation-priority ${cls}">${renderSection(x)}</div>`;
    }).join("");
-   const specificHtml=specificSections.map(x=>`<div class="memo-specific-section"><h3>${esc(x.title||"Information spécifique")}</h3><div class="memo-specific-body">${renderSection(x)}</div></div>`).join("");
+   const specificHtml=specificSections.map((x,i)=>`<details class="memo-v74-rubric" ${i===0?'open':''}><summary>${esc(x.title||"Information spécifique")}<span class="memo-v74-chevron" aria-hidden="true"></span></summary><div class="memo-v74-rubric-content">${renderSection(x)}</div></details>`).join("");
+   const rubricTools=specificSections.length>1?`<div class="memo-v74-rubric-tools"><span>Rubriques · ${specificSections.length}</span><div><button type="button" data-v74-expand="all">Tout déplier</button><button type="button" data-v74-expand="none">Tout replier</button></div></div>`:"";
 
    const form=String(child.form||child.sections?.[0]?.dciForm||medicationForms(child)[0]||"").trim();
    const dose=dosageLabel(child);
    const moleculeName=displayMedName(m);
    const selectedTitle=[moleculeName,dose].filter(Boolean).join(" ")+(form?" — "+form:"");
-   panel.innerHTML=`<div class="memo-selected-presentation"><span class="memo-selected-caption">PRÉSENTATION SÉLECTIONNÉE</span><div class="memo-v44-heading"><strong class="memo-v44-title">${esc(selectedTitle)}</strong><span class="memo-v44-regulatory"></span></div>${ficheDateLabel(child)}</div>${presentationHtml}${priorityHtml}${specificHtml}${(!priorityHtml&&!specificHtml&&!presentationHtml)?'<p class="memo-specific-empty">Aucune particularité renseignée pour cette présentation.</p>':''}`;
+   panel.innerHTML=`<div class="memo-selected-presentation"><span class="memo-selected-caption">PRÉSENTATION SÉLECTIONNÉE</span><div class="memo-v44-heading"><strong class="memo-v44-title">${esc(selectedTitle)}</strong><span class="memo-v44-regulatory"></span></div>${ficheDateLabel(child)}</div>${presentationHtml}${priorityHtml}${rubricTools}${specificHtml}${(!priorityHtml&&!specificHtml&&!presentationHtml)?'<p class="memo-specific-empty">Aucune particularité renseignée pour cette présentation.</p>':''}`;
+   panel.querySelectorAll("[data-v74-expand]").forEach(btn=>btn.addEventListener("click",()=>{
+    const expand=btn.dataset.v74Expand==="all";
+    panel.querySelectorAll(".memo-v74-rubric").forEach(r=>{r.open=expand});
+   }));
+   if(targetSectionId){const target=panel.querySelector(`#section-${CSS.escape(targetSectionId)}`);if(target){const rubric=target.closest(".memo-v74-rubric");if(rubric)rubric.open=true;}}
    const sourcesSlot=$("memo-combined-sources-slot");
    if(sourcesSlot){sourcesSlot.innerHTML=ficheCombinedSources(m,documentationSections,child);sourcesSlot.classList.toggle("hidden",!sourcesSlot.innerHTML.trim());memoLinkifyCips(sourcesSlot);}
    panel.querySelectorAll("[data-group-open]").forEach(b=>b.onclick=()=>openMedication(b.dataset.groupOpen));
