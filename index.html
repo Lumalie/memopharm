@@ -1996,6 +1996,29 @@ body.header-search-active #headerSearchSlot .search-suggestions .results{max-hei
 #detail #presentations-details.presentation-fixed #presentation-info .presentation-v33-photo.memo-v52-gallery{
  align-self:start!important;margin-top:0!important;
 }
+
+/* V102 — mêmes accordéons pour groupes et molécules */
+#detail .memo-v102-general .memo-v85-specialty-rubrics{padding-top:4px}
+#detail .memo-v102-general .memo-v74-rubric{border-radius:0}
+/* Badges commerciaux en haut à droite, à hauteur du sélecteur */
+#detail #presentations-details.presentation-fixed .memo-v48-identity{
+ display:flex!important;align-items:flex-start!important;gap:12px!important;
+ justify-content:space-between!important;flex-wrap:nowrap!important;
+}
+#detail #presentations-details.presentation-fixed .memo-v48-selector{flex:0 1 500px!important;min-width:0!important}
+#detail #presentations-details.presentation-fixed .memo-v102-commercial-storage{
+ display:flex!important;align-items:center!important;justify-content:flex-end!important;
+ gap:9px!important;flex:0 0 auto!important;margin:0 0 0 auto!important;
+ position:relative!important;z-index:2!important;
+}
+#detail #presentations-details.presentation-fixed .memo-v102-commercial-storage .memo-v93-storage-badge{
+ width:56px!important;height:52px!important;flex:none!important;
+}
+#detail #presentations-details.presentation-fixed .memo-v102-commercial-storage .memo-repro-tooltip{z-index:100!important}
+@media(max-width:550px){
+ #detail #presentations-details.presentation-fixed .memo-v48-identity{flex-wrap:wrap!important}
+ #detail #presentations-details.presentation-fixed .memo-v102-commercial-storage{margin-left:auto!important}
+}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -4000,7 +4023,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
 
 
  ${!isSpecialiteFiche(m)&&!isGroup(m)&&!isMolecule(m)?renderPresentations(m):""}
- ${isMolecule(m)&&moleculeDosages.length?`<details class="molecule-general" id="molecule-general" ${targetSectionId?"open":""}><summary>📖 Informations générales</summary><div class="molecule-general-inner">${displaySections.map(s=>renderSection(s,targetSectionId)).join("")}</div></details>`:isSpecialiteFiche(m)?`<details class="molecule-general memo-v92-specialty-general" id="molecule-general" ${targetSectionId?"open":""}><summary>📖 Informations générales</summary><div class="molecule-general-inner memo-v85-specialty-rubrics">${displaySections.map((s,i)=>`<details class="memo-v74-rubric" open><summary>${esc(s.title||"Information")}<span class="memo-v74-chevron" aria-hidden="true"></span></summary><div class="memo-v74-rubric-content">${renderSection(s,targetSectionId)}</div></details>`).join("")}</div></details>${memoV90SpecialtyPresentations(m)}`:displaySections.map(s=>renderSection(s,targetSectionId)).join("")}
+ ${(isGroup(m)||isMolecule(m))?`<details class="molecule-general memo-v102-general" id="molecule-general" ${targetSectionId?"open":""}><summary>📖 Informations générales</summary><div class="molecule-general-inner memo-v85-specialty-rubrics">${displaySections.map(s=>`<details class="memo-v74-rubric" open><summary>${esc(s.title||"Information")}<span class="memo-v74-chevron" aria-hidden="true"></span></summary><div class="memo-v74-rubric-content">${renderSection(s,targetSectionId)}</div></details>`).join("")}</div></details>`:isSpecialiteFiche(m)?`<details class="molecule-general memo-v92-specialty-general" id="molecule-general" ${targetSectionId?"open":""}><summary>📖 Informations générales</summary><div class="molecule-general-inner memo-v85-specialty-rubrics">${displaySections.map((s,i)=>`<details class="memo-v74-rubric" open><summary>${esc(s.title||"Information")}<span class="memo-v74-chevron" aria-hidden="true"></span></summary><div class="memo-v74-rubric-content">${renderSection(s,targetSectionId)}</div></details>`).join("")}</div></details>${memoV90SpecialtyPresentations(m)}`:displaySections.map(s=>renderSection(s,targetSectionId)).join("")}
   ${isMolecule(m)&&moleculeDosages.length?`<section class="molecule-tabs" id="molecule-tabs" aria-label="Présentations"><div class="molecule-tabs-inner"><div class="molecule-tab-strip molecule-form-strip" role="tablist" aria-label="Formes pharmaceutiques de ${esc(displayMedName(m))}"></div><div class="molecule-tab-strip molecule-dose-strip" role="tablist" aria-label="Dosages disponibles"></div><div class="molecule-tab-strip molecule-pack-strip" role="tablist" aria-label="Conditionnements disponibles"></div><div class="molecule-tab-content" id="molecule-tab-content"></div></div></section>`:""}
 `;
  memoV96RestoreDetails(m.id,$("detail"));
@@ -4052,7 +4075,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
    if(sourcesSlot){sourcesSlot.innerHTML=ficheCombinedSources(m,documentationSections,child);sourcesSlot.classList.toggle("hidden",!sourcesSlot.innerHTML.trim());memoLinkifyCips(sourcesSlot);}
    panel.querySelectorAll("[data-group-open]").forEach(b=>b.onclick=()=>openMedication(b.dataset.groupOpen));
    memoV44Banner(panel,child,selectedTitle);
-   panel.querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=panel.querySelector("#presentation-info");memoSetViewChoice(child.id,{presentation:sel.value});const choice=memoV44Chosen(child);if(target)target.innerHTML=choice?presentationInfo(choice.p,child):"";memoV48Sync(sel.closest("#presentations-details"),choice?.p);memoWireBadgeClicks(target);memoV44Banner(panel,child,selectedTitle);memoV67Refresh(child,choice?.p||null)});
+   panel.querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=panel.querySelector("#presentation-info");memoSetViewChoice(child.id,{presentation:sel.value});const choice=memoV44Chosen(child);if(target)target.innerHTML=choice?presentationInfo(choice.p,child):"";memoV48Sync(sel.closest("#presentations-details"),choice?.p);memoV102SyncStorage(sel.closest("#presentations-details"),choice?.p);memoWireBadgeClicks(target);memoV44Banner(panel,child,selectedTitle);memoV67Refresh(child,choice?.p||null)});
   };
   const setupPacks=child=>{
    const options=memoV44Options(child);
@@ -4260,7 +4283,7 @@ function presentationInfo(p,m=null, specialtyBoxesHtml=""){
  const imageTile=(url,label)=>`<figure class="memo-v52-photo-tile"><button type="button" class="presentation-v37-zoom" data-presentation-zoom="${esc(url)}" aria-label="Agrandir la photo : ${label}" title="Cliquer pour agrandir"><img src="${esc(url)}" alt="${label} de la présentation" loading="lazy"><span class="presentation-v37-zoom-icon" aria-hidden="true">⤢</span></button></figure>`;
  const tiles=[p.showPhoto===true&&img?imageTile(img,"Boîte"):"",p.showTabletPhoto===true&&tabletImg?imageTile(tabletImg,"Comprimé / gélule"):""].filter(Boolean);
  const photo=tiles.length?`<div class="presentation-v33-photo memo-v52-gallery">${tiles.join("")}</div>`:"";
- const badges=m&&isSpecialiteFiche(m)?"":m?practicalBadges(m,{...p,regulatoryList:""}):"";
+ const badges=m&&isSpecialiteFiche(m)?"":m?practicalBadges(m,{...p,regulatoryList:"",coldStorage:false,afterOpening:false}):"";
  if(!rows.length&&!photo&&!badges&&!p.name)return '<p class="muted">Aucun critère de présentation affiché pour le moment.</p>';
  const title="";
  return `<div class="presentation-v33-content">${title}${m&&!isSpecialiteFiche(m)?"":badges}<div class="presentation-v33-layout${photo?' has-photo':''}"><div class="presentation-v33-fields">${m&&!isSpecialiteFiche(m)?`<div class="memo-v101-cip-block">${badges}<div class="memo-v101-cip-line">${memoV48Cip(p)}</div></div>`:""}${specialtyBoxesHtml?`<div class="memo-v97-cip-area">${specialtyBoxesHtml}</div>`:""}${rows.join('')}</div>${photo}</div><p class="hint presentation-v33-warning">L’aspect seul ne permet pas d’identifier avec certitude un médicament. Vérifier la concordance avec la présentation exacte.</p></div>`;
@@ -4291,9 +4314,20 @@ function memoV90SpecialtyPresentations(m){
  }).join("");
  return `<details class="molecule-general memo-v92-specialty-presentations" id="presentations-details"><summary>💊 Présentations</summary><div class="molecule-general-inner">${entries||'<p class="muted">Aucune présentation renseignée.</p>'}</div></details>`;
 }
+function memoV102CommercialStorageBadges(p){
+ if(!p)return "";
+ const snow=`<svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10 20-1.25-2.5L6 18"/><path d="M10 4 8.75 6.5 6 6"/><path d="m14 20 1.25-2.5L18 18"/><path d="m14 4 1.25 2.5L18 6"/><path d="m17 21-3-6h-4"/><path d="m17 3-3 6 1.5 3"/><path d="M2 12h6.5L10 9"/><path d="m20 10-1.5 2 1.5 2"/><path d="M22 12h-6.5L14 15"/><path d="m4 10 1.5 2L4 14"/><path d="m7 21 3-6-1.5-3"/><path d="m7 3 3 6h4"/></svg>`;
+ const clock=`<svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`;
+ const tip=(title,note)=>`<span class="memo-repro-tooltip" role="tooltip"><span class="memo-repro-tip-title">${title}</span><span class="memo-repro-tip-note">${note}</span></span>`;
+ return `<div class="memo-v102-commercial-storage memo-v93-storage-row">${p.coldStorage===true?`<span class="memo-v93-storage-badge memo-v93-cold" tabindex="0" aria-label="Conservation au froid">${snow}${tip("Conservation au froid","Vérifier les conditions exactes dans le RCP.")}</span>`:""}${p.afterOpening===true?`<span class="memo-v93-storage-badge memo-v93-after" tabindex="0" aria-label="Durée après ouverture">${clock}${tip("Durée après ouverture",p.afterOpeningDuration?esc(p.afterOpeningDuration):"Durée non précisée — vérifier le RCP.")}</span>`:""}</div>`;
+}
+function memoV102SyncStorage(section,p){
+ const badges=section?.querySelector(".memo-v102-commercial-storage");
+ if(badges)badges.outerHTML=memoV102CommercialStorageBadges(p);
+}
 function renderPresentations(m,targetPresentationIndex=null,selectedPack=null){
  const options=memoV44Options(m).filter(x=>selectedPack===null||x.pack===selectedPack),saved=memoV44Chosen(m),chosen=options.find(x=>x.key===saved?.key)||options[0]||null;
- return `<section class="section presentation-fixed ${chosen?.p&&((chosen.p.showPhoto===true&&safeHttp(chosen.p.imageUrl||""))||(chosen.p.showTabletPhoto===true&&safeHttp(chosen.p.tabletImageUrl||"")))?'memo-v48-has-photo':''}" id="presentations-details"><h3>💊 Présentation</h3>${options.length?`<div class="memo-v48-identity"><div class="memo-v48-selector"><select id="presentation-choice" aria-label="Médicament commercial" data-presentation-select ${options.length===1?'aria-label="Médicament commercial"':''}>${options.map(x=>`<option value="${esc(x.key)}" ${chosen?.key===x.key?"selected":""}>${esc(presentationLabel(x.p,m,Number(x.key.split(":")[0])))}</option>`).join("")}</select></div><div class="memo-v48-cip"><div data-v48-cip>${memoV48Cip(chosen?.p)}</div></div></div><div id="presentation-info" style="margin-top:12px">${chosen?presentationInfo(chosen.p,m):""}</div><div id="memo-v86-specific-root">${m.entry_type==="specialite"&&chosen?memoV86SpecificHtml(chosen.p):""}</div>`:'<p class="muted">Aucune présentation renseignée.</p>'}</section>`
+ return `<section class="section presentation-fixed ${chosen?.p&&((chosen.p.showPhoto===true&&safeHttp(chosen.p.imageUrl||""))||(chosen.p.showTabletPhoto===true&&safeHttp(chosen.p.tabletImageUrl||"")))?'memo-v48-has-photo':''}" id="presentations-details"><h3>💊 Présentation</h3>${options.length?`<div class="memo-v48-identity"><div class="memo-v48-selector"><select id="presentation-choice" aria-label="Médicament commercial" data-presentation-select ${options.length===1?'aria-label="Médicament commercial"':''}>${options.map(x=>`<option value="${esc(x.key)}" ${chosen?.key===x.key?"selected":""}>${esc(presentationLabel(x.p,m,Number(x.key.split(":")[0])))}</option>`).join("")}</select></div><div class="memo-v48-cip"><div data-v48-cip>${memoV48Cip(chosen?.p)}</div></div>${memoV102CommercialStorageBadges(chosen?.p)}</div><div id="presentation-info" style="margin-top:12px">${chosen?presentationInfo(chosen.p,m):""}</div><div id="memo-v86-specific-root">${m.entry_type==="specialite"&&chosen?memoV86SpecificHtml(chosen.p):""}</div>`:'<p class="muted">Aucune présentation renseignée.</p>'}</section>`
 }
 
 const MEMO_CHOICES_KEY="memofficine_field_choices_v1";
