@@ -2137,6 +2137,50 @@ body.header-search-active #headerSearchSlot .search-suggestions .results{max-hei
 #searchPreview .memo-v108-preview-presentations .memo-v52-photo-tile img{width:100%!important;height:140px!important;max-height:140px!important;object-fit:contain!important}
 #searchPreview .memo-v108-preview-presentations .memo-v90-commercial{max-width:none!important;padding:8px 0!important;border:0!important;background:transparent!important}
 @media(max-width:650px){#searchPreview .memo-v109-commercial .presentation-v33-layout.has-photo,#searchPreview .memo-v108-preview-presentations .presentation-v33-layout.has-photo{grid-template-columns:1fr!important}}
+
+/* V111 — aperçu : reproduire les accordéons sans cartes ni typographie divergente */
+#searchPreview .memo-v74-rubric,#searchPreview details.memo-v74-rubric{
+ display:block!important;border:0!important;border-bottom:1px solid #e2eae4!important;
+ border-radius:0!important;background:transparent!important;box-shadow:none!important;
+ padding:0!important;margin:0!important;overflow:visible!important;
+}
+#searchPreview details.memo-v74-rubric:last-of-type{border-bottom:0!important}
+#searchPreview .memo-v74-rubric>summary{
+ list-style:none!important;cursor:pointer!important;display:flex!important;
+ align-items:center!important;justify-content:space-between!important;gap:12px!important;
+ padding:15px 4px!important;color:#24644c!important;font-weight:750!important;
+ font-size:1rem!important;background:transparent!important;border:0!important;border-radius:0!important;
+}
+#searchPreview .memo-v74-rubric>summary::-webkit-details-marker{display:none}
+#searchPreview .memo-v74-rubric>summary:hover{background:#f5f9f6!important}
+#searchPreview .memo-v74-chevron{flex:none;width:9px;height:9px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);transition:transform .15s;margin-right:9px;margin-top:-4px}
+#searchPreview .memo-v74-rubric[open] .memo-v74-chevron{transform:rotate(225deg);margin-top:4px}
+#searchPreview .memo-v74-rubric-content{padding:0 4px 15px!important;background:transparent!important;border:0!important;box-shadow:none!important}
+#searchPreview .memo-v74-rubric-content>.section{margin:0!important;padding:0!important;border:0!important;box-shadow:none!important;background:transparent!important}
+#searchPreview .memo-v74-rubric-content>.section>h3{display:none!important}
+#searchPreview .memo-v111-targeted>summary{cursor:pointer!important}
+/* Bannière identique à celle de la fiche complète (ses styles sont normalement limités à .detail). */
+#searchPreview .memo-selected-presentation{display:flex!important;flex-direction:column!important;gap:5px!important;background:#f8f0eb!important;border-left:3px solid #d5aa95!important;border-radius:9px!important;padding:12px 15px!important;margin:8px 0 18px!important}
+#searchPreview .memo-selected-caption{font-size:.72rem!important;letter-spacing:.07em!important;font-weight:750!important;color:#98654e!important}
+#searchPreview .memo-selected-presentation strong{font-size:1.03rem!important;color:#654436!important}
+#searchPreview .memo-selected-presentation .memo-date-row{margin-top:3px;color:#94796c}
+/* Menu commercial, badges et galerie : même hiérarchie que sur la fiche, en dimensions d'aperçu. */
+#searchPreview .memo-v109-commercial{background:#f7faf8;border:1px solid #dce8df;border-radius:14px;padding:16px 18px;margin:12px 0 16px}
+#searchPreview .memo-v109-choice{display:flex!important;justify-content:space-between!important;align-items:center!important;gap:12px!important;margin-bottom:9px!important}
+#searchPreview .memo-v109-choice select{width:min(100%,440px)!important;flex:0 1 440px!important}
+#searchPreview .memo-v109-choice .memo-v102-commercial-storage{display:flex!important;gap:7px!important;align-items:center!important;margin-left:auto!important;flex:none!important}
+#searchPreview .memo-v109-choice .memo-v93-storage-badge{position:relative!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;width:40px!important;height:38px!important;border-radius:10px!important;background:#d9eafb!important;color:#28649b!important;box-sizing:border-box!important}
+#searchPreview .memo-v109-choice .memo-v93-storage-badge.memo-v93-after{width:auto!important;min-width:40px!important;background:#edf0f2!important;color:#526575!important;padding:0 9px!important;gap:6px!important}
+#searchPreview .memo-v109-choice .memo-v93-storage-badge svg{width:23px!important;height:23px!important;flex:none!important}
+#searchPreview .memo-v109-choice .memo-v103-duration{font-size:.78rem!important;font-weight:700!important;white-space:nowrap!important}
+#searchPreview .memo-v109-commercial .presentation-v33-layout.has-photo,
+#searchPreview .memo-v108-preview-presentations .presentation-v33-layout.has-photo{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(180px,43%)!important;gap:16px!important;align-items:start!important}
+#searchPreview .memo-v109-commercial .presentation-v33-photo.memo-v52-gallery,
+#searchPreview .memo-v108-preview-presentations .presentation-v33-photo.memo-v52-gallery{display:flex!important;position:static!important;justify-content:center!important;align-items:center!important;gap:16px!important;padding:10px!important;width:100%!important;max-width:none!important;margin:0!important;border:1px solid #dce8df!important;border-radius:13px!important;background:#fcfefd!important;box-sizing:border-box!important}
+#searchPreview .memo-v109-commercial .memo-v52-photo-tile img,
+#searchPreview .memo-v108-preview-presentations .memo-v52-photo-tile img{height:165px!important;max-height:165px!important;object-fit:contain!important}
+#searchPreview .memo-v109-commercial .memo-practical-badges{display:none!important}
+@media(max-width:700px){#searchPreview .memo-v109-commercial .presentation-v33-layout.has-photo,#searchPreview .memo-v108-preview-presentations .presentation-v33-layout.has-photo{grid-template-columns:1fr!important}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -3760,7 +3804,7 @@ function previewSearchResult(item){
  const childMatch=rubricTokens.length?childSections.find(x=>rubricTokens.every(t=>{const label=norm(x.id+' '+x.title);return label.includes(t)||Object.entries(sectionAliases).some(([key,arr])=>arr.includes(t)&&label.includes(key))})):null;
  const targeted=!!rubricTokens.length;
  const safeSection=x=>renderSection(x).replace(/\sid="section-[^"]*"/g,'').replace(/(<section\b[^>]*>)\s*<h3>[^<]*<\/h3>/i,'$1');
- const rubric=(x,owner,child=null)=>`<div class="memo-v109-rubric-link" role="button" tabindex="0" data-v109-rubric="${esc(x.id)}" data-v109-owner="${esc(owner.id)}" ${child?`data-v109-child="${esc(child.id)}"`:''} title="Ouvrir cette rubrique dans la fiche"><div class="memo-v109-rubric-title">${esc(x.title||'Information')} <span aria-hidden="true">↗</span></div>${safeSection(x)}</div>`;
+ const rubric=(x,owner,child=null)=>`<details class="memo-v74-rubric memo-v111-targeted" open data-v109-rubric="${esc(x.id)}" data-v109-owner="${esc(owner.id)}" ${child?`data-v109-child="${esc(child.id)}"`:""}><summary title="Ouvrir cette rubrique dans la fiche">${esc(x.title||"Information")}<span class="memo-v74-chevron" aria-hidden="true"></span></summary><div class="memo-v74-rubric-content">${safeSection(x)}</div></details>`;
  const sectionList=(items,owner,child=null)=>items.map(x=>targeted?rubric(x,owner,child):`<details class="memo-v74-rubric" open><summary>${esc(x.title||'Information')}<span class="memo-v74-chevron" aria-hidden="true"></span></summary><div class="memo-v74-rubric-content">${safeSection(x)}</div></details>`).join('');
  const generalSections=targeted?(targetSection?[targetSection]:[]):validSections;
  const previewGeneralHtml=generalSections.length?`<details class="molecule-general memo-v102-general memo-v109-plain" open><summary>📖 Informations générales</summary><div class="molecule-general-inner memo-v85-specialty-rubrics">${sectionList(generalSections,m)}</div></details>`:'';
@@ -3796,7 +3840,7 @@ function previewSearchResult(item){
     if(target){target.closest('details')?.setAttribute('open','');target.scrollIntoView({block:'start',behavior:'smooth'});}
    }));
   };
-  el.addEventListener('click',open);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open()}});
+  const summary=el.querySelector('summary');if(summary){summary.addEventListener('click',e=>{e.preventDefault();open()});summary.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open()}});}
  });
  $('searchPreview').querySelectorAll('[data-v109-choice]').forEach(sel=>sel.addEventListener('change',()=>{
   const chosen=memoV44Options(selectedChild).find(x=>x.key===sel.value);
