@@ -2644,6 +2644,39 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
 .memo-equiv-detail-item strong{margin-right:6px}.memo-equiv-detail-item button{font-size:.83rem;border-radius:7px;padding:6px 9px;background:#f4f8f5;color:#355f4a;border:1px solid #dbe9df}
 .memo-equiv-note{font-size:.8rem;color:#7b8980;margin-top:25px;line-height:1.5}
 @media(max-width:600px){.memo-equiv-result-head{grid-template-columns:minmax(0,1fr) 20px minmax(0,1fr);gap:7px}.memo-equiv-card{padding:15px}.memo-equiv-molecule{font-size:1rem}.memo-equiv-name{font-size:.84rem}#equivNav{font-size:.84rem}}
+/* V115.1 — Correspondances en deux colonnes, détails sur demande */
+.memo-equiv-page{max-width:1100px}
+.memo-equiv-heading{text-align:center;margin:0 auto 32px}
+.memo-equiv-heading h2{font-size:2rem;line-height:1.2;margin-bottom:12px}
+.memo-equiv-heading p{font-size:1.02rem}
+.memo-equiv-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start}
+.memo-equiv-column{background:#fff;border:1px solid #dce7df;border-radius:16px;padding:22px;min-width:0;box-shadow:0 4px 15px rgba(31,70,48,.045)}
+.memo-equiv-column h3{font-size:1.28rem;color:#315d47;margin:0 0 20px}
+.memo-equiv-column.memo-equiv-dci h3{color:#795098}
+.memo-equiv-heading-sub{font-size:.83rem;font-weight:400;color:#79877e}
+.memo-equiv-column label{display:block;font-size:.87rem;font-weight:650;color:#516d5a;margin-bottom:9px}
+.memo-equiv-column input{width:100%;border-radius:10px;padding:12px 14px;font-size:1rem}
+.memo-equiv-column-results{margin-top:20px;display:flex;flex-direction:column;gap:10px}
+.memo-equiv-column-results .memo-equiv-empty{font-size:.88rem;padding:18px 10px;margin:0}
+.memo-equiv-entry{border:1px solid #dce7df;border-radius:10px;background:#f9fbf9;overflow:hidden}
+.memo-equiv-entry summary{cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;font-weight:700;color:#315d47;list-style:none}
+.memo-equiv-dci .memo-equiv-entry summary{color:#795098}
+.memo-equiv-entry summary::-webkit-details-marker{display:none}
+.memo-equiv-chevron{color:#8b9b8f;font-size:1.2rem;transition:transform .15s}
+.memo-equiv-entry[open] .memo-equiv-chevron{transform:rotate(180deg)}
+.memo-equiv-entry-body{padding:12px 14px 15px;border-top:1px solid #e7ede8;background:#fff}
+.memo-equiv-entry-body h4{font-size:.82rem;margin:12px 0 6px;color:#5c6c60}
+.memo-equiv-related{font-size:.8rem;color:#77867a;margin:0 0 10px;line-height:1.45}
+.memo-equiv-presentation{padding:9px 0;border-bottom:1px solid #edf0ed}
+.memo-equiv-presentation:last-child{border-bottom:0}
+.memo-equiv-open-fiche{border:0;background:none;padding:0;text-align:left;color:#315d47;font-size:.86rem;cursor:pointer}
+.memo-equiv-open-fiche:hover{text-decoration:underline}
+.memo-equiv-cip-list{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+.memo-equiv-cip-pair{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
+.memo-equiv-cip-pair .memo-v92-pack-label{display:inline-block;background:#edf0f2;color:#62717a;font-style:italic;font-size:.78rem;padding:4px 8px;border-radius:7px}
+.memo-equiv-reset{text-align:center;margin:16px auto}
+.memo-equiv-reset button{border:1px solid #d6e2d8;border-radius:9px;background:#fff;padding:9px 16px;color:#426b55}
+@media(max-width:730px){.memo-equiv-columns{grid-template-columns:1fr;gap:14px}.memo-equiv-heading h2{font-size:1.65rem}.memo-equiv-column{padding:16px}}
 </style>
 </head>
 <body>
@@ -2706,9 +2739,21 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
   </section><section id="equivView" class="hidden" aria-label="Recherche des correspondances commerciales et DCI">
  <div class="memo-equiv-page">
   <div class="memo-equiv-heading"><h2>Princeps ⇋ Générique</h2><p>Retrouvez les noms commerciaux et les molécules associées dans Mémopharm.</p></div>
-  <label for="equivSearch">Nom commercial ou molécule</label>
-  <div class="memo-equiv-searchrow"><input type="search" id="equivSearch" placeholder="Ex. : Clamoxyl, amoxicilline…" autocomplete="off"><button id="equivClear" type="button">Effacer</button></div>
-  <div id="equivResults" aria-live="polite"><p class="memo-equiv-empty">Saisissez un nom pour rechercher une correspondance.</p></div>
+  <div class="memo-equiv-columns">
+   <section class="memo-equiv-column memo-equiv-commercial">
+    <h3>Princeps <span class="memo-equiv-heading-sub">/ noms commerciaux</span></h3>
+    <label for="equivPrincepsSearch">Rechercher un nom commercial</label>
+    <input type="search" id="equivPrincepsSearch" placeholder="Ex. : Clamoxyl…" autocomplete="off">
+    <div id="equivPrincepsResults" class="memo-equiv-column-results" aria-live="polite"></div>
+   </section>
+   <section class="memo-equiv-column memo-equiv-dci">
+    <h3>Générique <span class="memo-equiv-heading-sub">/ DCI</span></h3>
+    <label for="equivDciSearch">Rechercher une molécule</label>
+    <input type="search" id="equivDciSearch" placeholder="Ex. : Amoxicilline…" autocomplete="off">
+    <div id="equivDciResults" class="memo-equiv-column-results" aria-live="polite"></div>
+   </section>
+  </div>
+  <div class="memo-equiv-reset"><button id="equivClear" type="button">Effacer la recherche</button></div>
   <p class="memo-equiv-note">Correspondances fondées sur les fiches enregistrées dans Mémopharm. Un nom commercial associé à une DCI ne constitue pas à lui seul une preuve de substituabilité.</p>
  </div>
  </section><section id="exploreView" class="hidden"><div class="explore-heading"><h2>Explorer les fiches</h2><p>Parcourez les fiches communes et leurs spécialités associées.</p></div><div class="explore-search"><label for="exploreSearch">Rechercher dans les fiches</label><div class="explore-search-row"><input id="exploreSearch" type="search" autocomplete="off" placeholder="Ex. : amoxicilline, oubli de prise, CIP, conservation…"><button id="clearExploreSearch" type="button">Effacer</button></div><p id="exploreSearchCount" class="muted" aria-live="polite"></p></div><div class="explore-controls"><label>Classe thérapeutique<select id="exploreClass"></select></label><label>Indication thérapeutique<select id="exploreIndication"></select></label><label>Forme pharmaceutique<select id="exploreForm"></select></label><label>Badge pharmaceutique<select id="exploreBadge"><option value="">Tous les badges</option><option value="mte">⚠ MTE</option><option value="photo">☀ Photosensibilisant</option><option value="exception">EXC · Médicament d’exception</option><option value="stup">STUP · Stupéfiant</option><option value="cold">❄ Conservation au froid</option><option value="after">◷ Conservation après ouverture</option><option value="listI">Liste I</option><option value="listII">Liste II</option></select></label><button id="resetExplore" type="button">Effacer les filtres</button></div> <div id="memoThemeIntro" class="memo-theme-intro hidden" aria-live="polite"></div><div id="exploreCards" class="explore-cards"></div></section><section id="sourcesView" class="hidden"><div class="explore-heading"><h2>Sources documentaires</h2><p>Références communes utilisées pour construire et vérifier les fiches de Mémopharm.</p></div><div id="sourcesList" class="sources-list"></div><div id="sourcesAdmin" class="panel hidden" style="padding:18px;margin-top:18px"></div></section><div class="memo-v43-footer"><strong>📖 Une ressource pratique pour les professionnels de santé</strong><p>Mémopharm est une base documentaire indépendante conçue pour faciliter l’accès aux informations essentielles sur les médicaments et accompagner la pratique quotidienne des professionnels de santé.</p><p>Les fiches sont enrichies progressivement à partir de sources de référence. Les dates de mise à jour et de vérification permettent d’en apprécier l’actualité. Pour toute décision de prise en charge, les informations doivent être confrontées aux référentiels officiels en vigueur et aux données de la spécialité concernée.</p></div>
@@ -3773,45 +3818,91 @@ function memoEquivRecords(){
   if(!groups.has(key))groups.set(key,{root,names:new Map(),details:[]});
   return groups.get(key);
  };
- const add=(root,name,source,detail)=>{
+ const add=(root,name,source,detail,presentation=null)=>{
   name=String(name||'').trim();
   if(!root||!name||norm(name)===norm(root.name))return;
   const group=groupFor(root),key=norm(name);
   if(!group.names.has(key))group.names.set(key,{name,items:[]});
-  if(detail)group.names.get(key).items.push({source,detail});
+  if(detail)group.names.get(key).items.push({source,detail,presentation});
  };
  // Les présentations des variantes sont les associations les plus précises.
  variants.forEach(v=>{
   const root=byId.get(String(moleculeParentId(v)));
   if(!root)return;
-  (v.presentations||[]).forEach(p=>add(root,p.name||p.specialtyName||p.specialite||'',v,displayMedName(v)));
+  (v.presentations||[]).forEach(p=>add(root,p.name||p.specialtyName||p.specialite||'',v,displayMedName(v),p));
  });
  // Les spécialités autonomes utilisent uniquement leurs liens DCI explicites.
  visible.filter(isSpecialiteFiche).forEach(m=>{
   const raw=String(m.parent_dci||m.dci||'').trim();
   const root=byId.get(raw)||byName.get(norm(raw));
-  if(root){add(root,m.name,m,displayMedName(m));(m.presentations||[]).forEach(p=>add(root,p.name||'',m,displayMedName(m)));}
+  if(root){add(root,m.name,m,displayMedName(m));(m.presentations||[]).forEach(p=>add(root,p.name||'',m,displayMedName(m),p));}
  });
  // Si une présentation est enregistrée directement sur une fiche molécule.
- roots.forEach(root=>(root.presentations||[]).forEach(p=>add(root,p.name||'',root,displayMedName(root))));
+ roots.forEach(root=>(root.presentations||[]).forEach(p=>add(root,p.name||'',root,displayMedName(root),p)));
  return [...groups.values()].filter(g=>g.names.size);
 }
+function memoEquivPresentationDetails(items){
+ const unique=new Map();
+ items.forEach(item=>{
+  const p=item.presentation;
+  const key=String(item.source.id)+'|'+String(p?.name||'')+'|'+String(p?.dosage||'')+'|'+String(p?.form||'');
+  if(!unique.has(key))unique.set(key,item);
+ });
+ if(!unique.size)return '<p class="memo-equiv-no-details">Aucune présentation détaillée renseignée.</p>';
+ return [...unique.values()].map(item=>{
+  const p=item.presentation;
+  const labels=[item.detail,p?.dosage,p?.form].map(x=>String(x||'').trim()).filter(Boolean);
+  const title=[...new Set(labels)].join(' · ');
+  const boxes=p?cipConditionnements(p):[];
+  return `<div class="memo-equiv-presentation">
+   <button type="button" class="memo-equiv-open-fiche" data-equiv-open="${esc(item.source.id)}" title="Ouvrir la fiche">${esc(title||displayMedName(item.source))} ↗</button>
+   ${boxes.length?`<div class="memo-equiv-cip-list">${boxes.map(box=>`<span class="memo-equiv-cip-pair">${box.cip?cipBadges({cipBoxes:[box]}):''}${box.pack?`<span class="memo-v92-pack-label">${esc(box.pack)}</span>`:''}</span>`).join('')}</div>`:''}
+  </div>`;
+ }).join('');
+}
 function renderEquivalences(){
- const host=$("equivResults");if(!host)return;
- const query=norm($("equivSearch").value).trim();
- if(!query){host.innerHTML='<p class="memo-equiv-empty">Saisissez un nom pour rechercher une correspondance.</p>';return;}
- const all=memoEquivRecords();
- const hits=all.map(g=>{
-  const rootMatch=norm(g.root.name).includes(query);
-  const names=[...g.names.values()].filter(n=>rootMatch||norm(n.name).includes(query));
-  return {...g,names,rootMatch};
- }).filter(g=>g.names.length).sort((a,b)=>Number(b.rootMatch)-Number(a.rootMatch)||a.root.name.localeCompare(b.root.name,'fr'));
- if(!hits.length){host.innerHTML='<p class="memo-equiv-empty">Aucune correspondance renseignée pour cette recherche.</p>';return;}
- host.innerHTML=hits.map(g=>`<article class="memo-equiv-card">
-  <div class="memo-equiv-result-head"><div><span class="memo-equiv-overline">Molécule (DCI)</span><button type="button" class="memo-equiv-molecule" data-equiv-open="${esc(g.root.id)}">${esc(g.root.name)}</button></div><span class="memo-equiv-swap" aria-hidden="true">⇋</span><div><span class="memo-equiv-overline">Nom${g.names.length>1?'s':''} commercial${g.names.length>1?'aux':''}</span><div class="memo-equiv-names">${g.names.map(n=>`<span class="memo-equiv-name">${esc(n.name)}</span>`).join('')}</div></div></div>
-  <details class="memo-equiv-details"><summary>Voir les fiches et présentations liées</summary><div class="memo-equiv-details-body">${g.names.map(n=>`<div class="memo-equiv-detail-item"><strong>${esc(n.name)}</strong>${[...new Map(n.items.map(item=>[String(item.source.id),item])).values()].map(item=>`<button type="button" data-equiv-open="${esc(item.source.id)}">${esc(item.detail)} ↗</button>`).join('')||'<span class="muted">Aucune fiche détaillée supplémentaire</span>'}</div>`).join('')}</div></details>
- </article>`).join('');
- host.querySelectorAll('[data-equiv-open]').forEach(btn=>btn.onclick=()=>openMedication(btn.dataset.equivOpen));
+ const left=$("equivPrincepsResults"),right=$("equivDciResults");
+ if(!left||!right)return;
+ const q=norm(($("equivPrincepsSearch").value||$("equivDciSearch").value||'').trim()).trim();
+ if(!q){
+  left.innerHTML='<p class="memo-equiv-empty">Les noms commerciaux apparaîtront ici.</p>';
+  right.innerHTML='<p class="memo-equiv-empty">Les molécules associées apparaîtront ici.</p>';
+  return;
+ }
+ const hits=memoEquivRecords().map(g=>{
+  const rootMatch=norm(g.root.name).includes(q);
+  const matchingNames=[...g.names.values()].filter(n=>norm(n.name).includes(q));
+  return {...g,rootMatch,matchingNames};
+ }).filter(g=>g.rootMatch||g.matchingNames.length).sort((a,b)=>Number(b.rootMatch)-Number(a.rootMatch)||a.root.name.localeCompare(b.root.name,'fr'));
+ if(!hits.length){
+  left.innerHTML='<p class="memo-equiv-empty">Aucune correspondance renseignée.</p>';
+  right.innerHTML='<p class="memo-equiv-empty">Aucune molécule associée trouvée.</p>';
+  return;
+ }
+ // Une ligne par nom commercial, sans répéter les dosages avant ouverture.
+ left.innerHTML=hits.flatMap(g=>{
+  const names=g.rootMatch?[...g.names.values()]:g.matchingNames;
+  return names.map(n=>`<details class="memo-equiv-entry"><summary><span>${esc(n.name)}</span><span class="memo-equiv-chevron">⌄</span></summary>
+   <div class="memo-equiv-entry-body"><p class="memo-equiv-related">DCI : ${esc(g.root.name)}</p>${memoEquivPresentationDetails(n.items)}</div>
+  </details>`);
+ }).join('');
+ right.innerHTML=hits.map(g=>{
+  const names=[...g.names.values()];
+  const generics=names.flatMap(n=>n.items.filter(item=>item.presentation?.presentationKind==='generic'));
+  return `<details class="memo-equiv-entry"><summary><span>${esc(g.root.name)}</span><span class="memo-equiv-chevron">⌄</span></summary>
+   <div class="memo-equiv-entry-body">
+    <button type="button" class="memo-equiv-open-fiche" data-equiv-open="${esc(g.root.id)}">Ouvrir la fiche molécule ↗</button>
+    ${generics.length?`<h4>Présentations génériques renseignées</h4>${memoEquivPresentationDetails(generics)}`:''}
+    <p class="memo-equiv-related">Noms commerciaux liés : ${esc(names.map(n=>n.name).join(', '))}</p>
+   </div></details>`;
+ }).join('');
+ document.querySelectorAll('#equivView [data-equiv-open]').forEach(btn=>btn.onclick=()=>openMedication(btn.dataset.equivOpen));
+ document.querySelectorAll('#equivView [data-copy-cip]').forEach(btn=>btn.onclick=async e=>{
+  e.preventDefault();e.stopPropagation();
+  const cip=btn.dataset.copyCip;
+  try{await navigator.clipboard.writeText(cip);toast("CIP copié");}
+  catch(err){toast("Impossible de copier le CIP automatiquement");}
+ });
 }
 function navigateToView(view){
  leaveInfoPage();
@@ -6329,9 +6420,15 @@ async function saveCommonSources(){
  pendingSources=null;renderSources();toast("Sources communes enregistrées !");
 }
 
-$("equivNav").onclick=()=>{navigateToView("equiv");$("equivSearch").focus()};
- $("equivSearch").addEventListener("input",renderEquivalences);
- $("equivClear").onclick=()=>{$("equivSearch").value="";renderEquivalences();$("equivSearch").focus()};
+$("equivNav").onclick=()=>{navigateToView("equiv");$("equivPrincepsSearch").focus()};
+ ["equivPrincepsSearch","equivDciSearch"].forEach((id)=>{
+  $(id).addEventListener("input",()=>{
+   const other=id==="equivPrincepsSearch"?"equivDciSearch":"equivPrincepsSearch";
+   $(other).value="";
+   renderEquivalences();
+  });
+ });
+ $("equivClear").onclick=()=>{$("equivPrincepsSearch").value="";$("equivDciSearch").value="";renderEquivalences();$("equivPrincepsSearch").focus()};
  $("exploreNav").onclick=()=>navigateToView("explore");
 $("sourcesNav").onclick=()=>navigateToView("sources");
 document.querySelector("a.brand").addEventListener("click",event=>{
