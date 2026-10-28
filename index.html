@@ -2633,8 +2633,11 @@ function restoreLocalDraft(){
 }
 
 
-function rowToMed(row){return {parent_dci:row.parent_dci||"",presentations:Array.isArray(row.presentations)?row.presentations:[],id:row.id,name:row.name||"",dosage:row.dosage||"",dci:row.dci||"",category:row.category||"Autres",form:row.form||"",aliases:Array.isArray(row.aliases)?row.aliases.join(", "):(row.aliases||""),entry_type:row.entry_type||"specialite",status:row.review_status||"À vérifier",updated:row.verified_at||"",modifiedAt:row.updated_at||"",source:row.source_url||"",sections:Array.isArray(row.sections)?row.sections:clone(DEFAULT_SECTIONS),published:row.status==="published"}}
-function medToRow(m){return {parent_dci:m.entry_type==="dci"?null:(m.parent_dci||null),presentations:m.presentations||[],id:m.id,name:m.name,dosage:m.dosage||null,dci:m.entry_type==="dci"?null:(m.dci||null),entry_type:m.entry_type||"specialite",category:m.category||"Autres",form:m.form||null,aliases:String(m.aliases||"").split(",").map(x=>x.trim()).filter(Boolean),review_status:m.status||"À vérifier",verified_at:m.updated||null,source_url:m.source||null,sections:(m.sections||[]).map(({imageData,...section})=>section),status:m.published?"published":"draft"}}
+// V113 étape 13 — Adaptateur de lecture du futur type Supabase « variant ».
+ // Le moteur existant continue à manipuler « dci » en mémoire pour préserver
+ // recherche, aperçus, Explorer et éditeur. Aucun changement SQL à cette étape.
+function rowToMed(row){return { _storageEntryType:row.entry_type==="variant"?"variant":null,parent_dci:row.parent_dci||"",presentations:Array.isArray(row.presentations)?row.presentations:[],id:row.id,name:row.name||"",dosage:row.dosage||"",dci:row.dci||"",category:row.category||"Autres",form:row.form||"",aliases:Array.isArray(row.aliases)?row.aliases.join(", "):(row.aliases||""),entry_type:row.entry_type==="variant"?"dci":(row.entry_type||"specialite"),status:row.review_status||"À vérifier",updated:row.verified_at||"",modifiedAt:row.updated_at||"",source:row.source_url||"",sections:Array.isArray(row.sections)?row.sections:clone(DEFAULT_SECTIONS),published:row.status==="published"}}
+function medToRow(m){return {parent_dci:m.entry_type==="dci"?null:(m.parent_dci||null),presentations:m.presentations||[],id:m.id,name:m.name,dosage:m.dosage||null,dci:m.entry_type==="dci"?null:(m.dci||null),entry_type:m._storageEntryType==="variant"?"variant":(m.entry_type||"specialite"),category:m.category||"Autres",form:m.form||null,aliases:String(m.aliases||"").split(",").map(x=>x.trim()).filter(Boolean),review_status:m.status||"À vérifier",verified_at:m.updated||null,source_url:m.source||null,sections:(m.sections||[]).map(({imageData,...section})=>section),status:m.published?"published":"draft"}}
 async function loadCloudMeds(){
  const {data,error}=await supabaseClient.from("medications").select("*").order("name");
  if(error){console.error(error);toast("Impossible de charger les fiches : vérifie la configuration SQL");return}
@@ -5614,7 +5617,9 @@ function prepareMoleculeVariants(m){
   if(!child.sections.length)child.sections=[{id:'variant-meta',title:'Métadonnées',type:'text',content:'',enabled:false}];
   child.sections[0].moleculeParentId=String(m.id);
   child.sections[0].dciForm=child.form;
-  child.entry_type='dci'; // Compatibilité temporaire avec le schéma Supabase.
+  child.entry_type='dci'; // Type interne de compatibilité pendant la transition.
+  // Préserver le type « variant » si cette ligne a déjà été migrée.
+  // Les nouvelles variantes restent « dci » tant que Supabase n'est pas prêt.
   child.name=m.name+' '+child.dosage;
   child.category=m.category;
   child.published=Boolean(m.published); // Même visibilité que la molécule.
