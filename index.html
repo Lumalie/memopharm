@@ -2476,6 +2476,52 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
  .memo-tree-breadcrumb .memo-crumb-popup{left:auto;right:-20px}
  .memo-tree-breadcrumb .memo-crumb-menu-items{max-height:55vh;overflow-y:auto}
 }
+
+/* V114.8 — Navigation en colonnes continues, sans encadrés successifs */
+#detail .memo-tree-breadcrumb,#searchPreview .memo-tree-breadcrumb{z-index:5000!important;isolation:auto}
+#detail:has(.memo-crumb-open) #detailPublicActions,
+#detail:has(.memo-crumb-open) .memo-v67-vigilance{z-index:1!important}
+.memo-tree-breadcrumb .memo-crumb-trigger{
+ display:inline-flex;align-items:center;justify-content:center;
+ width:23px;height:23px;padding:0!important;margin:0;
+ line-height:1!important;vertical-align:middle;
+ font-size:20px!important;font-family:Arial,sans-serif;
+}
+.memo-tree-breadcrumb .memo-crumb-expand{
+ display:inline-flex;align-items:center;justify-content:center;
+ align-self:stretch;min-width:30px;padding:0 6px!important;
+ font:600 19px/1 Arial,sans-serif!important;
+}
+.memo-tree-breadcrumb .memo-crumb-popup{
+ min-width:245px;max-width:min(290px,80vw);padding-top:5px;
+ filter:drop-shadow(0 10px 16px #193f3426);
+}
+.memo-tree-breadcrumb .memo-crumb-popup>.memo-crumb-menu-items{
+ border:1px solid #d9e5dc;border-radius:10px 0 0 10px;
+}
+.memo-tree-breadcrumb .memo-crumb-menu-items{
+ background:#fff;box-shadow:none;border:0;border-radius:0;
+ padding:7px;min-width:245px;max-width:290px;
+}
+.memo-tree-breadcrumb .memo-crumb-node{border-radius:5px}
+.memo-tree-breadcrumb .memo-crumb-submenu{
+ left:100%;top:-7px;padding-left:0;
+ min-width:245px;max-width:290px;
+ background:white;border-left:1px solid #e1eae4;
+ box-shadow:none;
+}
+.memo-tree-breadcrumb .memo-crumb-submenu>.memo-crumb-menu-items{
+ border:0;border-radius:0;box-shadow:none;
+}
+.memo-tree-breadcrumb .memo-crumb-destination{font-weight:600;padding:10px 9px}
+.memo-tree-breadcrumb .memo-crumb-node:hover>.memo-crumb-destination,
+.memo-tree-breadcrumb .memo-crumb-node:focus-within>.memo-crumb-destination{background:#f2f7f3}
+@media(max-width:700px){
+ .memo-tree-breadcrumb .memo-crumb-popup{filter:drop-shadow(0 8px 12px #193f3420)}
+ .memo-tree-breadcrumb .memo-crumb-submenu{position:static;border-left:2px solid #e1eae4;max-width:none;width:100%}
+ .memo-tree-breadcrumb .memo-crumb-menu-items{max-width:none;min-width:0;width:100%}
+ .memo-tree-breadcrumb .memo-crumb-popup>.memo-crumb-menu-items{border-radius:10px}
+}
 </style>
 </head>
 <body>
@@ -2944,8 +2990,8 @@ function memoBreadcrumbBranch(parentId,visible,ancestors=new Set(),depth=0){
   const next=new Set(ancestors);next.add(String(node.id));
   const nested=memoBreadcrumbBranch(node.id,visible,next,depth+1);
   return `<div class="memo-crumb-node${nested?' memo-crumb-has-children':''}">
-   <button type="button" class="memo-crumb-destination" role="menuitem" data-crumb-destination="${esc(node.id)}" style="${entityTreeStyle(node)}" title="Ouvrir ${esc(displayMedName(node))}">${esc(displayMedName(node))}</button>
-   ${nested?`<button type="button" class="memo-crumb-expand" aria-label="Afficher les sous-niveaux de ${esc(displayMedName(node))}" aria-expanded="false" title="Afficher les sous-niveaux">›</button><div class="memo-crumb-submenu">${nested}</div>`:""}
+   <button type="button" class="memo-crumb-destination" role="menuitem" data-crumb-destination="${esc(node.id)}" style="${entityTreeStyle(node)}">${esc(displayMedName(node))}</button>
+   ${nested?`<button type="button" class="memo-crumb-expand" aria-label="Afficher les sous-niveaux de ${esc(displayMedName(node))}" aria-expanded="false">›</button><div class="memo-crumb-submenu">${nested}</div>`:""}
   </div>`;
  }).join("")}</div>`;
 }
@@ -2962,11 +3008,11 @@ function ficheBreadcrumb(m){
  const path=[...chain,m];
  return `<nav class="fiche-breadcrumb memo-tree-breadcrumb" aria-label="Chemin de la fiche">${path.map((node,i)=>{
   const last=i===path.length-1;
-  const label=last?`<span class="breadcrumb-current ${isGroup(node)||isMolecule(node)?"breadcrumb-current-group-level":"breadcrumb-current-med"}" style="${entityTreeStyle(node)}" aria-current="page">${esc(displayMedName(node))}</span>`:`<button type="button" class="breadcrumb-link breadcrumb-group-level${i===path.length-2?' breadcrumb-nearest-parent':' breadcrumb-ancestor'}" style="${entityTreeStyle(node)}" data-group-open="${esc(node.id)}" title="Ouvrir ${esc(displayMedName(node))}">${esc(displayMedName(node))}</button>`;
+  const label=last?`<span class="breadcrumb-current ${isGroup(node)||isMolecule(node)?"breadcrumb-current-group-level":"breadcrumb-current-med"}" style="${entityTreeStyle(node)}" aria-current="page">${esc(displayMedName(node))}</span>`:`<button type="button" class="breadcrumb-link breadcrumb-group-level${i===path.length-2?' breadcrumb-nearest-parent':' breadcrumb-ancestor'}" style="${entityTreeStyle(node)}" data-group-open="${esc(node.id)}">${esc(displayMedName(node))}</button>`;
   if(last)return label;
   // Le chevron propose les enfants du niveau affiché et leurs descendants.
   const menu=memoBreadcrumbBranch(node.id,visible,new Set([String(node.id)]));
-  return `${label}<span class="memo-crumb-dropdown${i===path.length-2?' breadcrumb-nearest-separator':' breadcrumb-ancestor-separator'}"><button type="button" class="breadcrumb-separator memo-crumb-trigger" aria-label="Explorer les sous-niveaux de ${esc(displayMedName(node))}" aria-expanded="false" title="Explorer les sous-niveaux">›</button>${menu?`<div class="memo-crumb-popup">${menu}</div>`:""}</span>`;
+  return `${label}<span class="memo-crumb-dropdown${i===path.length-2?' breadcrumb-nearest-separator':' breadcrumb-ancestor-separator'}"><button type="button" class="breadcrumb-separator memo-crumb-trigger" aria-label="Explorer les sous-niveaux de ${esc(displayMedName(node))}" aria-expanded="false">›</button>${menu?`<div class="memo-crumb-popup">${menu}</div>`:""}</span>`;
  }).join("")}</nav>`;
 }
 function memoWireBreadcrumb(root,openTarget){
