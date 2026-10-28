@@ -2439,6 +2439,11 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
 #editor .memo-v16-list .memo-variant-add-empty:focus-visible {outline:3px solid #77ad8d;outline-offset:3px}
 #searchPreview .memo-preview-selected-link{background:none;border:0;padding:0;margin:0;text-align:left;color:#654436;font:inherit;font-size:1.03rem;font-weight:700;cursor:pointer;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px}
 #searchPreview .memo-preview-selected-link:hover,#searchPreview .memo-preview-selected-link:focus-visible{text-decoration-color:currentColor}
+/* V114.3 — Login dialog always above ficha badges and sticky headers */
+#modalRoot:has(.modalback){position:fixed;inset:0;z-index:10000;isolation:isolate}
+#modalRoot .modalback{z-index:1}
+#modalRoot .modal{position:relative;z-index:2}
+#molecule-presentations{scroll-margin-top:16px}
 </style>
 </head>
 <body>
@@ -2947,7 +2952,19 @@ function openMedication(id,presentationIndex=null,sectionId=null){
  showView("home");openedSearchFiche=true;renderFilters();renderResults();
  $("searchSuggestions").classList.add("hidden");
  renderDetail(sectionId,presentationIndex,variantTarget?.id||null);
- if(!sectionId&&presentationIndex===null){viewScrollPositions.home=0;requestAnimationFrame(()=>requestAnimationFrame(()=>$("searchLayout").scrollIntoView({block:"start"})));}
+ if(!sectionId&&presentationIndex===null){
+  viewScrollPositions.home=0;
+  if(variantTarget&&parentTarget){
+   const focusPresentations=()=>{
+    if(selectedId!==parentTarget.id||currentView!=="home")return;
+    const section=document.getElementById("molecule-presentations")||document.getElementById("presentations-details");
+    if(!section)return;
+    if(section.tagName==="DETAILS")section.open=true;
+    section.scrollIntoView({behavior:"smooth",block:"start"});
+   };
+   requestAnimationFrame(()=>requestAnimationFrame(focusPresentations));
+  }else requestAnimationFrame(()=>requestAnimationFrame(()=>$("searchLayout").scrollIntoView({block:"start"})));
+ }
  const url=new URL(location.href);url.hash="";url.searchParams.set("fiche",id);
  if(presentationIndex!==null)url.searchParams.set("presentation",String(presentationIndex));else url.searchParams.delete("presentation");
  if(sectionId)url.searchParams.set("rubrique",sectionId);else url.searchParams.delete("rubrique");
@@ -5938,7 +5955,17 @@ $("clearExploreSearch").onclick=()=>{$("exploreSearch").value="";explorerVisible
 $("exploreBadge").onchange=$("exploreClass").onchange=$("exploreIndication").onchange=$("exploreForm").onchange=()=>{explorerVisibleLimit=20;renderExplorer()};
 $("resetExplore").onclick=()=>{explorerVisibleLimit=20;$("exploreClass").value="";$("exploreIndication").value="";$("exploreForm").value="";$("exploreBadge").value="";renderExplorer()};
 document.addEventListener("keydown",event=>{if(event.ctrlKey&&event.altKey&&!event.shiftKey&&!event.metaKey&&event.code==="KeyA"&&!event.repeat&&!admin){event.preventDefault();showLogin()}});
-$("loginBtn").onclick=showLogin;$("logoutBtn").onclick=logout;$("addMedBtn").onclick=addMedication;$("search").addEventListener("input",()=>{renderResults()});$("clearSearch").onclick=()=>{$("search").value="";renderResults()};
+$("loginBtn").onclick=showLogin;$("logoutBtn").onclick=logout;$("addMedBtn").onclick=addMedication;$("search").addEventListener("input",()=>{
+ renderResults();
+ if(currentView==="home"&&!openedSearchFiche&&!editorId&&$("search").value.trim()){
+  requestAnimationFrame(()=>{
+   if(currentView!=="home"||openedSearchFiche||!$("search").value.trim())return;
+   const card=$("mainSearchCard");
+   const top=Math.max(0,window.scrollY+card.getBoundingClientRect().top-10);
+   if(Math.abs(window.scrollY-top)>12)window.scrollTo({top,behavior:"smooth"});
+  });
+ }
+});$("clearSearch").onclick=()=>{$("search").value="";renderResults()};
 $("exportBtn").onclick=()=>{$("headerJsonMenu").open=false;const blob=new Blob([JSON.stringify(meds,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="memopharm-sauvegarde-cloud.json";a.click();URL.revokeObjectURL(a.href)};
 $("importBtn").onclick=()=>{$("headerJsonMenu").open=false;toast("Import JSON désactivé temporairement : nous le relierons à la base avec validation.");};$("importFile").onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const parsed=JSON.parse(await file.text());if(!Array.isArray(parsed)||!parsed.every(m=>m.name&&Array.isArray(m.sections)))throw new Error("Format");if(!confirm("Remplacer les fiches locales par ce fichier ?"))return;toast("Import JSON non disponible dans cette version connectée : aucune donnée modifiée")}catch(err){toast("Fichier JSON non reconnu")}e.target.value=""};
 document.addEventListener("visibilitychange",()=>{
