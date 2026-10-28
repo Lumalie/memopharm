@@ -1854,6 +1854,28 @@ body.header-search-active #headerSearchSlot .search-suggestions .results{max-hei
  #detail .memo-v92-specialty-presentations .memo-v90-commercial .presentation-v33-layout.has-photo{grid-template-columns:1fr!important;gap:12px!important}
  #detail .memo-v92-specialty-presentations .memo-v90-commercial .presentation-v33-photo.memo-v52-gallery{max-width:310px!important;gap:18px!important}
 }
+/* V98 — encadré uniquement autour des photographies */
+#detail .memo-v92-specialty-presentations .memo-v90-commercial{
+ border:0!important;border-radius:0!important;background:transparent!important;
+ box-shadow:none!important;padding:0!important;margin:8px 0 12px!important;
+ max-width:860px!important;
+}
+#detail .memo-v92-specialty-presentations .memo-v90-commercial .presentation-v33-photo.memo-v52-gallery{
+ border:1px solid #dce8df!important;border-radius:14px!important;
+ background:#fcfefd!important;padding:12px!important;box-sizing:border-box!important;
+ gap:24px!important;
+}
+#detail .memo-v92-specialty-presentations .memo-v90-commercial .memo-v97-cip-area{
+ margin:0 0 7px!important;padding:0 0 7px!important;
+}
+#detail .memo-v92-specialty-presentations .memo-v90-commercial .presentation-v33-warning{
+ margin-top:10px!important;padding-top:10px!important;
+}
+@media(max-width:700px){
+ #detail .memo-v92-specialty-presentations .memo-v90-commercial .presentation-v33-photo.memo-v52-gallery{
+ padding:10px!important;gap:18px!important;
+ }
+}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
