@@ -2437,6 +2437,8 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
 }
 #editor .memo-v16-list .memo-variant-add-empty:hover {background:#cce6d3}
 #editor .memo-v16-list .memo-variant-add-empty:focus-visible {outline:3px solid #77ad8d;outline-offset:3px}
+#searchPreview .memo-preview-selected-link{background:none;border:0;padding:0;margin:0;text-align:left;color:#654436;font:inherit;font-size:1.03rem;font-weight:700;cursor:pointer;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px}
+#searchPreview .memo-preview-selected-link:hover,#searchPreview .memo-preview-selected-link:focus-visible{text-decoration-color:currentColor}
 </style>
 </head>
 <body>
@@ -2929,6 +2931,11 @@ function specialtyItems(m){
  return (m.presentations||[]).map((p,i)=>({p,i,name:(p.name||m.name||"").trim()})).filter(x=>x.name);
 }
 function openMedication(id,presentationIndex=null,sectionId=null){
+ const requested=meds.find(x=>String(x.id)===String(id));
+ const variantTarget=requested&&isVariantFiche(requested)?requested:null;
+ const parentTarget=variantTarget?meds.find(x=>String(x.id)===String(moleculeParentId(variantTarget))&&isMolecule(x)):null;
+ if(parentTarget){id=parentTarget.id;presentationIndex=null;sectionId=null;}
+
  // Conserver le contexte exact de la recherche dans l'entrée d'historique précédente.
  if(currentView==='home'&&!openedSearchFiche&&!editorId&&$('search').value.trim()){
   const previous={...history.state,memopharmSearch:{query:$('search').value,category:activeCategory,previewKey:previewSearchKey}};
@@ -2939,30 +2946,35 @@ function openMedication(id,presentationIndex=null,sectionId=null){
  if(sectionId)viewScrollPositions.home=0;
  showView("home");openedSearchFiche=true;renderFilters();renderResults();
  $("searchSuggestions").classList.add("hidden");
- renderDetail(sectionId,presentationIndex);
+ renderDetail(sectionId,presentationIndex,variantTarget?.id||null);
  if(!sectionId&&presentationIndex===null){viewScrollPositions.home=0;requestAnimationFrame(()=>requestAnimationFrame(()=>$("searchLayout").scrollIntoView({block:"start"})));}
  const url=new URL(location.href);url.hash="";url.searchParams.set("fiche",id);
  if(presentationIndex!==null)url.searchParams.set("presentation",String(presentationIndex));else url.searchParams.delete("presentation");
  if(sectionId)url.searchParams.set("rubrique",sectionId);else url.searchParams.delete("rubrique");
+ if(variantTarget)url.searchParams.set("dosage",variantTarget.id);else url.searchParams.delete("dosage");
  url.searchParams.delete("edition");
  history.pushState({fiche:id},"",url);rememberNavigation();
 }
 // Ctrl+clic (ou Cmd+clic sur Mac) : ouvrir une fiche dans un nouvel onglet.
 // Le lien inclut la présentation et la rubrique pour retrouver le même contexte.
 function openExplorerResult(event,button,presentationIndex=null,sectionId=null){
- const id=button.dataset.openMed;
+ const requested=meds.find(x=>String(x.id)===String(button.dataset.openMed));
+ const variantTarget=requested&&isVariantFiche(requested)?requested:null;
+ const parentTarget=variantTarget?meds.find(x=>String(x.id)===String(moleculeParentId(variantTarget))&&isMolecule(x)):null;
+ const id=parentTarget?.id||button.dataset.openMed;
  if(event.ctrlKey||event.metaKey){
   const url=new URL(location.href);
   url.hash="";url.searchParams.set("fiche",id);url.searchParams.delete("edition");
   if(presentationIndex!==null)url.searchParams.set("presentation",String(presentationIndex));else url.searchParams.delete("presentation");
-  if(sectionId)url.searchParams.set("rubrique",sectionId);else url.searchParams.delete("rubrique");
+  if(sectionId&&!variantTarget)url.searchParams.set("rubrique",sectionId);else url.searchParams.delete("rubrique");
+  if(variantTarget)url.searchParams.set("dosage",variantTarget.id);else url.searchParams.delete("dosage");
   window.open(url.href,"_blank","noopener");
   return;
  }
  if(currentView==="explore"){
   $("exploreSearch").value="";explorerVisibleLimit=20;
  }
- openMedication(id,presentationIndex,sectionId);
+ openMedication(variantTarget?.id||id,presentationIndex,sectionId);
 }
 function medicationForms(m){
  const presentationForms=(m.presentations||[]).map(p=>String(p.form||"").trim()).filter(Boolean);
@@ -3702,7 +3714,7 @@ function previewSearchResult(item){
  const childPreviewHtml=selectedChild?(()=>{
   const form=String(selectedChild.form||medicationForms(selectedChild)[0]||'').trim();
   const dose=String(selectedChild.dosage||ingredientTitleDose(selectedChild)||'').trim();
-  const banner=`<div class="memo-selected-presentation"><span class="memo-selected-caption">PRÉSENTATION SÉLECTIONNÉE</span><strong>${esc([displayMedName(m),dose].filter(Boolean).join(' '))}${form?' — '+esc(form):''}</strong>${ficheDateLabel(selectedChild)}</div>`;
+  const banner=`<div class="memo-selected-presentation"><span class="memo-selected-caption">PRÉSENTATION SÉLECTIONNÉE</span><button type="button" class="memo-preview-selected-link" data-open-selected-dosage="${esc(selectedChild.id)}" title="Ouvrir cette présentation dans la fiche molécule">${esc([displayMedName(m),dose].filter(Boolean).join(' '))}${form?' — '+esc(form):''}</button>${ficheDateLabel(selectedChild)}</div>`;
   const opts=memoV44Options(selectedChild),chosen=memoV44Chosen(selectedChild)||opts[0];
   const presentation=targeted?'':`<div class="memo-v109-commercial"><div class="memo-v109-choice"><select data-v109-choice aria-label="Choisir la présentation commerciale">${opts.map(o=>`<option value="${esc(o.key)}" ${o.key===chosen?.key?'selected':''}>${esc(presentationLabel(o.p,selectedChild,Number(o.key.split(':')[0])))}</option>`).join('')}</select>${memoV102CommercialStorageBadges(chosen?.p)}</div><div class="memo-v109-commercial-content">${chosen?presentationInfo(chosen.p,selectedChild):''}</div></div>`;
   const content=targeted?(childMatch?[childMatch]:[]):childSections;
@@ -3719,6 +3731,7 @@ function previewSearchResult(item){
  memoWireBadgeClicks($('searchPreview'));
  memoLinkifyCips($('searchPreview'));
  $('searchPreview').querySelector('[data-preview-open-title]')?.addEventListener('click',()=>openMedication(m.id,pres,sec?.id||null));
+ $('searchPreview').querySelector('[data-open-selected-dosage]')?.addEventListener('click',e=>openMedication(e.currentTarget.dataset.openSelectedDosage));
  $('searchPreview').querySelectorAll('[data-preview-section]').forEach(b=>b.onclick=()=>{const target=(m.sections||[]).find(x=>String(x.id)===String(b.dataset.previewSection));navigatePreview({med:m,section:target||null,presentation:pres});});
  $('searchPreview').querySelectorAll('[data-v109-rubric]').forEach(el=>{
   const open=()=>{
@@ -4084,7 +4097,7 @@ document.addEventListener("toggle",event=>{
  if(!root||!root.contains(event.target)||event.target.tagName!=="DETAILS"||!selectedId)return;
  memoV96SaveDetails(selectedId,root);
 },true);
-function renderDetail(targetSectionId=null,targetPresentationIndex=null){
+function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDosageId=null){
  editorId=null;
  const m=meds.find(x=>x.id===selectedId);
  $("detail").classList.remove("hidden");$("editor").classList.add("hidden");
@@ -4234,7 +4247,12 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
   formStrip.style.setProperty("--memo-tabs-count",groups.length);
   formStrip.innerHTML=groups.map(g=>`<button type="button" role="tab" class="molecule-tab" data-molecule-form="${esc(g.form)}" aria-selected="false" tabindex="-1">${esc(g.form)}</button>`).join("");
   formStrip.querySelectorAll("[data-molecule-form]").forEach(b=>b.onclick=()=>chooseForm(groups.find(g=>g.form===b.dataset.moleculeForm)));
-  if(groups.length){const saved=memoGetViewChoice(m.id);chooseForm(groups.find(g=>g.form===saved.form)||groups[0]);}
+  if(groups.length){
+   const requestedId=targetDosageId||new URL(location.href).searchParams.get("dosage");
+   const requestedGroup=requestedId?groups.find(g=>g.items.some(c=>String(c.id)===String(requestedId))):null;
+   const saved=memoGetViewChoice(m.id);
+   chooseForm(requestedGroup||groups.find(g=>g.form===saved.form)||groups[0],requestedGroup?requestedId:null);
+  }
  }
  $("detail").querySelectorAll("[data-group-open]").forEach(b=>b.onclick=()=>openMedication(b.dataset.groupOpen));
  $("detail").querySelectorAll(".associated-molecule-toggle").forEach(button=>button.onclick=()=>{
