@@ -2786,11 +2786,9 @@ function showView(view){
 function hierarchyMeta(m){return (m.sections||[]).find(s=>s.memofficineKind||s.memofficineParentGroup)||(m.sections||[]).find(s=>s.id==="indications")||(m.sections||[])[0]||{}}
 function isMolecule(m){return !isGroup(m)&&!!m.sections?.[0]?.moleculeRoot}
 function isSpecialiteFiche(m){return !isGroup(m)&&!isMolecule(m)&&hierarchyMeta(m).memofficineKind!=="conseil"&&m.entry_type==="specialite"}
-// V113 : distinguer les variantes encore utiles des anciennes fiches dosage/forme autonomes.
-// Les variantes sont des enregistrements techniques liés à une molécule ; elles ne sont
-// présentées dans les recherches en conservant leur lien avec la molécule parente.
-// Un seul prédicat pour les anciens enregistrements dosage/forme :
-// seul le rattachement à une molécule distingue une variante active d'une archive.
+// Les variantes SQL « variant » sont temporairement normalisées en « dci »
+// par rowToMed ; ce prédicat centralise leur identification dans l'interface.
+// La présence du rattachement à la molécule évite de confondre les fiches parentes.
 function isDosageRecord(m){return !isGroup(m)&&!isMolecule(m)&&hierarchyMeta(m).memofficineKind!=="conseil"&&m.entry_type==="dci"}
 function isVariantFiche(m){return isDosageRecord(m)&&!!moleculeParentId(m)}
 function moleculeParentId(m){return m.sections?.[0]?.moleculeParentId||""}
@@ -3357,7 +3355,7 @@ function renderExplorer(){
  const sortNames=(a,b)=>displayMedName(a).localeCompare(displayMedName(b),"fr",{sensitivity:"base"});
  // Ordre Explorer : groupes, fiches molécules, fiches dosage + forme, autres fiches.
  // Les liens molécule/dosage sont conservés : seul l'ordre d'affichage change.
- const explorerRank=m=>isGroup(m)?0:isMolecule(m)?1:(m.entry_type==="dci"&&!!moleculeParentId(m))?2:m.entry_type==="dci"?3:4;
+ const explorerRank=m=>isGroup(m)?0:isMolecule(m)?1:isVariantFiche(m)?2:m.entry_type==="dci"?3:4;
  const sortExplorer=(a,b)=>explorerRank(a)-explorerRank(b)||sortNames(a,b);
  const treeParent=m=>moleculeParentId(m)&&visibleById.has(String(moleculeParentId(m)))?String(moleculeParentId(m)):parentGroupId(m);
  const childrenOf=id=>visible.filter(m=>String(treeParent(m))===String(id)).sort(sortExplorer);
@@ -5617,7 +5615,7 @@ function prepareMoleculeVariants(m){
   if(!child.sections.length)child.sections=[{id:'variant-meta',title:'Métadonnées',type:'text',content:'',enabled:false}];
   child.sections[0].moleculeParentId=String(m.id);
   child.sections[0].dciForm=child.form;
-  child.entry_type='dci'; // Type interne de compatibilité pendant la transition.
+  child.entry_type='dci'; // Représentation interne conservée jusqu'au retrait de l'adaptateur.
   child._storageEntryType='variant'; // Enregistrer les variantes avec le type SQL dédié.
   child.name=m.name+' '+child.dosage;
   child.category=m.category;
