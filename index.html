@@ -172,6 +172,10 @@ header .header-actions button#loginBtn.admin-lock:active{appearance:none;display
 #headerSearchSlot .memo-search-princeps-label{color:var(--memo-princeps-neutral)!important}
 /* V116.56 — Titre des molécules en gras dans Équivalences. */
 #memoPanelGeneric .memo-pair-combined-title{font-weight:700!important}
+
+/* V116.57 — les badges de vigilance sont des liens natifs vers des sources officielles. */
+.memo-v67-practical a.memo-v67-alert{text-decoration:none!important;line-height:normal}
+.memo-v67-practical a.memo-v67-alert:visited{color:inherit}
 </style>
 </head>
 <body>
@@ -2229,9 +2233,21 @@ function memoReproBadges(m){
   return `<a class="memo-repro" data-state="${esc(r.status)}" ${url?`href="${esc(url)}" target="_blank" rel="noopener noreferrer"`:'tabindex="0" role="img"'} aria-label="${esc(description)}${url?' — ouvrir la source':' — source non disponible'}"><span class="memo-repro-icon lucide-official ${icon}" aria-hidden="true"></span>${tip}</a>`;
  }).join('')+'</div>';
 }
+// Sources institutionnelles des badges de vigilance : un lien natif, sans calque.
+// Ces pages expliquent la réglementation ; elles ne valident pas le statut d'une fiche particulière.
+const MEMO_BADGE_OFFICIAL_SOURCES={
+ mte:'https://www.ameli.fr/pharmacien/exercice-professionnel/delivrance-produits-sante/regles-delivrance-prise-charge/medicaments-generiques/regle-prescription-medicaments-generiques',
+ photo:'https://ansm.sante.fr/',
+ exception:'https://www.ameli.fr/medecin/exercice-liberal/regles-de-prescription-et-formalites/medicaments-et-dispositifs/medicaments',
+ stup:'https://www.ameli.fr/assure/sante/medicaments/utiliser-recycler-medicaments/lire-ordonnance-medicaments'
+};
 function memoV67Alerts(m,p=null){
- const specs=[['mte',practicalMTE(m,p),'MTE','Médicament à marge thérapeutique étroite','Vérifier les précautions et les règles de substitution applicables.'],['photo',practicalPhotosensitive(m,p),'Photosensibilisant','Photosensibilisation','Vérifier les précautions selon la forme et la voie.'],['exception',practicalFlags((isMolecule(m)||isSpecialiteFiche(m))?m:moleculeForDosage(m)).exception===true,'EXC','Médicament d’exception','Vérifier les conditions réglementaires de prescription et de prise en charge pour la spécialité.'],['stup',practicalFlags((isMolecule(m)||isSpecialiteFiche(m))?m:moleculeForDosage(m)).stup===true,'STUP','Stupéfiant','Vérifier les règles de prescription, de délivrance et de traçabilité applicables à la spécialité.']];
- return specs.filter(x=>x[1]).map(([kind,_,label,title,note])=>`<button type="button" class="memo-v67-alert memo-v69-${kind}" data-filter-badge="${kind}" aria-label="${title} — explorer les fiches concernées">${kind==='photo'?'<span class="memo-v67-sun" aria-hidden="true"></span>':`<span class="memo-v67-mte">${label}</span>`}<span class="memo-repro-tooltip" role="tooltip"><span class="memo-repro-tip-title">${title}</span><span class="memo-repro-tip-note">${note}</span><span class="memo-repro-tip-action">Cliquer pour explorer les fiches concernées</span></span></button>`).join('');
+ const root=(isMolecule(m)||isSpecialiteFiche(m))?m:moleculeForDosage(m);
+ const specs=[['mte',practicalMTE(m,p),'MTE','Médicament à marge thérapeutique étroite','Consulter les règles officielles de substitution.'],['photo',practicalPhotosensitive(m,p),'Photosensibilisant','Photosensibilisation','Consulter le site officiel de l’ANSM ; vérifier le RCP de la spécialité.'],['exception',practicalFlags(root).exception===true,'EXC','Médicament d’exception','Consulter les règles officielles de prescription et de prise en charge.'],['stup',practicalFlags(root).stup===true,'STUP','Stupéfiant','Consulter les informations réglementaires officielles ; vérifier le RCP de la spécialité.']];
+ return specs.filter(x=>x[1]).map(([kind,_,label,title,note])=>{
+  const url=MEMO_BADGE_OFFICIAL_SOURCES[kind];
+  return `<a class="memo-v67-alert memo-v69-${kind}" href="${esc(url)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(title)} — consulter une source officielle (nouvel onglet)" title="${esc(title)} — consulter la source officielle">${kind==='photo'?'<span class="memo-v67-sun" aria-hidden="true"></span>':`<span class="memo-v67-mte">${label}</span>`}<span class="memo-repro-tooltip" role="tooltip"><span class="memo-repro-tip-title">${esc(title)}</span><span class="memo-repro-tip-note">${esc(note)}</span><span class="memo-repro-tip-action">Ouvrir la source officielle ↗</span></span></a>`;
+ }).join('');
 }
 function memoV103DurationLabel(value){
  const v=String(value??"").trim();
