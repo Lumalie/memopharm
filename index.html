@@ -3940,7 +3940,7 @@ function searchPresentationLine(m,p,i,child=false){
  const title=explorerPresentationTitle(m,p,true);
  const princeps=p.presentationKind==='princeps'?'<span class="explore-pres-princeps">Princeps</span>':'';
  const cip=cipBadges(p);
- const badges=explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>explorerFilterBadge("class",t)).join('')+indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>explorerFilterBadge("indication",t)).join('');
+ const badges=explorerResultBadges(m);
  return `<div class="search-pres-direct ${child?'search-pres-child':''}"><button type="button" class="search-pres-title" data-open-med="${esc(m.id)}" data-hit-pres="${i}" aria-label="Ouvrir ${esc(title)}"><span aria-hidden="true">●</span> ${esc(title)} <span aria-hidden="true">↗</span></button><div class="search-pres-details">${princeps}${cip}${badges?`<div class="search-pres-badges">${badges}</div>`:''}</div></div>`;
 }
 let explorerVisibleLimit=20;
@@ -4183,32 +4183,23 @@ function explorerBindFilterBadges(container,classSel,indSel,formSel=null){
  }
 }
 // V116.36 — Rendu des résultats détaillés, indépendant de la construction de l’arborescence.
-function renderExplorerSearchResults(entries,filtered,searchMatches,query,classSel,indSel){
-  // V116.37 — Le terme normalisé doit être disponible dans le rendu des fiches
-  // molécules (notamment pour afficher les princeps correspondants).
-  const q=norm(query).trim();
-  const allowed=new Set(filtered.map(m=>m.id));
-  const hits=searchMatches.filter(hit=>allowed.has(hit.med.id));
-  // Préparation des résultats : aucune dépendance au DOM ni au rendu HTML.
-  const {hitGroups,visibleHits,groupedVisible}=explorerPrepareResults(hits,query,explorerVisibleLimit);
-  const categoryLabels={groups:"Fiches groupes",dci:"Fiches DCI",variants:"Variantes de présentation",specialties:"Spécialités",medications:"Fiches médicaments"};
+// V116.40 — Les sous-arbres de résultats utilisent un rendu indépendant de la page.
+// Une unique structure pour la prévisualisation des rubriques dans Explorer.
+function explorerSectionResultPreview(m,sec){
+ if(!sec||!isContentFicheType(m)||isGroup(m))return "";
+ return `<div class="explore-preview-direct"><div class="explore-preview-card"><button type="button" class="explore-preview-link" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec.id)}" aria-label="Ouvrir ${esc(sec.title)} dans la fiche ${esc(m.name)}"><span class="explore-preview-title">↳ ${esc(sec.title)}</span> <span class="explore-preview-arrow" aria-hidden="true">↗</span></button>${searchSectionPreview(resolveSharedSection(m,sec))}</div></div>`;
+}
 
-  const byIdForPath=new Map(entries.map(m=>[m.id,m]));
-  // Arborescence complète des descendants, même si seul le groupe parent correspond à la recherche.
-  const childrenByParent=new Map();
-  for(const entry of entries){
-   const parent=parentGroupId(entry);
-   if(!childrenByParent.has(parent))childrenByParent.set(parent,[]);
-   childrenByParent.get(parent).push(entry);
-  }
-  const sortChildren=(a,b)=>isGroup(a)!==isGroup(b)?(isGroup(a)?-1:1):displayMedName(a).localeCompare(displayMedName(b),"fr",{sensitivity:"base"});
-  const renderSearchChildren=(parentId,visited=new Set())=>{
+function explorerSearchChildSort(a,b){
+ return isGroup(a)!==isGroup(b)?(isGroup(a)?-1:1):displayMedName(a).localeCompare(displayMedName(b),"fr",{sensitivity:"base"});
+}
+function explorerRenderSearchChildren(parentId,childrenByParent,visited=new Set()){
    if(visited.has(parentId))return "";
    const seen=new Set(visited);seen.add(parentId);
-   const children=(childrenByParent.get(parentId)||[]).slice().sort(sortChildren);
+   const children=(childrenByParent.get(parentId)||[]).slice().sort(explorerSearchChildSort);
    return children.map(child=>{
     if(seen.has(child.id))return "";
-    const nested=isGroup(child)?renderSearchChildren(child.id,seen):"";
+    const nested=isGroup(child)?explorerRenderSearchChildren(child.id,childrenByParent,seen):"";
     const hasChildren=!!(childrenByParent.get(child.id)||[]).length&&isGroup(child);
     if(!isGroup(child)){
      const presentations=specialtyItems(child);
@@ -4227,8 +4218,9 @@ function renderExplorerSearchResults(entries,filtered,searchMatches,query,classS
      ${hasChildren?`<div class="explore-search-child-nested" hidden>${nested}</div>`:""}
     </div>`;
    }).join("");
-  };
-  const pathFor=m=>{
+}
+
+function explorerGroupPath(m,byIdForPath){
    const names=[],seen=new Set([m.id]);let parentId=parentGroupId(m);
    while(parentId&&!seen.has(parentId)){
     seen.add(parentId);const parent=byIdForPath.get(parentId);
@@ -4236,16 +4228,34 @@ function renderExplorerSearchResults(entries,filtered,searchMatches,query,classS
     names.unshift(parent.name);parentId=parentGroupId(parent);
    }
    return names;
-  };
+}
+
+function renderExplorerSearchResults(entries,filtered,searchMatches,query,classSel,indSel){
+  // V116.37 — Le terme normalisé doit être disponible dans le rendu des fiches
+  // molécules (notamment pour afficher les princeps correspondants).
+  const q=norm(query).trim();
+  const allowed=new Set(filtered.map(m=>m.id));
+  const hits=searchMatches.filter(hit=>allowed.has(hit.med.id));
+  // Préparation des résultats : aucune dépendance au DOM ni au rendu HTML.
+  const {hitGroups,visibleHits,groupedVisible}=explorerPrepareResults(hits,query,explorerVisibleLimit);
+  const categoryLabels={groups:"Fiches groupes",dci:"Fiches DCI",variants:"Variantes de présentation",specialties:"Spécialités",medications:"Fiches médicaments"};
+  const byIdForPath=new Map(entries.map(m=>[m.id,m]));
+
+  // Arborescence complète des descendants, même si seul le groupe parent correspond à la recherche.
+  const childrenByParent=new Map();
+  for(const entry of entries){
+   const parent=parentGroupId(entry);
+   if(!childrenByParent.has(parent))childrenByParent.set(parent,[]);
+   childrenByParent.get(parent).push(entry);
+  }
   $("exploreSearchCount").textContent=`${hitGroups.length} fiche${hitGroups.length===1?"":"s"} trouvée${hitGroups.length===1?"":"s"} · ${visibleHits.length} affichée${visibleHits.length===1?"":"s"} · ${hits.length} correspondance${hits.length===1?"":"s"} au total`;
   $("exploreCards").innerHTML=hits.length?`<div class="explore-sections">${groupedVisible.map(({category,items})=>`<section class="explore-result-section explore-section-${category}"><h3 class="explore-result-section-title">${categoryLabels[category]} <span>${items.length}${hitGroups.filter(g=>explorerResultCategory(g)===category).length>items.length?" / "+hitGroups.filter(g=>explorerResultCategory(g)===category).length:""}</span></h3><div class="explore-hits">${items.map((hitGroup)=>{
    const hit=hitGroup.parent||hitGroup.hits[0];
    const m=hit.med,sec=hitGroup.parent?.section||hitGroup.hits.find(h=>h.section)?.section||null;
-   const parents=pathFor(m);
+   const parents=explorerGroupPath(m,byIdForPath);
    const group=isGroup(m),subgroup=group&&parents.length>0;
    const kind=group?(subgroup?"subgroup":"group"):"med-parent";
-   const showSectionContent=!!sec&&isContentFicheType(m)&&!group;
-   const preview=showSectionContent?`<div class="explore-preview-direct"><div class="explore-preview-card"><button type="button" class="explore-preview-link" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec.id)}" aria-label="Ouvrir ${esc(sec.title)} dans la fiche ${esc(m.name)}"><span class="explore-preview-title">↳ ${esc(sec.title)}</span> <span class="explore-preview-arrow" aria-hidden="true">↗</span></button>${searchSectionPreview(resolveSharedSection(m,sec))}</div></div>`:"";
+   const preview=explorerSectionResultPreview(m,sec);
    if(group){
     const tags=explorerResultBadges(m);
     return `<article class="explore-group-result explore-result-group ${subgroup?"explore-group-result-sub":""}" style="${entityTreeStyle(m)}">
@@ -4256,7 +4266,7 @@ function renderExplorerSearchResults(entries,filtered,searchMatches,query,classS
       </div>
       
       ${tags?`<div class="explore-group-result-tags">${tags}</div>`:""}
-      <div class="explore-search-child-nested explore-search-root-children" hidden>${renderSearchChildren(m.id)}</div>
+      <div class="explore-search-child-nested explore-search-root-children" hidden>${explorerRenderSearchChildren(m.id,childrenByParent)}</div>
      </article>`;
    }
    const presentationRows=hitGroup.presentations.map(pHit=>{
