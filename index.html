@@ -2680,6 +2680,22 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
 /* V115.2 — Libellés explicites, formulation DCI avec dosage */
 .memo-equiv-dci .memo-equiv-entry summary{color:#795098}
 .memo-equiv-entry summary span:first-child{overflow-wrap:anywhere}
+/* V115.3 — Une DCI par accordéon, nom de molécule cliquable indépendamment */
+.memo-equiv-dci-group{overflow:hidden}
+.memo-equiv-dci-group-heading{display:flex;align-items:stretch;min-height:47px}
+.memo-equiv-molecule-link,.memo-equiv-molecule-name{flex:1;display:flex;align-items:center;padding:12px 14px;border:0;background:transparent;color:#795098;font-weight:700;text-align:left;font-size:1rem;cursor:pointer}
+.memo-equiv-molecule-name{cursor:default}
+.memo-equiv-molecule-link:hover{text-decoration:underline}
+.memo-equiv-dci-toggle{width:52px;flex-shrink:0;border:0;border-left:1px solid #e6e8e7;background:transparent;cursor:pointer;color:#795098;font-size:1.2rem}
+.memo-equiv-dci-toggle:hover,.memo-equiv-dci-toggle:focus-visible{background:#f1e9f5}
+.memo-equiv-dci-toggle[aria-expanded=true] .memo-equiv-chevron{display:inline-block;transform:rotate(180deg)}
+.memo-equiv-dci-group-body{padding:0 14px 5px;background:#fff;border-top:1px solid #e7ede8}
+.memo-equiv-dci-group-body[hidden]{display:none!important}
+.memo-equiv-dci-formulation{padding:13px 0;border-bottom:1px solid #e7e9e8}
+.memo-equiv-dci-formulation:last-child{border-bottom:0}
+.memo-equiv-open-fiche.memo-equiv-dci-variant{font-weight:700;color:#b46c4d;font-size:.93rem;line-height:1.4}
+.memo-equiv-open-fiche.memo-equiv-dci-variant:hover{color:#945037}
+.memo-equiv-dci-formulation .memo-equiv-cip-list{margin-top:9px}
 </style>
 </head>
 <body>
@@ -3810,80 +3826,72 @@ function detailLocation(id){
 }
 // V115 — Répertoire compact, sans nouvelle table et sans présumer la substituabilité.
 function memoEquivRecords(){
- const visible=publicMeds();
- const roots=visible.filter(isMolecule);
- const variants=visible.filter(isVariantFiche);
+ const visible=publicMeds(),roots=visible.filter(isMolecule),variants=visible.filter(isVariantFiche);
  const byId=new Map(roots.map(m=>[String(m.id),m]));
  const byName=new Map(roots.map(m=>[norm(m.name).trim(),m]));
  const groups=new Map();
- const groupFor=root=>{
-  const key=String(root.id);
-  if(!groups.has(key))groups.set(key,{root,names:new Map(),details:[]});
-  return groups.get(key);
+ const groupFor=(name,root=null)=>{
+  const key=norm(name).trim();
+  if(!groups.has(key))groups.set(key,{name,root,names:new Map(),formulations:new Map()});
+  const g=groups.get(key);if(root&&!g.root)g.root=root;
+  return g;
  };
- const add=(root,name,source,detail,presentation=null)=>{
-  name=String(name||'').trim();
-  if(!root||!name||norm(name)===norm(root.name))return;
-  const group=groupFor(root),key=norm(name);
-  if(!group.names.has(key))group.names.set(key,{name,items:[]});
-  group.names.get(key).items.push({source,detail,presentation});
+ const add=(name,root,commercial,source,label,presentation=null,ingredientDose='')=>{
+  name=String(name||'').trim();commercial=String(commercial||'').trim();
+  if(!name||!commercial)return;
+  const g=groupFor(name,root),key=norm(commercial);
+  if(!g.names.has(key))g.names.set(key,{name:commercial,items:[]});
+  const item={source,detail:label,presentation,ingredientDose};
+  g.names.get(key).items.push(item);
+  const fkey=norm(label);
+  if(!g.formulations.has(fkey))g.formulations.set(fkey,{label,source,items:[]});
+  g.formulations.get(fkey).items.push(item);
  };
- // Les présentations des variantes sont les associations les plus précises.
  variants.forEach(v=>{
   const root=byId.get(String(moleculeParentId(v)));
   if(!root)return;
-  (v.presentations||[]).forEach(p=>add(root,p.name||p.specialtyName||p.specialite||'',v,displayMedName(v),p));
+  (v.presentations||[]).forEach(p=>add(root.name,root,p.name||p.specialtyName||p.specialite||'',v,displayMedName(v),p));
  });
- // Les spécialités autonomes utilisent uniquement leurs liens DCI explicites.
+ roots.forEach(root=>(root.presentations||[]).forEach(p=>add(root.name,root,p.name||p.specialtyName||'',root,displayMedName(root),p)));
  visible.filter(isSpecialiteFiche).forEach(m=>{
+  const ingredients=(ingredientInfo(m)?.entries||[]).filter(e=>String(e.name||'').trim());
   const raw=String(m.parent_dci||m.dci||'').trim();
-  const root=byId.get(raw)||byName.get(norm(raw));
-  if(root){
-   add(root,m.name,m,displayMedName(m));
-   (m.presentations||[]).forEach(p=>add(root,p.name||m.name,m,displayMedName(m),p));
+  if(ingredients.length){
+   ingredients.forEach(e=>{
+    const name=String(e.name).trim(),dose=String(e.dose||'').trim();
+    const root=byId.get(raw)||byName.get(norm(raw))||byName.get(norm(name))||null;
+    const label=name+(dose?' '+dose:'');
+    add(name,root,m.name,m,label,null,dose);
+    (m.presentations||[]).forEach(p=>add(name,root,m.name,m,label,p,dose));
+   });
+  }else{
+   const root=byId.get(raw)||byName.get(norm(raw));
+   if(root){
+    const dose=String(m.dosage||'').trim();
+    const label=root.name+(dose?' '+dose:'');
+    add(root.name,root,m.name,m,label,null,dose);
+    (m.presentations||[]).forEach(p=>add(root.name,root,m.name,m,label,p,dose));
+   }
   }
  });
- // Si une présentation est enregistrée directement sur une fiche molécule.
- roots.forEach(root=>(root.presentations||[]).forEach(p=>add(root,p.name||'',root,displayMedName(root),p)));
  return [...groups.values()].filter(g=>g.names.size);
 }
-function memoEquivPresentationDetails(items){
+function memoEquivPresentationDetails(items,{dci=false}={}){
  const unique=new Map();
  items.forEach(item=>{
   const p=item.presentation;
-  const key=String(item.source.id)+'|'+String(p?.name||'')+'|'+String(p?.dosage||'')+'|'+String(p?.form||'');
+  const key=String(item.source.id)+'|'+String(item.detail)+'|'+String(p?.name||'')+'|'+String(p?.dosage||'')+'|'+String(p?.form||'');
   if(!unique.has(key))unique.set(key,item);
  });
- if(!unique.size)return '<p class="memo-equiv-no-details">Aucune présentation détaillée renseignée.</p>';
  return [...unique.values()].map(item=>{
-  const p=item.presentation;
-  const labels=[item.detail,p?.dosage,p?.form].map(x=>String(x||'').trim()).filter(Boolean);
-  const title=[...new Set(labels)].join(' · ');
+  const p=item.presentation,source=item.source;
+  const title=dci?item.detail:displayMedName(source);
   const boxes=p?cipConditionnements(p):[];
   return `<div class="memo-equiv-presentation">
-   <button type="button" class="memo-equiv-open-fiche" data-equiv-open="${esc(item.source.id)}" title="Ouvrir la fiche">${esc(title||displayMedName(item.source))} ↗</button>
+   <button type="button" class="memo-equiv-open-fiche${dci?' memo-equiv-dci-variant':''}" data-equiv-open="${esc(source.id)}" title="Ouvrir la fiche correspondante">${esc(title)}</button>
    ${boxes.length?`<div class="memo-equiv-cip-list">${boxes.map(box=>`<span class="memo-equiv-cip-pair">${box.cip?cipBadges({cipBoxes:[box]}):''}${box.pack?`<span class="memo-v92-pack-label">${esc(box.pack)}</span>`:''}</span>`).join('')}</div>`:''}
   </div>`;
  }).join('');
-}
-function memoEquivDciFormulations(group,items){
- const variants=items.filter(item=>isVariantFiche(item.source));
- const labels=new Map();
- variants.forEach(item=>{
-  const label=displayMedName(item.source);
-  if(label&&!labels.has(norm(label)))labels.set(norm(label),{label,source:item.source,items:[]});
-  if(label)labels.get(norm(label)).items.push(item);
- });
- // Specialty-only entries may carry their own dosage without a variant record.
- items.filter(item=>!isVariantFiche(item.source)).forEach(item=>{
-  const p=item.presentation;
-  const dose=String(p?.dosage||'').trim();
-  const label=dose?`${group.root.name} ${dose}`:group.root.name;
-  if(!labels.has(norm(label)))labels.set(norm(label),{label,source:item.source,items:[]});
-  labels.get(norm(label)).items.push(item);
- });
- if(!labels.size)labels.set(norm(group.root.name),{label:group.root.name,source:group.root,items:[]});
- return [...labels.values()].sort((a,b)=>a.label.localeCompare(b.label,'fr'));
 }
 function renderEquivalences(){
  const left=$("equivPrincepsResults"),right=$("equivDciResults");
@@ -3891,38 +3899,56 @@ function renderEquivalences(){
  const q=norm(($("equivPrincepsSearch").value||$("equivDciSearch").value||'').trim()).trim();
  if(!q){
   left.innerHTML='<p class="memo-equiv-empty">Les noms commerciaux apparaîtront ici.</p>';
-  right.innerHTML='<p class="memo-equiv-empty">Les formulations en DCI apparaîtront ici.</p>';
+  right.innerHTML='<p class="memo-equiv-empty">Les molécules et leurs dosages apparaîtront ici.</p>';
   return;
  }
  const hits=memoEquivRecords().map(g=>{
-  const rootMatch=norm(g.root.name).includes(q)||[...g.names.values()].some(n=>n.items.some(item=>norm(item.detail).includes(q)));
+  const rootMatch=norm(g.name).includes(q)||[...g.formulations.values()].some(f=>norm(f.label).includes(q));
   const matchingNames=[...g.names.values()].filter(n=>norm(n.name).includes(q));
   return {...g,rootMatch,matchingNames};
- }).filter(g=>g.rootMatch||g.matchingNames.length).sort((a,b)=>Number(b.rootMatch)-Number(a.rootMatch)||a.root.name.localeCompare(b.root.name,'fr'));
+ }).filter(g=>g.rootMatch||g.matchingNames.length).sort((a,b)=>Number(b.rootMatch)-Number(a.rootMatch)||a.name.localeCompare(b.name,'fr'));
  if(!hits.length){
-  left.innerHTML='<p class="memo-equiv-empty">Aucune correspondance renseignée.</p>';
-  right.innerHTML='<p class="memo-equiv-empty">Aucune formulation en DCI trouvée.</p>';
+  left.innerHTML='<p class="memo-equiv-empty">Aucune spécialité correspondante renseignée.</p>';
+  right.innerHTML='<p class="memo-equiv-empty">Aucune DCI correspondante renseignée.</p>';
   return;
  }
- // Une ligne par nom commercial, sans répéter les dosages avant ouverture.
  left.innerHTML=hits.flatMap(g=>{
   const names=g.rootMatch?[...g.names.values()]:g.matchingNames;
   return names.map(n=>`<details class="memo-equiv-entry"><summary><span>${esc(n.name)}</span><span class="memo-equiv-chevron">⌄</span></summary>
-   <div class="memo-equiv-entry-body"><p class="memo-equiv-related">DCI : ${esc(g.root.name)}</p>${memoEquivPresentationDetails(n.items)}</div>
+   <div class="memo-equiv-entry-body"><p class="memo-equiv-related">DCI : ${esc(g.name)}</p>${memoEquivPresentationDetails(n.items)}</div>
   </details>`);
  }).join('');
  right.innerHTML=hits.map(g=>{
   const names=g.rootMatch?[...g.names.values()]:g.matchingNames;
-  const items=names.flatMap(n=>n.items);
-  const formulations=memoEquivDciFormulations(g,items);
-  return formulations.map(f=>`<details class="memo-equiv-entry"><summary><span>${esc(f.label)}</span><span class="memo-equiv-chevron">⌄</span></summary>
-   <div class="memo-equiv-entry-body">
-    <button type="button" class="memo-equiv-open-fiche" data-equiv-open="${esc(f.source.id)}">Ouvrir la fiche ↗</button>
-    ${f.items.length?memoEquivPresentationDetails(f.items):'<p class="memo-equiv-related">Aucune présentation détaillée renseignée.</p>'}
-    <p class="memo-equiv-related">Noms commerciaux liés : ${esc(names.map(n=>n.name).join(', '))}</p>
-   </div></details>`).join('');
+  const filteredItems=names.flatMap(n=>n.items);
+  const formulations=[...g.formulations.values()].filter(f=>f.items.some(item=>filteredItems.includes(item)));
+  const entries=formulations.sort((a,b)=>a.label.localeCompare(b.label,'fr')).map(f=>{
+   const items=f.items.filter(item=>filteredItems.includes(item));
+   // A single presentation is displayed once, including its CIP and packaging.
+   const seen=new Set();
+   const distinct=items.filter(item=>{
+    const key=String(item.source.id)+'|'+String(item.presentation?.name||'')+'|'+String(item.presentation?.dosage||'');
+    if(seen.has(key))return false;seen.add(key);return true;
+   });
+   return `<div class="memo-equiv-dci-formulation">
+    <button type="button" class="memo-equiv-open-fiche memo-equiv-dci-variant" data-equiv-open="${esc(f.source.id)}" title="Ouvrir la variante ou la fiche spécialité">${esc(f.label)}</button>
+    ${distinct.map(item=>{
+      const boxes=item.presentation?cipConditionnements(item.presentation):[];
+      return boxes.length?`<div class="memo-equiv-cip-list">${boxes.map(box=>`<span class="memo-equiv-cip-pair">${box.cip?cipBadges({cipBoxes:[box]}):''}${box.pack?`<span class="memo-v92-pack-label">${esc(box.pack)}</span>`:''}</span>`).join('')}</div>`:'';
+    }).join('')}
+   </div>`;
+  }).join('');
+  const title=g.root?`<button type="button" class="memo-equiv-molecule-link" data-equiv-open="${esc(g.root.id)}" title="Ouvrir la fiche molécule">${esc(g.name)}</button>`:`<span class="memo-equiv-molecule-name">${esc(g.name)}</span>`;
+  return `<div class="memo-equiv-entry memo-equiv-dci-group">
+   <div class="memo-equiv-dci-group-heading">${title}<button type="button" class="memo-equiv-dci-toggle" aria-expanded="false" aria-label="Afficher les présentations de ${esc(g.name)}"><span class="memo-equiv-chevron">⌄</span></button></div>
+   <div class="memo-equiv-dci-group-body" hidden>${entries||'<p class="memo-equiv-related">Aucune présentation détaillée.</p>'}</div>
+  </div>`;
  }).join('');
- document.querySelectorAll('#equivView [data-equiv-open]').forEach(btn=>btn.onclick=()=>openMedication(btn.dataset.equivOpen));
+ document.querySelectorAll('#equivView .memo-equiv-dci-toggle').forEach(btn=>btn.onclick=()=>{
+  const body=btn.closest('.memo-equiv-dci-group').querySelector('.memo-equiv-dci-group-body');
+  body.hidden=!body.hidden;btn.setAttribute('aria-expanded',String(!body.hidden));
+ });
+ document.querySelectorAll('#equivView [data-equiv-open]').forEach(btn=>btn.onclick=e=>{e.stopPropagation();openMedication(btn.dataset.equivOpen)});
  document.querySelectorAll('#equivView [data-copy-cip]').forEach(btn=>btn.onclick=async e=>{
   e.preventDefault();e.stopPropagation();
   const cip=btn.dataset.copyCip;
