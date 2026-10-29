@@ -4025,7 +4025,7 @@ function renderExplorer(){
  $("memoThemeIntro").classList.add("hidden");
  if(!query&&$("exploreBadge").value&&memoRenderThemeList(filtered,$("exploreBadge").value))return;
  // En mode recherche, afficher les correspondances précises à la place de l'arborescence.
- if(query && false){
+ if(query){
   const allowed=new Set(filtered.map(m=>m.id));
   const hits=searchMatches.filter(hit=>allowed.has(hit.med.id));
   // Regrouper les correspondances par fiche mère : ses présentations ne
