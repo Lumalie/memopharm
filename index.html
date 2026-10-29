@@ -2923,6 +2923,30 @@ header .header-admin-actions button,header .header-admin-actions summary{min-hei
  #memoPanelDci .memo-dci-combined .memo-pair-substance{padding:10px 2px;min-height:0}
 }
 
+
+/* V116.12 — Titres plus lisibles, flèche de lien jamais soulignée. */
+#memoPanelGeneric .memo-pair-half .memo-equiv-entry summary,
+#memoPanelGeneric .memo-pair-half .memo-equiv-entry summary .memo-princeps-name{
+  font-size:1.09rem;
+}
+#memoPanelDci .memo-dci-combined .memo-pair-specialty-card{
+  font-size:1.09rem;
+  text-decoration:none!important;
+}
+#memoPanelDci .memo-dci-combined .memo-pair-specialty-card:hover,
+#memoPanelDci .memo-dci-combined .memo-pair-specialty-card:focus-visible{
+  text-decoration:none!important;
+}
+#memoPanelDci .memo-dci-combined .memo-pair-specialty-card:hover .memo-pair-card-name,
+#memoPanelDci .memo-dci-combined .memo-pair-specialty-card:focus-visible .memo-pair-card-name{
+  text-decoration:underline;
+  text-underline-offset:3px;
+}
+#memoPanelDci .memo-dci-combined .memo-pair-card-arrow{
+  text-decoration:none!important;
+  display:inline-block;
+}
+
 </style>
 </head>
 <body>
@@ -4216,7 +4240,7 @@ function memoRenderSpecialtyDci(){
  if(!rows.length){paired.innerHTML='<p class="memo-equiv-empty">Aucune correspondance trouvée dans les fiches spécialités.</p>';return;}
  paired.innerHTML=rows.map(({m,name,dci})=>`<section class="memo-pair-combined memo-dci-combined" aria-label="Correspondance ${esc(name)}">
   <div class="memo-pair-combined-grid">
-   <div class="memo-pair-half"><button type="button" class="memo-pair-specialty-card" data-equiv-open="${esc(m.id)}" title="Ouvrir la fiche spécialité">${esc(name)} <span class="memo-pair-card-arrow" aria-hidden="true">↗</span></button></div>
+   <div class="memo-pair-half"><button type="button" class="memo-pair-specialty-card" data-equiv-open="${esc(m.id)}" title="Ouvrir la fiche spécialité"><span class="memo-pair-card-name">${esc(name)}</span> <span class="memo-pair-card-arrow" aria-hidden="true">↗</span></button></div>
    <div class="memo-pair-half memo-pair-dci">${dci.map(e=>`<div class="memo-pair-substance"><strong>${esc(e.name)}</strong>${e.dose?`<span>${esc(e.dose)}</span>`:''}</div>`).join('')}</div>
   </div>
  </section>`).join('');
