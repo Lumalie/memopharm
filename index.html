@@ -2849,6 +2849,34 @@ header .header-admin-actions button,header .header-admin-actions summary{min-hei
 #memoPanelDci .memo-dci-combined .memo-pair-substance{padding:5px 0;line-height:1.45}
 #memoPanelDci .memo-dci-combined{min-height:76px}
 @media(max-width:730px){#memoPanelDci .memo-dci-combined .memo-pair-half{padding:13px 14px}}
+
+/* V116.10 — mêmes cartes alignées dans les deux outils, couleurs des fiches d'origine. */
+#memoPanelDci .memo-dci-combined .memo-pair-half{padding:14px 18px;gap:9px;justify-content:center}
+#memoPanelDci .memo-dci-combined .memo-pair-combined-grid{align-items:stretch}
+#memoPanelDci .memo-dci-combined .memo-pair-specialty-card{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;
+ padding:15px 17px;min-height:59px;text-align:left;cursor:pointer;
+ border:1px solid #9acfc6;border-radius:11px;background:#e4f5f2;
+ color:#1e7169;font:inherit;font-weight:700;line-height:1.4;
+ transition:background .15s ease,border-color .15s ease,box-shadow .15s ease;
+}
+#memoPanelDci .memo-dci-combined .memo-pair-specialty-card:hover{background:#d7eeea;border-color:#70b8ad;box-shadow:0 2px 7px #1e71691a}
+#memoPanelDci .memo-dci-combined .memo-pair-specialty-card:focus-visible{outline:3px solid #1e7169;outline-offset:3px}
+#memoPanelDci .memo-dci-combined .memo-pair-card-arrow{font-size:.9rem;opacity:.75;flex:none}
+#memoPanelDci .memo-dci-combined .memo-pair-dci{justify-content:center}
+#memoPanelDci .memo-dci-combined .memo-pair-substance{
+ padding:14px 16px;min-height:59px;border:1px solid #d2addf;border-radius:11px;
+ background:#f2e5f7;color:#793f8f;display:flex;align-items:center;gap:10px;
+}
+#memoPanelDci .memo-dci-combined .memo-pair-substance strong{color:#793f8f;font-weight:700}
+#memoPanelDci .memo-dci-combined .memo-pair-substance span{color:#793f8f;opacity:.8}
+/* Les fiches molécules et variantes conservent respectivement violet et terracotta. */
+#memoPanelGeneric .memo-pair-combined-title{background:#f2e5f7;color:#793f8f;border-bottom-color:#d2addf}
+#memoPanelGeneric .memo-equiv-entry{background:#f2e5f7;border-color:#d2addf}
+#memoPanelGeneric .memo-equiv-entry summary{color:#793f8f}
+#memoPanelGeneric .memo-equiv-entry-body{background:#fff}
+@media(max-width:730px){#memoPanelDci .memo-dci-combined .memo-pair-half{padding:10px}#memoPanelDci .memo-dci-combined .memo-pair-specialty-card,#memoPanelDci .memo-dci-combined .memo-pair-substance{padding:12px 10px;min-height:54px}}
+
 </style>
 </head>
 <body>
@@ -4142,7 +4170,7 @@ function memoRenderSpecialtyDci(){
  if(!rows.length){paired.innerHTML='<p class="memo-equiv-empty">Aucune correspondance trouvée dans les fiches spécialités.</p>';return;}
  paired.innerHTML=rows.map(({m,name,dci})=>`<section class="memo-pair-combined memo-dci-combined" aria-label="Correspondance ${esc(name)}">
   <div class="memo-pair-combined-grid">
-   <div class="memo-pair-half"><button type="button" class="memo-pair-link" data-equiv-open="${esc(m.id)}" title="Ouvrir la fiche spécialité">${esc(name)} <span aria-hidden="true">↗</span></button></div>
+   <div class="memo-pair-half"><button type="button" class="memo-pair-specialty-card" data-equiv-open="${esc(m.id)}" title="Ouvrir la fiche spécialité">${esc(name)} <span class="memo-pair-card-arrow" aria-hidden="true">↗</span></button></div>
    <div class="memo-pair-half memo-pair-dci">${dci.map(e=>`<div class="memo-pair-substance"><strong>${esc(e.name)}</strong>${e.dose?`<span>${esc(e.dose)}</span>`:''}</div>`).join('')}</div>
   </div>
  </section>`).join('');
