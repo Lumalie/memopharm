@@ -3174,6 +3174,10 @@ header .header-admin-actions button,header .header-admin-actions summary{min-hei
 .memo-explorer-results #exploreCards .explore-hits{grid-template-columns:minmax(0,1fr)}
 .memo-explorer-empty-results{color:#75877d;background:#f7faf8;border:1px dashed #d6e5dc;border-radius:10px;padding:22px 16px;font-size:.9rem}
 @media(max-width:780px){.memo-explorer-split{grid-template-columns:1fr;gap:15px}.memo-explorer-sidebar{position:static;max-height:320px}.memo-explorer-results>h3{margin-top:5px}}
+
+/* V116.27 — Arborescence sans encadré */
+.memo-explorer-sidebar{border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;padding:0 10px 0 0!important}
+.memo-explorer-sidebar>h3{margin-left:0}
 </style>
 </head>
 <body>
@@ -4028,22 +4032,18 @@ function renderExplorer(){
  // V116.26 : le sommaire historique reste dans une colonne indépendante.
  // Le rendu de droite conserve intégralement son moteur de recherche et ses aperçus.
  if(!window.__memoBuildingExplorerSidebar){
-  const searchInput=$("exploreSearch");
-  const savedSearch=searchInput.value;
-  const filterIds=["exploreClass","exploreIndication","exploreForm","exploreBadge"];
-  const savedFilters=filterIds.map(id=>$(id)?.value||"");
+  // Générer l’arborescence avec la recherche active : les ancêtres des fiches
+  // correspondantes restent visibles et les branches s’ouvrent automatiquement.
   window.__memoBuildingExplorerSidebar=true;
   try{
-   searchInput.value="";
-   filterIds.forEach(id=>{if($(id))$(id).value=""});
    renderExplorer();
    const side=$("exploreSidebarTree"),cards=$("exploreCards");
-   if(side&&cards){side.replaceChildren(...Array.from(cards.childNodes));}
+   if(side&&cards)side.replaceChildren(...Array.from(cards.childNodes));
   }finally{
-   searchInput.value=savedSearch;
-   filterIds.forEach((id,i)=>{if($(id))$(id).value=savedFilters[i]});
    window.__memoBuildingExplorerSidebar=false;
   }
+  const savedSearch=$("exploreSearch").value.trim();
+  const savedFilters=["exploreClass","exploreIndication","exploreForm","exploreBadge"].map(id=>$(id)?.value||"");
   if(!savedSearch&&!savedFilters.some(Boolean)){
    $("exploreCards").innerHTML='<div class="memo-explorer-empty-results">Saisissez un terme dans la recherche pour afficher ici les fiches correspondantes, classées par type.</div>';
    $("exploreSearchCount").textContent="";
@@ -4066,9 +4066,9 @@ function renderExplorer(){
  const filtered=entries.filter(m=>(!$("exploreBadge").value||memoBadgeMatches(m,$("exploreBadge").value))&&(!matchingIds||matchingIds.has(m.id))&&(!classSel.value||explorerClasses(m).includes(classSel.value))&&(!indSel.value||indicationTags(m).includes(indSel.value))&&(!formSel.value||medicationForms(m).includes(formSel.value)));
  $("exploreSearchCount").textContent=query?`${filtered.length} fiche${filtered.length===1?"":"s"} trouvée${filtered.length===1?"":"s"}`:"";
  $("memoThemeIntro").classList.add("hidden");
- if(!query&&$("exploreBadge").value&&memoRenderThemeList(filtered,$("exploreBadge").value))return;
+ if(!window.__memoBuildingExplorerSidebar&&!query&&$("exploreBadge").value&&memoRenderThemeList(filtered,$("exploreBadge").value))return;
  // En mode recherche, afficher les correspondances précises à la place de l'arborescence.
- if(query){
+ if(query&&!window.__memoBuildingExplorerSidebar){
   const allowed=new Set(filtered.map(m=>m.id));
   const hits=searchMatches.filter(hit=>allowed.has(hit.med.id));
   // Regrouper les correspondances par fiche mère : ses présentations ne
@@ -4351,7 +4351,7 @@ function ingredientInfo(m){return (m.sections||[]).find(s=>s.ingredientDosages)?
 function ingredientTitleDose(m){const info=ingredientInfo(m);if(!info||!info.showInTitle)return "";return (info.entries||[]).map(e=>String(e.dose||"").trim()).filter(Boolean).join("/")||String(m.dosage||"").trim()}
 function displayMedName(m){const name=String(m.name||"Sans nom").trim(),info=ingredientInfo(m);const dose=info?(info.showInTitle?ingredientTitleDose(m):""):String(m.dosage||"").trim();let title=dose&&!norm(name).endsWith(norm(dose))?name+" "+dose:name;const sf=m.entry_type==="specialite"?m.sections?.[0]?.specialtyFormTitle:null;if(sf?.showInTitle&&String(sf.value||"").trim())title+=", "+String(sf.value).trim();return title}
 function esc(s=""){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function norm(s=""){return String(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()}
+function norm(s=""){return String(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/œ/g,"oe").replace(/æ/g,"ae")}
 // Liens directs stables fondés sur l'identifiant Supabase de la fiche.
 // L'historique suit la page réellement consultée, et pas seulement la fiche sélectionnée.
 function rememberNavigation(){try{localStorage.setItem("memofficine-last-location-v1",location.pathname+location.search+location.hash)}catch(e){}}
