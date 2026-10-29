@@ -3134,6 +3134,17 @@ header .header-admin-actions button,header .header-admin-actions summary{min-hei
 #exploreCards .explore-preview-direct .explore-hit-content table{max-width:100%;overflow-x:auto}
 @media(max-width:600px){#exploreCards .explore-preview-direct{margin-left:8px!important}}
 
+
+/* V116.21 — Princeps trouvé dans Explorer : rappel discret, comme la recherche d'accueil. */
+#exploreCards .memo-explore-princeps-match{
+  margin:1px 0 0 20px;
+  color:#247257;
+  font-size:.87rem;
+  line-height:1.25;
+  font-style:italic;
+  font-weight:550;
+}
+#exploreCards .memo-explore-princeps-match + .explore-hit-main{margin-top:0!important}
 </style>
 </head>
 <body>
@@ -4147,7 +4158,10 @@ function renderExplorer(){
     return `<article class="explore-hit explore-hit-med explore-specialty-direct explore-result-specialite">${available.map(i=>m.presentations?.[i]?searchPresentationLine(m,m.presentations[i],i):'').join('')}${preview}</article>`;
    }
    const presentationToggle=presentationRows?`<button type="button" class="explore-grouped-toggle" data-presentation-toggle aria-expanded="false"><span aria-hidden="true">▸</span> ${hitGroup.presentations.length} présentation${hitGroup.presentations.length>1?"s":""}</button><div class="explore-grouped-children" hidden>${presentationRows}</div>`:"";
+   const matchedPrinceps=isMolecule(m)?(m.sections?.[0]?.princepsNames||[]).filter(name=>norm(name).includes(q)):[];
+   const princepsSearchLabel=matchedPrinceps.length?`<div class="memo-explore-princeps-match">${matchedPrinceps.map(name=>esc(name)).join(', ')}</div>`:'';
    return `<article class="explore-hit explore-hit-${kind} explore-hit-grouped ${isMolecule(m)?"explore-result-molecule":isVariantFiche(m)?"explore-result-dose":isSpecialiteFiche(m)?"explore-result-specialite":"explore-result-presentation"}">
+    ${princepsSearchLabel}
     <div class="explore-hit-main">
      <button type="button" class="explore-hit-open" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec?.id||"")}" data-hit-pres="${hit.presentation===null?"":hit.presentation}" aria-label="Ouvrir ${esc(isPresentation?presTitle:m.name)}${sec?" à la rubrique "+esc(sec.title):""}">
       <span class="explore-hit-heading"><span class="explore-hit-symbol" aria-hidden="true">${group?"▸":"●"}</span><strong class="explore-hit-name">${esc(isPresentation?presTitle:searchResultLabel(hit))}</strong><span class="explore-hit-arrow" aria-hidden="true">↗</span></span>
@@ -7074,6 +7088,7 @@ $("exploreBadge").onchange=$("exploreClass").onchange=$("exploreIndication").onc
 $("resetExplore").onclick=()=>{explorerVisibleLimit=20;$("exploreClass").value="";$("exploreIndication").value="";$("exploreForm").value="";$("exploreBadge").value="";renderExplorer()};
 document.addEventListener("keydown",event=>{if(event.ctrlKey&&event.altKey&&!event.shiftKey&&!event.metaKey&&event.code==="KeyA"&&!event.repeat&&!admin){event.preventDefault();showLogin()}});
 $("loginBtn").onclick=showLogin;$("logoutBtn").onclick=logout;$("addMedBtn").onclick=addMedication;$("search").addEventListener("input",()=>{
+ previewSearchKey="";
  renderResults();
  if(currentView==="home"&&!openedSearchFiche&&!editorId&&$("search").value.trim()){
   requestAnimationFrame(()=>{
