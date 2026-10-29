@@ -185,6 +185,125 @@ header .header-actions button#loginBtn.admin-lock:active{appearance:none;display
 #editor #memo-badge-links-editor #memo-v90-storage label{display:inline-flex;align-items:center;gap:5px;white-space:normal;margin:0;font-weight:500}
 #editor #memo-badge-links-editor #memo-v90-storage input[type=checkbox]{width:auto;flex:none;margin:0}
 #editor #memo-badge-links-editor #memo-v90-storage input[type=text]{width:145px;max-width:100%;margin:0;padding:7px 9px}
+
+/* V116.61 — Bannière élégante, touche botanique. Présentation uniquement. */
+header{
+  background:#193f34;
+  padding:17px 20px 18px;
+  border-top:3px solid #80a991;
+}
+header .topline{
+  min-height:90px;
+  display:grid;
+  grid-template-columns:minmax(250px,auto) minmax(0,1fr) auto;
+  align-items:center;
+  column-gap:clamp(18px,2.5vw,35px);
+  row-gap:12px;
+}
+header .topline .brand{
+  gap:12px;
+  min-width:0;
+  justify-self:start;
+}
+header .logo{
+  width:46px;height:46px;
+  flex:0 0 46px;
+  border-radius:14px;
+  background:#dcebe1;
+  box-shadow:0 0 0 1px rgba(255,255,255,.17),0 3px 10px rgba(0,0,0,.09);
+}
+header .logo img{width:44px;height:44px;object-fit:contain}
+header .eyebrow{
+  display:flex;align-items:center;gap:7px;
+  color:#d6e6da;
+  font-size:.69rem;
+  letter-spacing:.12em;
+  opacity:1;
+}
+header .eyebrow::before{content:'✦';font-size:.65rem;color:#a6d3ad;letter-spacing:0}
+header .brand h1{letter-spacing:-.025em;line-height:1.08;margin:4px 0 0}
+header .brand-slogan{color:#dcebe2;opacity:.94;margin-top:5px}
+header #headerSearchSlot{
+  justify-self:stretch;
+  min-width:0;
+  width:100%;
+}
+body.header-search-active header #headerSearchSlot{
+  flex:none;
+  width:100%;
+  max-width:490px;
+  margin:0 auto;
+}
+body.header-search-active header #headerSearchSlot .searchcard{
+  border:1px solid #d9e8df;
+  border-radius:14px;
+  box-shadow:0 4px 16px rgba(0,0,0,.08);
+}
+header .header-action-stack{
+  justify-self:end;
+  margin-left:0;
+  gap:7px;
+  min-width:0;
+}
+header .header-action-stack .header-actions{
+  gap:6px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+header .header-action-stack .header-actions>button:not(.admin-lock){
+  border-radius:10px;
+  background:#f7faf7;
+  border:1px solid #d5e7d9;
+  min-height:39px;
+  padding:9px 14px;
+  font-weight:600;
+  transition:background .15s,border-color .15s,transform .15s;
+}
+header .header-action-stack .header-actions>button:not(.admin-lock):hover{
+  background:#e6f2e9;
+  border-color:#a9ceb4;
+  transform:translateY(-1px);
+}
+header .header-action-stack .header-actions>button:not(.admin-lock):focus-visible,
+header .header-admin-actions button:focus-visible,
+header .header-json-menu>summary:focus-visible{
+  outline:2px solid #c6e5d1;
+  outline-offset:3px;
+}
+header .header-action-stack .header-actions>button.header-logout{
+  background:#a72f3b;
+  color:#fff;
+  border-color:#a72f3b;
+}
+header .header-action-stack .header-actions>button.header-logout:hover{
+  background:#87232f;
+  border-color:#87232f;
+}
+header .header-admin-actions{gap:7px;justify-content:flex-end}
+header .header-admin-actions .header-new-fiche,
+header .header-json-menu>summary{border-radius:10px}
+/* Conserver la recherche uniquement sur les vues où le JS la déplace déjà. */
+header #headerSearchSlot:empty{display:none}
+@media(max-width:1120px){
+  header .topline{grid-template-columns:minmax(230px,1fr) minmax(260px,1.2fr);gap:12px 18px}
+  header .header-action-stack{grid-column:1/-1;justify-self:end}
+  body:not(.header-search-active) header .header-action-stack{grid-column:2;grid-row:1}
+  body:not(.header-search-active) header .topline{grid-template-columns:minmax(230px,1fr) auto}
+  body.header-search-active header #headerSearchSlot{max-width:none}
+}
+@media(max-width:680px){
+  header{padding:13px 14px 15px}
+  header .topline,
+  body:not(.header-search-active) header .topline{display:flex;flex-wrap:wrap;min-height:0;gap:14px}
+  header .topline .brand{flex:1 1 240px}
+  header .brand h1{font-size:1.65rem}
+  header .header-action-stack{width:100%;align-items:stretch}
+  header .header-action-stack .header-actions,
+  header .header-admin-actions{justify-content:flex-start}
+  body.header-search-active header #headerSearchSlot{order:2;flex:1 1 100%;max-width:none}
+  header .header-action-stack{order:3}
+  header .header-action-stack .header-actions>button:not(.admin-lock){padding:8px 11px}
+}
 </style>
 </head>
 <body>
