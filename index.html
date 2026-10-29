@@ -4390,28 +4390,9 @@ function renderExplorerTree(entries,filtered,query,classSel,indSel,formSel){
  $("exploreCards").querySelectorAll("[data-filter-ind]").forEach(b=>b.onclick=()=>{indSel.value=b.dataset.filterInd;renderExplorer()});
  $("exploreCards").querySelectorAll("[data-filter-form]").forEach(b=>b.onclick=()=>{formSel.value=b.dataset.filterForm;renderExplorer()});
 }
-function renderExplorer(){
- // V116.26 : le sommaire historique reste dans une colonne indépendante.
- // Le rendu de droite conserve intégralement son moteur de recherche et ses aperçus.
- if(!window.__memoBuildingExplorerSidebar){
-  // Générer l’arborescence avec la recherche active : les ancêtres des fiches
-  // correspondantes restent visibles et les branches s’ouvrent automatiquement.
-  window.__memoBuildingExplorerSidebar=true;
-  try{
-   renderExplorer();
-   const side=$("exploreSidebarTree"),cards=$("exploreCards");
-   if(side&&cards)side.replaceChildren(...Array.from(cards.childNodes));
-  }finally{
-   window.__memoBuildingExplorerSidebar=false;
-  }
-  const savedSearch=$("exploreSearch").value.trim();
-  const savedFilters=["exploreClass","exploreIndication","exploreForm","exploreBadge"].map(id=>$(id)?.value||"");
-  if(!savedSearch&&!savedFilters.some(Boolean)){
-   $("exploreCards").innerHTML='<div class="memo-explorer-empty-results">Saisissez un terme dans la recherche pour afficher ici les fiches correspondantes, classées par type.</div>';
-   $("exploreSearchCount").textContent="";
-   return;
-  }
- }
+// V116.38 — Préparation unique des données : partagée par les deux colonnes.
+// Les filtres sont synchronisés une seule fois, sans modifier les critères de recherche.
+function explorerBuildViewModel(){
  const entries=publicMeds();
  const classes=[...new Set(entries.flatMap(explorerClasses).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"fr"));
  const indications=[...new Set(entries.flatMap(indicationTags))].sort((a,b)=>a.localeCompare(b,"fr"));
@@ -4421,21 +4402,43 @@ function renderExplorer(){
  classSel.innerHTML='<option value="">Toutes les classes</option>'+classes.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");
  indSel.innerHTML='<option value="">Toutes les indications</option>'+indications.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");
  formSel.innerHTML='<option value="">Toutes les formes</option>'+forms.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");
- classSel.value=classes.includes(oldClass)?oldClass:"";indSel.value=indications.includes(oldInd)?oldInd:"";formSel.value=forms.includes(oldForm)?oldForm:"";
+ classSel.value=classes.includes(oldClass)?oldClass:"";
+ indSel.value=indications.includes(oldInd)?oldInd:"";
+ formSel.value=forms.includes(oldForm)?oldForm:"";
  const query=$("exploreSearch").value.trim();
  const searchMatches=query?explorerSearchMatches(query):[];
  const matchingIds=query?new Set(searchMatches.map(x=>x.med.id)):null;
  const filtered=entries.filter(m=>(!$("exploreBadge").value||memoBadgeMatches(m,$("exploreBadge").value))&&(!matchingIds||matchingIds.has(m.id))&&(!classSel.value||explorerClasses(m).includes(classSel.value))&&(!indSel.value||indicationTags(m).includes(indSel.value))&&(!formSel.value||medicationForms(m).includes(formSel.value)));
+ return {entries,filtered,query,searchMatches,classSel,indSel,formSel};
+}
+// V116.38 — Plus de récursion ni de variable globale pour construire la barre latérale.
+// Les deux rendus reçoivent exactement le même ensemble de fiches filtrées.
+function renderExplorer(){
+ const model=explorerBuildViewModel();
+ const {entries,filtered,query,searchMatches,classSel,indSel,formSel}=model;
+ const sidebar=$("exploreSidebarTree"),cards=$("exploreCards");
+ if(sidebar&&cards){
+  // Le renderer historique écrit dans exploreCards ; déplacer ses nœuds conserve
+  // les gestionnaires de clic, les états des chevrons et les badges interactifs.
+  renderExplorerTree(entries,filtered,query,classSel,indSel,formSel);
+  sidebar.replaceChildren(...Array.from(cards.childNodes));
+ }
+ const hasFilters=["exploreClass","exploreIndication","exploreForm","exploreBadge"].some(id=>$(id)?.value);
+ if(!query&&!hasFilters){
+  cards.innerHTML='<div class="memo-explorer-empty-results">Saisissez un terme dans la recherche pour afficher ici les fiches correspondantes, classées par type.</div>';
+  $("exploreSearchCount").textContent="";
+  return;
+ }
  $("exploreSearchCount").textContent=query?`${filtered.length} fiche${filtered.length===1?"":"s"} trouvée${filtered.length===1?"":"s"}`:"";
  $("memoThemeIntro").classList.add("hidden");
- if(!window.__memoBuildingExplorerSidebar&&!query&&$("exploreBadge").value&&memoRenderThemeList(filtered,$("exploreBadge").value))return;
- // En mode recherche, déléguer l'affichage détaillé au renderer dédié.
- if(query&&!window.__memoBuildingExplorerSidebar){
+ if(!query&&$("exploreBadge").value&&memoRenderThemeList(filtered,$("exploreBadge").value))return;
+ if(query){
   renderExplorerSearchResults(entries,filtered,searchMatches,query,classSel,indSel);
   return;
  }
  renderExplorerTree(entries,filtered,query,classSel,indSel,formSel);
 }
+
 function ingredientInfo(m){return (m.sections||[]).find(s=>s.ingredientDosages)?.ingredientDosages||null}
 function ingredientTitleDose(m){const info=ingredientInfo(m);if(!info||!info.showInTitle)return "";return (info.entries||[]).map(e=>String(e.dose||"").trim()).filter(Boolean).join("/")||String(m.dosage||"").trim()}
 function displayMedName(m){const name=String(m.name||"Sans nom").trim(),info=ingredientInfo(m);const dose=info?(info.showInTitle?ingredientTitleDose(m):""):String(m.dosage||"").trim();let title=dose&&!norm(name).endsWith(norm(dose))?name+" "+dose:name;const sf=m.entry_type==="specialite"?m.sections?.[0]?.specialtyFormTitle:null;if(sf?.showInTitle&&String(sf.value||"").trim())title+=", "+String(sf.value).trim();return title}
