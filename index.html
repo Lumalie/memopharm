@@ -4105,6 +4105,23 @@ function explorerSearchMatches(query){
  }
  return output;
 }
+// V116.33 — Classement des résultats Explorer : fonctions pures, réutilisables.
+// Les pondérations et l'ordre des catégories sont strictement conservés.
+function explorerResultCategory(g){
+ return isGroup(g.med)?"groups":isVariantFiche(g.med)?"variants":isMolecule(g.med)||g.med.entry_type==="dci"?"dci":g.med.entry_type==="specialite"?"specialties":"medications";
+}
+function explorerResultName(g){return norm(g.med.name||"");}
+function explorerResultScore(g,q){
+ const n=explorerResultName(g);
+ const exact=n===q?100:n.startsWith(q)?70:n.includes(q)?45:0;
+ const presentation=g.presentations.some(h=>norm(h.med.presentations?.[h.presentation]?.name||"").includes(q))?30:0;
+ return exact+presentation;
+}
+function explorerResultCategoryOrder(specialtyNameMatch,groupNameMatch){
+ return specialtyNameMatch&&!groupNameMatch
+  ?["dci","variants","specialties","medications","groups"]
+  :["groups","dci","variants","specialties","medications"];
+}
 function renderExplorer(){
  // V116.26 : le sommaire historique reste dans une colonne indépendante.
  // Le rendu de droite conserve intégralement son moteur de recherche et ses aperçus.
@@ -4162,21 +4179,15 @@ function renderExplorer(){
   }
   // Trier les résultats par type de fiche et adapter la priorité à l'intention.
   const q=norm(query).trim();
-  const categoryOf=g=>isGroup(g.med)?"groups":isVariantFiche(g.med)?"variants":isMolecule(g.med)||g.med.entry_type==="dci"?"dci":g.med.entry_type==="specialite"?"specialties":"medications";
-  const nameOf=g=>norm(g.med.name||"");
-  const scoreOf=g=>{
-   const n=nameOf(g);
-   const exact=n===q?100:n.startsWith(q)?70:n.includes(q)?45:0;
-   const presentation=g.presentations.some(h=>norm(h.med.presentations?.[h.presentation]?.name||"").includes(q))?30:0;
-   return exact+presentation;
-  };
+  // Les règles de classement sont partagées, indépendamment du rendu HTML.
+  const categoryOf=explorerResultCategory;
+  const nameOf=explorerResultName;
+  const scoreOf=g=>explorerResultScore(g,q);
   const sortedGroups=[...hitGroups].sort((a,b)=>scoreOf(b)-scoreOf(a)||nameOf(a).localeCompare(nameOf(b),"fr"));
-  const categoryPriority=["groups","dci","variants","specialties","medications"];
-  // Une recherche correspondant précisément à une spécialité favorise sa fiche DCI
-  // associée si elle existe, puis les spécialités et leurs présentations.
+  // Une spécialité trouvée par son nom privilégie sa DCI, sauf si un groupe correspond.
   const specialtyNameMatch=sortedGroups.some(g=>categoryOf(g)==="specialties"&&scoreOf(g)>=45);
   const groupNameMatch=sortedGroups.some(g=>categoryOf(g)==="groups"&&scoreOf(g)>=45);
-  if(specialtyNameMatch&&!groupNameMatch)categoryPriority.splice(0,categoryPriority.length,"dci","variants","specialties","medications","groups");
+  const categoryPriority=explorerResultCategoryOrder(specialtyNameMatch,groupNameMatch);
   const visibleHits=[];
   let remaining=explorerVisibleLimit;
   for(const category of categoryPriority){
