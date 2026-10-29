@@ -4126,6 +4126,38 @@ function explorerResultCategoryOrder(specialtyNameMatch,groupNameMatch){
   ?["dci","variants","specialties","medications","groups"]
   :["groups","dci","variants","specialties","medications"];
 }
+// V116.35 — Préparation pure des résultats Explorer : regroupement et tri.
+// Conserve l'ordre des correspondances, les pondérations et les priorités historiques.
+function explorerPrepareResults(hits,query,visibleLimit){
+ const hitGroups=[];
+ const hitGroupById=new Map();
+ for(const hit of hits){
+  const key=String(hit.med.id);
+  let group=hitGroupById.get(key);
+  if(!group){group={med:hit.med,hits:[],presentations:[],parent:null};hitGroupById.set(key,group);hitGroups.push(group)}
+  group.hits.push(hit);
+  if(hit.presentation===null){if(!group.parent)group.parent=hit}
+  else if(!group.presentations.some(p=>p.presentation===hit.presentation))group.presentations.push(hit);
+ }
+ const q=norm(query).trim();
+ const categoryOf=explorerResultCategory;
+ const nameOf=explorerResultName;
+ const scoreOf=g=>explorerResultScore(g,q);
+ const sortedGroups=[...hitGroups].sort((a,b)=>scoreOf(b)-scoreOf(a)||nameOf(a).localeCompare(nameOf(b),"fr"));
+ const specialtyNameMatch=sortedGroups.some(g=>categoryOf(g)==="specialties"&&scoreOf(g)>=45);
+ const groupNameMatch=sortedGroups.some(g=>categoryOf(g)==="groups"&&scoreOf(g)>=45);
+ const categoryPriority=explorerResultCategoryOrder(specialtyNameMatch,groupNameMatch);
+ const visibleHits=[];
+ let remaining=visibleLimit;
+ for(const category of categoryPriority){
+  for(const g of sortedGroups.filter(x=>categoryOf(x)===category)){
+   if(remaining<=0)break;
+   visibleHits.push(g);remaining--;
+  }
+ }
+ const groupedVisible=categoryPriority.map(category=>({category,items:visibleHits.filter(g=>explorerResultCategory(g)===category)})).filter(x=>x.items.length);
+ return {hitGroups,visibleHits,groupedVisible};
+}
 function renderExplorer(){
  // V116.26 : le sommaire historique reste dans une colonne indépendante.
  // Le rendu de droite conserve intégralement son moteur de recherche et ses aperçus.
@@ -4169,38 +4201,8 @@ function renderExplorer(){
  if(query&&!window.__memoBuildingExplorerSidebar){
   const allowed=new Set(filtered.map(m=>m.id));
   const hits=searchMatches.filter(hit=>allowed.has(hit.med.id));
-  // Regrouper les correspondances par fiche mère : ses présentations ne
-  // constituent plus des cartes autonomes dans les résultats.
-  const hitGroups=[];
-  const hitGroupById=new Map();
-  for(const hit of hits){
-   const key=String(hit.med.id);
-   let group=hitGroupById.get(key);
-   if(!group){group={med:hit.med,hits:[],presentations:[],parent:null};hitGroupById.set(key,group);hitGroups.push(group)}
-   group.hits.push(hit);
-   if(hit.presentation===null){if(!group.parent)group.parent=hit}
-   else if(!group.presentations.some(p=>p.presentation===hit.presentation))group.presentations.push(hit);
-  }
-  // Trier les résultats par type de fiche et adapter la priorité à l'intention.
-  const q=norm(query).trim();
-  // Les règles de classement sont partagées, indépendamment du rendu HTML.
-  const categoryOf=explorerResultCategory;
-  const nameOf=explorerResultName;
-  const scoreOf=g=>explorerResultScore(g,q);
-  const sortedGroups=[...hitGroups].sort((a,b)=>scoreOf(b)-scoreOf(a)||nameOf(a).localeCompare(nameOf(b),"fr"));
-  // Une spécialité trouvée par son nom privilégie sa DCI, sauf si un groupe correspond.
-  const specialtyNameMatch=sortedGroups.some(g=>categoryOf(g)==="specialties"&&scoreOf(g)>=45);
-  const groupNameMatch=sortedGroups.some(g=>categoryOf(g)==="groups"&&scoreOf(g)>=45);
-  const categoryPriority=explorerResultCategoryOrder(specialtyNameMatch,groupNameMatch);
-  const visibleHits=[];
-  let remaining=explorerVisibleLimit;
-  for(const category of categoryPriority){
-   for(const g of sortedGroups.filter(x=>categoryOf(x)===category)){
-    if(remaining<=0)break;
-    visibleHits.push(g);remaining--;
-   }
-  }
-  const groupedVisible=categoryPriority.map(category=>({category,items:visibleHits.filter(g=>categoryOf(g)===category)})).filter(x=>x.items.length);
+  // Préparation des résultats : aucune dépendance au DOM ni au rendu HTML.
+  const {hitGroups,visibleHits,groupedVisible}=explorerPrepareResults(hits,query,explorerVisibleLimit);
   const categoryLabels={groups:"Fiches groupes",dci:"Fiches DCI",variants:"Variantes de présentation",specialties:"Spécialités",medications:"Fiches médicaments"};
 
   const byIdForPath=new Map(entries.map(m=>[m.id,m]));
@@ -4248,32 +4250,16 @@ function renderExplorer(){
    return names;
   };
   $("exploreSearchCount").textContent=`${hitGroups.length} fiche${hitGroups.length===1?"":"s"} trouvée${hitGroups.length===1?"":"s"} · ${visibleHits.length} affichée${visibleHits.length===1?"":"s"} · ${hits.length} correspondance${hits.length===1?"":"s"} au total`;
-  $("exploreCards").innerHTML=hits.length?`<div class="explore-sections">${groupedVisible.map(({category,items})=>`<section class="explore-result-section explore-section-${category}"><h3 class="explore-result-section-title">${categoryLabels[category]} <span>${items.length}${hitGroups.filter(g=>categoryOf(g)===category).length>items.length?" / "+hitGroups.filter(g=>categoryOf(g)===category).length:""}</span></h3><div class="explore-hits">${items.map((hitGroup,hitIndex)=>{
+  $("exploreCards").innerHTML=hits.length?`<div class="explore-sections">${groupedVisible.map(({category,items})=>`<section class="explore-result-section explore-section-${category}"><h3 class="explore-result-section-title">${categoryLabels[category]} <span>${items.length}${hitGroups.filter(g=>explorerResultCategory(g)===category).length>items.length?" / "+hitGroups.filter(g=>explorerResultCategory(g)===category).length:""}</span></h3><div class="explore-hits">${items.map((hitGroup)=>{
    const hit=hitGroup.parent||hitGroup.hits[0];
    const m=hit.med,sec=hitGroup.parent?.section||hitGroup.hits.find(h=>h.section)?.section||null;
    const parents=pathFor(m);
    const group=isGroup(m),subgroup=group&&parents.length>0;
    const kind=group?(subgroup?"subgroup":"group"):"med-parent";
-   const isPresentation=false;
-   const presName=String(p?.name||m.name||"").trim();
-   const presDose=String(p?.dosage||m.dosage||"").trim();
-   const presForm=String(p?.form||m.form||"").trim();
-   const presKind=p?.presentationKind||"";
-   const generic=presKind==="generic";
-   const princeps=presKind==="princeps";
-   const presNameWithLab=generic&&p.lab&&!norm(presName).includes(norm(p.lab))?`${presName} ${p.lab}`:presName;
-   const presTitle=[presNameWithLab,...(presDose&&!norm(presName).includes(norm(presDose))?[presDose]:[]),...(presForm&&!norm(presName).includes(norm(presForm))?[presForm]:[])].filter(Boolean).join(" · ");
-   const presLab=""; // Le laboratoire du générique est intégré au titre.
-   const presBadge=princeps?'<span class="explore-pres-princeps">Princeps</span>':"";
-   const cipButton=cipBadges(p);
    const showSectionContent=!!sec&&isContentFicheType(m)&&!group;
    const preview=showSectionContent?`<div class="explore-preview-direct"><div class="explore-preview-card"><button type="button" class="explore-preview-link" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec.id)}" aria-label="Ouvrir ${esc(sec.title)} dans la fiche ${esc(m.name)}"><span class="explore-preview-title">↳ ${esc(sec.title)}</span> <span class="explore-preview-arrow" aria-hidden="true">↗</span></button>${searchSectionPreview(resolveSharedSection(m,sec))}</div></div>`:"";
    if(group){
     const tags=explorerResultBadges(m);
-    const ancestorNodes=parents.map((name,i)=>{
-     const ancestor=entries.find(x=>isGroup(x)&&x.name===name&&pathFor(x).length===i);
-     return ancestor?`<button type="button" class="explore-group-ancestor" data-open-med="${esc(ancestor.id)}">${esc(name)}</button>`:`<span>${esc(name)}</span>`;
-    }).join('<span class="explore-group-chevron" aria-hidden="true">›</span>');
     return `<article class="explore-group-result explore-result-group ${subgroup?"explore-group-result-sub":""}" style="${entityTreeStyle(m)}">
       <div class="explore-group-result-line">
        ${((childrenByParent.get(m.id)||[]).length)?`<button type="button" class="explore-group-result-toggle" data-search-tree-toggle aria-expanded="false" aria-label="Déplier les fiches du groupe ${esc(m.name)}"><span aria-hidden="true">▸</span></button>`:'<span class="explore-search-child-spacer" aria-hidden="true"></span>'}
@@ -4307,11 +4293,10 @@ function renderExplorer(){
    return `<article class="explore-hit explore-hit-${kind} explore-hit-grouped ${isMolecule(m)?"explore-result-molecule":isVariantFiche(m)?"explore-result-dose":isSpecialiteFiche(m)?"explore-result-specialite":"explore-result-presentation"}">
     ${princepsSearchLabel}
     <div class="explore-hit-main">
-     <button type="button" class="explore-hit-open" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec?.id||"")}" data-hit-pres="${hit.presentation===null?"":hit.presentation}" aria-label="Ouvrir ${esc(isPresentation?presTitle:m.name)}${sec?" à la rubrique "+esc(sec.title):""}">
-      <span class="explore-hit-heading"><span class="explore-hit-symbol" aria-hidden="true">${group?"▸":"●"}</span><strong class="explore-hit-name">${esc(isPresentation?presTitle:isVariantFiche(m)?[m.name,m.dosage,m.form].filter(Boolean).filter((v,i,a)=>i===0||!norm(a[0]).includes(norm(v))).join(" · "):searchResultLabel(hit))}</strong><span class="explore-hit-arrow" aria-hidden="true">↗</span></span>
+     <button type="button" class="explore-hit-open" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec?.id||"")}" data-hit-pres="${hit.presentation===null?"":hit.presentation}" aria-label="Ouvrir ${esc(m.name)}${sec?" à la rubrique "+esc(sec.title):""}">
+      <span class="explore-hit-heading"><span class="explore-hit-symbol" aria-hidden="true">${group?"▸":"●"}</span><strong class="explore-hit-name">${esc(isVariantFiche(m)?[m.name,m.dosage,m.form].filter(Boolean).filter((v,i,a)=>i===0||!norm(a[0]).includes(norm(v))).join(" · "):searchResultLabel(hit))}</strong><span class="explore-hit-arrow" aria-hidden="true">↗</span></span>
       
      </button>
-     ${isPresentation?`<div class="explore-pres-info">${presBadge}${presLab}${cipButton}</div>`:""}
     </div>
     ${isMolecule(m)?`<div class="explore-hit-tags">${explorerResultBadges(m)}</div>`:""}
     ${preview}
