@@ -2806,6 +2806,12 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
 .memo-princeps-source:hover{color:#144733;text-decoration:underline}
 .memo-princeps-source:focus-visible{text-decoration:underline}
 .memo-princeps-static{font-weight:650;color:#276b52}
+
+/* V116.6 : Spécialités ⇋ DCI, une carte commune et deux colonnes solidaires. */
+#memoPanelDci .memo-dci-combined .memo-pair-half{justify-content:flex-start}
+#memoPanelDci .memo-dci-combined .memo-pair-link{width:auto;align-self:flex-start;padding:3px 0}
+#memoPanelDci .memo-dci-combined .memo-pair-dci{gap:9px}
+#memoPanelDci .memo-dci-combined .memo-pair-substance{padding:3px 0}
 </style>
 </head>
 <body>
@@ -4097,10 +4103,12 @@ function memoRenderSpecialtyDci(){
  });
  rows.sort((a,b)=>a.name.localeCompare(b.name,'fr'));
  if(!rows.length){paired.innerHTML='<p class="memo-equiv-empty">Aucune correspondance trouvée dans les fiches spécialités.</p>';return;}
- paired.innerHTML=rows.map(({m,name,dci})=>`<div class="memo-pair-row">
-  <div class="memo-pair-cell"><button type="button" class="memo-pair-link" data-equiv-open="${esc(m.id)}" title="Ouvrir la fiche spécialité">${esc(name)} <span aria-hidden="true">↗</span></button></div>
-  <div class="memo-pair-cell memo-pair-dci">${dci.map(e=>`<div class="memo-pair-substance"><strong>${esc(e.name)}</strong>${e.dose?`<span>${esc(e.dose)}</span>`:''}</div>`).join('')}</div>
- </div>`).join('');
+ paired.innerHTML=rows.map(({m,name,dci})=>`<section class="memo-pair-combined memo-dci-combined" aria-label="Correspondance ${esc(name)}">
+  <div class="memo-pair-combined-grid">
+   <div class="memo-pair-half"><div class="memo-pair-half-title">Spécialité</div><button type="button" class="memo-pair-link" data-equiv-open="${esc(m.id)}" title="Ouvrir la fiche spécialité">${esc(name)} <span aria-hidden="true">↗</span></button></div>
+   <div class="memo-pair-half memo-pair-dci"><div class="memo-pair-half-title">DCI</div>${dci.map(e=>`<div class="memo-pair-substance"><strong>${esc(e.name)}</strong>${e.dose?`<span>${esc(e.dose)}</span>`:''}</div>`).join('')}</div>
+  </div>
+ </section>`).join('');
  paired.querySelectorAll('[data-equiv-open]').forEach(btn=>btn.onclick=()=>openMedication(btn.dataset.equivOpen));
 }
 function memoEquivChevron(){
