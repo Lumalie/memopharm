@@ -481,6 +481,57 @@ header .header-action-stack .header-actions > #logoutBtn:hover{
   body.header-search-active header #headerSearchSlot .searchcard{padding:7px!important}
   body.header-search-active header #headerSearchSlot #clearSearch{padding:7px!important;font-size:.82rem}
 }
+
+/* Mémopharm V116.66 — mode sombre optionnel : palette et surfaces partagées */
+.memo-theme-toggle{display:inline-flex;align-items:center;justify-content:center;min-width:42px;min-height:42px;padding:9px!important;background:transparent!important;color:#dceee3!important;border:1px solid #ffffff38!important;border-radius:11px!important}
+.memo-theme-toggle:hover{background:#ffffff18!important;border-color:#ffffff88!important}
+.memo-theme-toggle .memo-sun{display:none}
+html[data-memo-theme="dark"] .memo-theme-toggle .memo-sun{display:block}
+html[data-memo-theme="dark"] .memo-theme-toggle .memo-moon{display:none}
+html[data-memo-theme="dark"]{color-scheme:dark;
+ --ink:#e7f1ea;--muted:#b0c4b7;--bg:#111c19;--card:#1b2b25;--line:#365046;
+ --green:#a8d8bb;--green2:#2a4538;--green3:#416a52;
+ --gold:#403923;--goldline:#877447;--red:#f2a9a0;
+ --memo-group-bg:#253e32;--memo-group-ink:#b3e0c1;--memo-group-border:#527d61;
+ --memo-molecule-bg:#392b43;--memo-molecule-ink:#dfb7f0;--memo-molecule-border:#825b98;
+ --memo-dose-bg:#413127;--memo-dose-ink:#f1b9a0;--memo-dose-border:#956c59;
+ --memo-specialty-bg:#213e3a;--memo-specialty-ink:#a1e1d7;--memo-specialty-border:#4e8b80;
+ --memo-blue-ink:#b3d5ff;--memo-presentation-bg:#26374c;--memo-presentation-ink:#b3d5ff;--memo-presentation-border:#628ab7;
+ --memo-neutral-border:#41594b;
+}
+html[data-memo-theme="dark"] body{background:var(--bg);color:var(--ink)}
+html[data-memo-theme="dark"] header{background:#102f26}
+html[data-memo-theme="dark"] :is(.panel,.searchcard,.modal,.presentation-card,.section-editor,.section-image,.image-controls,.detail details,.dash-list-page,.dash-card,.explore-panel,.explore-tree-panel,.explore-results-panel,.search-preview-card,.search-preview-panel,.search-preview-section,.search-preview-found,.search-preview-children,.explore-card,.explore-result,.explore-hit,.explore-group-result,.explore-search-child,.admin-card,.dashboard-card,.dash-heading,.editor-panel,.admin-editor,.source-card,.sources-card,.equiv-card,.equiv-panel,.eq-card,.match-card,.result-card,.priority-card,.fiche-card,.fiche-section,.group-associations .associated-molecule-children){
+ background-color:var(--card)!important;color:var(--ink);border-color:var(--line)}
+html[data-memo-theme="dark"] :is(button,input,select,textarea,.field,[contenteditable="true"]):not(.memo-theme-toggle){color:var(--ink);background-color:#23372e;border-color:#4b6656}
+html[data-memo-theme="dark"] :is(input,textarea,select)::placeholder{color:#a5b8ab;opacity:1}
+html[data-memo-theme="dark"] :is(input,textarea,select):focus{outline-color:#91c9a4}
+html[data-memo-theme="dark"] :is(button.primary,.primary-button){background:#477e5e!important;color:#fff!important;border-color:#679a76!important}
+html[data-memo-theme="dark"] :is(.muted,.sub,.hint,.foot,.empty,.search-preview-found-label){color:var(--muted)}
+html[data-memo-theme="dark"] :is(.result:hover,.result.selected,.section th,.callout,.tag,.search-preview-found,.search-preview-related,.section.direct-target,.admin-banner,.section-editor.is-disabled){background-color:#294336!important;color:var(--ink)}
+html[data-memo-theme="dark"] :is(.section.conseil-comptoir,.priority-card,.priority-section,.dash-stat,.dashboard-stat,.dash-metric){background-color:#294336!important;color:var(--ink);border-color:#547c60}
+html[data-memo-theme="dark"] :is(.notice,.tag.status){background-color:#443b25;color:#f1dca4;border-color:#847046}
+html[data-memo-theme="dark"] :is(.section,.section th,.section td,.panelhead,.result,.dash-list-page,.detail details){border-color:var(--line)}
+html[data-memo-theme="dark"] :is(.sources a,.search-preview-title-link,.fiche-parent-navigation a){color:#a8d8bb}
+html[data-memo-theme="dark"] :is(.text-format-bubble,.modal,.popover,.dropdown,.search-suggestions,.search-preview-found){background:#20342a!important;color:var(--ink)!important;border-color:var(--line)!important}
+html[data-memo-theme="dark"] :is(.text-format-bubble button,.modal button){color:var(--ink)}
+html[data-memo-theme="dark"] :is(.explore-tree-node,.explore-tree-children,.explore-tree-row,.explore-tree-item){border-color:#41584a}
+html[data-memo-theme="dark"] :is(.explore-group-result,.explore-hit,.explore-search-child,.search-pres-direct,.explore-grouped-presentation){--explore-rgb:37,62,50}
+html[data-memo-theme="dark"] :is(.explore-result-molecule,.result-molecule){--explore-rgb:57,43,67;--hit-rgb:57,43,67}
+html[data-memo-theme="dark"] :is(.explore-result-dose,.result-fiche){--explore-rgb:65,49,39;--hit-rgb:65,49,39}
+html[data-memo-theme="dark"] :is(.explore-result-specialite,.result-presentation){--explore-rgb:33,62,58;--hit-rgb:33,62,58}
+html[data-memo-theme="dark"] #searchWorkspace #searchSuggestions .result{--hit-rgb:37,62,50;color:var(--ink)}
+html[data-memo-theme="dark"] #searchWorkspace #searchSuggestions .result-molecule{--hit-rgb:57,43,67}
+html[data-memo-theme="dark"] #searchWorkspace #searchSuggestions .result-fiche{--hit-rgb:65,49,39}
+html[data-memo-theme="dark"] #searchWorkspace #searchSuggestions .result-presentation{--hit-rgb:33,62,58}
+html[data-memo-theme="dark"] :is(.memo-admin-icon-button,.header-actions button):not(#logoutBtn):not(.memo-theme-toggle){background:#e5f0e8;color:#1b4935;border-color:#bdd8c5}
+html[data-memo-theme="dark"] :is(.header-actions #logoutBtn){background:#a72f3b!important;color:#fff!important;border-color:#a72f3b!important}
+html[data-memo-theme="dark"] :is(.section-image,.image-preview){background:#283a30}
+html[data-memo-theme="dark"] :is(.explore-heading,.dash-heading h2,h2,h3){color:inherit}
+html[data-memo-theme="dark"] :is(.tag,.badge,.pill){border-color:#526f5b}
+html[data-memo-theme="dark"] :is(.admin label,.label,.panelhead){color:var(--ink)}
+html[data-memo-theme="dark"] :is(.search-preview-section,.search-preview-found,.explore-preview-direct){box-shadow:none}
+@media(max-width:820px){.memo-theme-toggle{min-height:42px;min-width:42px}}
 </style>
 </head>
 <body>
@@ -495,7 +546,7 @@ header .header-action-stack .header-actions > #logoutBtn:hover{
   </div>
 </a>
     <div id="headerSearchSlot" class="header-search-slot"></div>
-    <div class="header-action-stack"><div class="header-actions"><button id="equivNav" type="button" title="Rechercher une correspondance entre un nom commercial et une DCI">Équivalences</button><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="loginBtn" type="button" class="admin-lock" title="Administration (Ctrl + Alt + A)" aria-label="Connexion administrateur" aria-keyshortcuts="Control+Alt+A"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="10" width="17" height="11.5" rx="2.5"/><path d="M7.5 10V7a4.5 4.5 0 0 1 9 0v3"/><path d="M12 15.1v2.9"/><circle cx="12" cy="14.8" r="1" fill="currentColor" stroke="none"/></svg></button><button id="logoutBtn" type="button" class="header-logout hidden">Déconnexion</button></div><div class="header-admin-actions hidden" id="headerAdminActions"><details class="header-json-menu hidden" id="headerJsonMenu"><summary>JSON <span aria-hidden="true">⌄</span></summary><div class="header-json-items"><button id="exportBtn" type="button">Exporter JSON</button><button id="importBtn" type="button">Importer JSON</button></div></details><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
+    <div class="header-action-stack"><div class="header-actions"><button id="equivNav" type="button" title="Rechercher une correspondance entre un nom commercial et une DCI">Équivalences</button><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="memoThemeToggle" class="memo-theme-toggle" type="button" aria-label="Activer le mode sombre" title="Passer en mode sombre" aria-pressed="false"><svg class="memo-moon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.9 13.1A9 9 0 0 1 10.9 3.1 9 9 0 1 0 20.9 13.1Z"/></svg><svg class="memo-sun" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg></button><button id="loginBtn" type="button" class="admin-lock" title="Administration (Ctrl + Alt + A)" aria-label="Connexion administrateur" aria-keyshortcuts="Control+Alt+A"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="10" width="17" height="11.5" rx="2.5"/><path d="M7.5 10V7a4.5 4.5 0 0 1 9 0v3"/><path d="M12 15.1v2.9"/><circle cx="12" cy="14.8" r="1" fill="currentColor" stroke="none"/></svg></button><button id="logoutBtn" type="button" class="header-logout hidden">Déconnexion</button></div><div class="header-admin-actions hidden" id="headerAdminActions"><details class="header-json-menu hidden" id="headerJsonMenu"><summary>JSON <span aria-hidden="true">⌄</span></summary><div class="header-json-items"><button id="exportBtn" type="button">Exporter JSON</button><button id="importBtn" type="button">Importer JSON</button></div></details><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
   </div>
   <p>Une base de repères pour retrouver rapidement les informations utiles sur les médicaments, leurs modalités de prise et les points de vigilance.</p>
 </div></header>
@@ -5197,6 +5248,38 @@ const MEMOPHARM_CONTACT_ENDPOINT = `${SUPABASE_URL}/functions/v1/memopharm-conta
  document.addEventListener('keydown',e=>{const o=getOverlay();if(!o||o.hidden)return;if(e.key==='Escape')close();else if(e.key==='+'||e.key==='=')zoom(scale*1.3);else if(e.key==='-')zoom(scale/1.3);else if(e.key==='0')reset()});
 })();
 
+</script>
+
+<script>
+/* Préférence locale, indépendante de Supabase et des droits administrateur. */
+(function(){
+ const storageKey='memopharm-theme';
+ let saved=null;
+ try{saved=localStorage.getItem(storageKey)}catch(e){}
+ const media=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)');
+ let explicit=saved==='dark'||saved==='light';
+ function apply(mode){
+   document.documentElement.setAttribute('data-memo-theme',mode);
+   const button=document.getElementById('memoThemeToggle');
+   if(button){
+     const dark=mode==='dark';
+     button.setAttribute('aria-pressed',String(dark));
+     button.setAttribute('aria-label',dark?'Activer le mode clair':'Activer le mode sombre');
+     button.title=dark?'Passer en mode clair':'Passer en mode sombre';
+   }
+ }
+ apply(explicit?saved:(media&&media.matches?'dark':'light'));
+ document.getElementById('memoThemeToggle')?.addEventListener('click',function(){
+   const next=document.documentElement.getAttribute('data-memo-theme')==='dark'?'light':'dark';
+   explicit=true;apply(next);
+   try{localStorage.setItem(storageKey,next)}catch(e){}
+ });
+ if(media){
+   const update=function(){if(!explicit)apply(media.matches?'dark':'light')};
+   if(media.addEventListener)media.addEventListener('change',update);
+   else if(media.addListener)media.addListener(update);
+ }
+})();
 </script>
 </body></html>
 
