@@ -3025,19 +3025,20 @@ header .header-admin-actions button,header .header-admin-actions summary{min-hei
 }
 
 
-/* V116.17 — Explorer : une seule carte turquoise par fiche spécialité.
-   La présentation, ses CIP et ses badges restent dans le même encadré. */
+/* V116.18 — Explorer : les spécialités reprennent exactement le style
+   des autres résultats : liseré gauche et dégradé, sans carte encadrée. */
 #exploreCards .explore-hits > article.explore-specialty-direct.explore-result-specialite{
   --explore-ink:var(--memo-specialite-ink,#1e7169);
   --explore-line:var(--memo-specialite-border,#9acfc6);
-  background:var(--memo-specialite-bg,#e4f5f2)!important;
-  border:1px solid var(--memo-specialite-border,#9acfc6)!important;
-  border-radius:12px!important;
-  padding:12px 15px!important;
+  border:0!important;
+  border-left:3px solid var(--memo-specialite-border,#9acfc6)!important;
+  border-radius:0!important;
+  background:linear-gradient(90deg,var(--memo-specialite-bg,#e4f5f2),transparent 90%)!important;
+  padding:10px 12px!important;
   box-shadow:none!important;
 }
 #exploreCards .explore-hits > article.explore-specialty-direct.explore-result-specialite:hover{
-  background:#dcf0ec!important;
+  background:linear-gradient(90deg,#d7efea,transparent 90%)!important;
 }
 #exploreCards .explore-hits > article.explore-specialty-direct.explore-result-specialite > .search-pres-direct{
   background:transparent!important;
@@ -3048,13 +3049,11 @@ header .header-admin-actions button,header .header-admin-actions summary{min-hei
   box-shadow:none!important;
 }
 #exploreCards .explore-hits > article.explore-specialty-direct.explore-result-specialite > .search-pres-direct + .search-pres-direct{
-  border-top:1px solid rgba(30,113,105,.22)!important;
+  border-top:1px solid rgba(30,113,105,.15)!important;
   margin-top:10px!important;
   padding-top:10px!important;
 }
-#exploreCards .explore-hits > article.explore-specialty-direct.explore-result-specialite .search-pres-title{
-  color:var(--memo-specialite-ink,#1e7169)!important;
-}
+#exploreCards .explore-hits > article.explore-specialty-direct.explore-result-specialite .search-pres-title,
 #exploreCards .explore-hits > article.explore-specialty-direct.explore-result-specialite .search-pres-title span:first-child{
   color:var(--memo-specialite-ink,#1e7169)!important;
 }
