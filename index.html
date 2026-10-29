@@ -2963,6 +2963,26 @@ header .header-admin-actions button,header .header-admin-actions summary{min-hei
 #memoPanelGeneric .memo-equiv-cip-list{margin-top:5px}
 #memoPanelGeneric .memo-pair-half>.memo-equiv-related{align-self:flex-start;font-size:.82rem;color:#89948c;line-height:1.5}
 @media(max-width:730px){.memo-equiv-result-toolbar{gap:5px}.memo-equiv-tool-action{padding:5px!important}}
+
+/* V116.14 — typographie uniforme et sans gras dans les correspondances. */
+#memoPanelDci .memo-dci-combined .memo-pair-specialty-card,
+#memoPanelDci .memo-dci-combined .memo-pair-card-name,
+#memoPanelDci .memo-dci-combined .memo-pair-substance,
+#memoPanelDci .memo-dci-combined .memo-pair-substance strong,
+#memoPanelDci .memo-dci-combined .memo-pair-substance span,
+#memoPanelGeneric .memo-pair-half .memo-equiv-entry summary,
+#memoPanelGeneric .memo-pair-half .memo-equiv-entry summary .memo-princeps-name,
+#memoPanelGeneric .memo-pair-combined-title,
+#memoPanelGeneric .memo-equiv-dci-variant,
+#memoPanelGeneric .memo-equiv-open-fiche {font-weight:400!important;}
+#memoPanelDci .memo-dci-combined .memo-pair-substance,
+#memoPanelDci .memo-dci-combined .memo-pair-substance strong,
+#memoPanelDci .memo-dci-combined .memo-pair-specialty-card {font-size:1.09rem!important;line-height:1.45;}
+/* Recherche générale : princeps trouvé, puis renvoi vers la fiche molécule. */
+.result .memo-search-princeps-route{display:flex;flex-direction:column;align-items:flex-start;gap:3px;margin:1px 0 5px 20px;line-height:1.35}
+.result .memo-search-princeps-label{font-size:.85rem;font-weight:400;color:#793f8f}
+.result .memo-search-princeps-target{font-size:.94rem;font-weight:500;color:inherit}
+.result .memo-search-princeps-turn{color:#7c9284;font-size:1.05rem;margin-right:5px}
 </style>
 </head>
 <body>
@@ -4258,7 +4278,7 @@ function memoRenderSpecialtyDci(){
  paired.innerHTML=rows.map(({m,name,dci})=>`<section class="memo-pair-combined memo-dci-combined" aria-label="Correspondance ${esc(name)}">
   <div class="memo-pair-combined-grid">
    <div class="memo-pair-half"><button type="button" class="memo-pair-specialty-card" data-equiv-open="${esc(m.id)}" title="Ouvrir la fiche spécialité"><span class="memo-pair-card-name">${memoHighlight(name,q)}</span> <span class="memo-pair-card-arrow" aria-hidden="true">↗</span></button></div>
-   <div class="memo-pair-half memo-pair-dci">${dci.map(e=>`<div class="memo-pair-substance"><strong>${memoHighlight(e.name,q)}</strong>${e.dose?`<span>${esc(e.dose)}</span>`:''}</div>`).join('')}</div>
+   <div class="memo-pair-half memo-pair-dci">${dci.map(e=>`<div class="memo-pair-substance"><span class="memo-pair-substance-name">${memoHighlight(e.name,q)}</span>${e.dose?`<span>${esc(e.dose)}</span>`:''}</div>`).join('')}</div>
   </div>
  </section>`).join('');
  paired.querySelectorAll('[data-equiv-open]').forEach(btn=>btn.onclick=()=>openMedication(btn.dataset.equivOpen));
@@ -4734,9 +4754,18 @@ function renderResults(){
    [...new Map(item.mergedPresentationIndexes.flatMap(i=>cipConditionnements(m.presentations?.[i]||{})).filter(c=>c.cip).map(c=>[String(c.cip),c])).values()]
     .map(c=>cipBadges({showCip:true,cip:c.cip,cipBoxes:[c]})).join(""):"";
   const dciBadges=(isDciFamilyType(m))&&!isPresentation?`<div class="result-dci-badges">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}</div>`:"";
+  // Identifier un princeps saisi dans la recherche générale (pas une simple
+  // correspondance fortuite dans le texte d'une autre rubrique).
+  const princepsMatches=isMolecule(m)&&!isPresentation&&!matchingVariant
+   ?(m.sections?.[0]?.princepsNames||[]).filter(pr=>norm(pr).includes(norm(query)))
+   :[];
+  const princepsRoute=princepsMatches.length?`<div class="memo-search-princeps-route">
+    <span class="memo-search-princeps-label">${princepsMatches.map(pr=>esc(pr)).join(', ')}</span>
+    <span class="memo-search-princeps-target"><span class="memo-search-princeps-turn" aria-hidden="true">↳</span>${esc(displayMedName(m))}</span>
+   </div>`:'';
   const sectionDetail=sec&&isContentFicheType(m)&&!isPresentation?`<div class="result-section-direct"><span class="result-section-title">↳ ${esc(sec.title)}</span></div>`:"";
   return `<div class="result result-${kind}" role="option" aria-selected="false" tabindex="-1" data-id="${esc(matchingVariant?.id||m.id)}" data-preview-id="${esc(m.id)}" data-section="${esc(matchingVariant?'':sec?.id||'')}" data-presentation="${matchingVariant||item.presentation===null?'':item.presentation}">
-   <strong><span class="result-dot" aria-hidden="true">●</span>${esc(isPresentation?presentationTitle:name)}<span class="result-arrow" aria-hidden="true">↗</span></strong>
+   ${princepsRoute?princepsRoute:`<strong><span class="result-dot" aria-hidden="true">●</span>${esc(isPresentation?presentationTitle:name)}<span class="result-arrow" aria-hidden="true">↗</span></strong>`}
    ${isPresentation?`<div class="result-presentation-info">${badge}${cip}</div>`:mergedCip?`<div class="result-presentation-info memo-v106-merged-cip">${mergedCip}</div>`:(isDciFamilyType(m))?dciBadges:group?"":`<div class="sub">${esc(m.category||"Sans famille")}</div>`}
    ${sectionDetail}
   </div>`;
