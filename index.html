@@ -3184,6 +3184,29 @@ header .header-admin-actions button,header .header-admin-actions summary{min-hei
 #exploreCards .explore-hit.explore-result-dose{--explore-ink:var(--memo-dose-ink);--explore-line:var(--memo-dose-border);--explore-rgb:250,238,231}
 #exploreCards .explore-section-variants .explore-hits{display:grid;grid-template-columns:minmax(0,1fr);gap:5px}
 #exploreCards .explore-result-dose .explore-hit-name{color:var(--memo-dose-ink)}
+
+/* V116.29 — Entrées variantes et spécialités harmonisées dans l'arborescence */
+.memo-explorer-sidebar .explore-tree .explore-tree-node.explore-tree-variant>.explore-tree-line,
+.memo-explorer-sidebar .explore-tree .explore-tree-node.explore-tree-specialite>.explore-tree-line{
+  background:transparent!important;
+  border:0!important;
+  border-radius:8px!important;
+  box-shadow:none!important;
+  padding:4px 3px!important;
+  min-height:34px;
+}
+.memo-explorer-sidebar .explore-tree .explore-tree-node.explore-tree-variant>.explore-tree-line:hover{background:#fbefe8!important}
+.memo-explorer-sidebar .explore-tree .explore-tree-node.explore-tree-specialite>.explore-tree-line:hover{background:#e9f7f7!important}
+.memo-explorer-sidebar .explore-tree .explore-tree-node.explore-tree-variant>.explore-tree-line .explore-tree-name,
+.memo-explorer-sidebar .explore-tree .explore-tree-node.explore-tree-variant>.explore-tree-line .explore-tree-icon{color:#b66e50!important}
+.memo-explorer-sidebar .explore-tree .explore-tree-node.explore-tree-specialite>.explore-tree-line .explore-tree-name,
+.memo-explorer-sidebar .explore-tree .explore-tree-node.explore-tree-specialite>.explore-tree-line .explore-tree-icon{color:#278a91!important}
+.memo-explorer-sidebar .explore-tree .explore-tree-node.explore-tree-variant>.explore-tree-line .explore-tree-name,
+.memo-explorer-sidebar .explore-tree .explore-tree-node.explore-tree-specialite>.explore-tree-line .explore-tree-name{
+  font-size:.84rem!important;font-weight:600!important;line-height:1.4!important;
+  background:none!important;border:0!important;box-shadow:none!important;
+  padding:0!important;margin:0!important;text-align:left!important;
+}
 </style>
 </head>
 <body>
@@ -4357,7 +4380,7 @@ function renderExplorer(){
    const form=String(p.form||m.form||"").trim();
    return [name+lab,...(dose&&!norm(name).includes(norm(dose))?[dose]:[]),...(form&&!norm(name).includes(norm(form))?[form]:[])].filter(Boolean).join(" · ");
   };
-  return `<div class="explore-tree-node ${isGroup(m)||isMolecule(m)?"explore-tree-group":"explore-tree-med"} ${isGroup(m)||isMolecule(m)?(depth===0?"explore-tree-root-group":"explore-tree-subgroup"):""} ${!isMatch?"explore-tree-context":""}" style="--tree-depth:${Math.min(depth,8)};${entityTreeStyle(m)}">
+  return `<div class="explore-tree-node ${isVariantFiche(m)?"explore-tree-variant":isSpecialiteFiche(m)?"explore-tree-specialite":""} ${isGroup(m)||isMolecule(m)?"explore-tree-group":"explore-tree-med"} ${isGroup(m)||isMolecule(m)?(depth===0?"explore-tree-root-group":"explore-tree-subgroup"):""} ${!isMatch?"explore-tree-context":""}" style="--tree-depth:${Math.min(depth,8)};${entityTreeStyle(m)}">
    <div class="explore-tree-line">
     ${kids.length?`<button type="button" class="explore-tree-toggle" data-tree-toggle="${esc(m.id)}" aria-label="${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)?"Replier":"Déplier"} ${esc(displayMedName(m))}" aria-expanded="${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)}" aria-controls="tree-children-${esc(m.id)}"><span aria-hidden="true">${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)?"▾":"▸"}</span></button>`:`<span class="explore-tree-leaf-space" aria-hidden="true"></span>`}
     ${isGroup(m)||isMolecule(m)?"":`<span class="explore-tree-icon" aria-hidden="true">●</span>`}
@@ -5389,7 +5412,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDo
     const cls=x.id==="alerte-delivrance"?"memo-priority-alert":x.id==="coup-oeil"?"memo-priority-glance":"memo-priority-advice";
     return `<div class="memo-presentation-priority ${cls}">${renderSection(x)}</div>`;
    }).join("");
-   const specificHtml=specificSections.map((x,i)=>`<details class="memo-v74-rubric" ${i===0?'open':''}><summary>${esc(x.title||"Information spécifique")}<span class="memo-v74-chevron" aria-hidden="true"></span></summary><div class="memo-v74-rubric-content">${renderSection(x)}</div></details>`).join("");
+   const specificHtml=specificSections.map((x,i)=>`<details class="memo-v74-rubric" open><summary>${esc(x.title||"Information spécifique")}<span class="memo-v74-chevron" aria-hidden="true"></span></summary><div class="memo-v74-rubric-content">${renderSection(x)}</div></details>`).join("");
    const rubricTools=specificSections.length>1?`<div class="memo-v74-rubric-tools"><span>Rubriques · ${specificSections.length}</span><div><button type="button" data-v74-expand="all">Tout déplier</button><button type="button" data-v74-expand="none">Tout replier</button></div></div>`:"";
 
    const form=String(child.form||child.sections?.[0]?.dciForm||medicationForms(child)[0]||"").trim();
