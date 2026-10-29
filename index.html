@@ -4161,6 +4161,9 @@ function explorerPrepareResults(hits,query,visibleLimit){
 
 // V116.36 — Rendu des résultats détaillés, indépendant de la construction de l’arborescence.
 function renderExplorerSearchResults(entries,filtered,searchMatches,query,classSel,indSel){
+  // V116.37 — Le terme normalisé doit être disponible dans le rendu des fiches
+  // molécules (notamment pour afficher les princeps correspondants).
+  const q=norm(query).trim();
   const allowed=new Set(filtered.map(m=>m.id));
   const hits=searchMatches.filter(hit=>allowed.has(hit.med.id));
   // Préparation des résultats : aucune dépendance au DOM ni au rendu HTML.
