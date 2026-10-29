@@ -2983,6 +2983,47 @@ header .header-admin-actions button,header .header-admin-actions summary{min-hei
 .result .memo-search-princeps-label{font-size:1rem;font-weight:650;font-style:italic;color:#247257}
 .result .memo-search-princeps-target{font-size:.94rem;font-weight:500;color:inherit}
 .result .memo-search-princeps-turn{color:#7c9284;font-size:1.05rem;margin-right:5px}
+
+/* V116.16 — recherche générale : même ligne moléculaire, avec ou sans princeps */
+.search-suggestions .result .memo-search-princeps-route{
+  margin:0 0 5px 0;
+  gap:2px;
+  align-items:stretch;
+}
+.search-suggestions .result .memo-search-princeps-label{
+  margin-left:3px;
+  font-size:.87rem;
+  line-height:1.3;
+  font-weight:550;
+  font-style:italic;
+  color:#247257;
+}
+.search-suggestions .result strong.memo-search-princeps-target{
+  display:flex;
+  align-items:baseline;
+  gap:7px;
+  margin:0;
+  padding:0;
+  font-size:.94rem;
+  line-height:1.4;
+  font-weight:700;
+  color:var(--hit-ink,#793f8f);
+}
+.search-suggestions .result strong.memo-search-princeps-target .memo-search-princeps-turn{
+  display:inline-block;
+  flex:none;
+  width:auto;
+  margin:0;
+  font-size:.72rem;
+  line-height:inherit;
+  font-weight:400;
+  color:var(--hit-ink,#793f8f);
+}
+.search-suggestions .result strong.memo-search-princeps-target .memo-search-molecule-name{
+  font:inherit;
+  color:inherit;
+}
+
 </style>
 </head>
 <body>
@@ -4761,7 +4802,7 @@ function renderResults(){
    :[];
   const princepsRoute=princepsMatches.length?`<div class="memo-search-princeps-route">
     <span class="memo-search-princeps-label">${princepsMatches.map(pr=>esc(pr)).join(', ')}</span>
-    <span class="memo-search-princeps-target"><span class="memo-search-princeps-turn" aria-hidden="true">↳</span>${esc(displayMedName(m))}</span>
+    <strong class="memo-search-princeps-target"><span class="result-dot memo-search-princeps-turn" aria-hidden="true">↳</span><span class="memo-search-molecule-name">${esc(displayMedName(m))}</span></strong>
    </div>`:'';
   const sectionDetail=sec&&isContentFicheType(m)&&!isPresentation?`<div class="result-section-direct"><span class="result-section-title">↳ ${esc(sec.title)}</span></div>`:"";
   return `<div class="result result-${kind}" role="option" aria-selected="false" tabindex="-1" data-id="${esc(matchingVariant?.id||m.id)}" data-preview-id="${esc(m.id)}" data-section="${esc(matchingVariant?'':sec?.id||'')}" data-presentation="${matchingVariant||item.presentation===null?'':item.presentation}">
