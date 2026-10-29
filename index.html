@@ -162,6 +162,16 @@ header .header-actions button#loginBtn.admin-lock:active{appearance:none;display
   overflow-wrap:anywhere;
   white-space:normal;
 }
+
+/* V116.56 — Couleurs des princeps hors recherche Équivalences. */
+:root{--memo-princeps-neutral:#6d7773}
+#detail .memo-princeps-name,
+#exploreCards .memo-explore-princeps-match,
+#results .memo-search-princeps-label,
+.search-suggestions .memo-search-princeps-label,
+#headerSearchSlot .memo-search-princeps-label{color:var(--memo-princeps-neutral)!important}
+/* V116.56 — Titre des molécules en gras dans Équivalences. */
+#memoPanelGeneric .memo-pair-combined-title{font-weight:700!important}
 </style>
 </head>
 <body>
@@ -176,7 +186,7 @@ header .header-actions button#loginBtn.admin-lock:active{appearance:none;display
   </div>
 </a>
     <div id="headerSearchSlot" class="header-search-slot"></div>
-    <div class="header-action-stack"><div class="header-actions"><button id="equivNav" type="button" title="Rechercher une correspondance entre un nom commercial et une DCI">Correspondances</button><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="loginBtn" type="button" class="admin-lock" title="Administration (Ctrl + Alt + A)" aria-label="Connexion administrateur" aria-keyshortcuts="Control+Alt+A"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="10" width="17" height="11.5" rx="2.5"/><path d="M7.5 10V7a4.5 4.5 0 0 1 9 0v3"/><path d="M12 15.1v2.9"/><circle cx="12" cy="14.8" r="1" fill="currentColor" stroke="none"/></svg></button><button id="logoutBtn" type="button" class="header-logout hidden">Déconnexion</button></div><div class="header-admin-actions hidden" id="headerAdminActions"><button id="addMedBtn" type="button" class="header-new-fiche hidden">+ Nouvelle fiche</button><details class="header-json-menu" id="headerJsonMenu"><summary>JSON <span aria-hidden="true">⌄</span></summary><div class="header-json-items"><button id="exportBtn" type="button">Exporter JSON</button><button id="importBtn" type="button">Importer JSON</button></div></details><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
+    <div class="header-action-stack"><div class="header-actions"><button id="equivNav" type="button" title="Rechercher une correspondance entre un nom commercial et une DCI">Équivalences</button><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="loginBtn" type="button" class="admin-lock" title="Administration (Ctrl + Alt + A)" aria-label="Connexion administrateur" aria-keyshortcuts="Control+Alt+A"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="10" width="17" height="11.5" rx="2.5"/><path d="M7.5 10V7a4.5 4.5 0 0 1 9 0v3"/><path d="M12 15.1v2.9"/><circle cx="12" cy="14.8" r="1" fill="currentColor" stroke="none"/></svg></button><button id="logoutBtn" type="button" class="header-logout hidden">Déconnexion</button></div><div class="header-admin-actions hidden" id="headerAdminActions"><button id="addMedBtn" type="button" class="header-new-fiche hidden">+ Nouvelle fiche</button><details class="header-json-menu" id="headerJsonMenu"><summary>JSON <span aria-hidden="true">⌄</span></summary><div class="header-json-items"><button id="exportBtn" type="button">Exporter JSON</button><button id="importBtn" type="button">Importer JSON</button></div></details><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
   </div>
   <p>Une base de repères pour retrouver rapidement les informations utiles sur les médicaments, leurs modalités de prise et les points de vigilance.</p>
 </div></header>
@@ -223,7 +233,7 @@ header .header-actions button#loginBtn.admin-lock:active{appearance:none;display
   </div>
   </section><section id="equivView" class="hidden" aria-label="Recherche des correspondances commerciales et DCI">
  <div class="memo-equiv-page">
-  <div class="memo-equiv-heading"><h2>Correspondances</h2><p>Deux outils complémentaires pour retrouver les médicaments et leurs relations.</p></div>
+  <div class="memo-equiv-heading"><h2>Équivalences</h2><p>Deux outils complémentaires pour retrouver les médicaments et leurs relations.</p></div>
   <div class="memo-correspondence-tabs" role="tablist" aria-label="Type de correspondance">
    <button id="memoTabGeneric" type="button" role="tab" aria-selected="true" aria-controls="memoPanelGeneric">Princeps ⇋ Générique</button>
    <button id="memoTabDci" type="button" role="tab" aria-selected="false" aria-controls="memoPanelDci">Spécialités ⇋ DCI</button>
@@ -1181,7 +1191,7 @@ function renderExplorerSearchResults(entries,filtered,searchMatches,query,classS
   const hits=searchMatches.filter(hit=>allowed.has(hit.med.id));
   // Préparation des résultats : aucune dépendance au DOM ni au rendu HTML.
   const {hitGroups,visibleHits,groupedVisible}=explorerPrepareResults(hits,query,explorerVisibleLimit);
-  const categoryLabels={groups:"Fiches groupes",dci:"Fiches DCI",variants:"Variantes de présentation",specialties:"Spécialités",medications:"Fiches médicaments"};
+  const categoryLabels={groups:"Fiches groupes",dci:"Fiches molécule",variants:"Variantes de présentation",specialties:"Spécialités",medications:"Fiches médicaments"};
   const byIdForPath=new Map(entries.map(m=>[m.id,m]));
 
   // Arborescence complète des descendants, même si seul le groupe parent correspond à la recherche.
@@ -1583,6 +1593,12 @@ function memoUpdateGenericToolbar(count){
 function memoEquivChevron(){
  return `<span class="memo-equiv-chevron memo-equiv-chevron-icons" aria-hidden="true"><span class="memo-equiv-icon-down"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span><span class="memo-equiv-icon-up"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg></span></span>`;
 }
+// Lien de justification du statut NSFP sans répéter le nom du princeps.
+function memoEquivStatusSource(status){
+ const url=memoSafeSource(status?.url);
+ const checked=status?.checked?' — vérifié le '+esc(status.checked):'';
+ return url?`<a class="memo-princeps-source" href="${esc(url)}" target="_blank" rel="noopener noreferrer">↗ Source du statut NSFP${checked}</a>`:`Source du statut NSFP${checked}`;
+}
 function renderEquivalences(){
  const paired=$("memoGenericPaired");if(!paired)return;
  const q=norm((($('equivPrincepsSearch')?.value||$('equivDciSearch')?.value||'')).trim()).trim();
@@ -1593,7 +1609,7 @@ function renderEquivalences(){
  memoUpdateGenericToolbar(hits.length);
  const makeEntry=(g,n)=>{
   const key=norm(g.name)+'|'+norm(n.name),isOpen=memoEquivOpenSpecialties.has(key);
-  const details=(n.nsfp?`<div class="memo-equiv-related">${memoPrincepsDisplay(g.root,n.name)} — source du statut</div>`:'')+(n.items.length?memoEquivPresentationDetails(n.items):'<p class="memo-equiv-related">Nom de princeps conservé dans la fiche molécule, sans présentation actuelle renseignée. Commercialisation à vérifier.</p>');
+  const details=(n.nsfp?`<div class="memo-equiv-related">${memoEquivStatusSource(n.nsfp)}</div>`:'')+(n.items.length?memoEquivPresentationDetails(n.items):'<p class="memo-equiv-related">Nom de princeps conservé dans la fiche molécule, sans présentation actuelle renseignée. Commercialisation à vérifier.</p>');
   return `<details class="memo-equiv-entry" data-equiv-specialty-key="${esc(key)}" ${isOpen?'open':''}><summary><span>${n.nsfp?memoPrincepsDisplay(g.root,n.name):memoHighlight(n.name,q)}${n.legacy&&!n.nsfp?' <small class="memo-legacy-label">historique / à vérifier</small>':''}</span>${memoEquivChevron()}</summary><div class="memo-equiv-entry-body">${details}</div></details>`;
  };
  paired.innerHTML=hits.map(g=>{
