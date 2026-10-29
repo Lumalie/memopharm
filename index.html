@@ -2696,6 +2696,24 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
 .memo-equiv-open-fiche.memo-equiv-dci-variant{font-weight:700;color:#b46c4d;font-size:.93rem;line-height:1.4}
 .memo-equiv-open-fiche.memo-equiv-dci-variant:hover{color:#945037}
 .memo-equiv-dci-formulation .memo-equiv-cip-list{margin-top:9px}
+#equivView .memo-equiv-commercial .memo-equiv-presentation .memo-equiv-open-fiche{color:#b46c4d;font-weight:700}
+#equivView .memo-equiv-commercial .memo-equiv-presentation .memo-equiv-open-fiche:hover{color:#945037}
+
+/* V115.5 — Chevrons SVG fournis, état ouvert/fermé sans rotation */
+#equivView .memo-equiv-chevron-icons{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;line-height:1;transform:none!important}
+#equivView .memo-equiv-chevron-icons svg{width:19px;height:19px;display:block;stroke:currentColor}
+#equivView .memo-equiv-chevron-icons .memo-equiv-icon-up{display:none}
+#equivView .memo-equiv-entry[open]>.memo-equiv-entry-body~.memo-equiv-chevron-icons{display:none}
+#equivView details.memo-equiv-entry[open]>summary .memo-equiv-icon-down{display:none}
+#equivView details.memo-equiv-entry[open]>summary .memo-equiv-icon-up{display:inline-flex}
+#equivView .memo-equiv-dci-toggle[aria-expanded="true"] .memo-equiv-icon-down{display:none}
+#equivView .memo-equiv-dci-toggle[aria-expanded="true"] .memo-equiv-icon-up{display:inline-flex}
+#equivView .memo-equiv-dci-toggle .memo-equiv-chevron-icons{transform:none!important}
+/* V115.6 — Barre dépliable, compteur discret et titres terracotta */
+#equivView .memo-equiv-dci-group-heading{cursor:pointer}
+#equivView .memo-equiv-dci-group-heading .memo-equiv-molecule-link{cursor:pointer}
+#equivView .memo-equiv-dosage-count{align-self:center;white-space:nowrap;font-size:.76rem;color:#7c8a80;background:#edf1ed;border-radius:999px;padding:3px 8px;margin:0 8px}
+#equivView .memo-equiv-commercial .memo-equiv-presentation .memo-equiv-open-fiche{font-weight:700;color:#b46c4d}
 </style>
 </head>
 <body>
@@ -3893,6 +3911,9 @@ function memoEquivPresentationDetails(items,{dci=false}={}){
   </div>`;
  }).join('');
 }
+// Conserver l'état des accordéons pendant la navigation interne et les rendus.
+const memoEquivOpenSpecialties=new Set();
+const memoEquivOpenDcis=new Set();
 function renderEquivalences(){
  const left=$("equivPrincepsResults"),right=$("equivDciResults");
  if(!left||!right)return;
@@ -3914,7 +3935,7 @@ function renderEquivalences(){
  }
  left.innerHTML=hits.flatMap(g=>{
   const names=g.rootMatch?[...g.names.values()]:g.matchingNames;
-  return names.map(n=>`<details class="memo-equiv-entry"><summary><span>${esc(n.name)}</span><span class="memo-equiv-chevron">⌄</span></summary>
+  return names.map(n=>`<details class="memo-equiv-entry" data-equiv-specialty-key="${esc(norm(g.name)+'|'+norm(n.name))}" ${memoEquivOpenSpecialties.has(norm(g.name)+'|'+norm(n.name))?'open':''}><summary><span>${esc(n.name)}</span><span class="memo-equiv-chevron memo-equiv-chevron-icons"><span class="memo-equiv-icon-down"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span><span class="memo-equiv-icon-up"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg></span></span></summary>
    <div class="memo-equiv-entry-body"><p class="memo-equiv-related">DCI : ${esc(g.name)}</p>${memoEquivPresentationDetails(n.items)}</div>
   </details>`);
  }).join('');
@@ -3939,14 +3960,29 @@ function renderEquivalences(){
    </div>`;
   }).join('');
   const title=g.root?`<button type="button" class="memo-equiv-molecule-link" data-equiv-open="${esc(g.root.id)}" title="Ouvrir la fiche molécule">${esc(g.name)}</button>`:`<span class="memo-equiv-molecule-name">${esc(g.name)}</span>`;
-  return `<div class="memo-equiv-entry memo-equiv-dci-group">
-   <div class="memo-equiv-dci-group-heading">${title}<button type="button" class="memo-equiv-dci-toggle" aria-expanded="false" aria-label="Afficher les présentations de ${esc(g.name)}"><span class="memo-equiv-chevron">⌄</span></button></div>
-   <div class="memo-equiv-dci-group-body" hidden>${entries||'<p class="memo-equiv-related">Aucune présentation détaillée.</p>'}</div>
+  const isOpen=memoEquivOpenDcis.has(norm(g.name));
+  const doseCount=formulations.length;
+  const countLabel=`${doseCount} ${doseCount===1?'dosage':'dosages'}`;
+  return `<div class="memo-equiv-entry memo-equiv-dci-group" data-equiv-dci-key="${esc(norm(g.name))}">
+   <div class="memo-equiv-dci-group-heading">${title}<span class="memo-equiv-dosage-count">${countLabel}</span><button type="button" class="memo-equiv-dci-toggle" aria-expanded="${isOpen?'true':'false'}" aria-label="Afficher les présentations de ${esc(g.name)}"><span class="memo-equiv-chevron memo-equiv-chevron-icons"><span class="memo-equiv-icon-down"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span><span class="memo-equiv-icon-up"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg></span></span></button></div>
+   <div class="memo-equiv-dci-group-body" ${isOpen?'':'hidden'}>${entries||'<p class="memo-equiv-related">Aucune présentation détaillée.</p>'}</div>
   </div>`;
  }).join('');
+ document.querySelectorAll('#equivView [data-equiv-specialty-key]').forEach(el=>el.addEventListener('toggle',()=>{
+  const key=el.dataset.equivSpecialtyKey;
+  if(el.open)memoEquivOpenSpecialties.add(key);else memoEquivOpenSpecialties.delete(key);
+ }));
+ document.querySelectorAll('#equivView .memo-equiv-dci-group-heading').forEach(heading=>{
+  heading.addEventListener('click',e=>{
+   if(e.target.closest('.memo-equiv-molecule-link,.memo-equiv-dci-toggle'))return;
+   heading.querySelector('.memo-equiv-dci-toggle')?.click();
+  });
+ });
  document.querySelectorAll('#equivView .memo-equiv-dci-toggle').forEach(btn=>btn.onclick=()=>{
   const body=btn.closest('.memo-equiv-dci-group').querySelector('.memo-equiv-dci-group-body');
   body.hidden=!body.hidden;btn.setAttribute('aria-expanded',String(!body.hidden));
+  const key=btn.closest('[data-equiv-dci-key]').dataset.equivDciKey;
+  if(body.hidden)memoEquivOpenDcis.delete(key);else memoEquivOpenDcis.add(key);
  });
  document.querySelectorAll('#equivView [data-equiv-open]').forEach(btn=>btn.onclick=e=>{e.stopPropagation();openMedication(btn.dataset.equivOpen)});
  document.querySelectorAll('#equivView [data-copy-cip]').forEach(btn=>btn.onclick=async e=>{
@@ -4717,7 +4753,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDo
   };
   const renderChild=(child,selectedPack=null)=>{
    if(!child||!panel)return;
-   memoV67Refresh(child,memoV44Chosen(child)?.p||null);
+   memoV67Refresh(child,memoV116CommercialChosen(child)?.p||null);
    const childSections=(child.sections||[]).filter(x=>x.enabled!==false&&!isDocumentationSection(x)&&String(x.content||" ").trim()).map(x=>resolveSharedSection(child,x));
    // Toutes les rubriques actives propres à la présentation sont visibles,
    // y compris les trois encarts prioritaires lorsque l'éditeur les active.
@@ -4746,7 +4782,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDo
    if(sourcesSlot){sourcesSlot.innerHTML=ficheCombinedSources(m,documentationSections,child);sourcesSlot.classList.toggle("hidden",!sourcesSlot.innerHTML.trim());memoLinkifyCips(sourcesSlot);}
    panel.querySelectorAll("[data-group-open]").forEach(b=>b.onclick=()=>openMedication(b.dataset.groupOpen));
    memoV44Banner(panel,child,selectedTitle);
-   panel.querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=panel.querySelector("#presentation-info");memoSetViewChoice(child.id,{presentation:sel.value});const choice=memoV44Chosen(child);if(target)target.innerHTML=choice?presentationInfo(choice.p,child):"";memoV48Sync(sel.closest("#presentations-details"),choice?.p);memoV102SyncStorage(sel.closest("#presentations-details"),choice?.p);memoWireBadgeClicks(target);memoV44Banner(panel,child,selectedTitle);memoV67Refresh(child,choice?.p||null)});
+   panel.querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=panel.querySelector("#presentation-info");memoSetViewChoice(child.id,{presentation:sel.value});const choice=memoV116CommercialChosen(child);if(target)target.innerHTML=choice?presentationInfo(choice.p,child):"";memoV48Sync(sel.closest("#presentations-details"),choice?.p);memoV102SyncStorage(sel.closest("#presentations-details"),choice?.p);memoWireBadgeClicks(target);memoV44Banner(panel,child,selectedTitle);memoV67Refresh(child,choice?.p||null)});
   };
   // Le boîtage n'est plus un niveau d'onglet : chaque conditionnement
   // reste consultable dans la présentation commerciale via son CIP.
@@ -4898,6 +4934,26 @@ function memoV44Options(m){
  });
  return result;
 }
+// Une option par spécialité commerciale, même lorsque plusieurs CIP/boîtages
+// sont associés à cette même présentation. On ne modifie pas les données.
+function memoV116CommercialOptions(m){
+ const grouped=new Map();
+ memoV44Options(m).forEach(x=>{
+  const p=x.p, name=String(p.name||m.name||'').trim(),lab=String(p.lab||'').trim();
+  const key=[norm(name),norm(lab),norm(p.form||''),norm(p.dosage||'')].join('|');
+  if(!grouped.has(key))grouped.set(key,{key:x.key,p:{...p,cipBoxes:[]},packs:[]});
+  const entry=grouped.get(key);
+  cipConditionnements(p).forEach(box=>{
+   if(!entry.packs.some(b=>b.cip===box.cip&&b.pack===box.pack))entry.packs.push(box);
+  });
+ });
+ return [...grouped.values()].map(x=>({...x,p:{...x.p,cipBoxes:x.packs,showCip:x.p.showCip}}));
+}
+function memoV116CommercialChosen(m){
+ const options=memoV116CommercialOptions(m),stored=String(memoGetViewChoice(m.id).presentation||'');
+ const previous=memoV44Options(m).find(x=>x.key===stored);
+ return options.find(x=>x.key===stored)||options.find(x=>previous&&norm(x.p.name||'')===norm(previous.p.name||'')&&norm(x.p.lab||'')===norm(previous.p.lab||'')&&norm(x.p.form||'')===norm(previous.p.form||'')&&norm(x.p.dosage||'')===norm(previous.p.dosage||''))||options[0]||null;
+}
 function memoV44Chosen(m){
  const options=memoV44Options(m),stored=memoGetViewChoice(m.id).presentation;
  const key=stored===null||stored===undefined?null:String(stored).includes(":")?String(stored):String(stored)+":0";
@@ -4925,7 +4981,7 @@ function memoV48Sync(section,p){
  const hasPhoto=!!(p&&((p.showPhoto===true&&safeHttp(p.imageUrl||""))||(p.showTabletPhoto===true&&safeHttp(p.tabletImageUrl||""))));
  section.classList.toggle("memo-v48-has-photo",hasPhoto);
  const cip=section.querySelector("[data-v48-cip]");
- if(cip)cip.innerHTML=memoV48Cip(p);
+ if(cip)cip.innerHTML=section.hasAttribute("data-variant-commercial")?memoMoleculeCipAndPack(p):memoV48Cip(p);
 }
 function presentationInfo(p,m=null, specialtyBoxesHtml=""){
  if(!p)return '<p class="muted">Aucune présentation documentée.</p>';
@@ -4986,8 +5042,8 @@ function memoV102SyncStorage(section,p){
  if(badges)badges.outerHTML=memoV102CommercialStorageBadges(p);
 }
 function renderPresentations(m,targetPresentationIndex=null,selectedPack=null){
- const options=memoV44Options(m).filter(x=>selectedPack===null||x.pack===selectedPack),saved=memoV44Chosen(m),chosen=options.find(x=>x.key===saved?.key)||options[0]||null;
- return `<section class="section presentation-fixed ${chosen?.p&&((chosen.p.showPhoto===true&&safeHttp(chosen.p.imageUrl||""))||(chosen.p.showTabletPhoto===true&&safeHttp(chosen.p.tabletImageUrl||"")))?'memo-v48-has-photo':''}" id="presentations-details">${options.length?`<div class="memo-v48-identity"><div class="memo-v48-selector"><select id="presentation-choice" aria-label="Médicament commercial" data-presentation-select ${options.length===1?'aria-label="Médicament commercial"':''}>${options.map(x=>`<option value="${esc(x.key)}" ${chosen?.key===x.key?"selected":""}>${esc(presentationLabel(x.p,m,Number(x.key.split(":")[0])))}</option>`).join("")}</select></div><div class="memo-v48-cip"><div data-v48-cip>${memoV48Cip(chosen?.p)}</div></div>${memoV102CommercialStorageBadges(chosen?.p)}</div><div id="presentation-info" style="margin-top:12px">${chosen?presentationInfo(chosen.p,m):""}</div><div id="memo-v86-specific-root">${m.entry_type==="specialite"&&chosen?memoV86SpecificHtml(chosen.p):""}</div>`:'<p class="muted">Aucune présentation renseignée.</p>'}</section>`
+ const options=isVariantFiche(m)?memoV116CommercialOptions(m):memoV44Options(m).filter(x=>selectedPack===null||x.pack===selectedPack),saved=isVariantFiche(m)?memoV116CommercialChosen(m):memoV44Chosen(m),chosen=options.find(x=>x.key===saved?.key)||options[0]||null;
+ return `<section class="section presentation-fixed ${chosen?.p&&((chosen.p.showPhoto===true&&safeHttp(chosen.p.imageUrl||""))||(chosen.p.showTabletPhoto===true&&safeHttp(chosen.p.tabletImageUrl||"")))?'memo-v48-has-photo':''}" id="presentations-details" ${isVariantFiche(m)?'data-variant-commercial="true"':''}>${options.length?`<div class="memo-v48-identity"><div class="memo-v48-selector"><select id="presentation-choice" aria-label="Médicament commercial" data-presentation-select ${options.length===1?'aria-label="Médicament commercial"':''}>${options.map(x=>`<option value="${esc(x.key)}" ${chosen?.key===x.key?"selected":""}>${esc(presentationLabel(x.p,m,Number(x.key.split(":")[0])))}</option>`).join("")}</select></div><div class="memo-v48-cip"><div data-v48-cip>${isVariantFiche(m)?memoMoleculeCipAndPack(chosen?.p):memoV48Cip(chosen?.p)}</div></div>${memoV102CommercialStorageBadges(chosen?.p)}</div><div id="presentation-info" style="margin-top:12px">${chosen?presentationInfo(chosen.p,m):""}</div><div id="memo-v86-specific-root">${m.entry_type==="specialite"&&chosen?memoV86SpecificHtml(chosen.p):""}</div>`:'<p class="muted">Aucune présentation renseignée.</p>'}</section>`
 }
 
 const MEMO_CHOICES_KEY="memofficine_field_choices_v1";
