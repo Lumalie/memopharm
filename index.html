@@ -3024,6 +3024,44 @@ header .header-admin-actions button,header .header-admin-actions summary{min-hei
   color:inherit;
 }
 
+
+/* V116.17 — Explorer : une seule carte turquoise par fiche spécialité.
+   La présentation, ses CIP et ses badges restent dans le même encadré. */
+#exploreCards .explore-hits > article.explore-specialty-direct.explore-result-specialite{
+  --explore-ink:var(--memo-specialite-ink,#1e7169);
+  --explore-line:var(--memo-specialite-border,#9acfc6);
+  background:var(--memo-specialite-bg,#e4f5f2)!important;
+  border:1px solid var(--memo-specialite-border,#9acfc6)!important;
+  border-radius:12px!important;
+  padding:12px 15px!important;
+  box-shadow:none!important;
+}
+#exploreCards .explore-hits > article.explore-specialty-direct.explore-result-specialite:hover{
+  background:#dcf0ec!important;
+}
+#exploreCards .explore-hits > article.explore-specialty-direct.explore-result-specialite > .search-pres-direct{
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  padding:0!important;
+  margin:0!important;
+  box-shadow:none!important;
+}
+#exploreCards .explore-hits > article.explore-specialty-direct.explore-result-specialite > .search-pres-direct + .search-pres-direct{
+  border-top:1px solid rgba(30,113,105,.22)!important;
+  margin-top:10px!important;
+  padding-top:10px!important;
+}
+#exploreCards .explore-hits > article.explore-specialty-direct.explore-result-specialite .search-pres-title{
+  color:var(--memo-specialite-ink,#1e7169)!important;
+}
+#exploreCards .explore-hits > article.explore-specialty-direct.explore-result-specialite .search-pres-title span:first-child{
+  color:var(--memo-specialite-ink,#1e7169)!important;
+}
+#exploreCards .explore-hits > article.explore-specialty-direct.explore-result-specialite .search-pres-details{
+  margin-top:6px;
+}
+
 </style>
 </head>
 <body>
