@@ -4025,7 +4025,7 @@ function renderExplorer(){
  $("memoThemeIntro").classList.add("hidden");
  if(!query&&$("exploreBadge").value&&memoRenderThemeList(filtered,$("exploreBadge").value))return;
  // En mode recherche, afficher les correspondances précises à la place de l'arborescence.
- if(query){
+ if(query && false){
   const allowed=new Set(filtered.map(m=>m.id));
   const hits=searchMatches.filter(hit=>allowed.has(hit.med.id));
   // Regrouper les correspondances par fiche mère : ses présentations ne
@@ -4247,8 +4247,14 @@ function renderExplorer(){
  const explorerRank=m=>isGroup(m)?0:isMolecule(m)?1:isVariantFiche(m)?2:m.entry_type==="dci"?3:4;
  const sortExplorer=(a,b)=>explorerRank(a)-explorerRank(b)||sortNames(a,b);
  const treeParent=m=>moleculeParentId(m)&&visibleById.has(String(moleculeParentId(m)))?String(moleculeParentId(m)):parentGroupId(m);
- const childrenOf=id=>visible.filter(m=>String(treeParent(m))===String(id)).sort(sortExplorer);
- const rootEntries=visible.filter(m=>!visibleById.has(String(treeParent(m)))||String(treeParent(m))===String(m.id)).sort(sortExplorer);
+ const explorerMatchedIds=new Set(filtered.map(m=>String(m.id)));
+ const explorerContextIds=new Set(explorerMatchedIds);
+ if(query){for(const m of filtered){let parent=treeParent(m),seen=new Set([String(m.id)]);while(parent&&!seen.has(String(parent))){seen.add(String(parent));const ancestor=visibleById.get(String(parent));if(!ancestor)break;explorerContextIds.add(String(ancestor.id));parent=treeParent(ancestor);}}}
+ const childrenOf=id=>visible.filter(m=>String(treeParent(m))===String(id)&&(!query||explorerContextIds.has(String(m.id)))).sort(sortExplorer);
+ const rootEntries=visible.filter(m=>(!visibleById.has(String(treeParent(m)))||String(treeParent(m))===String(m.id))&&(!query||explorerContextIds.has(String(m.id)))).sort(sortExplorer);
+ // Toujours conserver le tri par type de fiche dans la recherche.
+ const explorerTypeOrder=m=>isGroup(m)?0:isMolecule(m)?1:isVariantFiche(m)?2:isSpecialiteFiche(m)?3:4;
+ rootEntries.sort((a,b)=>explorerTypeOrder(a)-explorerTypeOrder(b)||sortExplorer(a,b));
  const renderNode=(m,depth=0,ancestors=new Set())=>{
   if(ancestors.has(m.id))return "";
   const next=new Set(ancestors);next.add(m.id);
@@ -4868,7 +4874,7 @@ function syncSearchWorkspace(query,found){
  $('searchWorkspace').classList.toggle('hidden',!active);
  const dropdown=$('searchSuggestions');const target=active?$('searchResultsSlot'):$('mainSearchCard');
  if(dropdown.parentElement!==target){if(active)target.appendChild(dropdown);else $('mainSearchCard').insertBefore(dropdown,$('filters'))}
- if(active){dropdown.classList.remove('hidden');const match=found.find(x=>searchPreviewKey(x)===previewSearchKey)||found[0];if(match)previewSearchResult(match);else $('searchPreview').innerHTML='<div class="empty">Aucun résultat pour cette recherche.</div>'}
+ if(active){dropdown.classList.remove('hidden');const match=found.find(x=>searchPreviewKey(x)===previewSearchKey)||found[0];if(match){const variant=match.presentation===null?memoSearchResultVariant(match.med,query):null;previewSearchResult(variant?{med:variant,section:null,presentation:null}:match);}else $('searchPreview').innerHTML='<div class="empty">Aucun résultat pour cette recherche.</div>'}
  else {previewSearchKey='';previewHistoryReady=false;}
 }
 let highlightedSearchIndex=-1;
