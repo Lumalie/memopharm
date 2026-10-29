@@ -3207,6 +3207,37 @@ header .header-admin-actions button,header .header-admin-actions summary{min-hei
   background:none!important;border:0!important;box-shadow:none!important;
   padding:0!important;margin:0!important;text-align:left!important;
 }
+
+/* V116.30 — mêmes lignes d'arborescence pour toutes les fiches : seul le code couleur varie */
+.memo-explorer-sidebar .explore-tree .explore-tree-node.explore-tree-variant>.explore-tree-line{
+  background:#f9e9e2!important;
+  border:0!important;border-radius:11px!important;
+  box-shadow:none!important;
+  padding:6px 8px!important;min-height:36px!important;
+}
+.memo-explorer-sidebar .explore-tree .explore-tree-node.explore-tree-specialite>.explore-tree-line{
+  background:#e4f5f2!important;
+  border:0!important;border-radius:11px!important;
+  box-shadow:none!important;
+  padding:6px 8px!important;min-height:36px!important;
+}
+.memo-explorer-sidebar .explore-tree .explore-tree-node.explore-tree-variant>.explore-tree-line:hover{background:#f4ddd1!important}
+.memo-explorer-sidebar .explore-tree .explore-tree-node.explore-tree-specialite>.explore-tree-line:hover{background:#d6eeeb!important}
+.memo-explorer-sidebar .explore-tree .explore-tree-node.explore-tree-variant>.explore-tree-line .explore-tree-name,
+.memo-explorer-sidebar .explore-tree .explore-tree-node.explore-tree-variant>.explore-tree-line .explore-tree-icon,
+.memo-explorer-sidebar .explore-tree .explore-tree-node.explore-tree-variant>.explore-tree-line .explore-tree-toggle{color:#b66e50!important}
+.memo-explorer-sidebar .explore-tree .explore-tree-node.explore-tree-specialite>.explore-tree-line .explore-tree-name,
+.memo-explorer-sidebar .explore-tree .explore-tree-node.explore-tree-specialite>.explore-tree-line .explore-tree-icon,
+.memo-explorer-sidebar .explore-tree .explore-tree-node.explore-tree-specialite>.explore-tree-line .explore-tree-toggle{color:#278a91!important}
+.memo-explorer-sidebar .explore-tree .explore-tree-node.explore-tree-variant>.explore-tree-line .explore-tree-name,
+.memo-explorer-sidebar .explore-tree .explore-tree-node.explore-tree-specialite>.explore-tree-line .explore-tree-name{
+  font-size:.84rem!important;font-weight:700!important;line-height:1.4!important;
+  background:none!important;border:0!important;box-shadow:none!important;
+  padding:0!important;margin:0!important;text-align:left!important;
+}
+/* Alignement des puces avec le titre, sans modifier les niveaux de l'arborescence. */
+.memo-explorer-sidebar .explore-tree .explore-tree-node.explore-tree-variant>.explore-tree-line .explore-tree-icon,
+.memo-explorer-sidebar .explore-tree .explore-tree-node.explore-tree-specialite>.explore-tree-line .explore-tree-icon{flex:0 0 auto;font-size:.65rem!important}
 </style>
 </head>
 <body>
