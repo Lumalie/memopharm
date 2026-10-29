@@ -2841,6 +2841,14 @@ header .header-admin-actions button,header .header-admin-actions summary{min-hei
 #memoPanelDci .memo-dci-combined .memo-pair-combined-grid{border-top:0;border-bottom:0}
 #memoPanelDci .memo-dci-combined{min-height:0}
 @media(max-width:730px){#memoPanelDci .memo-dci-combined .memo-pair-half{padding:7px 9px}}
+
+/* V116.9 — Présentation Spécialités ⇋ DCI aérée, avec retrait intérieur. */
+#memoPanelDci .memo-dci-combined .memo-pair-half{padding:15px 22px;gap:9px;justify-content:center}
+#memoPanelDci .memo-dci-combined .memo-pair-link{padding:5px 0;line-height:1.45}
+#memoPanelDci .memo-dci-combined .memo-pair-dci{gap:9px}
+#memoPanelDci .memo-dci-combined .memo-pair-substance{padding:5px 0;line-height:1.45}
+#memoPanelDci .memo-dci-combined{min-height:76px}
+@media(max-width:730px){#memoPanelDci .memo-dci-combined .memo-pair-half{padding:13px 14px}}
 </style>
 </head>
 <body>
@@ -4163,7 +4171,7 @@ function renderEquivalences(){
   const left=princeps.map(n=>makeEntry(g,n)).join('')||'<p class="memo-equiv-related">Aucun princeps identifié dans la fiche molécule.</p>';
   const right=generiques.map(n=>makeEntry(g,n)).join('')||'<p class="memo-equiv-related">Aucun générique identifié dans la fiche molécule.</p>';
   const other=unknown.length?`<div class="memo-pair-uncategorized"><span>Statut non renseigné :</span> ${unknown.map(n=>esc(n.name)).join(' · ')}</div>`:'';
-  return `<section class="memo-pair-combined" aria-label="Correspondances ${esc(g.name)}"><div class="memo-pair-combined-title">${esc(g.name)}</div><div class="memo-pair-combined-grid"><div class="memo-pair-half"><div class="memo-pair-half-title">Princeps</div>${left}</div><div class="memo-pair-half"><div class="memo-pair-half-title">Génériques</div>${right}</div></div>${other}</section>`;
+  return `<section class="memo-pair-combined" aria-label="Correspondances ${esc(g.name)}"><div class="memo-pair-combined-title">${esc(g.name)}</div><div class="memo-pair-combined-grid"><div class="memo-pair-half">${left}</div><div class="memo-pair-half">${right}</div></div>${other}</section>`;
  }).join('');
  paired.querySelectorAll('.memo-princeps-source').forEach(a=>a.addEventListener('click',e=>e.stopPropagation()));
  paired.querySelectorAll('[data-equiv-specialty-key]').forEach(el=>el.addEventListener('toggle',()=>{const key=el.dataset.equivSpecialtyKey;if(el.open)memoEquivOpenSpecialties.add(key);else memoEquivOpenSpecialties.delete(key)}));
@@ -4278,7 +4286,7 @@ function getSearchMatches(queryOverride=null){
  // Ne pas produire de résultat autonome de variante : le moteur V112 utilise
  // childText et moleculeChildren() pour sélectionner la bonne présentation/rubrique.
  publicMeds().filter(m=>!isVariantFiche(m)).forEach(m=>{
-  const base=norm([m.name,m.dosage,m.dci,m.parent_dci,m.category,m.aliases,...indicationTags(m),...explorerClasses(m),...medicationForms(m),...(isGroup(m)?["fiche groupe","groupe therapeutique","famille de medicaments"]:[])].join(" "));
+  const base=norm([m.name,m.dosage,m.dci,m.parent_dci,m.category,m.aliases,...(isMolecule(m)?(m.sections?.[0]?.princepsNames||[]):[]),...indicationTags(m),...explorerClasses(m),...medicationForms(m),...(isGroup(m)?["fiche groupe","groupe therapeutique","famille de medicaments"]:[])].join(" "));
   const presentations=specialtyItems(m);
   const presText=x=>norm([x.name,x.p.dosage,x.p.lab,x.p.lab?"laboratoire":"",x.p.form,x.p.cip,...cipConditionnements(x.p).flatMap(c=>[c.cip,c.pack]),cipConditionnements(x.p).length?"cip":"",x.p.cis,x.p.cis?"cis":"",x.p.description,x.p.marking].join(" "));
   const sections=(m.sections||[]).filter(x=>x.enabled!==false);
