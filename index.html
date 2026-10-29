@@ -351,6 +351,53 @@ header .header-action-stack .header-actions > button.admin-lock{
 @media(max-width:680px){
   header .header-action-stack :is(.header-actions > button:not(.admin-lock),.header-admin-actions > button,.header-json-menu > summary){padding:8px 11px}
 }
+
+/* V116.63 — Même départ vertical que les titres Explorer et Sources. */
+#equivView .memo-equiv-page{margin-top:0}
+#equivView .memo-equiv-page>.explore-heading{padding-top:32px;padding-bottom:14px}
+
+/* V116.63 — Un seul style commun pour les boutons de la bannière. */
+header .header-action-stack :is(
+  .header-actions>button:not(.admin-lock),
+  .header-admin-actions>button,
+  .header-json-menu>summary
+){
+  box-sizing:border-box;
+  min-height:44px;
+  padding:11px 17px;
+  border-radius:11px;
+  background:#f7faf7;
+  border:1px solid #d5e7d9;
+  color:var(--green);
+  font:inherit;
+  font-size:.94rem;
+  font-weight:400;
+  line-height:1.25;
+  white-space:nowrap;
+}
+/* Neutraliser l'ancien style spécial du bouton Équivalences. */
+header .header-action-stack .header-actions>#equivNav{
+  background:#f7faf7;
+  border-color:#d5e7d9;
+  color:var(--green);
+  font-size:.94rem;
+  font-weight:400;
+}
+header .header-action-stack .header-actions :is(#equivNav,#exploreNav,#sourcesNav):hover,
+header .header-action-stack .header-actions :is(#equivNav,#exploreNav,#sourcesNav)[aria-current="page"]{
+  background:#e1efe5;
+  border-color:#a8ccb3;
+}
+/* Déconnexion conserve son emphase rouge et son texte gras. */
+header .header-action-stack .header-admin-actions :is(#logoutBtn,.logout-btn,.logout-button){
+  font-weight:700;
+}
+@media(max-width:680px){
+  header .header-action-stack :is(.header-actions>button:not(.admin-lock),.header-admin-actions>button,.header-json-menu>summary){
+    min-height:42px;
+    padding:9px 13px;
+  }
+}
 </style>
 </head>
 <body>
