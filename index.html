@@ -176,6 +176,8 @@ header .header-actions button#loginBtn.admin-lock:active{appearance:none;display
 /* V116.57 — les badges de vigilance sont des liens natifs vers des sources officielles. */
 .memo-v67-practical a.memo-v67-alert{text-decoration:none!important;line-height:normal}
 .memo-v67-practical a.memo-v67-alert:visited{color:inherit}
+
+.memo-badge-source-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}.memo-badge-source-grid input{width:100%;min-width:0}@media(max-width:680px){.memo-badge-source-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -2233,20 +2235,23 @@ function memoReproBadges(m){
   return `<a class="memo-repro" data-state="${esc(r.status)}" ${url?`href="${esc(url)}" target="_blank" rel="noopener noreferrer"`:'tabindex="0" role="img"'} aria-label="${esc(description)}${url?' — ouvrir la source':' — source non disponible'}"><span class="memo-repro-icon lucide-official ${icon}" aria-hidden="true"></span>${tip}</a>`;
  }).join('')+'</div>';
 }
-// Sources institutionnelles des badges de vigilance : un lien natif, sans calque.
-// Ces pages expliquent la réglementation ; elles ne valident pas le statut d'une fiche particulière.
-const MEMO_BADGE_OFFICIAL_SOURCES={
- mte:'https://www.ameli.fr/pharmacien/exercice-professionnel/delivrance-produits-sante/regles-delivrance-prise-charge/medicaments-generiques/regle-prescription-medicaments-generiques',
- photo:'https://ansm.sante.fr/',
- exception:'https://www.ameli.fr/medecin/exercice-liberal/regles-de-prescription-et-formalites/medicaments-et-dispositifs/medicaments',
- stup:'https://www.ameli.fr/assure/sante/medicaments/utiliser-recycler-medicaments/lire-ordonnance-medicaments'
-};
+// Liens de référence personnalisables par fiche (aucun lien imposé).
+const MEMO_BADGE_LINK_TYPES=[['mte','MTE'],['photo','Photosensibilisant'],['exception','EXC'],['stup','STUP']];
+function memoBadgeLinks(m){return m?.sections?.[0]?.badgeSourceLinks||{};}
+function memoBadgeSourceEditor(m){
+ const saved=memoBadgeLinks(m);
+ return `<div class="full memo-practical-editor" id="memo-badge-links-editor"><h4>Sources des badges de vigilance</h4><p class="muted">Indique une URL pour chaque badge : le badge ouvrira ce lien dans un nouvel onglet. Si le champ est vide, le badge reste visible mais n'est pas cliquable.</p><div class="memo-badge-source-grid">${MEMO_BADGE_LINK_TYPES.map(([key,label])=>`<div><label for="memo-badge-url-${key}">${label} — lien de référence</label><input type="url" id="memo-badge-url-${key}" data-memo-badge-url="${key}" value="${esc(saved[key]||'')}" placeholder="https://…" inputmode="url" autocomplete="url"></div>`).join('')}</div></div>`;
+}
 function memoV67Alerts(m,p=null){
  const root=(isMolecule(m)||isSpecialiteFiche(m))?m:moleculeForDosage(m);
- const specs=[['mte',practicalMTE(m,p),'MTE','Médicament à marge thérapeutique étroite','Consulter les règles officielles de substitution.'],['photo',practicalPhotosensitive(m,p),'Photosensibilisant','Photosensibilisation','Consulter le site officiel de l’ANSM ; vérifier le RCP de la spécialité.'],['exception',practicalFlags(root).exception===true,'EXC','Médicament d’exception','Consulter les règles officielles de prescription et de prise en charge.'],['stup',practicalFlags(root).stup===true,'STUP','Stupéfiant','Consulter les informations réglementaires officielles ; vérifier le RCP de la spécialité.']];
- return specs.filter(x=>x[1]).map(([kind,_,label,title,note])=>{
-  const url=MEMO_BADGE_OFFICIAL_SOURCES[kind];
-  return `<a class="memo-v67-alert memo-v69-${kind}" href="${esc(url)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(title)} — consulter une source officielle (nouvel onglet)" title="${esc(title)} — consulter la source officielle">${kind==='photo'?'<span class="memo-v67-sun" aria-hidden="true"></span>':`<span class="memo-v67-mte">${label}</span>`}<span class="memo-repro-tooltip" role="tooltip"><span class="memo-repro-tip-title">${esc(title)}</span><span class="memo-repro-tip-note">${esc(note)}</span><span class="memo-repro-tip-action">Ouvrir la source officielle ↗</span></span></a>`;
+ const sourceLinks=memoBadgeLinks(root);
+ const specs=[['mte',practicalMTE(m,p),'MTE','Médicament à marge thérapeutique étroite'],['photo',practicalPhotosensitive(m,p),'Photosensibilisant','Photosensibilisation'],['exception',practicalFlags(root).exception===true,'EXC','Médicament d’exception'],['stup',practicalFlags(root).stup===true,'STUP','Stupéfiant']];
+ return specs.filter(x=>x[1]).map(([kind,_,label,title])=>{
+  const url=memoSafeSource(sourceLinks[kind]);
+  const tag=url?'a':'span';
+  const attrs=url?` href="${esc(url)}" target="_blank" rel="noopener noreferrer"`:' tabindex="0"';
+  const tip=url?'Ouvrir la source renseignée ↗':'Aucun lien renseigné : modifier la fiche pour ajouter une source';
+  return `<${tag} class="memo-v67-alert memo-v69-${kind}"${attrs} aria-label="${esc(title)}${url?' — ouvrir la source (nouvel onglet)':' — source non renseignée'}" title="${esc(title)}${url?' — consulter la source':''}">${kind==='photo'?'<span class="memo-v67-sun" aria-hidden="true"></span>':`<span class="memo-v67-mte">${label}</span>`}<span class="memo-repro-tooltip" role="tooltip"><span class="memo-repro-tip-title">${esc(title)}</span><span class="memo-repro-tip-note">${url?'Lien personnalisé enregistré dans cette fiche.':'Aucune source définie pour ce badge.'}</span><span class="memo-repro-tip-action">${tip}</span></span></${tag}>`;
  }).join('');
 }
 function memoV103DurationLabel(value){
@@ -3082,6 +3087,7 @@ function renderEditor(id){
  <div class="full explorer-class-custom" id="princeps-editor-wrap"><label for="f-princeps">Princeps</label><input id="f-princeps" list="princeps-suggestions" value="${esc((m.sections?.[0]?.princepsNames||[]).join(', '))}" placeholder="Ex. : Nom de spécialité 1, Nom de spécialité 2" autocomplete="off"><datalist id="princeps-suggestions">${[...new Set(meds.flatMap(x=>x.sections?.[0]?.princepsNames||[]))].sort((a,b)=>a.localeCompare(b,'fr')).map(x=>`<option value="${esc(x)}"></option>`).join('')}</datalist><div id="memo-princeps-choices" class="memo-princeps-choices"></div><div id="memo-princeps-panel" class="memo-princeps-dialog" hidden></div><p class="muted">Sépare les noms par des virgules, puis clique sur un badge pour indiquer NSFP avec une URL justificative et une date.</p></div>
  <div class="full explorer-class-custom"><label class="explorer-section-heading" for="f-extra-classes">Classe·s thérapeutique·s</label><input id="f-extra-classes" list="class-suggestions" value="${esc(explorerClasses(m).filter(t=>t!=="Autres"||explorerClasses(m).length===1).join(", "))}" placeholder="Ex. : Antibiotiques, Pénicillines" autocomplete="off"><datalist id="class-suggestions">${[...new Set(meds.flatMap(explorerClasses))].sort((a,b)=>a.localeCompare(b,"fr")).map(t=>`<option value="${esc(t)}"></option>`).join("")}</datalist><div id="explorer-class-choices" class="explorer-class-choices"></div><p class="muted">Sépare les étiquettes par des virgules. Coche uniquement les badges à afficher dans Explorer. Les autres restent enregistrés et utilisables dans les filtres.</p></div>
  <div class="full memo-practical-editor" id="molecule-practical-flags"><label><input type="checkbox" id="f-mte" ${practicalFlags(m).mte===true?"checked":""}> ⚠ MTE — Marge thérapeutique étroite</label><label><input type="checkbox" id="f-photosensitizing" ${practicalFlags(m).photosensitizing===true?"checked":""}> ☀ Photosensibilisant</label><label><input type="checkbox" id="f-exception" ${practicalFlags(m).exception===true?"checked":""}> EXC — Médicament d’exception</label><label><input type="checkbox" id="f-stup" ${practicalFlags(m).stup===true?"checked":""}> STUP — Stupéfiant</label><span class="hint">À renseigner pour cette fiche selon les sources vérifiées. Les particularités propres à une forme restent à documenter séparément.</span></div>
+ ${memoBadgeSourceEditor(m)}
  <div class="full explorer-class-custom"><label class="explorer-section-heading" for="f-indications">Indication·s thérapeutique·s</label><input id="f-indications" list="indication-suggestions" value="${esc(indicationTags(m).join(", "))}" placeholder="Ex. : Infection bactérienne, Carence en fer" autocomplete="off"><datalist id="indication-suggestions">${[...new Set(meds.flatMap(indicationTags))].sort((a,b)=>a.localeCompare(b,"fr")).map(t=>`<option value="${esc(t)}"></option>`).join("")}</datalist><div id="explorer-indication-choices" class="explorer-class-choices"></div><p class="muted">Sépare les étiquettes par des virgules. Coche uniquement les badges à afficher dans Explorer. Les autres restent enregistrés et utilisables dans les filtres.</p></div>
  
  
@@ -3826,6 +3832,19 @@ function captureEditorFields(m){
   m.form=m.sections[0].specialtyFormTitle.value;
  }
  if(kind==="molecule"||kind==="specialite")m.sections[0].practicalFlags={...practicalFlags(m),photosensitizing:!!$("f-photosensitizing")?.checked,mte:!!$("f-mte")?.checked,exception:!!$("f-exception")?.checked,stup:!!$("f-stup")?.checked};
+ if(kind==="molecule"||kind==="specialite"){
+  const sourceLinks={};
+  for(const [key] of MEMO_BADGE_LINK_TYPES){
+   const input=$("memo-badge-url-"+key);
+   const raw=String(input?.value||'').trim();
+   if(raw){
+    const safe=memoSafeSource(raw);
+    if(!safe){alert("Lien invalide pour le badge "+key.toUpperCase()+". Utilise une adresse https:// valide.");input?.focus();return;}
+    sourceLinks[key]=safe;
+   }
+  }
+  m.sections[0].badgeSourceLinks=sourceLinks;
+ }
  if(kind==="dci"||kind==="molecule"){
   m.sections[0].princepsNames=[...new Set((get("f-princeps")||"").split(",").map(x=>x.trim()).filter(Boolean))];
   const valid=new Set(m.sections[0].princepsNames.map(norm));
