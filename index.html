@@ -2723,6 +2723,31 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
 #equivView .memo-equiv-root-link{display:inline-block;margin:12px 0 3px;color:#795098;font-size:.8rem}
 #equivView .memo-equiv-dci-formulation .memo-equiv-cip-list{margin-top:0}
 #equivView .memo-equiv-presentation .memo-equiv-open-fiche{font-weight:700;color:#b46c4d}
+/* V115.9 — Toute la barre DCI est un bouton unique, sans zone morte */
+#equivView button.memo-equiv-dci-group-heading{width:100%;padding:0;border:0;background:transparent;text-align:left;font:inherit;color:inherit;cursor:pointer;display:flex;align-items:stretch}
+#equivView button.memo-equiv-dci-group-heading:hover,#equivView button.memo-equiv-dci-group-heading:focus-visible{background:#f5f0f8;outline-offset:2px}
+#equivView button.memo-equiv-dci-group-heading .memo-equiv-dci-toggle{display:flex;align-items:center;justify-content:center;pointer-events:none}
+#equivView button.memo-equiv-dci-group-heading .memo-equiv-molecule-name{pointer-events:none}
+
+/* V116 — Correspondances, deux outils dans une seule rubrique */
+.memo-correspondence-tabs{display:flex;justify-content:center;gap:7px;margin:-8px auto 28px;padding:5px;background:#e9efe9;border-radius:13px;max-width:590px}
+.memo-correspondence-tabs button{flex:1;min-width:0;padding:12px 13px;border:1px solid transparent;border-radius:10px;background:transparent;color:#526a5a;font-weight:650;cursor:pointer;font-size:.96rem}
+.memo-correspondence-tabs button[aria-selected=true]{background:#fff;color:#315d47;border-color:#d8e4db;box-shadow:0 2px 7px rgba(25,58,38,.07)}
+.memo-correspondence-tabs button:focus-visible{outline:2px solid #638e75;outline-offset:2px}
+#memoPanelGeneric{max-width:780px;margin:auto;background:#fff;border:1px solid #dce7df;border-radius:16px;padding:26px}
+#memoPanelGeneric[hidden],#memoPanelDci[hidden]{display:none!important}
+.memo-generic-intro{text-align:center;margin-bottom:24px}
+.memo-generic-intro h3{color:#315d47;font-size:1.35rem;margin:0 0 8px}
+.memo-generic-intro p{color:#687c6e;font-size:.92rem;line-height:1.55}
+#memoPanelGeneric label{display:block;font-weight:650;color:#426b55;margin-bottom:9px}
+#memoGenericSearch{width:100%;padding:13px 15px;border:1px solid #cad9cd;border-radius:11px;font-size:1rem}
+#memoGenericResults{margin-top:20px}
+.memo-generic-result{padding:15px;border:1px solid #dce7df;border-radius:11px;margin-bottom:10px}
+.memo-generic-dci{font-size:1.06rem;color:#795098;font-weight:700;margin-bottom:10px}
+.memo-generic-names{display:flex;flex-wrap:wrap;gap:7px}
+.memo-generic-names span{background:#eaf3ed;border-radius:7px;padding:6px 10px;color:#315d47;font-size:.88rem}
+.memo-generic-result p{font-size:.76rem;color:#819087;margin:12px 0 0}
+@media(max-width:650px){.memo-correspondence-tabs{gap:3px}.memo-correspondence-tabs button{font-size:.82rem;padding:10px 6px}#memoPanelGeneric{padding:17px}}
 </style>
 </head>
 <body>
@@ -2737,7 +2762,7 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
   </div>
 </a>
     <div id="headerSearchSlot" class="header-search-slot"></div>
-    <div class="header-action-stack"><div class="header-actions"><button id="equivNav" type="button" title="Rechercher une correspondance entre un nom commercial et une DCI">Spécialité ⇋ DCI</button><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="loginBtn" type="button" class="admin-lock" title="Administration (Ctrl + Alt + A)" aria-label="Connexion administrateur" aria-keyshortcuts="Control+Alt+A"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="10" width="17" height="11.5" rx="2.5"/><path d="M7.5 10V7a4.5 4.5 0 0 1 9 0v3"/><path d="M12 15.1v2.9"/><circle cx="12" cy="14.8" r="1" fill="currentColor" stroke="none"/></svg></button><button id="logoutBtn" type="button" class="header-logout hidden">Déconnexion</button></div><div class="header-admin-actions hidden" id="headerAdminActions"><button id="addMedBtn" type="button" class="header-new-fiche hidden">+ Nouvelle fiche</button><details class="header-json-menu" id="headerJsonMenu"><summary>JSON <span aria-hidden="true">⌄</span></summary><div class="header-json-items"><button id="exportBtn" type="button">Exporter JSON</button><button id="importBtn" type="button">Importer JSON</button></div></details><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
+    <div class="header-action-stack"><div class="header-actions"><button id="equivNav" type="button" title="Rechercher une correspondance entre un nom commercial et une DCI">Correspondances</button><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="loginBtn" type="button" class="admin-lock" title="Administration (Ctrl + Alt + A)" aria-label="Connexion administrateur" aria-keyshortcuts="Control+Alt+A"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="10" width="17" height="11.5" rx="2.5"/><path d="M7.5 10V7a4.5 4.5 0 0 1 9 0v3"/><path d="M12 15.1v2.9"/><circle cx="12" cy="14.8" r="1" fill="currentColor" stroke="none"/></svg></button><button id="logoutBtn" type="button" class="header-logout hidden">Déconnexion</button></div><div class="header-admin-actions hidden" id="headerAdminActions"><button id="addMedBtn" type="button" class="header-new-fiche hidden">+ Nouvelle fiche</button><details class="header-json-menu" id="headerJsonMenu"><summary>JSON <span aria-hidden="true">⌄</span></summary><div class="header-json-items"><button id="exportBtn" type="button">Exporter JSON</button><button id="importBtn" type="button">Importer JSON</button></div></details><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
   </div>
   <p>Une base de repères pour retrouver rapidement les informations utiles sur les médicaments, leurs modalités de prise et les points de vigilance.</p>
 </div></header>
@@ -2784,7 +2809,12 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
   </div>
   </section><section id="equivView" class="hidden" aria-label="Recherche des correspondances commerciales et DCI">
  <div class="memo-equiv-page">
-  <div class="memo-equiv-heading"><h2>Spécialités ⇋ DCI</h2><p>Retrouvez les noms commerciaux et leurs formulations en DCI, avec les présentations détaillées sur demande.</p></div>
+  <div class="memo-equiv-heading"><h2>Correspondances</h2><p>Deux outils complémentaires pour retrouver les médicaments et leurs relations.</p></div>
+  <div class="memo-correspondence-tabs" role="tablist" aria-label="Type de correspondance">
+   <button id="memoTabDci" type="button" role="tab" aria-selected="true" aria-controls="memoPanelDci">Spécialités ⇋ DCI</button>
+   <button id="memoTabGeneric" type="button" role="tab" aria-selected="false" aria-controls="memoPanelGeneric">Princeps ⇋ Générique</button>
+  </div>
+  <div id="memoPanelDci" role="tabpanel" aria-labelledby="memoTabDci">
   <div class="memo-equiv-columns">
    <section class="memo-equiv-column memo-equiv-commercial">
     <h3>Spécialités <span class="memo-equiv-heading-sub">/ noms commerciaux</span></h3>
@@ -2801,6 +2831,14 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
   </div>
   <div class="memo-equiv-reset"><button id="equivClear" type="button">Effacer la recherche</button></div>
   <p class="memo-equiv-note">Correspondances issues des fiches Mémopharm. La colonne « Spécialités » regroupe tous les noms commerciaux, sans présumer leur statut de princeps. Une DCI commune ne prouve pas la substituabilité.</p>
+  </div>
+  <div id="memoPanelGeneric" role="tabpanel" aria-labelledby="memoTabGeneric" hidden>
+   <div class="memo-generic-intro"><h3>Princeps ⇋ Générique</h3><p>Recherchez une spécialité ou une DCI. Les associations de noms existantes sont consultables dès maintenant ; les groupes génériques officiels pourront être renseignés ultérieurement.</p></div>
+   <label for="memoGenericSearch">Rechercher un nom commercial ou une DCI</label>
+   <input id="memoGenericSearch" type="search" autocomplete="off" placeholder="Ex. : Clamoxyl, amoxicilline…">
+   <div id="memoGenericResults" aria-live="polite"></div>
+   <p class="memo-equiv-note">Attention : ces associations indiquent uniquement des noms commerciaux liés à une DCI dans Mémopharm. Elles ne prouvent ni le statut de princeps ou de générique, ni la substituabilité.</p>
+  </div>
  </div>
  </section><section id="exploreView" class="hidden"><div class="explore-heading"><h2>Explorer les fiches</h2><p>Parcourez les fiches communes et leurs spécialités associées.</p></div><div class="explore-search"><label for="exploreSearch">Rechercher dans les fiches</label><div class="explore-search-row"><input id="exploreSearch" type="search" autocomplete="off" placeholder="Ex. : amoxicilline, oubli de prise, CIP, conservation…"><button id="clearExploreSearch" type="button">Effacer</button></div><p id="exploreSearchCount" class="muted" aria-live="polite"></p></div><div class="explore-controls"><label>Classe thérapeutique<select id="exploreClass"></select></label><label>Indication thérapeutique<select id="exploreIndication"></select></label><label>Forme pharmaceutique<select id="exploreForm"></select></label><label>Badge pharmaceutique<select id="exploreBadge"><option value="">Tous les badges</option><option value="mte">⚠ MTE</option><option value="photo">☀ Photosensibilisant</option><option value="exception">EXC · Médicament d’exception</option><option value="stup">STUP · Stupéfiant</option><option value="cold">❄ Conservation au froid</option><option value="after">◷ Conservation après ouverture</option><option value="listI">Liste I</option><option value="listII">Liste II</option></select></label><button id="resetExplore" type="button">Effacer les filtres</button></div> <div id="memoThemeIntro" class="memo-theme-intro hidden" aria-live="polite"></div><div id="exploreCards" class="explore-cards"></div></section><section id="sourcesView" class="hidden"><div class="explore-heading"><h2>Sources documentaires</h2><p>Références communes utilisées pour construire et vérifier les fiches de Mémopharm.</p></div><div id="sourcesList" class="sources-list"></div><div id="sourcesAdmin" class="panel hidden" style="padding:18px;margin-top:18px"></div></section><div class="memo-v43-footer"><strong>📖 Une ressource pratique pour les professionnels de santé</strong><p>Mémopharm est une base documentaire indépendante conçue pour faciliter l’accès aux informations essentielles sur les médicaments et accompagner la pratique quotidienne des professionnels de santé.</p><p>Les fiches sont enrichies progressivement à partir de sources de référence. Les dates de mise à jour et de vérification permettent d’en apprécier l’actualité. Pour toute décision de prise en charge, les informations doivent être confrontées aux référentiels officiels en vigueur et aux données de la spécialité concernée.</p></div>
 <div id="dashMobileToolbar" role="toolbar" aria-label="Outils de modification de la liste">
@@ -3957,6 +3995,24 @@ function memoEquivPresentationDetails(items){
 // Conserver l'état des accordéons pendant la navigation interne et les rendus.
 const memoEquivOpenSpecialties=new Set();
 const memoEquivOpenDcis=new Set();
+let memoCorrespondenceTab="dci";
+function memoSetCorrespondenceTab(tab){
+ memoCorrespondenceTab=tab==="generic"?"generic":"dci";
+ const dci=memoCorrespondenceTab==="dci";
+ $("memoPanelDci").hidden=!dci;
+ $("memoPanelGeneric").hidden=dci;
+ $("memoTabDci").setAttribute("aria-selected",String(dci));
+ $("memoTabGeneric").setAttribute("aria-selected",String(!dci));
+ if(dci)renderEquivalences();else memoRenderGenericSearch();
+}
+function memoRenderGenericSearch(){
+ const target=$("memoGenericResults");if(!target)return;
+ const q=norm($("memoGenericSearch").value.trim());
+ if(!q){target.innerHTML='<p class="memo-equiv-empty">Saisissez un nom pour retrouver les correspondances enregistrées.</p>';return;}
+ const hits=memoEquivRecords().map(g=>({g,names:[...g.names.values()]})).filter(({g,names})=>norm(g.name).includes(q)||names.some(n=>norm(n.name).includes(q)));
+ if(!hits.length){target.innerHTML='<p class="memo-equiv-empty">Aucune correspondance renseignée dans Mémopharm.</p>';return;}
+ target.innerHTML=hits.map(({g,names})=>`<div class="memo-generic-result"><div class="memo-generic-dci">${esc(g.name)}</div><div class="memo-generic-names">${names.map(n=>`<span>${esc(n.name)}</span>`).join('')}</div><p>Correspondances de noms uniquement · statut princeps/générique non vérifié</p></div>`).join('');
+}
 function renderEquivalences(){
  const left=$("equivPrincepsResults"),right=$("equivDciResults");
  if(!left||!right)return;
@@ -4010,7 +4066,7 @@ function renderEquivalences(){
   const doseCount=formGroups.size;
   const countLabel=`${doseCount} ${doseCount===1?'dosage':'dosages'}`;
   return `<div class="memo-equiv-entry memo-equiv-dci-group" data-equiv-dci-key="${esc(norm(g.name))}">
-   <div class="memo-equiv-dci-group-heading">${title}<span class="memo-equiv-dosage-count">${countLabel}</span><button type="button" class="memo-equiv-dci-toggle" aria-expanded="${isOpen?'true':'false'}" aria-label="Afficher les présentations de ${esc(g.name)}"><span class="memo-equiv-chevron memo-equiv-chevron-icons"><span class="memo-equiv-icon-down"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span><span class="memo-equiv-icon-up"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg></span></span></button></div>
+   <button type="button" class="memo-equiv-dci-group-heading" aria-expanded="${isOpen?'true':'false'}" aria-label="Afficher les présentations de ${esc(g.name)}">${title}<span class="memo-equiv-dosage-count">${countLabel}</span><span class="memo-equiv-dci-toggle" aria-expanded="${isOpen?'true':'false'}"><span class="memo-equiv-chevron memo-equiv-chevron-icons"><span class="memo-equiv-icon-down"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span><span class="memo-equiv-icon-up"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg></span></span></span></button>
    <div class="memo-equiv-dci-group-body" ${isOpen?'':'hidden'}>${entries||'<p class="memo-equiv-related">Aucune autre présentation commerciale renseignée pour cette DCI.</p>'}</div>
   </div>`;
  }).join('');
@@ -4018,18 +4074,15 @@ function renderEquivalences(){
   const key=el.dataset.equivSpecialtyKey;
   if(el.open)memoEquivOpenSpecialties.add(key);else memoEquivOpenSpecialties.delete(key);
  }));
- document.querySelectorAll('#equivView .memo-equiv-dci-group-heading').forEach(heading=>{
-  heading.addEventListener('click',e=>{
-   if(e.target.closest('.memo-equiv-dci-toggle'))return;
-   heading.querySelector('.memo-equiv-dci-toggle')?.click();
-  });
- });
- document.querySelectorAll('#equivView .memo-equiv-dci-toggle').forEach(btn=>btn.onclick=()=>{
-  const body=btn.closest('.memo-equiv-dci-group').querySelector('.memo-equiv-dci-group-body');
-  body.hidden=!body.hidden;btn.setAttribute('aria-expanded',String(!body.hidden));
-  const key=btn.closest('[data-equiv-dci-key]').dataset.equivDciKey;
+ document.querySelectorAll('#equivView .memo-equiv-dci-group-heading').forEach(btn=>btn.addEventListener('click',()=>{
+  const group=btn.closest('.memo-equiv-dci-group');
+  const body=group.querySelector('.memo-equiv-dci-group-body');
+  body.hidden=!body.hidden;
+  btn.setAttribute('aria-expanded',String(!body.hidden));
+  btn.querySelector('.memo-equiv-dci-toggle')?.setAttribute('aria-expanded',String(!body.hidden));
+  const key=group.dataset.equivDciKey;
   if(body.hidden)memoEquivOpenDcis.delete(key);else memoEquivOpenDcis.add(key);
- });
+ }));
  document.querySelectorAll('#equivView [data-equiv-open]').forEach(btn=>btn.onclick=e=>{e.stopPropagation();openMedication(btn.dataset.equivOpen)});
  document.querySelectorAll('#equivView [data-copy-cip]').forEach(btn=>btn.onclick=async e=>{
   e.preventDefault();e.stopPropagation();
@@ -6574,7 +6627,11 @@ async function saveCommonSources(){
  pendingSources=null;renderSources();toast("Sources communes enregistrées !");
 }
 
-$("equivNav").onclick=()=>{navigateToView("equiv");$("equivPrincepsSearch").focus()};
+$("equivNav").onclick=()=>{navigateToView("equiv");(memoCorrespondenceTab==="dci"?$("equivPrincepsSearch"):$("memoGenericSearch")).focus()};
+$("memoTabDci").onclick=()=>memoSetCorrespondenceTab("dci");
+$("memoTabGeneric").onclick=()=>memoSetCorrespondenceTab("generic");
+$("memoGenericSearch").addEventListener("input",memoRenderGenericSearch);
+
  ["equivPrincepsSearch","equivDciSearch"].forEach((id)=>{
   $(id).addEventListener("input",()=>{
    const other=id==="equivPrincepsSearch"?"equivDciSearch":"equivPrincepsSearch";
