@@ -2947,6 +2947,22 @@ header .header-admin-actions button,header .header-admin-actions summary{min-hei
   display:inline-block;
 }
 
+
+/* V116.13 — lisibilité, repérage des recherches et accordéons groupés. */
+@media(min-width:1150px){.memo-equiv-page{max-width:1190px}}
+.memo-equiv-result-toolbar{display:flex;justify-content:flex-end;align-items:center;gap:12px;margin:16px 2px -5px;flex-wrap:wrap}
+.memo-equiv-result-toolbar[hidden]{display:none!important}
+#memoGenericCount{margin-right:auto;font-size:.82rem;color:#708276}
+.memo-equiv-tool-action{font-size:.8rem!important;color:#416a54!important;background:transparent!important;border:0!important;padding:6px 8px!important;box-shadow:none!important;cursor:pointer;text-decoration:none}
+.memo-equiv-tool-action:hover{text-decoration:underline}
+.memo-equiv-tool-action:focus-visible{outline:2px solid #6d997e;outline-offset:2px;border-radius:5px}
+.memo-match{background:#f9edbd;color:inherit;border-radius:3px;padding:0 1px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+#memoPanelGeneric .memo-equiv-presentation{padding-top:11px;padding-bottom:11px}
+#memoPanelGeneric .memo-equiv-presentation .memo-equiv-dci-variant{font-size:.94rem;line-height:1.45}
+#memoPanelGeneric .memo-equiv-lab-name{font-size:.76rem;color:#79867e}
+#memoPanelGeneric .memo-equiv-cip-list{margin-top:5px}
+#memoPanelGeneric .memo-pair-half>.memo-equiv-related{align-self:flex-start;font-size:.82rem;color:#89948c;line-height:1.5}
+@media(max-width:730px){.memo-equiv-result-toolbar{gap:5px}.memo-equiv-tool-action{padding:5px!important}}
 </style>
 </head>
 <body>
@@ -3047,6 +3063,7 @@ header .header-admin-actions button,header .header-admin-actions summary{min-hei
     <div id="equivDciResults" class="memo-equiv-column-results" aria-live="polite"></div>
    </section>
   </div>
+  <div class="memo-equiv-result-toolbar" id="memoGenericToolbar" hidden><span id="memoGenericCount" aria-live="polite"></span><button type="button" id="memoExpandAll" class="memo-equiv-tool-action">Tout déplier</button><button type="button" id="memoCollapseAll" class="memo-equiv-tool-action">Tout replier</button></div>
   <div id="memoGenericPaired" class="memo-paired-results" aria-live="polite"></div>
   <div class="memo-equiv-reset"><button id="equivClear" type="button">Effacer la recherche</button></div>
   <p class="memo-equiv-note">Statuts issus exclusivement des fiches molécules et de leurs variantes. Les noms de princeps historiques restent consultables ; leur commercialisation et la substituabilité sont à vérifier.</p>
@@ -4240,11 +4257,27 @@ function memoRenderSpecialtyDci(){
  if(!rows.length){paired.innerHTML='<p class="memo-equiv-empty">Aucune correspondance trouvée dans les fiches spécialités.</p>';return;}
  paired.innerHTML=rows.map(({m,name,dci})=>`<section class="memo-pair-combined memo-dci-combined" aria-label="Correspondance ${esc(name)}">
   <div class="memo-pair-combined-grid">
-   <div class="memo-pair-half"><button type="button" class="memo-pair-specialty-card" data-equiv-open="${esc(m.id)}" title="Ouvrir la fiche spécialité"><span class="memo-pair-card-name">${esc(name)}</span> <span class="memo-pair-card-arrow" aria-hidden="true">↗</span></button></div>
-   <div class="memo-pair-half memo-pair-dci">${dci.map(e=>`<div class="memo-pair-substance"><strong>${esc(e.name)}</strong>${e.dose?`<span>${esc(e.dose)}</span>`:''}</div>`).join('')}</div>
+   <div class="memo-pair-half"><button type="button" class="memo-pair-specialty-card" data-equiv-open="${esc(m.id)}" title="Ouvrir la fiche spécialité"><span class="memo-pair-card-name">${memoHighlight(name,q)}</span> <span class="memo-pair-card-arrow" aria-hidden="true">↗</span></button></div>
+   <div class="memo-pair-half memo-pair-dci">${dci.map(e=>`<div class="memo-pair-substance"><strong>${memoHighlight(e.name,q)}</strong>${e.dose?`<span>${esc(e.dose)}</span>`:''}</div>`).join('')}</div>
   </div>
  </section>`).join('');
  paired.querySelectorAll('[data-equiv-open]').forEach(btn=>btn.onclick=()=>openMedication(btn.dataset.equivOpen));
+}
+// Surlignage du fragment recherché, sans injecter de HTML provenant de la saisie.
+function memoHighlight(value,query){
+ const original=String(value||''),q=norm(String(query||'').trim());
+ if(!q)return esc(original);
+ const chars=[...original],folded=[],starts=[];
+ chars.forEach((c,i)=>{for(const x of norm(c)){folded.push(x);starts.push(i)}});
+ const idx=folded.join('').indexOf(q);
+ if(idx<0)return esc(original);
+ const begin=starts[idx],end=starts[Math.min(idx+q.length-1,starts.length-1)]+1;
+ return esc(chars.slice(0,begin).join(''))+'<mark class="memo-match">'+esc(chars.slice(begin,end).join(''))+'</mark>'+esc(chars.slice(end).join(''));
+}
+function memoUpdateGenericToolbar(count){
+ const toolbar=$('memoGenericToolbar');if(!toolbar)return;
+ toolbar.hidden=!count;
+ $('memoGenericCount').textContent=count+' '+(count===1?'molécule trouvée':'molécules trouvées');
 }
 function memoEquivChevron(){
  return `<span class="memo-equiv-chevron memo-equiv-chevron-icons" aria-hidden="true"><span class="memo-equiv-icon-down"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span><span class="memo-equiv-icon-up"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg></span></span>`;
@@ -4252,14 +4285,15 @@ function memoEquivChevron(){
 function renderEquivalences(){
  const paired=$("memoGenericPaired");if(!paired)return;
  const q=norm((($('equivPrincepsSearch')?.value||$('equivDciSearch')?.value||'')).trim()).trim();
- if(!q){paired.innerHTML='<p class="memo-equiv-empty">Recherchez un princeps, un générique ou une molécule pour afficher les correspondances.</p>';return;}
+ if(!q){memoUpdateGenericToolbar(0);paired.innerHTML='<p class="memo-equiv-empty">Recherchez un princeps, un générique ou une molécule pour afficher les correspondances.</p>';return;}
  const hits=memoEquivRecords().filter(g=>norm(g.name).includes(q)||[...g.names.values()].some(n=>norm(n.name).includes(q)));
  hits.sort((a,b)=>a.name.localeCompare(b.name,'fr'));
- if(!hits.length){paired.innerHTML='<p class="memo-equiv-empty">Aucune correspondance renseignée dans les fiches molécules.</p>';return;}
+ if(!hits.length){memoUpdateGenericToolbar(0);paired.innerHTML='<p class="memo-equiv-empty">Aucune correspondance renseignée dans les fiches molécules.</p>';return;}
+ memoUpdateGenericToolbar(hits.length);
  const makeEntry=(g,n)=>{
   const key=norm(g.name)+'|'+norm(n.name),isOpen=memoEquivOpenSpecialties.has(key);
   const details=(n.nsfp?`<div class="memo-equiv-related">${memoPrincepsDisplay(g.root,n.name)} — source du statut</div>`:'')+(n.items.length?memoEquivPresentationDetails(n.items):'<p class="memo-equiv-related">Nom de princeps conservé dans la fiche molécule, sans présentation actuelle renseignée. Commercialisation à vérifier.</p>');
-  return `<details class="memo-equiv-entry" data-equiv-specialty-key="${esc(key)}" ${isOpen?'open':''}><summary><span>${n.nsfp?memoPrincepsDisplay(g.root,n.name):esc(n.name)}${n.legacy&&!n.nsfp?' <small class="memo-legacy-label">historique / à vérifier</small>':''}</span>${memoEquivChevron()}</summary><div class="memo-equiv-entry-body">${details}</div></details>`;
+  return `<details class="memo-equiv-entry" data-equiv-specialty-key="${esc(key)}" ${isOpen?'open':''}><summary><span>${n.nsfp?memoPrincepsDisplay(g.root,n.name):memoHighlight(n.name,q)}${n.legacy&&!n.nsfp?' <small class="memo-legacy-label">historique / à vérifier</small>':''}</span>${memoEquivChevron()}</summary><div class="memo-equiv-entry-body">${details}</div></details>`;
  };
  paired.innerHTML=hits.map(g=>{
   const names=[...g.names.values()].sort((a,b)=>a.name.localeCompare(b.name,'fr'));
@@ -4269,8 +4303,12 @@ function renderEquivalences(){
   const left=princeps.map(n=>makeEntry(g,n)).join('')||'<p class="memo-equiv-related">Aucun princeps identifié dans la fiche molécule.</p>';
   const right=generiques.map(n=>makeEntry(g,n)).join('')||'<p class="memo-equiv-related">Aucun générique identifié dans la fiche molécule.</p>';
   const other=unknown.length?`<div class="memo-pair-uncategorized"><span>Statut non renseigné :</span> ${unknown.map(n=>esc(n.name)).join(' · ')}</div>`:'';
-  return `<section class="memo-pair-combined" aria-label="Correspondances ${esc(g.name)}"><div class="memo-pair-combined-title">${esc(g.name)}</div><div class="memo-pair-combined-grid"><div class="memo-pair-half">${left}</div><div class="memo-pair-half">${right}</div></div>${other}</section>`;
+  return `<section class="memo-pair-combined" aria-label="Correspondances ${esc(g.name)}"><div class="memo-pair-combined-title">${memoHighlight(g.name,q)}</div><div class="memo-pair-combined-grid"><div class="memo-pair-half">${left}</div><div class="memo-pair-half">${right}</div></div>${other}</section>`;
  }).join('');
+ // Les contrôles globaux n'agissent que sur les accordéons actuellement visibles.
+ const expand=$('memoExpandAll'),collapse=$('memoCollapseAll');
+ if(expand)expand.onclick=()=>paired.querySelectorAll('details[data-equiv-specialty-key]').forEach(el=>{el.open=true});
+ if(collapse)collapse.onclick=()=>paired.querySelectorAll('details[data-equiv-specialty-key]').forEach(el=>{el.open=false});
  paired.querySelectorAll('.memo-princeps-source').forEach(a=>a.addEventListener('click',e=>e.stopPropagation()));
  paired.querySelectorAll('[data-equiv-specialty-key]').forEach(el=>el.addEventListener('toggle',()=>{const key=el.dataset.equivSpecialtyKey;if(el.open)memoEquivOpenSpecialties.add(key);else memoEquivOpenSpecialties.delete(key)}));
  paired.querySelectorAll('[data-equiv-open]').forEach(btn=>btn.onclick=e=>{e.stopPropagation();openMedication(btn.dataset.equivOpen)});
