@@ -2832,6 +2832,15 @@ header .header-action-stack .header-actions{display:flex;align-items:center;gap:
 header .header-action-stack .header-actions>button:not(.admin-lock),header .header-action-stack .header-actions>details>summary{display:inline-flex;align-items:center;justify-content:center;min-height:39px;padding:9px 14px;border-radius:10px;line-height:1.2;white-space:nowrap;box-sizing:border-box}
 header .header-admin-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 header .header-admin-actions button,header .header-admin-actions summary{min-height:39px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center}
+
+/* V116.8 — Cartes de résultats Spécialités ⇋ DCI compactes, sans sous-en-têtes ni séparateur horizontal. */
+#memoPanelDci .memo-dci-combined .memo-pair-half{padding:8px 13px;gap:3px;justify-content:center}
+#memoPanelDci .memo-dci-combined .memo-pair-link{padding:2px 0;line-height:1.35}
+#memoPanelDci .memo-dci-combined .memo-pair-dci{gap:3px}
+#memoPanelDci .memo-dci-combined .memo-pair-substance{padding:2px 0;line-height:1.35}
+#memoPanelDci .memo-dci-combined .memo-pair-combined-grid{border-top:0;border-bottom:0}
+#memoPanelDci .memo-dci-combined{min-height:0}
+@media(max-width:730px){#memoPanelDci .memo-dci-combined .memo-pair-half{padding:7px 9px}}
 </style>
 </head>
 <body>
@@ -4125,8 +4134,8 @@ function memoRenderSpecialtyDci(){
  if(!rows.length){paired.innerHTML='<p class="memo-equiv-empty">Aucune correspondance trouvée dans les fiches spécialités.</p>';return;}
  paired.innerHTML=rows.map(({m,name,dci})=>`<section class="memo-pair-combined memo-dci-combined" aria-label="Correspondance ${esc(name)}">
   <div class="memo-pair-combined-grid">
-   <div class="memo-pair-half"><div class="memo-pair-half-title">Spécialité</div><button type="button" class="memo-pair-link" data-equiv-open="${esc(m.id)}" title="Ouvrir la fiche spécialité">${esc(name)} <span aria-hidden="true">↗</span></button></div>
-   <div class="memo-pair-half memo-pair-dci"><div class="memo-pair-half-title">DCI</div>${dci.map(e=>`<div class="memo-pair-substance"><strong>${esc(e.name)}</strong>${e.dose?`<span>${esc(e.dose)}</span>`:''}</div>`).join('')}</div>
+   <div class="memo-pair-half"><button type="button" class="memo-pair-link" data-equiv-open="${esc(m.id)}" title="Ouvrir la fiche spécialité">${esc(name)} <span aria-hidden="true">↗</span></button></div>
+   <div class="memo-pair-half memo-pair-dci">${dci.map(e=>`<div class="memo-pair-substance"><strong>${esc(e.name)}</strong>${e.dose?`<span>${esc(e.dose)}</span>`:''}</div>`).join('')}</div>
   </div>
  </section>`).join('');
  paired.querySelectorAll('[data-equiv-open]').forEach(btn=>btn.onclick=()=>openMedication(btn.dataset.equivOpen));
