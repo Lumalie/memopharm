@@ -3156,6 +3156,24 @@ header .header-admin-actions button,header .header-admin-actions summary{min-hei
 #exploreCards .explore-hits .explore-group-result-tags{margin:2px 0 2px 20px!important;display:flex;flex-wrap:wrap;gap:4px!important}
 #exploreCards .explore-hits .explore-group-result-tags .badge-button{padding:2px 6px!important;line-height:1.25!important}
 
+
+/* V116.26 — Explorer : arborescence permanente à gauche, résultats à droite */
+.memo-explorer-split{display:grid;grid-template-columns:minmax(230px,30%) minmax(0,1fr);gap:20px;align-items:start;margin-top:14px}
+.memo-explorer-sidebar,.memo-explorer-results{min-width:0}
+.memo-explorer-sidebar{border:1px solid #dce9e0;border-radius:12px;background:#fafcfb;padding:12px 10px;max-height:calc(100vh - 120px);overflow:auto;position:sticky;top:18px}
+.memo-explorer-sidebar>h3,.memo-explorer-results>h3{font-size:.94rem;color:#396c56;margin:2px 4px 12px}
+.memo-explorer-sidebar .explore-tree{gap:5px}
+.memo-explorer-sidebar .explore-tree-line{padding:4px 3px;gap:3px}
+.memo-explorer-sidebar .explore-tree-name{font-size:.84rem!important;overflow-wrap:anywhere;text-align:left}
+.memo-explorer-sidebar .explore-tree-tags{gap:3px;margin-top:2px}
+.memo-explorer-sidebar .explore-tree-tags .badge-button{font-size:.65rem;padding:2px 5px}
+.memo-explorer-sidebar .explore-tree-children{padding-left:9px!important;margin-top:4px}
+.memo-explorer-sidebar .explore-tree-toggle{width:21px;min-width:21px}
+.memo-explorer-sidebar .explore-tree-leaf-space{width:21px}
+.memo-explorer-results #exploreCards{min-width:0}
+.memo-explorer-results #exploreCards .explore-hits{grid-template-columns:minmax(0,1fr)}
+.memo-explorer-empty-results{color:#75877d;background:#f7faf8;border:1px dashed #d6e5dc;border-radius:10px;padding:22px 16px;font-size:.9rem}
+@media(max-width:780px){.memo-explorer-split{grid-template-columns:1fr;gap:15px}.memo-explorer-sidebar{position:static;max-height:320px}.memo-explorer-results>h3{margin-top:5px}}
 </style>
 </head>
 <body>
@@ -3262,7 +3280,7 @@ header .header-admin-actions button,header .header-admin-actions summary{min-hei
   <p class="memo-equiv-note">Statuts issus exclusivement des fiches molécules et de leurs variantes. Les noms de princeps historiques restent consultables ; leur commercialisation et la substituabilité sont à vérifier.</p>
   </div>
  </div>
- </section><section id="exploreView" class="hidden"><div class="explore-heading"><h2>Explorer les fiches</h2><p>Parcourez les fiches communes et leurs spécialités associées.</p></div><div class="explore-search"><label for="exploreSearch">Rechercher dans les fiches</label><div class="explore-search-row"><input id="exploreSearch" type="search" autocomplete="off" placeholder="Ex. : amoxicilline, oubli de prise, CIP, conservation…"><button id="clearExploreSearch" type="button">Effacer</button></div><p id="exploreSearchCount" class="muted" aria-live="polite"></p></div><div class="explore-controls"><label>Classe thérapeutique<select id="exploreClass"></select></label><label>Indication thérapeutique<select id="exploreIndication"></select></label><label>Forme pharmaceutique<select id="exploreForm"></select></label><label>Badge pharmaceutique<select id="exploreBadge"><option value="">Tous les badges</option><option value="mte">⚠ MTE</option><option value="photo">☀ Photosensibilisant</option><option value="exception">EXC · Médicament d’exception</option><option value="stup">STUP · Stupéfiant</option><option value="cold">❄ Conservation au froid</option><option value="after">◷ Conservation après ouverture</option><option value="listI">Liste I</option><option value="listII">Liste II</option></select></label><button id="resetExplore" type="button">Effacer les filtres</button></div> <div id="memoThemeIntro" class="memo-theme-intro hidden" aria-live="polite"></div><div id="exploreCards" class="explore-cards"></div></section><section id="sourcesView" class="hidden"><div class="explore-heading"><h2>Sources documentaires</h2><p>Références communes utilisées pour construire et vérifier les fiches de Mémopharm.</p></div><div id="sourcesList" class="sources-list"></div><div id="sourcesAdmin" class="panel hidden" style="padding:18px;margin-top:18px"></div></section><div class="memo-v43-footer"><strong>📖 Une ressource pratique pour les professionnels de santé</strong><p>Mémopharm est une base documentaire indépendante conçue pour faciliter l’accès aux informations essentielles sur les médicaments et accompagner la pratique quotidienne des professionnels de santé.</p><p>Les fiches sont enrichies progressivement à partir de sources de référence. Les dates de mise à jour et de vérification permettent d’en apprécier l’actualité. Pour toute décision de prise en charge, les informations doivent être confrontées aux référentiels officiels en vigueur et aux données de la spécialité concernée.</p></div>
+ </section><section id="exploreView" class="hidden"><div class="explore-heading"><h2>Explorer les fiches</h2><p>Parcourez les fiches communes et leurs spécialités associées.</p></div><div class="explore-search"><label for="exploreSearch">Rechercher dans les fiches</label><div class="explore-search-row"><input id="exploreSearch" type="search" autocomplete="off" placeholder="Ex. : amoxicilline, oubli de prise, CIP, conservation…"><button id="clearExploreSearch" type="button">Effacer</button></div><p id="exploreSearchCount" class="muted" aria-live="polite"></p></div><div class="explore-controls"><label>Classe thérapeutique<select id="exploreClass"></select></label><label>Indication thérapeutique<select id="exploreIndication"></select></label><label>Forme pharmaceutique<select id="exploreForm"></select></label><label>Badge pharmaceutique<select id="exploreBadge"><option value="">Tous les badges</option><option value="mte">⚠ MTE</option><option value="photo">☀ Photosensibilisant</option><option value="exception">EXC · Médicament d’exception</option><option value="stup">STUP · Stupéfiant</option><option value="cold">❄ Conservation au froid</option><option value="after">◷ Conservation après ouverture</option><option value="listI">Liste I</option><option value="listII">Liste II</option></select></label><button id="resetExplore" type="button">Effacer les filtres</button></div> <div id="memoThemeIntro" class="memo-theme-intro hidden" aria-live="polite"></div><div class="memo-explorer-split"><aside class="memo-explorer-sidebar" aria-label="Arborescence des fiches"><h3>Arborescence</h3><div id="exploreSidebarTree"></div></aside><div class="memo-explorer-results"><h3>Résultats par type de fiche</h3><div id="exploreCards" class="explore-cards"></div></div></div></section><section id="sourcesView" class="hidden"><div class="explore-heading"><h2>Sources documentaires</h2><p>Références communes utilisées pour construire et vérifier les fiches de Mémopharm.</p></div><div id="sourcesList" class="sources-list"></div><div id="sourcesAdmin" class="panel hidden" style="padding:18px;margin-top:18px"></div></section><div class="memo-v43-footer"><strong>📖 Une ressource pratique pour les professionnels de santé</strong><p>Mémopharm est une base documentaire indépendante conçue pour faciliter l’accès aux informations essentielles sur les médicaments et accompagner la pratique quotidienne des professionnels de santé.</p><p>Les fiches sont enrichies progressivement à partir de sources de référence. Les dates de mise à jour et de vérification permettent d’en apprécier l’actualité. Pour toute décision de prise en charge, les informations doivent être confrontées aux référentiels officiels en vigueur et aux données de la spécialité concernée.</p></div>
 <div id="dashMobileToolbar" role="toolbar" aria-label="Outils de modification de la liste">
 <button type="button" data-dash-mobile="outdent" aria-label="Retirer un niveau">← Retrait</button>
 <button type="button" data-dash-mobile="indent" aria-label="Ajouter un niveau">→ Tabulation</button>
@@ -4007,6 +4025,31 @@ function memoRenderThemeList(entries,kind){
  return true;
 }
 function renderExplorer(){
+ // V116.26 : le sommaire historique reste dans une colonne indépendante.
+ // Le rendu de droite conserve intégralement son moteur de recherche et ses aperçus.
+ if(!window.__memoBuildingExplorerSidebar){
+  const searchInput=$("exploreSearch");
+  const savedSearch=searchInput.value;
+  const filterIds=["exploreClass","exploreIndication","exploreForm","exploreBadge"];
+  const savedFilters=filterIds.map(id=>$(id)?.value||"");
+  window.__memoBuildingExplorerSidebar=true;
+  try{
+   searchInput.value="";
+   filterIds.forEach(id=>{if($(id))$(id).value=""});
+   renderExplorer();
+   const side=$("exploreSidebarTree"),cards=$("exploreCards");
+   if(side&&cards){side.replaceChildren(...Array.from(cards.childNodes));}
+  }finally{
+   searchInput.value=savedSearch;
+   filterIds.forEach((id,i)=>{if($(id))$(id).value=savedFilters[i]});
+   window.__memoBuildingExplorerSidebar=false;
+  }
+  if(!savedSearch&&!savedFilters.some(Boolean)){
+   $("exploreCards").innerHTML='<div class="memo-explorer-empty-results">Saisissez un terme dans la recherche pour afficher ici les fiches correspondantes, classées par type.</div>';
+   $("exploreSearchCount").textContent="";
+   return;
+  }
+ }
  const entries=publicMeds();
  const classes=[...new Set(entries.flatMap(explorerClasses).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"fr"));
  const indications=[...new Set(entries.flatMap(indicationTags))].sort((a,b)=>a.localeCompare(b,"fr"));
@@ -4805,7 +4848,7 @@ function previewSearchResult(item){
  // closest variant rather than waiting for the complete dosage.
  const defaultChild=!rubricTokens.length&&doseChildren.length?doseChildren.slice().sort((a,b)=>String(a.dosage||'').localeCompare(String(b.dosage||''),'fr',{numeric:true}))[0]:null;
  const selectedChild=forcedChild||(matchingChildren[0]?.child||defaultChild||null);
- const childSections=selectedChild?(selectedChild.sections||[]).filter(x=>x.enabled!==false&&!isDocumentationSection(x)&&String(x.content||'').trim()).map(x=>resolveSharedSection(selectedChild,x)):[];
+ const childSections=selectedChild?(selectedChild.sections||[]).filter(x=>x.enabled!==false&&!isDocumentationSection(x)).map(x=>resolveSharedSection(selectedChild,x)).filter(x=>String(x.content||'').trim()):[];
  const childMatch=rubricTokens.length?childSections.find(x=>rubricTokens.every(t=>{const label=norm(x.id+' '+x.title);return label.includes(t)||Object.entries(sectionAliases).some(([key,arr])=>arr.includes(t)&&label.includes(key))})):null;
  const targeted=!!rubricTokens.length;
  const safeSection=x=>renderSection(x).replace(/\sid="section-[^"]*"/g,'').replace(/(<section\b[^>]*>)\s*<h3>[^<]*<\/h3>/i,'$1');
@@ -4820,8 +4863,12 @@ function previewSearchResult(item){
   const banner=`<div class="memo-selected-presentation"><span class="memo-selected-caption">PRÉSENTATION SÉLECTIONNÉE</span><button type="button" class="memo-preview-selected-link" data-open-selected-dosage="${esc(selectedChild.id)}" title="Ouvrir cette présentation dans la fiche molécule">${esc([displayMedName(m),dose].filter(Boolean).join(' '))}${form?' — '+esc(form):''}</button>${ficheDateLabel(selectedChild)}</div>`;
   const opts=memoV44Options(selectedChild),chosen=memoV44Chosen(selectedChild)||opts[0];
   const presentation=targeted?'':`<div class="memo-v109-commercial"><div class="memo-v109-choice"><select data-v109-choice aria-label="Choisir la présentation commerciale">${opts.map(o=>`<option value="${esc(o.key)}" ${o.key===chosen?.key?'selected':''}>${esc(presentationLabel(o.p,selectedChild,Number(o.key.split(':')[0])))}</option>`).join('')}</select>${memoV102CommercialStorageBadges(chosen?.p)}</div><div class="memo-v109-commercial-content">${chosen?presentationInfo(chosen.p,selectedChild):''}</div></div>`;
-  const content=targeted?(childMatch?[childMatch]:[]):childSections;
-  return `${banner}${presentation}${content.length?`<div class="memo-v109-dose-rubrics">${sectionList(content,m,selectedChild)}</div>`:''}`;
+  // Une rubrique recherchée peut appartenir à la fiche molécule mère,
+  // même lorsque l’aperçu a sélectionné une variante de dosage.
+  // Ne jamais laisser un aperçu « amox 500 poso » vide pour cette raison.
+  const content=targeted?(childMatch?[childMatch]:targetSection?[targetSection]:[]):childSections;
+  const contentOwner=targeted&&!childMatch&&targetSection?m:selectedChild;
+  return `${banner}${presentation}${content.length?`<div class="memo-v109-dose-rubrics">${sectionList(content,m,contentOwner===m?null:selectedChild)}</div>`:''}`;
  })():'';
  const previewBodyHtml=isSpecialiteFiche(m)?`${previewGeneralHtml}${previewSpecialtyHtml}`:isMolecule(m)?selectedChild?childPreviewHtml:previewGeneralHtml:validSections.map(x=>rubric(x,m)).join('');
 
