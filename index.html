@@ -3984,10 +3984,16 @@ function renderEquivalences(){
  }).join('');
  right.innerHTML=hits.map(g=>{
   const names=g.rootMatch?[...g.names.values()]:g.matchingNames;
-  const filteredItems=[...g.names.values()].flatMap(n=>n.items);
+  // Recherche par spécialité : la colonne DCI ne doit pas répéter les
+  // conditionnements de la spécialité recherchée (déjà affichés à gauche).
+  // Les autres spécialités liées à la même DCI restent visibles à droite.
+  const excludedCommercialNames=new Set(g.matchingNames.map(n=>norm(n.name)));
+  const filteredItems=[...g.names.values()]
+   .filter(n=>!excludedCommercialNames.has(norm(n.name)) || !g.matchingNames.length)
+   .flatMap(n=>n.items);
   const formulations=[...g.formulations.values()].filter(f=>f.items.some(item=>filteredItems.includes(item)));
   const formGroups=new Map();
-  formulations.forEach(f=>f.items.forEach(item=>{
+  formulations.forEach(f=>f.items.filter(item=>filteredItems.includes(item)).forEach(item=>{
    const label=memoEquivFormDose(item),key=norm(label);
    if(!formGroups.has(key))formGroups.set(key,{label,items:[]});
    formGroups.get(key).items.push(item);
@@ -4005,7 +4011,7 @@ function renderEquivalences(){
   const countLabel=`${doseCount} ${doseCount===1?'dosage':'dosages'}`;
   return `<div class="memo-equiv-entry memo-equiv-dci-group" data-equiv-dci-key="${esc(norm(g.name))}">
    <div class="memo-equiv-dci-group-heading">${title}<span class="memo-equiv-dosage-count">${countLabel}</span><button type="button" class="memo-equiv-dci-toggle" aria-expanded="${isOpen?'true':'false'}" aria-label="Afficher les présentations de ${esc(g.name)}"><span class="memo-equiv-chevron memo-equiv-chevron-icons"><span class="memo-equiv-icon-down"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span><span class="memo-equiv-icon-up"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg></span></span></button></div>
-   <div class="memo-equiv-dci-group-body" ${isOpen?'':'hidden'}>${g.root?`<button type="button" class="memo-equiv-open-fiche memo-equiv-root-link" data-equiv-open="${esc(g.root.id)}">Ouvrir la fiche molécule ↗</button>`:''}${entries||'<p class="memo-equiv-related">Aucune présentation détaillée.</p>'}</div>
+   <div class="memo-equiv-dci-group-body" ${isOpen?'':'hidden'}>${entries||'<p class="memo-equiv-related">Aucune autre présentation commerciale renseignée pour cette DCI.</p>'}</div>
   </div>`;
  }).join('');
  document.querySelectorAll('#equivView [data-equiv-specialty-key]').forEach(el=>el.addEventListener('toggle',()=>{
