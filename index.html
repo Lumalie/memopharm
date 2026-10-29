@@ -3061,6 +3061,15 @@ header .header-admin-actions button,header .header-admin-actions summary{min-hei
   margin-top:6px;
 }
 
+
+/* V116.19 — Explorer : résultats épurés, badges des fiches molécules */
+#exploreCards .explore-hit-grouped .explore-hit-tags{display:flex;flex-wrap:wrap;gap:5px;margin:1px 0 3px 23px;align-items:center}
+#exploreCards .explore-hit-grouped .explore-hit-tags .badge-button{font-size:.76rem}
+#exploreCards .explore-hit-grouped{gap:1px!important}
+#exploreCards .explore-hit-grouped .explore-hit-open{padding-block:3px!important}
+#exploreCards .explore-group-result{padding-bottom:7px}
+#exploreCards .explore-group-result-tags{margin-top:3px}
+
 </style>
 </head>
 <body>
@@ -4052,7 +4061,7 @@ function renderExplorer(){
        <button type="button" class="explore-group-result-name" data-open-med="${esc(m.id)}">${esc(m.name)}</button>
        
       </div>
-      ${ancestorNodes?`<div class="explore-group-ancestors"><span aria-hidden="true">↖</span> ${ancestorNodes}</div>`:""}
+      
       ${tags?`<div class="explore-group-result-tags">${tags}</div>`:""}
       <div class="explore-search-child-nested explore-search-root-children" hidden>${renderSearchChildren(m.id)}</div>
      </article>`;
@@ -4078,10 +4087,11 @@ function renderExplorer(){
     <div class="explore-hit-main">
      <button type="button" class="explore-hit-open" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec?.id||"")}" data-hit-pres="${hit.presentation===null?"":hit.presentation}" aria-label="Ouvrir ${esc(isPresentation?presTitle:m.name)}${sec?" à la rubrique "+esc(sec.title):""}">
       <span class="explore-hit-heading"><span class="explore-hit-symbol" aria-hidden="true">${group?"▸":"●"}</span><strong class="explore-hit-name">${esc(isPresentation?presTitle:searchResultLabel(hit))}</strong><span class="explore-hit-arrow" aria-hidden="true">↗</span></span>
-      ${isPresentation?"":`<span class="explore-hit-meta">${group?"Fiche groupe":isMolecule(m)?"Fiche molécule":isVariantFiche(m)?"Variante de présentation":"Fiche spécialité"} · ${esc(m.category||"Sans famille")}</span><span class="explore-hit-path">${path.map((part,i)=>`<span>${esc(part)}</span>${i<path.length-1?'<span aria-hidden="true">›</span>':''}`).join("")}</span>`}
+      
      </button>
      ${isPresentation?`<div class="explore-pres-info">${presBadge}${presLab}${cipButton}</div>`:""}
     </div>
+    ${isMolecule(m)?`<div class="explore-hit-tags">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}</div>`:""}
     ${preview}
     ${presentationToggle}
    </article>`;
