@@ -3925,16 +3925,22 @@ function cipConditionnements(p){
  return p?.cip?[{cip:String(p.cip).trim(),pack:String(p.pack||"").trim()}]:[];
 }
 function cipBadges(p){return cipConditionnements(p).filter(x=>x.cip).map(x=>`<span class="cip-pack-item"><button type="button" class="explore-cip-copy" data-copy-cip="${esc(x.cip)}" title="${esc(x.pack||`Copier le CIP ${x.cip}`)}" aria-label="Copier le CIP ${esc(x.cip)}${x.pack?` — ${esc(x.pack)}`:""}"><span>CIP</span> ${esc(x.cip)} <span aria-hidden="true">⧉</span></button></span>`).join("")}
-// Presentation et badges communs aux résultats et aux enfants d'arborescence.
-function searchPresentationLine(m,p,i,child=false){
+// V116.39 — Intitulés de présentations centralisés.
+// checkFull conserve la règle historique des résultats directs (nom + laboratoire).
+function explorerPresentationTitle(m,p,checkFull=false){
  const name=String(p.name||m.name||'').trim();
  const lab=p.presentationKind==='generic'&&p.lab&&!norm(name).includes(norm(p.lab))?' '+p.lab:'';
- const dose=String(p.dosage||m.dosage||'').trim(),form=String(p.form||m.form||'').trim();
- const full=name+lab;
- const title=[full,...(dose&&!norm(full).includes(norm(dose))?[dose]:[]),...(form&&!norm(full).includes(norm(form))?[form]:[])].filter(Boolean).join(' · ');
+ const dose=String(p.dosage||m.dosage||'').trim();
+ const form=String(p.form||m.form||'').trim();
+ const full=name+lab,check=checkFull?full:name;
+ return [full,...(dose&&!norm(check).includes(norm(dose))?[dose]:[]),...(form&&!norm(check).includes(norm(form))?[form]:[])].filter(Boolean).join(' · ');
+}
+// Presentation et badges communs aux résultats et aux enfants d'arborescence.
+function searchPresentationLine(m,p,i,child=false){
+ const title=explorerPresentationTitle(m,p,true);
  const princeps=p.presentationKind==='princeps'?'<span class="explore-pres-princeps">Princeps</span>':'';
  const cip=cipBadges(p);
- const badges=explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join('')+indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join('');
+ const badges=explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>explorerFilterBadge("class",t)).join('')+indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>explorerFilterBadge("indication",t)).join('');
  return `<div class="search-pres-direct ${child?'search-pres-child':''}"><button type="button" class="search-pres-title" data-open-med="${esc(m.id)}" data-hit-pres="${i}" aria-label="Ouvrir ${esc(title)}"><span aria-hidden="true">●</span> ${esc(title)} <span aria-hidden="true">↗</span></button><div class="search-pres-details">${princeps}${cip}${badges?`<div class="search-pres-badges">${badges}</div>`:''}</div></div>`;
 }
 let explorerVisibleLimit=20;
@@ -4102,13 +4108,19 @@ function explorerSearchMatches(query){
 }
 // V116.33 — Classement des résultats Explorer : fonctions pures, réutilisables.
 // Les pondérations et l'ordre des catégories sont strictement conservés.
+// V116.39 — Un seul composant HTML pour les badges de filtres d’Explorer.
+function explorerFilterBadge(kind,value){
+ const config={class:["badge-class","data-filter-class"],indication:["badge-indication","data-filter-ind"],form:["badge-form","data-filter-form"]}[kind];
+ if(!config)return "";
+ return `<button type="button" class="badge-button ${config[0]}" ${config[1]}="${esc(value)}">${esc(value)}</button>`;
+}
 // V116.34 — Composant commun des badges de recherche Explorer.
 function explorerResultBadges(m){
  const classes=explorerClasses(m).filter(t=>explorerClassVisible(m,t))
-  .map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("");
+  .map(t=>explorerFilterBadge("class",t)).join("");
  const hidden=(m.sections||[])[0]?.explorerHiddenIndications||[];
  const indications=indicationTags(m).filter(t=>!hidden.includes(t))
-  .map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("");
+  .map(t=>explorerFilterBadge("indication",t)).join("");
  return classes+indications;
 }
 function explorerResultCategory(g){
@@ -4159,6 +4171,17 @@ function explorerPrepareResults(hits,query,visibleLimit){
  return {hitGroups,visibleHits,groupedVisible};
 }
 
+// V116.39 — Clics sur les badges : même logique dans les deux colonnes.
+function explorerBindFilterBadges(container,classSel,indSel,formSel=null){
+ const bindings=[["class",classSel],["ind",indSel],["form",formSel]];
+ for(const [kind,select] of bindings){
+  if(!select)continue;
+  container.querySelectorAll(`[data-filter-${kind}]`).forEach(button=>button.onclick=()=>{
+   select.value=button.getAttribute(`data-filter-${kind}`);
+   renderExplorer();
+  });
+ }
+}
 // V116.36 — Rendu des résultats détaillés, indépendant de la construction de l’arborescence.
 function renderExplorerSearchResults(entries,filtered,searchMatches,query,classSel,indSel){
   // V116.37 — Le terme normalisé doit être disponible dans le rendu des fiches
@@ -4192,7 +4215,7 @@ function renderExplorerSearchResults(entries,filtered,searchMatches,query,classS
      if(child.entry_type==="specialite"&&presentations.length){
       return `<div class="explore-search-child explore-search-child-med explore-search-child-specialty">${presentations.map(({p,i})=>searchPresentationLine(child,p,i,true)).join("")}</div>`;
      }
-     const badges=explorerClasses(child).filter(t=>explorerClassVisible(child,t)).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")+indicationTags(child).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("");
+     const badges=explorerClasses(child).filter(t=>explorerClassVisible(child,t)).map(t=>explorerFilterBadge("class",t)).join("")+indicationTags(child).map(t=>explorerFilterBadge("indication",t)).join("");
      return `<div class="explore-search-child explore-search-child-med ${isMolecule(child)?"explore-result-molecule":isVariantFiche(child)?"explore-result-dose":isSpecialiteFiche(child)?"explore-result-specialite":"explore-result-presentation"}"><div class="explore-search-child-line"><span class="explore-search-child-spacer" aria-hidden="true"></span><button type="button" class="explore-search-child-link" data-open-med="${esc(child.id)}">● ${esc(displayMedName(child))} ↗</button></div>${badges?`<div class="search-pres-badges">${badges}</div>`:''}</div>`;
     }
     return `<div class="explore-search-child ${isGroup(child)?"explore-search-child-group":"explore-search-child-med"}">
@@ -4239,11 +4262,7 @@ function renderExplorerSearchResults(entries,filtered,searchMatches,query,classS
    const presentationRows=hitGroup.presentations.map(pHit=>{
     const presentation=m.presentations?.[pHit.presentation];
     if(!presentation)return "";
-    const name=String(presentation.name||m.name||"").trim();
-    const lab=presentation.presentationKind==="generic"&&presentation.lab&&!norm(name).includes(norm(presentation.lab))?" "+presentation.lab:"";
-    const dose=String(presentation.dosage||m.dosage||"").trim();
-    const form=String(presentation.form||m.form||"").trim();
-    const title=[name+lab,...(dose&&!norm(name).includes(norm(dose))?[dose]:[]),...(form&&!norm(name).includes(norm(form))?[form]:[])].filter(Boolean).join(" · ");
+    const title=explorerPresentationTitle(m,presentation);
     const princeps=presentation.presentationKind==="princeps"?'<span class="explore-pres-princeps">Princeps</span>':"";
     const cip=cipBadges(presentation);
     return `<div class="explore-grouped-presentation"><button type="button" class="explore-grouped-presentation-link" data-open-med="${esc(m.id)}" data-hit-pres="${pHit.presentation}" data-hit-section="${esc(pHit.section?.id||"")}"><span aria-hidden="true">●</span> ${esc(title)} <span aria-hidden="true">↗</span></button><div class="explore-pres-info">${princeps}${cip}</div></div>`;
@@ -4290,8 +4309,7 @@ function renderExplorerSearchResults(entries,filtered,searchMatches,query,classS
    button.querySelector("span").textContent=expanded?"▾":"▸";
    button.setAttribute("aria-label",(expanded?"Replier ":"Déplier ")+(row.querySelector("[data-open-med]")?.textContent||"le groupe"));
   });
-  $("exploreCards").querySelectorAll("[data-filter-class]").forEach(b=>b.onclick=()=>{classSel.value=b.dataset.filterClass;renderExplorer()});
-  $("exploreCards").querySelectorAll("[data-filter-ind]").forEach(b=>b.onclick=()=>{indSel.value=b.dataset.filterInd;renderExplorer()});
+  explorerBindFilterBadges($("exploreCards"),classSel,indSel);
   const showMore=$("exploreShowMore");if(showMore)showMore.onclick=()=>{explorerVisibleLimit+=20;renderExplorer()};
   $("exploreCards").querySelectorAll("[data-copy-cip]").forEach(button=>button.onclick=async e=>{
    e.stopPropagation();
@@ -4354,13 +4372,7 @@ function renderExplorerTree(entries,filtered,query,classSel,indSel,formSel){
   const forms=medicationForms(m);
   const isMatch=filtered.some(x=>x.id===m.id);
   const specialtyPresentations=m.entry_type==="specialite"?specialtyItems(m):[];
-  const presentationTitle=p=>{
-   const name=String(p.name||m.name||"").trim();
-   const lab=p.presentationKind==="generic"&&p.lab&&!norm(name).includes(norm(p.lab))?" "+p.lab:"";
-   const dose=String(p.dosage||m.dosage||"").trim();
-   const form=String(p.form||m.form||"").trim();
-   return [name+lab,...(dose&&!norm(name).includes(norm(dose))?[dose]:[]),...(form&&!norm(name).includes(norm(form))?[form]:[])].filter(Boolean).join(" · ");
-  };
+  const presentationTitle=p=>explorerPresentationTitle(m,p);
   return `<div class="explore-tree-node ${isVariantFiche(m)?"explore-tree-variant":isSpecialiteFiche(m)?"explore-tree-specialite":""} ${isGroup(m)||isMolecule(m)?"explore-tree-group":"explore-tree-med"} ${isGroup(m)||isMolecule(m)?(depth===0?"explore-tree-root-group":"explore-tree-subgroup"):""} ${!isMatch?"explore-tree-context":""}" style="--tree-depth:${Math.min(depth,8)};${entityTreeStyle(m)}">
    <div class="explore-tree-line">
     ${kids.length?`<button type="button" class="explore-tree-toggle" data-tree-toggle="${esc(m.id)}" aria-label="${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)?"Replier":"Déplier"} ${esc(displayMedName(m))}" aria-expanded="${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)}" aria-controls="tree-children-${esc(m.id)}"><span aria-hidden="true">${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)?"▾":"▸"}</span></button>`:`<span class="explore-tree-leaf-space" aria-hidden="true"></span>`}
@@ -4369,7 +4381,7 @@ function renderExplorerTree(entries,filtered,query,classSel,indSel,formSel){
     
    </div>
    ${specialtyPresentations.length>1?`<div class="explore-tree-presentations">${specialtyPresentations.map(({p,i})=>`<button type="button" class="explore-tree-presentation" data-open-med="${esc(m.id)}" data-open-pres="${i}"><span aria-hidden="true">↳</span> ${esc(presentationTitle(p))}${p.presentationKind==="princeps"?'<span class="explore-pres-princeps-inline">Princeps</span>':""}</button>`).join("")}</div>`:""}
-   ${isMatch?`<div class="explore-tree-tags">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)&&!inheritedClasses.has(norm(t))).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)&&!inheritedIndications.has(norm(t))).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}${(((isDciFamilyType(m))?explorerBadgeVisible(m,"forms"):true)?forms:[]).filter(t=>!inheritedForms.has(norm(t))).map(t=>`<button type="button" class="badge-button badge-form" data-filter-form="${esc(t)}">${esc(t)}</button>`).join("")}</div>`:""}
+   ${isMatch?`<div class="explore-tree-tags">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)&&!inheritedClasses.has(norm(t))).map(t=>explorerFilterBadge("class",t)).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)&&!inheritedIndications.has(norm(t))).map(t=>explorerFilterBadge("indication",t)).join("")}${(((isDciFamilyType(m))?explorerBadgeVisible(m,"forms"):true)?forms:[]).filter(t=>!inheritedForms.has(norm(t))).map(t=>explorerFilterBadge("form",t)).join("")}</div>`:""}
    ${kids.length?`<div class="explore-tree-children" id="tree-children-${esc(m.id)}" ${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)?"":"hidden"}>${kids.map(child=>renderNode(child,depth+1,next)).join("")}</div>`:""}
   </div>`;
  };
@@ -4386,9 +4398,7 @@ function renderExplorerTree(entries,filtered,query,classSel,indSel,formSel){
   if(opening)exploreExpandedGroups.add(id);else exploreExpandedGroups.delete(id);
  }));
  $("exploreCards").querySelectorAll("[data-open-med]").forEach(b=>{b.onclick=e=>openExplorerResult(e,b,b.hasAttribute("data-open-pres")?Number(b.dataset.openPres):null);b.onauxclick=e=>{if(e.button===1)openExplorerResult({...e,ctrlKey:true},b,b.hasAttribute("data-open-pres")?Number(b.dataset.openPres):null)}});
- $("exploreCards").querySelectorAll("[data-filter-class]").forEach(b=>b.onclick=()=>{classSel.value=b.dataset.filterClass;renderExplorer()});
- $("exploreCards").querySelectorAll("[data-filter-ind]").forEach(b=>b.onclick=()=>{indSel.value=b.dataset.filterInd;renderExplorer()});
- $("exploreCards").querySelectorAll("[data-filter-form]").forEach(b=>b.onclick=()=>{formSel.value=b.dataset.filterForm;renderExplorer()});
+ explorerBindFilterBadges($("exploreCards"),classSel,indSel,formSel);
 }
 // V116.38 — Préparation unique des données : partagée par les deux colonnes.
 // Les filtres sont synchronisés une seule fois, sans modifier les critères de recherche.
@@ -5079,7 +5089,7 @@ function renderResults(){
   const mergedCip=item.mergedPresentationIndexes?.length?
    [...new Map(item.mergedPresentationIndexes.flatMap(i=>cipConditionnements(m.presentations?.[i]||{})).filter(c=>c.cip).map(c=>[String(c.cip),c])).values()]
     .map(c=>cipBadges({showCip:true,cip:c.cip,cipBoxes:[c]})).join(""):"";
-  const dciBadges=(isDciFamilyType(m))&&!isPresentation?`<div class="result-dci-badges">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}</div>`:"";
+  const dciBadges=(isDciFamilyType(m))&&!isPresentation?`<div class="result-dci-badges">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>explorerFilterBadge("class",t)).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>explorerFilterBadge("indication",t)).join("")}</div>`:"";
   // Identifier un princeps saisi dans la recherche générale (pas une simple
   // correspondance fortuite dans le texte d'une autre rubrique).
   const princepsMatches=isMolecule(m)&&!isPresentation&&!matchingVariant
