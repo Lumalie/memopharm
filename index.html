@@ -2752,12 +2752,26 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
 /* V116.1 — Glissement fluide de l'onglet sélectionné */
 .memo-correspondence-tabs{position:relative;isolation:isolate;gap:0!important;overflow:hidden}
 .memo-correspondence-tabs::before{content:"";position:absolute;z-index:-1;top:5px;bottom:5px;left:5px;width:calc((100% - 10px)/2);background:#fff;border:1px solid #d8e4db;border-radius:10px;box-shadow:0 2px 7px rgba(25,58,38,.07);box-sizing:border-box;transform:translateX(0);transition:transform .3s cubic-bezier(.22,.7,.2,1)}
-.memo-correspondence-tabs:has(#memoTabGeneric[aria-selected="true"])::before{transform:translateX(100%)}
+.memo-correspondence-tabs:has(#memoTabDci[aria-selected="true"])::before{transform:translateX(100%)}
 .memo-correspondence-tabs button{position:relative;z-index:1;transition:color .2s ease}
 .memo-correspondence-tabs button[aria-selected="true"]{background:transparent!important;border-color:transparent!important;box-shadow:none!important}
 .memo-simple-entry .memo-equiv-entry-body{display:flex;flex-direction:column;align-items:flex-start;gap:9px}
 .memo-simple-detail{margin:0;color:#b46c4d;font-weight:600;font-size:.88rem}
 @media(prefers-reduced-motion:reduce){.memo-correspondence-tabs::before{transition:none}}
+
+/* V116.2 : les deux résultats d’une correspondance partagent la même ligne. */
+#memoPanelDci .memo-equiv-column-results,#memoPanelGeneric .memo-equiv-column-results{display:none!important}
+.memo-paired-results{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+.memo-pair-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:stretch}
+.memo-pair-cell{min-width:0;background:#fff;border:1px solid #dce7df;border-radius:14px;padding:13px 16px;display:flex;flex-direction:column;justify-content:center;gap:9px}
+.memo-pair-stack{justify-content:flex-start;padding:10px;gap:10px}
+.memo-pair-stack .memo-equiv-entry{margin:0}
+.memo-pair-link{border:0;background:transparent;text-align:left;font:inherit;font-weight:700;color:#315d47;cursor:pointer;padding:7px 4px;width:100%}
+.memo-pair-link:hover{text-decoration:underline}
+.memo-pair-dci{color:#795098}
+.memo-pair-substance{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+.memo-pair-substance span{color:#7c7187;font-size:.88rem}
+@media(max-width:730px){.memo-pair-row{gap:8px}.memo-pair-cell{padding:10px 8px}.memo-pair-link{font-size:.88rem}.memo-pair-substance{font-size:.88rem}}
 </style>
 </head>
 <body>
@@ -2821,8 +2835,8 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
  <div class="memo-equiv-page">
   <div class="memo-equiv-heading"><h2>Correspondances</h2><p>Deux outils complémentaires pour retrouver les médicaments et leurs relations.</p></div>
   <div class="memo-correspondence-tabs" role="tablist" aria-label="Type de correspondance">
-   <button id="memoTabDci" type="button" role="tab" aria-selected="false" aria-controls="memoPanelDci">Spécialités ⇋ DCI</button>
    <button id="memoTabGeneric" type="button" role="tab" aria-selected="true" aria-controls="memoPanelGeneric">Princeps ⇋ Générique</button>
+   <button id="memoTabDci" type="button" role="tab" aria-selected="false" aria-controls="memoPanelDci">Spécialités ⇋ DCI</button>
   </div>
   <div id="memoPanelDci" role="tabpanel" aria-labelledby="memoTabDci" hidden>
    <div class="memo-equiv-columns">
@@ -2839,8 +2853,9 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
      <div id="memoSubstanceResults" class="memo-equiv-column-results" aria-live="polite"></div>
     </section>
    </div>
+   <div id="memoDciPaired" class="memo-paired-results" aria-live="polite"></div>
    <div class="memo-equiv-reset"><button id="memoDciClear" type="button">Effacer la recherche</button></div>
-   <p class="memo-equiv-note">Les noms commerciaux et leurs substances actives proviennent des fiches Mémopharm. Les dosages et présentations restent consultables dans les fiches.</p>
+   <p class="memo-equiv-note">Correspondances issues uniquement des fiches spécialités. Cliquez sur une spécialité pour ouvrir sa fiche.</p>
   </div>
   <div id="memoPanelGeneric" role="tabpanel" aria-labelledby="memoTabGeneric">
   <div class="memo-equiv-columns">
@@ -2857,8 +2872,9 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
     <div id="equivDciResults" class="memo-equiv-column-results" aria-live="polite"></div>
    </section>
   </div>
+  <div id="memoGenericPaired" class="memo-paired-results" aria-live="polite"></div>
   <div class="memo-equiv-reset"><button id="equivClear" type="button">Effacer la recherche</button></div>
-  <p class="memo-equiv-note">Correspondances de noms issues de Mémopharm : le statut officiel de princeps ou de générique et la substituabilité ne sont pas vérifiés.</p>
+  <p class="memo-equiv-note">Présentations issues uniquement des fiches molécules et de leurs variantes. Les statuts princeps/générique doivent être explicitement vérifiés : une DCI commune ne garantit pas la substituabilité.</p>
   </div>
  </div>
  </section><section id="exploreView" class="hidden"><div class="explore-heading"><h2>Explorer les fiches</h2><p>Parcourez les fiches communes et leurs spécialités associées.</p></div><div class="explore-search"><label for="exploreSearch">Rechercher dans les fiches</label><div class="explore-search-row"><input id="exploreSearch" type="search" autocomplete="off" placeholder="Ex. : amoxicilline, oubli de prise, CIP, conservation…"><button id="clearExploreSearch" type="button">Effacer</button></div><p id="exploreSearchCount" class="muted" aria-live="polite"></p></div><div class="explore-controls"><label>Classe thérapeutique<select id="exploreClass"></select></label><label>Indication thérapeutique<select id="exploreIndication"></select></label><label>Forme pharmaceutique<select id="exploreForm"></select></label><label>Badge pharmaceutique<select id="exploreBadge"><option value="">Tous les badges</option><option value="mte">⚠ MTE</option><option value="photo">☀ Photosensibilisant</option><option value="exception">EXC · Médicament d’exception</option><option value="stup">STUP · Stupéfiant</option><option value="cold">❄ Conservation au froid</option><option value="after">◷ Conservation après ouverture</option><option value="listI">Liste I</option><option value="listII">Liste II</option></select></label><button id="resetExplore" type="button">Effacer les filtres</button></div> <div id="memoThemeIntro" class="memo-theme-intro hidden" aria-live="polite"></div><div id="exploreCards" class="explore-cards"></div></section><section id="sourcesView" class="hidden"><div class="explore-heading"><h2>Sources documentaires</h2><p>Références communes utilisées pour construire et vérifier les fiches de Mémopharm.</p></div><div id="sourcesList" class="sources-list"></div><div id="sourcesAdmin" class="panel hidden" style="padding:18px;margin-top:18px"></div></section><div class="memo-v43-footer"><strong>📖 Une ressource pratique pour les professionnels de santé</strong><p>Mémopharm est une base documentaire indépendante conçue pour faciliter l’accès aux informations essentielles sur les médicaments et accompagner la pratique quotidienne des professionnels de santé.</p><p>Les fiches sont enrichies progressivement à partir de sources de référence. Les dates de mise à jour et de vérification permettent d’en apprécier l’actualité. Pour toute décision de prise en charge, les informations doivent être confrontées aux référentiels officiels en vigueur et aux données de la spécialité concernée.</p></div>
@@ -3939,7 +3955,8 @@ function memoEquivRecords(){
   (v.presentations||[]).forEach(p=>add(root.name,root,p.name||p.specialtyName||p.specialite||'',v,displayMedName(v),p));
  });
  roots.forEach(root=>(root.presentations||[]).forEach(p=>add(root.name,root,p.name||p.specialtyName||'',root,displayMedName(root),p)));
- visible.filter(isSpecialiteFiche).forEach(m=>{
+ /* Fiches spécialités exclues : source exclusive = fiches molécules. */
+ [].forEach(m=>{
   const ingredients=(ingredientInfo(m)?.entries||[]).filter(e=>String(e.name||'').trim());
   const raw=String(m.parent_dci||m.dci||'').trim();
   if(ingredients.length){
@@ -4026,108 +4043,58 @@ function memoSetCorrespondenceTab(tab){
  $("memoTabGeneric").setAttribute("aria-selected",String(!dci));
  if(dci)memoRenderSpecialtyDci();else renderEquivalences();
 }
+// V116.2 : deux sources de données indépendantes, alignement par paires.
 function memoRenderSpecialtyDci(){
- const left=$("memoSpecialtyResults"),right=$("memoSubstanceResults");
- if(!left||!right)return;
- const q=norm(($("memoSpecialtySearch").value||$("memoSubstanceSearch").value||"").trim()).trim();
- if(!q){left.innerHTML='<p class="memo-equiv-empty">Les spécialités apparaîtront ici.</p>';right.innerHTML='<p class="memo-equiv-empty">Les DCI correspondantes apparaîtront ici.</p>';return;}
- const groups=memoEquivRecords().map(g=>({g,names:[...g.names.values()]})).filter(({g,names})=>norm(g.name).includes(q)||names.some(n=>norm(n.name).includes(q)));
- if(!groups.length){left.innerHTML='<p class="memo-equiv-empty">Aucune spécialité trouvée.</p>';right.innerHTML='<p class="memo-equiv-empty">Aucune DCI trouvée.</p>';return;}
- const commercial=new Map(),substances=new Map();
- groups.forEach(({g,names})=>{
-  names.forEach(n=>{
-   const key=norm(n.name);if(!commercial.has(key))commercial.set(key,{name:n.name,items:[]});
-   commercial.get(key).items.push(...n.items);
-  });
-  const key=norm(g.name);if(!substances.has(key))substances.set(key,{name:g.name,items:[]});
-  substances.get(key).items.push(...names.flatMap(n=>n.items));
+ const paired=$("memoDciPaired"),q=norm(($('memoSpecialtySearch').value||$('memoSubstanceSearch').value||'').trim()).trim();
+ if(!q){paired.innerHTML='<p class="memo-equiv-empty">Recherchez une spécialité ou une substance active pour afficher les correspondances.</p>';return;}
+ const rows=[];
+ publicMeds().filter(isSpecialiteFiche).forEach(m=>{
+  const ingredients=(ingredientInfo(m)?.entries||[]).filter(e=>String(e.name||'').trim());
+  const fallback=String(m.parent_dci||m.dci||'').trim();
+  const dci=ingredients.length?ingredients.map(e=>({name:String(e.name).trim(),dose:String(e.dose||'').trim()})):(fallback?[{name:fallback,dose:String(m.dosage||'').trim()}]:[]);
+  if(!dci.length)return;
+  const name=displayMedName(m);
+  if(!norm(name).includes(q)&&!dci.some(e=>norm(e.name+' '+e.dose).includes(q)))return;
+  rows.push({m,name,dci});
  });
- const entry=(name,items,side)=>{
-  const targets=[...new Map(items.map(i=>[String(i.source.id),i.source])).values()];
-  const details=side==='commercial'?[...new Set(items.map(i=>i.detail).filter(Boolean))]:[...new Set(items.map(i=>i.ingredientDose?i.detail:i.detail).filter(Boolean))];
-  return `<details class="memo-equiv-entry memo-simple-entry"><summary><span>${esc(name)}</span><span class="memo-equiv-chevron">⌄</span></summary><div class="memo-equiv-entry-body">${details.map(x=>`<p class="memo-simple-detail">${esc(x)}</p>`).join('')}${targets.map(t=>`<button class="memo-equiv-open-fiche" type="button" data-equiv-open="${esc(t.id)}">Voir la fiche ${esc(displayMedName(t))} ↗</button>`).join('')}</div></details>`;
- };
- left.innerHTML=[...commercial.values()].sort((a,b)=>a.name.localeCompare(b.name,'fr')).map(x=>entry(x.name,x.items,'commercial')).join('');
- right.innerHTML=[...substances.values()].sort((a,b)=>a.name.localeCompare(b.name,'fr')).map(x=>entry(x.name,x.items,'dci')).join('');
- document.querySelectorAll('#memoPanelDci [data-equiv-open]').forEach(btn=>btn.onclick=()=>openMedication(btn.dataset.equivOpen));
+ rows.sort((a,b)=>a.name.localeCompare(b.name,'fr'));
+ if(!rows.length){paired.innerHTML='<p class="memo-equiv-empty">Aucune correspondance trouvée dans les fiches spécialités.</p>';return;}
+ paired.innerHTML=rows.map(({m,name,dci})=>`<div class="memo-pair-row">
+  <div class="memo-pair-cell"><button type="button" class="memo-pair-link" data-equiv-open="${esc(m.id)}" title="Ouvrir la fiche spécialité">${esc(name)} <span aria-hidden="true">↗</span></button></div>
+  <div class="memo-pair-cell memo-pair-dci">${dci.map(e=>`<div class="memo-pair-substance"><strong>${esc(e.name)}</strong>${e.dose?`<span>${esc(e.dose)}</span>`:''}</div>`).join('')}</div>
+ </div>`).join('');
+ paired.querySelectorAll('[data-equiv-open]').forEach(btn=>btn.onclick=()=>openMedication(btn.dataset.equivOpen));
 }
 function renderEquivalences(){
- const left=$("equivPrincepsResults"),right=$("equivDciResults");
- if(!left||!right)return;
- const q=norm(($("equivPrincepsSearch").value||$("equivDciSearch").value||'').trim()).trim();
- if(!q){
-  left.innerHTML='<p class="memo-equiv-empty">Les noms commerciaux apparaîtront ici.</p>';
-  right.innerHTML='<p class="memo-equiv-empty">Les molécules et leurs dosages apparaîtront ici.</p>';
-  return;
- }
+ const paired=$("memoGenericPaired");
+ if(!paired)return;
+ const q=norm(($('equivPrincepsSearch').value||$('equivDciSearch').value||'').trim()).trim();
+ if(!q){paired.innerHTML='<p class="memo-equiv-empty">Recherchez un nom commercial ou une molécule pour afficher les correspondances.</p>';return;}
  const hits=memoEquivRecords().map(g=>{
   const rootMatch=norm(g.name).includes(q)||[...g.formulations.values()].some(f=>norm(f.label).includes(q));
   const matchingNames=[...g.names.values()].filter(n=>norm(n.name).includes(q));
   return {...g,rootMatch,matchingNames};
  }).filter(g=>g.rootMatch||g.matchingNames.length).sort((a,b)=>Number(b.rootMatch)-Number(a.rootMatch)||a.name.localeCompare(b.name,'fr'));
- if(!hits.length){
-  left.innerHTML='<p class="memo-equiv-empty">Aucune spécialité correspondante renseignée.</p>';
-  right.innerHTML='<p class="memo-equiv-empty">Aucune DCI correspondante renseignée.</p>';
-  return;
- }
- left.innerHTML=hits.flatMap(g=>{
+ if(!hits.length){paired.innerHTML='<p class="memo-equiv-empty">Aucune correspondance renseignée dans les fiches molécules.</p>';return;}
+ paired.innerHTML=hits.map(g=>{
   const names=g.rootMatch?[...g.names.values()]:g.matchingNames;
-  return names.map(n=>`<details class="memo-equiv-entry" data-equiv-specialty-key="${esc(norm(g.name)+'|'+norm(n.name))}" ${memoEquivOpenSpecialties.has(norm(g.name)+'|'+norm(n.name))?'open':''}><summary><span>${esc(n.name)}</span><span class="memo-equiv-chevron memo-equiv-chevron-icons"><span class="memo-equiv-icon-down"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span><span class="memo-equiv-icon-up"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg></span></span></summary>
-   <div class="memo-equiv-entry-body"><p class="memo-equiv-related">DCI : ${esc(g.name)}</p>${memoEquivPresentationDetails(n.items)}</div>
-  </details>`);
- }).join('');
- right.innerHTML=hits.map(g=>{
-  const names=g.rootMatch?[...g.names.values()]:g.matchingNames;
-  // Recherche par spécialité : la colonne DCI ne doit pas répéter les
-  // conditionnements de la spécialité recherchée (déjà affichés à gauche).
-  // Les autres spécialités liées à la même DCI restent visibles à droite.
-  const excludedCommercialNames=new Set(g.matchingNames.map(n=>norm(n.name)));
-  const filteredItems=[...g.names.values()]
-   .filter(n=>!excludedCommercialNames.has(norm(n.name)) || !g.matchingNames.length)
-   .flatMap(n=>n.items);
-  const formulations=[...g.formulations.values()].filter(f=>f.items.some(item=>filteredItems.includes(item)));
-  const formGroups=new Map();
-  formulations.forEach(f=>f.items.filter(item=>filteredItems.includes(item)).forEach(item=>{
-   const label=memoEquivFormDose(item),key=norm(label);
-   if(!formGroups.has(key))formGroups.set(key,{label,items:[]});
-   formGroups.get(key).items.push(item);
-  }));
-  const entries=[...formGroups.values()].sort((a,b)=>a.label.localeCompare(b.label,'fr')).map(f=>{
+  const left=names.map(n=>`<details class="memo-equiv-entry" data-equiv-specialty-key="${esc(norm(g.name)+'|'+norm(n.name))}" ${memoEquivOpenSpecialties.has(norm(g.name)+'|'+norm(n.name))?'open':''}><summary><span>${esc(n.name)}</span><span class="memo-equiv-chevron">⌄</span></summary><div class="memo-equiv-entry-body"><p class="memo-equiv-related">DCI : ${esc(g.name)}</p>${memoEquivPresentationDetails(n.items)}</div></details>`).join('');
+  const excluded=new Set(g.matchingNames.map(n=>norm(n.name)));
+  const filteredItems=[...g.names.values()].filter(n=>!excluded.has(norm(n.name))||!g.matchingNames.length).flatMap(n=>n.items);
+  const forms=new Map();
+  filteredItems.forEach(item=>{const label=memoEquivFormDose(item),key=norm(label);if(!forms.has(key))forms.set(key,{label,items:[]});forms.get(key).items.push(item)});
+  const entries=[...forms.values()].sort((a,b)=>a.label.localeCompare(b.label,'fr')).map(f=>{
    const target=f.items.find(x=>isVariantFiche(x.source))?.source||f.items[0].source;
-   return `<div class="memo-equiv-dci-formulation">
-    <button type="button" class="memo-equiv-open-fiche memo-equiv-dci-variant" data-equiv-open="${esc(target.id)}" title="Ouvrir la variante ou la fiche spécialité">${esc(f.label)}</button>
-    ${memoEquivCipRows(f.items)}
-   </div>`;
+   return `<div class="memo-equiv-dci-formulation"><button type="button" class="memo-equiv-open-fiche memo-equiv-dci-variant" data-equiv-open="${esc(target.id)}">${esc(f.label)}</button>${memoEquivCipRows(f.items)}</div>`;
   }).join('');
-  const title=`<span class="memo-equiv-molecule-name">${esc(g.name)}</span>`;
   const isOpen=memoEquivOpenDcis.has(norm(g.name));
-  const doseCount=formGroups.size;
-  const countLabel=`${doseCount} ${doseCount===1?'dosage':'dosages'}`;
-  return `<div class="memo-equiv-entry memo-equiv-dci-group" data-equiv-dci-key="${esc(norm(g.name))}">
-   <button type="button" class="memo-equiv-dci-group-heading" aria-expanded="${isOpen?'true':'false'}" aria-label="Afficher les présentations de ${esc(g.name)}">${title}<span class="memo-equiv-dosage-count">${countLabel}</span><span class="memo-equiv-dci-toggle" aria-expanded="${isOpen?'true':'false'}"><span class="memo-equiv-chevron memo-equiv-chevron-icons"><span class="memo-equiv-icon-down"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span><span class="memo-equiv-icon-up"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg></span></span></span></button>
-   <div class="memo-equiv-dci-group-body" ${isOpen?'':'hidden'}>${entries||'<p class="memo-equiv-related">Aucune autre présentation commerciale renseignée pour cette DCI.</p>'}</div>
-  </div>`;
+  const right=`<div class="memo-equiv-entry memo-equiv-dci-group" data-equiv-dci-key="${esc(norm(g.name))}"><button type="button" class="memo-equiv-dci-group-heading" aria-expanded="${isOpen?'true':'false'}"><span class="memo-equiv-molecule-name">${esc(g.name)}</span><span class="memo-equiv-dosage-count">${forms.size} ${forms.size===1?'présentation':'présentations'}</span><span class="memo-equiv-dci-toggle"><span class="memo-equiv-chevron">⌄</span></span></button><div class="memo-equiv-dci-group-body" ${isOpen?'':'hidden'}>${entries||'<p class="memo-equiv-related">Aucune autre présentation commerciale renseignée pour cette DCI.</p>'}</div></div>`;
+  return `<div class="memo-pair-row"><div class="memo-pair-cell memo-pair-stack">${left}</div><div class="memo-pair-cell memo-pair-stack">${right}</div></div>`;
  }).join('');
- document.querySelectorAll('#equivView [data-equiv-specialty-key]').forEach(el=>el.addEventListener('toggle',()=>{
-  const key=el.dataset.equivSpecialtyKey;
-  if(el.open)memoEquivOpenSpecialties.add(key);else memoEquivOpenSpecialties.delete(key);
- }));
- document.querySelectorAll('#equivView .memo-equiv-dci-group-heading').forEach(btn=>btn.addEventListener('click',()=>{
-  const group=btn.closest('.memo-equiv-dci-group');
-  const body=group.querySelector('.memo-equiv-dci-group-body');
-  body.hidden=!body.hidden;
-  btn.setAttribute('aria-expanded',String(!body.hidden));
-  btn.querySelector('.memo-equiv-dci-toggle')?.setAttribute('aria-expanded',String(!body.hidden));
-  const key=group.dataset.equivDciKey;
-  if(body.hidden)memoEquivOpenDcis.delete(key);else memoEquivOpenDcis.add(key);
- }));
- document.querySelectorAll('#equivView [data-equiv-open]').forEach(btn=>btn.onclick=e=>{e.stopPropagation();openMedication(btn.dataset.equivOpen)});
- document.querySelectorAll('#equivView [data-copy-cip]').forEach(btn=>btn.onclick=async e=>{
-  e.preventDefault();e.stopPropagation();
-  const cip=btn.dataset.copyCip;
-  try{await navigator.clipboard.writeText(cip);toast("CIP copié");}
-  catch(err){toast("Impossible de copier le CIP automatiquement");}
- });
+ paired.querySelectorAll('[data-equiv-specialty-key]').forEach(el=>el.addEventListener('toggle',()=>{const key=el.dataset.equivSpecialtyKey;if(el.open)memoEquivOpenSpecialties.add(key);else memoEquivOpenSpecialties.delete(key)}));
+ paired.querySelectorAll('.memo-equiv-dci-group-heading').forEach(btn=>btn.addEventListener('click',()=>{const group=btn.closest('.memo-equiv-dci-group'),body=group.querySelector('.memo-equiv-dci-group-body');body.hidden=!body.hidden;btn.setAttribute('aria-expanded',String(!body.hidden));const key=group.dataset.equivDciKey;if(body.hidden)memoEquivOpenDcis.delete(key);else memoEquivOpenDcis.add(key)}));
+ paired.querySelectorAll('[data-equiv-open]').forEach(btn=>btn.onclick=e=>{e.stopPropagation();openMedication(btn.dataset.equivOpen)});
+ paired.querySelectorAll('[data-copy-cip]').forEach(btn=>btn.onclick=async e=>{e.preventDefault();e.stopPropagation();try{await navigator.clipboard.writeText(btn.dataset.copyCip);toast('CIP copié')}catch(err){toast('Impossible de copier le CIP automatiquement')}});
 }
 function navigateToView(view){
  leaveInfoPage();
