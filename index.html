@@ -2792,6 +2792,19 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
 .memo-pair-half .memo-equiv-chevron-icons .memo-equiv-icon-up{display:none}
 .memo-pair-half details.memo-equiv-entry[open]>summary .memo-equiv-icon-up{display:inline-flex}
 @media(max-width:730px){.memo-pair-half{padding:9px}.memo-pair-combined-title{padding:11px 12px}}
+
+/* V116.4 — Princeps NSFP avec justificatif */
+.memo-princeps-choices{display:flex;flex-wrap:wrap;gap:9px;margin:11px 0}
+.memo-princeps-edit-badge{display:inline-flex;align-items:center;gap:7px;border:1px solid #d8e4db;background:#eff6f0;color:#244b39;border-radius:9px;padding:7px 10px;cursor:pointer;font:inherit}
+.memo-princeps-edit-badge:hover{border-color:#739d82}
+.memo-nsfp-badge{display:inline-flex;align-items:center;background:#fbe5e4;color:#a52e2a;border:1px solid #f1c0bd;border-radius:6px;font-size:.7rem;font-weight:800;padding:2px 6px;white-space:nowrap}
+.memo-princeps-dialog{border:1px solid #d6e2d8;background:#fafcfb;border-radius:12px;padding:14px;margin:10px 0;max-width:580px}
+.memo-princeps-dialog label{display:block;font-weight:650;margin:10px 0 5px}
+.memo-princeps-dialog input{width:100%}
+.memo-princeps-dialog-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.memo-princeps-source{display:inline-flex;align-items:center;gap:5px;color:#276b52;text-decoration:underline;text-underline-offset:3px;font-weight:650}
+.memo-princeps-source:hover{color:#144733}
+.memo-princeps-static{font-weight:650;color:#276b52}
 </style>
 </head>
 <body>
@@ -3947,6 +3960,23 @@ function detailLocation(id){
  url.searchParams.delete("edition");history.replaceState({fiche:id},"",url);rememberNavigation();
 }
 // V115 — Répertoire compact, sans nouvelle table et sans présumer la substituabilité.
+// Statut NSFP par princeps : conservé dans la section principale de la fiche molécule.
+function memoPrincepsStatuses(m){const raw=m?.sections?.[0]?.princepsNsfp;return raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{}}
+function memoPrincepsStatus(m,name){const data=memoPrincepsStatuses(m);return data[norm(name)]||null}
+function memoSafeSource(url){try{const u=new URL(String(url||''));return (u.protocol==='https:'||u.protocol==='http:')&&u.hostname.includes('.')?u.href:''}catch(e){return ''}}
+function memoPrincepsDisplay(m,name){const status=memoPrincepsStatus(m,name),url=status&&memoSafeSource(status.url);const label=esc(name)+(status?' <span class="memo-nsfp-badge">NSFP</span>':'');return url?`<a class="memo-princeps-source" href="${esc(url)}" target="_blank" rel="noopener noreferrer" title="Source du statut NSFP — vérifié le ${esc(status.checked||'date non renseignée')}">${label} <span aria-hidden="true">↗</span></a>`:`<span class="memo-princeps-static">${label}</span>`}
+let memoPrincepsEditorStatus={};
+function memoInitPrincepsEditor(m){
+ const input=$('f-princeps'),list=$('memo-princeps-choices'),panel=$('memo-princeps-panel');if(!input||!list||!panel)return;
+ memoPrincepsEditorStatus=JSON.parse(JSON.stringify(memoPrincepsStatuses(m)));
+ const names=()=>[...new Map(input.value.split(',').map(n=>n.trim()).filter(Boolean).map(n=>[norm(n),n])).values()];
+ const render=()=>{list.innerHTML=names().map(n=>`<button type="button" class="memo-princeps-edit-badge" data-nsfp-name="${esc(n)}">${esc(n)}${memoPrincepsEditorStatus[norm(n)]?' <span class="memo-nsfp-badge">NSFP</span>':''} <span aria-hidden="true">✎</span></button>`).join('')||'<span class="muted">Saisis un nom pour définir son statut.</span>'};
+ input.addEventListener('input',()=>{panel.hidden=true;render()});render();
+ list.addEventListener('click',e=>{const b=e.target.closest('[data-nsfp-name]');if(!b)return;const name=b.dataset.nsfpName,existing=memoPrincepsEditorStatus[norm(name)];panel.hidden=false;panel.dataset.name=name;panel.innerHTML=`<strong>${esc(name)} — statut de commercialisation</strong><p class="muted">Renseigne une source précise confirmant l'arrêt de commercialisation. Ne pas confondre avec une rupture temporaire.</p><label><input type="checkbox" id="memo-nsfp-toggle" ${existing?'checked':''}> Ne se fait plus (NSFP)</label><div id="memo-nsfp-fields"><label for="memo-nsfp-url">URL du justificatif</label><input id="memo-nsfp-url" type="url" placeholder="https://…" value="${esc(existing?.url||'')}"><label for="memo-nsfp-date">Date de vérification</label><input id="memo-nsfp-date" type="date" value="${esc(existing?.checked||new Date().toISOString().slice(0,10))}"></div><p class="muted" id="memo-nsfp-error" role="alert"></p><div class="memo-princeps-dialog-actions"><button type="button" class="soft" id="memo-nsfp-apply">Valider</button><button type="button" class="soft" id="memo-nsfp-cancel">Annuler</button></div>`;
+ const toggle=$('memo-nsfp-toggle'),fields=$('memo-nsfp-fields');const sync=()=>fields.hidden=!toggle.checked;toggle.addEventListener('change',sync);sync();$('memo-nsfp-cancel').onclick=()=>panel.hidden=true;
+ $('memo-nsfp-apply').onclick=()=>{const key=norm(name);if(toggle.checked){const url=memoSafeSource($('memo-nsfp-url').value),date=$('memo-nsfp-date').value;if(!url||!date){$('memo-nsfp-error').textContent='Une URL http(s) valide et une date sont obligatoires pour activer NSFP.';return;}memoPrincepsEditorStatus[key]={url,checked:date};}else delete memoPrincepsEditorStatus[key];panel.hidden=true;render()};
+ });
+}
 function memoEquivRecords(){
  const visible=publicMeds(),roots=visible.filter(isMolecule),variants=visible.filter(isVariantFiche);
  const byId=new Map(roots.map(m=>[String(m.id),m]));
@@ -3981,8 +4011,8 @@ function memoEquivRecords(){
  // même si aucune présentation commerciale actuelle n'est enregistrée.
  roots.forEach(root=>(root.sections?.[0]?.princepsNames||[]).forEach(name=>{
   const g=groupFor(root.name,root),key=norm(name);
-  if(!g.names.has(key))g.names.set(key,{name,items:[],legacy:true,kind:'princeps'});
-  else {const n=g.names.get(key);n.kind='princeps';}
+  if(!g.names.has(key))g.names.set(key,{name,items:[],legacy:true,kind:'princeps',nsfp:memoPrincepsStatus(root,name)});
+  else {const n=g.names.get(key);n.kind='princeps';n.nsfp=memoPrincepsStatus(root,name);}
  }));
  return [...groups.values()].filter(g=>g.names.size);
 }
@@ -4084,8 +4114,8 @@ function renderEquivalences(){
  if(!hits.length){paired.innerHTML='<p class="memo-equiv-empty">Aucune correspondance renseignée dans les fiches molécules.</p>';return;}
  const makeEntry=(g,n)=>{
   const key=norm(g.name)+'|'+norm(n.name),isOpen=memoEquivOpenSpecialties.has(key);
-  const details=n.items.length?memoEquivPresentationDetails(n.items):'<p class="memo-equiv-related">Nom de princeps conservé dans la fiche molécule, sans présentation actuelle renseignée. Commercialisation à vérifier.</p>';
-  return `<details class="memo-equiv-entry" data-equiv-specialty-key="${esc(key)}" ${isOpen?'open':''}><summary><span>${esc(n.name)}${n.legacy?' <small class="memo-legacy-label">historique / à vérifier</small>':''}</span>${memoEquivChevron()}</summary><div class="memo-equiv-entry-body">${details}</div></details>`;
+  const details=(n.nsfp?`<div class="memo-equiv-related">${memoPrincepsDisplay(g.root,n.name)} — source du statut</div>`:'')+(n.items.length?memoEquivPresentationDetails(n.items):'<p class="memo-equiv-related">Nom de princeps conservé dans la fiche molécule, sans présentation actuelle renseignée. Commercialisation à vérifier.</p>');
+  return `<details class="memo-equiv-entry" data-equiv-specialty-key="${esc(key)}" ${isOpen?'open':''}><summary><span>${n.nsfp?memoPrincepsDisplay(g.root,n.name):esc(n.name)}${n.legacy&&!n.nsfp?' <small class="memo-legacy-label">historique / à vérifier</small>':''}</span>${memoEquivChevron()}</summary><div class="memo-equiv-entry-body">${details}</div></details>`;
  };
  paired.innerHTML=hits.map(g=>{
   const names=[...g.names.values()].sort((a,b)=>a.name.localeCompare(b.name,'fr'));
@@ -4097,6 +4127,7 @@ function renderEquivalences(){
   const other=unknown.length?`<div class="memo-pair-uncategorized"><span>Statut non renseigné :</span> ${unknown.map(n=>esc(n.name)).join(' · ')}</div>`:'';
   return `<section class="memo-pair-combined" aria-label="Correspondances ${esc(g.name)}"><div class="memo-pair-combined-title">${esc(g.name)}</div><div class="memo-pair-combined-grid"><div class="memo-pair-half"><div class="memo-pair-half-title">Princeps</div>${left}</div><div class="memo-pair-half"><div class="memo-pair-half-title">Génériques</div>${right}</div></div>${other}</section>`;
  }).join('');
+ paired.querySelectorAll('.memo-princeps-source').forEach(a=>a.addEventListener('click',e=>e.stopPropagation()));
  paired.querySelectorAll('[data-equiv-specialty-key]').forEach(el=>el.addEventListener('toggle',()=>{const key=el.dataset.equivSpecialtyKey;if(el.open)memoEquivOpenSpecialties.add(key);else memoEquivOpenSpecialties.delete(key)}));
  paired.querySelectorAll('[data-equiv-open]').forEach(btn=>btn.onclick=e=>{e.stopPropagation();openMedication(btn.dataset.equivOpen)});
  paired.querySelectorAll('[data-copy-cip]').forEach(btn=>btn.onclick=async e=>{e.preventDefault();e.stopPropagation();try{await navigator.clipboard.writeText(btn.dataset.copyCip);toast('CIP copié')}catch(err){toast('Impossible de copier le CIP automatiquement')}});
@@ -4837,7 +4868,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDo
  ${alertSection&&String(alertSection.content||"").trim()?`<div class="priority-card priority-alert">${renderPrioritySection(alertSection,targetSectionId)}</div>`:""}
  ${prioritySection&&String(prioritySection.content||"").trim()?`<div class="group-glance">${renderPrioritySection(prioritySection,targetSectionId)}</div>`:""}
  ${adviceSection&&String(adviceSection.content||"").trim()?`<div class="priority-card priority-advice">${renderPrioritySection(adviceSection,targetSectionId)}</div>`:""}
- ${(isDciFamilyType(m))&&!isGroup(m)&&(m.sections?.[0]?.princepsNames||[]).length?`<div class="callout"><strong>Princeps :</strong> ${m.sections[0].princepsNames.map(n=>`<span class="princeps-name">${esc(n)}</span>`).join(", ")}</div>`:""}
+ ${(isDciFamilyType(m))&&!isGroup(m)&&(m.sections?.[0]?.princepsNames||[]).length?`<div class="callout"><strong>Princeps :</strong> ${m.sections[0].princepsNames.map(n=>memoPrincepsDisplay(m,n)).join(", ")}</div>`:""}
 
  ${!isSpecialiteFiche(m)&&!isGroup(m)&&!isMolecule(m)?renderPresentations(m):""}
  ${(isGroup(m)||isMolecule(m))?`<details class="molecule-general memo-v102-general" id="molecule-general" ${targetSectionId?"open":""}><summary>📖 Informations générales</summary><div class="molecule-general-inner memo-v85-specialty-rubrics">${displaySections.map(s=>`<details class="memo-v74-rubric" open><summary>${esc(s.title||"Information")}<span class="memo-v74-chevron" aria-hidden="true"></span></summary><div class="memo-v74-rubric-content">${renderSection(s,targetSectionId)}</div></details>`).join("")}</div></details>`:isSpecialiteFiche(m)?`<details class="molecule-general memo-v92-specialty-general" id="molecule-general" ${targetSectionId?"open":""}><summary>📖 Informations générales</summary><div class="molecule-general-inner memo-v85-specialty-rubrics">${displaySections.map((s,i)=>`<details class="memo-v74-rubric" open><summary>${esc(s.title||"Information")}<span class="memo-v74-chevron" aria-hidden="true"></span></summary><div class="memo-v74-rubric-content">${renderSection(s,targetSectionId)}</div></details>`).join("")}</div></details>${memoV90SpecialtyPresentations(m)}`:displaySections.map(s=>renderSection(s,targetSectionId)).join("")}
@@ -5516,7 +5547,7 @@ function renderEditor(id){
 
   <div class="full" id="parent-group-wrap"><label for="f-parent-group">Groupe parent (facultatif)</label><select id="f-parent-group"><option value="">Aucun groupe</option>${groupOptions(m).map(g=>`<option value="${esc(g.id)}" ${parentGroupId(m)===g.id?"selected":""}>${esc(g.name)} — ${esc(g.category)}</option>`).join("")}</select><div class="muted" id="group-parent-help">Choisis librement un groupe parent, quelle que soit sa classe thérapeutique.</div></div>
   <div><label id="f-name-label" for="f-name">Nom de la spécialité</label><input id="f-name" value="${esc(m.name)}" placeholder="Ex. : Tardyferon"></div><div id="f-dci-form-wrap"><label class="field-label-inline" for="f-dci-form">Forme pharmaceutique <span class="field-inline-choice"><input type="checkbox" data-explorer-visibility="forms" ${explorerBadgeVisible(m,"forms")?"checked":""} aria-label="Afficher la forme pharmaceutique dans Explorer"> <span>Afficher dans Explorer</span></span></label><input id="f-dci-form" data-memo-kind="form" list="memo-forms" value="${esc(m.sections?.[0]?.dciForm||m.form||"")}" placeholder="Ex. : Comprimé, gélule, solution buvable"></div><div id="f-dose-title-wrap" class="full hidden"></div><div id="f-dosage-wrap"><label class="field-label-inline" for="f-dosage">Dosage <span class="field-inline-choice"><input type="checkbox" id="f-dose-in-title"> <span>Afficher dans le titre</span></span></label><div class="dosage-fields"><input id="f-dosage" value="${esc((ingredientInfo(m)?.entries||[]).map(e=>String(e.dose||" ").trim()).filter(Boolean).join("/")||m.dosage||"")}" readonly aria-label="Dosage calculé depuis les DCI" title="Calculé automatiquement depuis les champs Dosage actif"></div><p class="muted">Calculé depuis les champs « Dosage actif » ci-dessous. Plusieurs dosages sont séparés par /.</p></div><div id="f-specialty-form-wrap"><label class="field-label-inline" for="f-specialty-form">Forme <span class="field-inline-choice"><input type="checkbox" id="f-specialty-form-in-title" ${m.sections?.[0]?.specialtyFormTitle?.showInTitle?"checked":""}> <span>Afficher dans le titre</span></span></label><input id="f-specialty-form" list="memo-forms" value="${esc(m.sections?.[0]?.specialtyFormTitle?.value||m.form||"")}" placeholder="Ex. : comprimé, gélule"></div><div id="f-dci-wrap" class="full"><label>DCI / substances actives et dosages</label><div id="dciEntries"></div><button type="button" id="addDciEntry" class="soft" style="margin-top:8px">+ Ajouter une DCI</button><p class="muted">Une ligne par substance active. Le sel et sa quantité sont facultatifs et apparaîtront en gris conseil. Ne pas confondre la quantité de sel et celle de substance active.</p></div>
- <div class="full explorer-class-custom" id="princeps-editor-wrap"><label for="f-princeps">Princeps</label><input id="f-princeps" list="princeps-suggestions" value="${esc((m.sections?.[0]?.princepsNames||[]).join(', '))}" placeholder="Ex. : Nom de spécialité 1, Nom de spécialité 2" autocomplete="off"><datalist id="princeps-suggestions">${[...new Set(meds.flatMap(x=>x.sections?.[0]?.princepsNames||[]))].sort((a,b)=>a.localeCompare(b,'fr')).map(x=>`<option value="${esc(x)}"></option>`).join('')}</datalist><p class="muted">Sépare les noms de spécialités par des virgules. Plusieurs noms peuvent être renseignés pour une même DCI. Vérifier le statut de princeps de chaque spécialité.</p></div>
+ <div class="full explorer-class-custom" id="princeps-editor-wrap"><label for="f-princeps">Princeps</label><input id="f-princeps" list="princeps-suggestions" value="${esc((m.sections?.[0]?.princepsNames||[]).join(', '))}" placeholder="Ex. : Nom de spécialité 1, Nom de spécialité 2" autocomplete="off"><datalist id="princeps-suggestions">${[...new Set(meds.flatMap(x=>x.sections?.[0]?.princepsNames||[]))].sort((a,b)=>a.localeCompare(b,'fr')).map(x=>`<option value="${esc(x)}"></option>`).join('')}</datalist><div id="memo-princeps-choices" class="memo-princeps-choices"></div><div id="memo-princeps-panel" class="memo-princeps-dialog" hidden></div><p class="muted">Sépare les noms par des virgules, puis clique sur un badge pour indiquer NSFP avec une URL justificative et une date.</p></div>
  <div class="full explorer-class-custom"><label class="explorer-section-heading" for="f-extra-classes">Classe·s thérapeutique·s</label><input id="f-extra-classes" list="class-suggestions" value="${esc(explorerClasses(m).filter(t=>t!=="Autres"||explorerClasses(m).length===1).join(", "))}" placeholder="Ex. : Antibiotiques, Pénicillines" autocomplete="off"><datalist id="class-suggestions">${[...new Set(meds.flatMap(explorerClasses))].sort((a,b)=>a.localeCompare(b,"fr")).map(t=>`<option value="${esc(t)}"></option>`).join("")}</datalist><div id="explorer-class-choices" class="explorer-class-choices"></div><p class="muted">Sépare les étiquettes par des virgules. Coche uniquement les badges à afficher dans Explorer. Les autres restent enregistrés et utilisables dans les filtres.</p></div>
  <div class="full memo-practical-editor" id="molecule-practical-flags"><label><input type="checkbox" id="f-mte" ${practicalFlags(m).mte===true?"checked":""}> ⚠ MTE — Marge thérapeutique étroite</label><label><input type="checkbox" id="f-photosensitizing" ${practicalFlags(m).photosensitizing===true?"checked":""}> ☀ Photosensibilisant</label><label><input type="checkbox" id="f-exception" ${practicalFlags(m).exception===true?"checked":""}> EXC — Médicament d’exception</label><label><input type="checkbox" id="f-stup" ${practicalFlags(m).stup===true?"checked":""}> STUP — Stupéfiant</label><span class="hint">À renseigner pour cette fiche selon les sources vérifiées. Les particularités propres à une forme restent à documenter séparément.</span></div>
  <div class="full explorer-class-custom"><label class="explorer-section-heading" for="f-indications">Indication·s thérapeutique·s</label><input id="f-indications" list="indication-suggestions" value="${esc(indicationTags(m).join(", "))}" placeholder="Ex. : Infection bactérienne, Carence en fer" autocomplete="off"><datalist id="indication-suggestions">${[...new Set(meds.flatMap(indicationTags))].sort((a,b)=>a.localeCompare(b,"fr")).map(t=>`<option value="${esc(t)}"></option>`).join("")}</datalist><div id="explorer-indication-choices" class="explorer-class-choices"></div><p class="muted">Sépare les étiquettes par des virgules. Coche uniquement les badges à afficher dans Explorer. Les autres restent enregistrés et utilisables dans les filtres.</p></div>
@@ -6008,6 +6039,7 @@ function renderEditor(id){
   };
   input.addEventListener("input",render);render();
  }
+ memoInitPrincepsEditor(m);
  wireIndividualBadges("f-extra-classes","explorer-class-choices","explorerHiddenClasses");
  wireIndividualBadges("f-indications","explorer-indication-choices","explorerHiddenIndications");
 
@@ -6262,7 +6294,11 @@ function captureEditorFields(m){
   m.form=m.sections[0].specialtyFormTitle.value;
  }
  if(kind==="molecule"||kind==="specialite")m.sections[0].practicalFlags={...practicalFlags(m),photosensitizing:!!$("f-photosensitizing")?.checked,mte:!!$("f-mte")?.checked,exception:!!$("f-exception")?.checked,stup:!!$("f-stup")?.checked};
- if(kind==="dci"||kind==="molecule")m.sections[0].princepsNames=[...new Set((get("f-princeps")||"").split(",").map(x=>x.trim()).filter(Boolean))];
+ if(kind==="dci"||kind==="molecule"){
+  m.sections[0].princepsNames=[...new Set((get("f-princeps")||"").split(",").map(x=>x.trim()).filter(Boolean))];
+  const valid=new Set(m.sections[0].princepsNames.map(norm));
+  m.sections[0].princepsNsfp=Object.fromEntries(Object.entries(memoPrincepsEditorStatus).filter(([key])=>valid.has(key)));
+ }
  m.sections[0].explorerVisibility=Object.fromEntries([...$("editor").querySelectorAll("[data-explorer-visibility]")].filter(input=>!input.closest(".hidden")).map(input=>[input.dataset.explorerVisibility,input.checked]));
  const classes=[...new Set((get("f-extra-classes")||"").split(",").map(t=>t.trim()).filter(Boolean))];
  m.category=classes[0]||"Autres";
