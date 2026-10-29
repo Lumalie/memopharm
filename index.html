@@ -3178,6 +3178,12 @@ header .header-admin-actions button,header .header-admin-actions summary{min-hei
 /* V116.27 — Arborescence sans encadré */
 .memo-explorer-sidebar{border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;padding:0 10px 0 0!important}
 .memo-explorer-sidebar>h3{margin-left:0}
+
+/* V116.28 — variantes terracotta */
+#exploreCards .explore-section-variants .explore-result-section-title{color:var(--memo-dose-ink);border-bottom-color:var(--memo-dose-border)}
+#exploreCards .explore-hit.explore-result-dose{--explore-ink:var(--memo-dose-ink);--explore-line:var(--memo-dose-border);--explore-rgb:250,238,231}
+#exploreCards .explore-section-variants .explore-hits{display:grid;grid-template-columns:minmax(0,1fr);gap:5px}
+#exploreCards .explore-result-dose .explore-hit-name{color:var(--memo-dose-ink)}
 </style>
 </head>
 <body>
@@ -4028,6 +4034,39 @@ function memoRenderThemeList(entries,kind){
  $("exploreCards").querySelectorAll("[data-open-med]").forEach(b=>b.onclick=e=>openExplorerResult(e,b,b.hasAttribute("data-open-pres")?Number(b.dataset.openPres):null));
  return true;
 }
+// V116.28 — Index dédié à Explorer : inclut les variantes autonomes et
+// vérifie les critères sur une même présentation (forme, dosage, CIP, etc.).
+function explorerSearchMatches(query){
+ const tokens=norm(query).trim().split(/\s+/).filter(Boolean);
+ if(!tokens.length)return [];
+ const entries=publicMeds(),byId=new Map(entries.map(m=>[String(m.id),m]));
+ const output=[];
+ const sectionFields=m=>(m.sections||[]).filter(x=>x.enabled!==false);
+ const sectionMatch=(section,t)=>memoSearchTokenMatch([section.id,section.title,section.content].join(' '),t)||
+  (['poso','posologie'].includes(t)&&norm(section.id+' '+section.title).includes('posologie'));
+ for(const m of entries){
+  const parent=isVariantFiche(m)?byId.get(String(moleculeParentId(m))):null;
+  const family=parent?[parent,m]:[m];
+  const core=[...family.flatMap(x=>[x.name,x.dci,x.parent_dci,x.aliases,x.category,...(x.sections?.[0]?.princepsNames||[]),...explorerClasses(x),...indicationTags(x)]),
+   ...(isGroup(m)?['fiche groupe','groupe therapeutique']:[])].join(' ');
+  const sections=sectionFields(m);
+  const sectionHay=sections.map(x=>[x.id,x.title,x.content].join(' ')).join(' ');
+  const own=[m.name,m.dosage,m.form,ingredientTitleDose(m),...medicationForms(m)].join(' ');
+  const presentations=specialtyItems(m);
+  const presHay=x=>[x.name,x.p.dosage,x.p.form,x.p.lab,x.p.cip,x.p.cis,x.p.pack,x.p.description,x.p.marking,
+   ...cipConditionnements(x.p).flatMap(c=>[c.cip,c.pack])].join(' ');
+  const shared=t=>memoSearchTokenMatch(core,t)||sections.some(sec=>sectionMatch(sec,t));
+  const self=t=>shared(t)||memoSearchTokenMatch(own,t)||memoSearchTokenMatch(sectionHay,t);
+  const matchingPres=presentations.filter(x=>tokens.every(t=>shared(t)||memoSearchTokenMatch(presHay(x),t)));
+  const selfMatches=tokens.every(self);
+  if(!selfMatches&&!matchingPres.length)continue;
+  // Préférer la rubrique correspondant à la requête, sans masquer la fiche.
+  const section=sections.find(sec=>tokens.some(t=>sectionMatch(sec,t)&&!memoSearchTokenMatch(own,t)))||null;
+  if(selfMatches)output.push({med:m,section,presentation:null});
+  for(const x of matchingPres)output.push({med:m,section,presentation:x.i});
+ }
+ return output;
+}
 function renderExplorer(){
  // V116.26 : le sommaire historique reste dans une colonne indépendante.
  // Le rendu de droite conserve intégralement son moteur de recherche et ses aperçus.
@@ -4061,7 +4100,7 @@ function renderExplorer(){
  formSel.innerHTML='<option value="">Toutes les formes</option>'+forms.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");
  classSel.value=classes.includes(oldClass)?oldClass:"";indSel.value=indications.includes(oldInd)?oldInd:"";formSel.value=forms.includes(oldForm)?oldForm:"";
  const query=$("exploreSearch").value.trim();
- const searchMatches=query?getSearchMatches(query):[];
+ const searchMatches=query?explorerSearchMatches(query):[];
  const matchingIds=query?new Set(searchMatches.map(x=>x.med.id)):null;
  const filtered=entries.filter(m=>(!$("exploreBadge").value||memoBadgeMatches(m,$("exploreBadge").value))&&(!matchingIds||matchingIds.has(m.id))&&(!classSel.value||explorerClasses(m).includes(classSel.value))&&(!indSel.value||indicationTags(m).includes(indSel.value))&&(!formSel.value||medicationForms(m).includes(formSel.value)));
  $("exploreSearchCount").textContent=query?`${filtered.length} fiche${filtered.length===1?"":"s"} trouvée${filtered.length===1?"":"s"}`:"";
@@ -4085,7 +4124,7 @@ function renderExplorer(){
   }
   // Trier les résultats par type de fiche et adapter la priorité à l'intention.
   const q=norm(query).trim();
-  const categoryOf=g=>isGroup(g.med)?"groups":(g.med.entry_type==="dci"||g.med.entry_type==="variant")?"dci":g.med.entry_type==="specialite"?"specialties":"medications";
+  const categoryOf=g=>isGroup(g.med)?"groups":isVariantFiche(g.med)?"variants":isMolecule(g.med)||g.med.entry_type==="dci"?"dci":g.med.entry_type==="specialite"?"specialties":"medications";
   const nameOf=g=>norm(g.med.name||"");
   const scoreOf=g=>{
    const n=nameOf(g);
@@ -4094,12 +4133,12 @@ function renderExplorer(){
    return exact+presentation;
   };
   const sortedGroups=[...hitGroups].sort((a,b)=>scoreOf(b)-scoreOf(a)||nameOf(a).localeCompare(nameOf(b),"fr"));
-  const categoryPriority=["groups","dci","specialties","medications"];
+  const categoryPriority=["groups","dci","variants","specialties","medications"];
   // Une recherche correspondant précisément à une spécialité favorise sa fiche DCI
   // associée si elle existe, puis les spécialités et leurs présentations.
   const specialtyNameMatch=sortedGroups.some(g=>categoryOf(g)==="specialties"&&scoreOf(g)>=45);
   const groupNameMatch=sortedGroups.some(g=>categoryOf(g)==="groups"&&scoreOf(g)>=45);
-  if(specialtyNameMatch&&!groupNameMatch)categoryPriority.splice(0,categoryPriority.length,"dci","specialties","medications","groups");
+  if(specialtyNameMatch&&!groupNameMatch)categoryPriority.splice(0,categoryPriority.length,"dci","variants","specialties","medications","groups");
   const visibleHits=[];
   let remaining=explorerVisibleLimit;
   for(const category of categoryPriority){
@@ -4109,7 +4148,7 @@ function renderExplorer(){
    }
   }
   const groupedVisible=categoryPriority.map(category=>({category,items:visibleHits.filter(g=>categoryOf(g)===category)})).filter(x=>x.items.length);
-  const categoryLabels={groups:"Fiches groupes",dci:"Fiches DCI",specialties:"Spécialités",medications:"Fiches médicaments"};
+  const categoryLabels={groups:"Fiches groupes",dci:"Fiches DCI",variants:"Variantes de présentation",specialties:"Spécialités",medications:"Fiches médicaments"};
 
   const byIdForPath=new Map(entries.map(m=>[m.id,m]));
   // Arborescence complète des descendants, même si seul le groupe parent correspond à la recherche.
@@ -4218,7 +4257,7 @@ function renderExplorer(){
     ${princepsSearchLabel}
     <div class="explore-hit-main">
      <button type="button" class="explore-hit-open" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec?.id||"")}" data-hit-pres="${hit.presentation===null?"":hit.presentation}" aria-label="Ouvrir ${esc(isPresentation?presTitle:m.name)}${sec?" à la rubrique "+esc(sec.title):""}">
-      <span class="explore-hit-heading"><span class="explore-hit-symbol" aria-hidden="true">${group?"▸":"●"}</span><strong class="explore-hit-name">${esc(isPresentation?presTitle:searchResultLabel(hit))}</strong><span class="explore-hit-arrow" aria-hidden="true">↗</span></span>
+      <span class="explore-hit-heading"><span class="explore-hit-symbol" aria-hidden="true">${group?"▸":"●"}</span><strong class="explore-hit-name">${esc(isPresentation?presTitle:isVariantFiche(m)?[m.name,m.dosage,m.form].filter(Boolean).filter((v,i,a)=>i===0||!norm(a[0]).includes(norm(v))).join(" · "):searchResultLabel(hit))}</strong><span class="explore-hit-arrow" aria-hidden="true">↗</span></span>
       
      </button>
      ${isPresentation?`<div class="explore-pres-info">${presBadge}${presLab}${cipButton}</div>`:""}
