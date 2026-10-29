@@ -18,8 +18,7 @@
 .search-suggestions .result .sub + .result-section-direct{margin-top:9px}.search-suggestions .result .result-section-direct{margin-bottom:2px}.fiche-documentation{margin:26px 0 5px;padding:15px 18px;background:#fff;border:1px solid #e1e7e2;border-radius:var(--m-radius-12);box-shadow:0 2px 9px #193f3408;color:#6c7772;font-size:var(--m-font-md);font-style:italic;line-height:var(--m-leading-relaxed)}.fiche-documentation .documentation-source{overflow-wrap:anywhere;white-space:pre-wrap}.fiche-documentation .documentation-source p{margin:4px 0}.fiche-documentation .documentation-source a{color:#5c7770}.fiche-documentation .documentation-date{margin-top:8px;color:#738078}.fiche-documentation .documentation-source + .documentation-date{padding-top:9px;border-top:1px solid #edf0ed}.search-preview .fiche-documentation{margin:15px 12px 8px}.search-suggestions .result .result-section-direct{margin:2px 0 0 21px;padding:1px 0 1px 9px;line-height:1.25}.search-suggestions .result .result-section-title{margin:0;line-height:1.3}.header-search-active #headerSearchSlot .search-suggestions .result{--hit-ink:var(--memo-dose-ink);--hit-line:var(--memo-dose-border);--hit-rgb:250,238,231;position:relative;box-sizing:border-box;margin:5px 8px;padding:11px 12px 11px 14px;border:0;border-left:3px solid var(--hit-line);border-radius:0 7px 7px 0;background:linear-gradient(90deg,rgba(var(--hit-rgb),.72),rgba(var(--hit-rgb),.22) 58%,transparent 100%);color:var(--hit-ink);transition:background .15s ease;cursor:pointer}.header-search-active #headerSearchSlot .search-suggestions .result-group{--hit-ink:var(--memo-group-ink);--hit-line:var(--memo-group-border);--hit-rgb:234,243,237}.header-search-active #headerSearchSlot .search-suggestions .result-molecule{--hit-ink:var(--memo-molecule-ink);--hit-line:var(--memo-molecule-border);--hit-rgb:242,229,247}.header-search-active #headerSearchSlot .search-suggestions .result-fiche{--hit-ink:var(--memo-dose-ink);--hit-line:var(--memo-dose-border);--hit-rgb:250,238,231}.header-search-active #headerSearchSlot .search-suggestions .result-presentation{--hit-ink:var(--memo-presentation-ink);--hit-line:var(--memo-presentation-border);--hit-rgb:230,240,251}.header-search-active #headerSearchSlot .search-suggestions .result strong,
 .header-search-active #headerSearchSlot .search-suggestions .result .result-dot,
 .header-search-active #headerSearchSlot .search-suggestions .result .result-kind-label{color:var(--hit-ink)}.header-search-active #headerSearchSlot .search-suggestions .result:hover,
-.header-search-active #headerSearchSlot .search-suggestions .result[aria-selected="true"]{border-left-color:var(--hit-ink);background:linear-gradient(90deg,rgba(var(--hit-rgb),.98),rgba(var(--hit-rgb),.36) 70%,transparent 100%);outline:none}.header-search-active #headerSearchSlot .search-suggestions .result .result-section-direct{border-left-color:var(--hit-line)}#exploreCards :is(.explore-group-result,.explore-hit,.explore-search-child,.search-pres-direct,.explore-grouped-presentation){--explore-ink:var(--memo-group-ink);--explore-line:var(--memo-group-border);--explore-rgb:234,243,237}#exploreCards .explore-result-molecule{--explore-ink:var(--memo-molecule-ink);--explore-line:var(--memo-molecule-border);--explore-rgb:242,229,247}#exploreCards .explore-result-dose{--explore-ink:var(--memo-dose-ink);--explore-line:var(--memo-dose-border);--explore-rgb:250,238,231}#exploreCards :is(.explore-result-presentation,.search-pres-direct,.explore-grouped-presentation){--explore-ink:var(--memo-presentation-ink);--explore-line:var(--memo-presentation-border);--explore-rgb:230,240,251}#exploreCards .explore-group-result,
-#exploreCards .explore-hit.explore-hit-grouped,
+.header-search-active #headerSearchSlot .search-suggestions .result[aria-selected="true"]{border-left-color:var(--hit-ink);background:linear-gradient(90deg,rgba(var(--hit-rgb),.98),rgba(var(--hit-rgb),.36) 70%,transparent 100%);outline:none}.header-search-active #headerSearchSlot .search-suggestions .result .result-section-direct{border-left-color:var(--hit-line)}#exploreCards :is(.explore-group-result,.explore-hit,.explore-search-child,.search-pres-direct,.explore-grouped-presentation){--explore-ink:var(--memo-group-ink);--explore-line:var(--memo-group-border);--explore-rgb:234,243,237}#exploreCards .explore-result-molecule{--explore-ink:var(--memo-molecule-ink);--explore-line:var(--memo-molecule-border);--explore-rgb:242,229,247}#exploreCards .explore-result-dose{--explore-ink:var(--memo-dose-ink);--explore-line:var(--memo-dose-border);--explore-rgb:250,238,231}#exploreCards :is(.explore-result-presentation,.search-pres-direct,.explore-grouped-presentation){--explore-ink:var(--memo-presentation-ink);--explore-line:var(--memo-presentation-border);--explore-rgb:230,240,251}#exploreCards .memo-result-card.explore-hit-grouped,
 #exploreCards .explore-hit.explore-specialty-direct{border:0!important;border-left:3px solid var(--explore-line)!important;border-radius:0 8px 8px 0!important;background:linear-gradient(90deg,rgba(var(--explore-rgb),.76),rgba(var(--explore-rgb),.22) 58%,transparent 100%)!important;padding:8px 10px!important;margin:5px 0!important;box-shadow:none!important}#exploreCards .explore-group-result .explore-group-result-line{background:transparent!important;border-radius:0}#exploreCards .explore-group-result-sub .explore-group-result-name,
 #exploreCards .explore-group-result-sub .explore-group-result-toggle,
 #exploreCards .explore-group-result .explore-group-result-name,
@@ -1007,7 +1006,7 @@ function explorerSearchMatches(query){
 function explorerFilterBadge(kind,value){
  const config={class:["badge-class","data-filter-class"],indication:["badge-indication","data-filter-ind"],form:["badge-form","data-filter-form"]}[kind];
  if(!config)return "";
- return `<button type="button" class="badge-button ${config[0]}" ${config[1]}="${esc(value)}">${esc(value)}</button>`;
+ return `<button type="button" class="memo-filter-badge badge-button ${config[0]}" ${config[1]}="${esc(value)}">${esc(value)}</button>`;
 }
 // V116.34 — Composant commun des badges de recherche Explorer.
 function explorerResultBadges(m){
@@ -1153,14 +1152,14 @@ function renderExplorerSearchResults(entries,filtered,searchMatches,query,classS
    const preview=explorerSectionResultPreview(m,sec);
    if(group){
     const tags=explorerResultBadges(m);
-    return `<article class="explore-group-result explore-result-group ${subgroup?"explore-group-result-sub":""}" style="${entityTreeStyle(m)}">
+    return `<article class="memo-result-card explore-group-result explore-result-group ${subgroup?"explore-group-result-sub":""}" style="${entityTreeStyle(m)}">
       <div class="explore-group-result-line">
        ${((childrenByParent.get(m.id)||[]).length)?`<button type="button" class="explore-group-result-toggle" data-search-tree-toggle aria-expanded="false" aria-label="Déplier les fiches du groupe ${esc(m.name)}"><span aria-hidden="true">▸</span></button>`:'<span class="explore-search-child-spacer" aria-hidden="true"></span>'}
        <button type="button" class="explore-group-result-name" data-open-med="${esc(m.id)}">${esc(m.name)}</button>
        
       </div>
       
-      ${tags?`<div class="explore-group-result-tags">${tags}</div>`:""}
+      ${tags?`<div class="memo-result-tags explore-group-result-tags">${tags}</div>`:""}
       <div class="explore-search-child-nested explore-search-root-children" hidden>${explorerRenderSearchChildren(m.id,childrenByParent)}</div>
      </article>`;
    }
@@ -1174,12 +1173,12 @@ function renderExplorerSearchResults(entries,filtered,searchMatches,query,classS
    }).join("");
    if(m.entry_type==="specialite"&&specialtyItems(m).length){
     const available=hitGroup.presentations.length?hitGroup.presentations.map(h=>h.presentation):specialtyItems(m).map(x=>x.i);
-    return `<article class="explore-hit explore-hit-med explore-specialty-direct explore-result-specialite">${available.map(i=>m.presentations?.[i]?searchPresentationLine(m,m.presentations[i],i):'').join('')}${preview}</article>`;
+    return `<article class="memo-result-card explore-hit explore-hit-med explore-specialty-direct explore-result-specialite">${available.map(i=>m.presentations?.[i]?searchPresentationLine(m,m.presentations[i],i):'').join('')}${preview}</article>`;
    }
    const presentationToggle=presentationRows?`<button type="button" class="explore-grouped-toggle" data-presentation-toggle aria-expanded="false"><span aria-hidden="true">▸</span> ${hitGroup.presentations.length} présentation${hitGroup.presentations.length>1?"s":""}</button><div class="explore-grouped-children" hidden>${presentationRows}</div>`:"";
    const matchedPrinceps=isMolecule(m)?(m.sections?.[0]?.princepsNames||[]).filter(name=>norm(name).includes(q)):[];
    const princepsSearchLabel=matchedPrinceps.length?`<div class="memo-explore-princeps-match">${matchedPrinceps.map(name=>esc(name)).join(', ')}</div>`:'';
-   return `<article class="explore-hit explore-hit-${kind} explore-hit-grouped ${isMolecule(m)?"explore-result-molecule":isVariantFiche(m)?"explore-result-dose":isSpecialiteFiche(m)?"explore-result-specialite":"explore-result-presentation"}">
+   return `<article class="memo-result-card explore-hit explore-hit-${kind} explore-hit-grouped ${isMolecule(m)?"explore-result-molecule":isVariantFiche(m)?"explore-result-dose":isSpecialiteFiche(m)?"explore-result-specialite":"explore-result-presentation"}">
     ${princepsSearchLabel}
     <div class="explore-hit-main">
      <button type="button" class="explore-hit-open" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec?.id||"")}" data-hit-pres="${hit.presentation===null?"":hit.presentation}" aria-label="Ouvrir ${esc(m.name)}${sec?" à la rubrique "+esc(sec.title):""}">
@@ -1187,7 +1186,7 @@ function renderExplorerSearchResults(entries,filtered,searchMatches,query,classS
       
      </button>
     </div>
-    ${isMolecule(m)?`<div class="explore-hit-tags">${explorerResultBadges(m)}</div>`:""}
+    ${isMolecule(m)?`<div class="memo-result-tags explore-hit-tags">${explorerResultBadges(m)}</div>`:""}
     ${preview}
     ${presentationToggle}
    </article>`;
