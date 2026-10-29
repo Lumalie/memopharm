@@ -2714,6 +2714,15 @@ header .brand-slogan{color:#dcebe2;font-size:.79rem;font-weight:450;line-height:
 #equivView .memo-equiv-dci-group-heading .memo-equiv-molecule-link{cursor:pointer}
 #equivView .memo-equiv-dosage-count{align-self:center;white-space:nowrap;font-size:.76rem;color:#7c8a80;background:#edf1ed;border-radius:999px;padding:3px 8px;margin:0 8px}
 #equivView .memo-equiv-commercial .memo-equiv-presentation .memo-equiv-open-fiche{font-weight:700;color:#b46c4d}
+/* V115.7 — accordéons entiers et provenance des CIP */
+#equivView .memo-equiv-dci-group-heading{cursor:pointer}
+#equivView .memo-equiv-dci-group-heading:hover{background:#f5f0f8}
+#equivView .memo-equiv-dci-group-heading .memo-equiv-molecule-name{cursor:pointer;pointer-events:none}
+#equivView .memo-equiv-lab-group{margin-top:8px;margin-bottom:6px}
+#equivView .memo-equiv-lab-name{font-size:.77rem;color:#76857a;font-weight:600;margin-bottom:6px}
+#equivView .memo-equiv-root-link{display:inline-block;margin:12px 0 3px;color:#795098;font-size:.8rem}
+#equivView .memo-equiv-dci-formulation .memo-equiv-cip-list{margin-top:0}
+#equivView .memo-equiv-presentation .memo-equiv-open-fiche{font-weight:700;color:#b46c4d}
 </style>
 </head>
 <body>
@@ -3894,20 +3903,54 @@ function memoEquivRecords(){
  });
  return [...groups.values()].filter(g=>g.names.size);
 }
-function memoEquivPresentationDetails(items,{dci=false}={}){
- const unique=new Map();
+function memoEquivFormDose(item){
+ const source=item.source,p=item.presentation||{};
+ const form=String(p.form||source.form||source.sections?.[0]?.dciForm||source.sections?.[0]?.specialtyFormTitle?.value||'').trim();
+ const dosage=String(p.dosage||source.dosage||item.ingredientDose||'').trim();
+ const label=[form,dosage].filter(Boolean).join(' · ');
+ return label||item.detail||displayMedName(source);
+}
+function memoEquivLab(item){
+ const p=item.presentation||{},m=item.source;
+ return String(p.lab||m.lab||m.laboratory||m.laboratoire||'').trim();
+}
+function memoEquivCipRows(items){
+ const seen=new Set(),rows=[];
  items.forEach(item=>{
   const p=item.presentation;
-  const key=String(item.source.id)+'|'+String(item.detail)+'|'+String(p?.name||'')+'|'+String(p?.dosage||'')+'|'+String(p?.form||'');
-  if(!unique.has(key))unique.set(key,item);
+  if(!p)return;
+  const lab=memoEquivLab(item);
+  cipConditionnements(p).forEach(box=>{
+   const key=[box.cip,box.pack,lab].map(norm).join('|');
+   if(seen.has(key))return;seen.add(key);
+   rows.push({box,lab});
+  });
  });
- return [...unique.values()].map(item=>{
-  const p=item.presentation,source=item.source;
-  const title=dci?item.detail:displayMedName(source);
-  const boxes=p?cipConditionnements(p):[];
+ if(!rows.length)return '';
+ // Laboratoire au-dessus des CIP, en conservant chaque paire CIP–boîtage.
+ const labs=new Map();
+ rows.forEach(row=>{
+  const key=norm(row.lab)||'__inconnu__';
+  if(!labs.has(key))labs.set(key,{name:row.lab,rows:[]});
+  labs.get(key).rows.push(row.box);
+ });
+ return [...labs.values()].map(group=>`<div class="memo-equiv-lab-group">
+  <div class="memo-equiv-lab-name">${group.name?`Laboratoire : ${esc(group.name)}`:'Laboratoire non renseigné'}</div>
+  <div class="memo-equiv-cip-list">${group.rows.map(box=>`<span class="memo-equiv-cip-pair">${box.cip?cipBadges({cipBoxes:[box]}):''}${box.pack?`<span class="memo-v92-pack-label">${esc(box.pack)}</span>`:''}</span>`).join('')}</div>
+ </div>`).join('');
+}
+function memoEquivPresentationDetails(items){
+ const groups=new Map();
+ items.forEach(item=>{
+  const label=memoEquivFormDose(item),key=norm(label);
+  if(!groups.has(key))groups.set(key,{label,items:[]});
+  groups.get(key).items.push(item);
+ });
+ return [...groups.values()].map(group=>{
+  const source=group.items.find(x=>isVariantFiche(x.source))?.source||group.items[0].source;
   return `<div class="memo-equiv-presentation">
-   <button type="button" class="memo-equiv-open-fiche${dci?' memo-equiv-dci-variant':''}" data-equiv-open="${esc(source.id)}" title="Ouvrir la fiche correspondante">${esc(title)}</button>
-   ${boxes.length?`<div class="memo-equiv-cip-list">${boxes.map(box=>`<span class="memo-equiv-cip-pair">${box.cip?cipBadges({cipBoxes:[box]}):''}${box.pack?`<span class="memo-v92-pack-label">${esc(box.pack)}</span>`:''}</span>`).join('')}</div>`:''}
+   <button type="button" class="memo-equiv-open-fiche memo-equiv-dci-variant" data-equiv-open="${esc(source.id)}" title="Ouvrir la fiche correspondante">${esc(group.label)}</button>
+   ${memoEquivCipRows(group.items)}
   </div>`;
  }).join('');
 }
@@ -3941,31 +3984,28 @@ function renderEquivalences(){
  }).join('');
  right.innerHTML=hits.map(g=>{
   const names=g.rootMatch?[...g.names.values()]:g.matchingNames;
-  const filteredItems=names.flatMap(n=>n.items);
+  const filteredItems=[...g.names.values()].flatMap(n=>n.items);
   const formulations=[...g.formulations.values()].filter(f=>f.items.some(item=>filteredItems.includes(item)));
-  const entries=formulations.sort((a,b)=>a.label.localeCompare(b.label,'fr')).map(f=>{
-   const items=f.items.filter(item=>filteredItems.includes(item));
-   // A single presentation is displayed once, including its CIP and packaging.
-   const seen=new Set();
-   const distinct=items.filter(item=>{
-    const key=String(item.source.id)+'|'+String(item.presentation?.name||'')+'|'+String(item.presentation?.dosage||'');
-    if(seen.has(key))return false;seen.add(key);return true;
-   });
+  const formGroups=new Map();
+  formulations.forEach(f=>f.items.forEach(item=>{
+   const label=memoEquivFormDose(item),key=norm(label);
+   if(!formGroups.has(key))formGroups.set(key,{label,items:[]});
+   formGroups.get(key).items.push(item);
+  }));
+  const entries=[...formGroups.values()].sort((a,b)=>a.label.localeCompare(b.label,'fr')).map(f=>{
+   const target=f.items.find(x=>isVariantFiche(x.source))?.source||f.items[0].source;
    return `<div class="memo-equiv-dci-formulation">
-    <button type="button" class="memo-equiv-open-fiche memo-equiv-dci-variant" data-equiv-open="${esc(f.source.id)}" title="Ouvrir la variante ou la fiche spécialité">${esc(f.label)}</button>
-    ${distinct.map(item=>{
-      const boxes=item.presentation?cipConditionnements(item.presentation):[];
-      return boxes.length?`<div class="memo-equiv-cip-list">${boxes.map(box=>`<span class="memo-equiv-cip-pair">${box.cip?cipBadges({cipBoxes:[box]}):''}${box.pack?`<span class="memo-v92-pack-label">${esc(box.pack)}</span>`:''}</span>`).join('')}</div>`:'';
-    }).join('')}
+    <button type="button" class="memo-equiv-open-fiche memo-equiv-dci-variant" data-equiv-open="${esc(target.id)}" title="Ouvrir la variante ou la fiche spécialité">${esc(f.label)}</button>
+    ${memoEquivCipRows(f.items)}
    </div>`;
   }).join('');
-  const title=g.root?`<button type="button" class="memo-equiv-molecule-link" data-equiv-open="${esc(g.root.id)}" title="Ouvrir la fiche molécule">${esc(g.name)}</button>`:`<span class="memo-equiv-molecule-name">${esc(g.name)}</span>`;
+  const title=`<span class="memo-equiv-molecule-name">${esc(g.name)}</span>`;
   const isOpen=memoEquivOpenDcis.has(norm(g.name));
-  const doseCount=formulations.length;
+  const doseCount=formGroups.size;
   const countLabel=`${doseCount} ${doseCount===1?'dosage':'dosages'}`;
   return `<div class="memo-equiv-entry memo-equiv-dci-group" data-equiv-dci-key="${esc(norm(g.name))}">
    <div class="memo-equiv-dci-group-heading">${title}<span class="memo-equiv-dosage-count">${countLabel}</span><button type="button" class="memo-equiv-dci-toggle" aria-expanded="${isOpen?'true':'false'}" aria-label="Afficher les présentations de ${esc(g.name)}"><span class="memo-equiv-chevron memo-equiv-chevron-icons"><span class="memo-equiv-icon-down"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span><span class="memo-equiv-icon-up"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg></span></span></button></div>
-   <div class="memo-equiv-dci-group-body" ${isOpen?'':'hidden'}>${entries||'<p class="memo-equiv-related">Aucune présentation détaillée.</p>'}</div>
+   <div class="memo-equiv-dci-group-body" ${isOpen?'':'hidden'}>${g.root?`<button type="button" class="memo-equiv-open-fiche memo-equiv-root-link" data-equiv-open="${esc(g.root.id)}">Ouvrir la fiche molécule ↗</button>`:''}${entries||'<p class="memo-equiv-related">Aucune présentation détaillée.</p>'}</div>
   </div>`;
  }).join('');
  document.querySelectorAll('#equivView [data-equiv-specialty-key]').forEach(el=>el.addEventListener('toggle',()=>{
@@ -3974,7 +4014,7 @@ function renderEquivalences(){
  }));
  document.querySelectorAll('#equivView .memo-equiv-dci-group-heading').forEach(heading=>{
   heading.addEventListener('click',e=>{
-   if(e.target.closest('.memo-equiv-molecule-link,.memo-equiv-dci-toggle'))return;
+   if(e.target.closest('.memo-equiv-dci-toggle'))return;
    heading.querySelector('.memo-equiv-dci-toggle')?.click();
   });
  });
