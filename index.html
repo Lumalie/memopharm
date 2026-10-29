@@ -3708,15 +3708,13 @@ function groupDepth(group,visible=publicMeds()){
 }
 function groupLevelStyle(depth){
  const c=GROUP_LEVEL_COLORS[Math.max(0,depth)%GROUP_LEVEL_COLORS.length];
- return `--group-bg:${c.bg};--group-fg:${c.fg};--group-border:${c.border};`;
+ return typeColorStyle(c);
 }
 // Identité visuelle unique : sauge pour les groupes, mauve pour les molécules.
 const MOLECULE_COLOR={bg:"#f2e5f7",fg:"#793f8f",border:"#d2addf"};
+// Un seul sérialiseur CSS pour tous les niveaux : la palette reste inchangée.
 function entityTreeStyle(item){
- if(isMolecule(item)){
-  const c=MOLECULE_COLOR;
-  return `--group-bg:${c.bg};--group-fg:${c.fg};--group-border:${c.border};`;
- }
+ if(isMolecule(item))return typeColorStyle(MOLECULE_COLOR);
  return isGroup(item)?groupLevelStyle(0):typeColorStyle(isSpecialiteFiche(item)?SPECIALITE_COLOR:DOSAGE_COLOR);
 }
 // V6.25 : un seul emplacement et une seule présentation pour les retours vers les fiches parentes.
