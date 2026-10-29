@@ -3070,6 +3070,70 @@ header .header-admin-actions button,header .header-admin-actions summary{min-hei
 #exploreCards .explore-group-result{padding-bottom:7px}
 #exploreCards .explore-group-result-tags{margin-top:3px}
 
+
+/* V116.20 — Explorer : densité proche du sommaire, aperçu intégré */
+#exploreCards .explore-hit.explore-hit-grouped,
+#exploreCards .explore-hit.explore-specialty-direct,
+#exploreCards .explore-group-result{
+  padding:5px 9px!important;
+  margin:3px 0!important;
+  border-radius:0 5px 5px 0!important;
+}
+#exploreCards .explore-hit-grouped{gap:0!important}
+#exploreCards .explore-hit-grouped .explore-hit-open{padding:2px 5px!important;min-height:0!important}
+#exploreCards .explore-hit-grouped .explore-hit-heading{line-height:1.3!important}
+#exploreCards .explore-hit-grouped .explore-hit-tags{margin:2px 0 2px 20px!important;gap:4px!important}
+#exploreCards .explore-hit-grouped .explore-hit-tags .badge-button{padding:2px 6px!important;line-height:1.25!important}
+#exploreCards .explore-specialty-direct .search-pres-direct{padding:3px 2px 4px!important;margin:0!important}
+#exploreCards .explore-specialty-direct .search-pres-title{padding:0!important;line-height:1.3!important}
+#exploreCards .explore-specialty-direct .search-pres-details{margin-top:2px!important;gap:4px!important}
+#exploreCards .explore-specialty-direct .search-pres-badges{margin-top:1px!important;gap:4px!important}
+#exploreCards .explore-preview-direct{
+  margin:4px 2px 1px 20px!important;
+  padding:0!important;
+  min-width:0;
+}
+#exploreCards .explore-preview-card{
+  border:1px solid rgba(96,129,115,.22);
+  border-radius:7px;
+  background:rgba(255,255,255,.58);
+  padding:5px 9px 6px;
+  min-width:0;
+}
+#exploreCards .explore-preview-link{
+  display:inline-flex!important;align-items:center;gap:5px!important;
+  width:auto!important;min-height:0!important;
+  padding:0!important;margin:0!important;
+  background:transparent!important;border:0!important;box-shadow:none!important;
+  line-height:1.3!important;
+}
+#exploreCards .explore-preview-link:hover,
+#exploreCards .explore-preview-link:focus-visible{
+  background:transparent!important;outline:0!important;text-decoration:underline;
+  text-underline-offset:2px;
+}
+#exploreCards .explore-preview-title{padding:0!important;font-size:.8rem!important;line-height:1.3!important}
+#exploreCards .explore-preview-arrow{font-size:.77rem;line-height:1;opacity:.8}
+#exploreCards .explore-preview-direct .explore-hit-content{
+  margin:3px 0 0!important;padding:0!important;
+  border:0!important;border-radius:0!important;
+  background:transparent!important;box-shadow:none!important;
+  font-size:.83rem;line-height:1.38;
+  overflow-wrap:anywhere;
+}
+#exploreCards .explore-preview-direct .explore-hit-content>section,
+#exploreCards .explore-preview-direct .explore-hit-content>div{
+  margin:0!important;padding:0!important;
+  border:0!important;box-shadow:none!important;
+  background:transparent!important;
+}
+#exploreCards .explore-preview-direct .explore-hit-content p{margin:2px 0!important}
+#exploreCards .explore-preview-direct .explore-hit-content ul,
+#exploreCards .explore-preview-direct .explore-hit-content ol{margin:2px 0!important;padding-left:18px!important}
+#exploreCards .explore-preview-direct .explore-hit-content li{margin:1px 0!important}
+#exploreCards .explore-preview-direct .explore-hit-content table{max-width:100%;overflow-x:auto}
+@media(max-width:600px){#exploreCards .explore-preview-direct{margin-left:8px!important}}
+
 </style>
 </head>
 <body>
@@ -4048,7 +4112,7 @@ function renderExplorer(){
    const presBadge=princeps?'<span class="explore-pres-princeps">Princeps</span>':"";
    const cipButton=cipBadges(p);
    const showSectionContent=!!sec&&isContentFicheType(m)&&!group;
-   const preview=showSectionContent?`<div class="explore-preview-direct"><button type="button" class="explore-preview-link" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec.id)}" aria-label="Ouvrir ${esc(sec.title)} dans la fiche ${esc(m.name)}"><span class="explore-preview-title">↳ ${esc(sec.title)}</span> <span aria-hidden="true">↗</span></button>${searchSectionPreview(resolveSharedSection(m,sec))}</div>`:"";
+   const preview=showSectionContent?`<div class="explore-preview-direct"><div class="explore-preview-card"><button type="button" class="explore-preview-link" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec.id)}" aria-label="Ouvrir ${esc(sec.title)} dans la fiche ${esc(m.name)}"><span class="explore-preview-title">↳ ${esc(sec.title)}</span> <span class="explore-preview-arrow" aria-hidden="true">↗</span></button>${searchSectionPreview(resolveSharedSection(m,sec))}</div></div>`:"";
    if(group){
     const tags=`${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}`;
     const ancestorNodes=parents.map((name,i)=>{
