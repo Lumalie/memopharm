@@ -2877,6 +2877,52 @@ header .header-admin-actions button,header .header-admin-actions summary{min-hei
 #memoPanelGeneric .memo-equiv-entry-body{background:#fff}
 @media(max-width:730px){#memoPanelDci .memo-dci-combined .memo-pair-half{padding:10px}#memoPanelDci .memo-dci-combined .memo-pair-specialty-card,#memoPanelDci .memo-dci-combined .memo-pair-substance{padding:12px 10px;min-height:54px}}
 
+
+/* V116.11 — Un seul encadré principal, entrées séparées par un trait discret.
+   Les couleurs de chaque type de fiche ne s'appliquent qu'aux textes. */
+#memoPanelDci .memo-dci-combined .memo-pair-specialty-card,
+#memoPanelDci .memo-dci-combined .memo-pair-substance{
+  background:transparent;border:0;border-radius:0;box-shadow:none;
+  min-height:0;padding:11px 3px;color:#1e7169;
+}
+#memoPanelDci .memo-dci-combined .memo-pair-specialty-card:hover{
+  background:transparent;border-color:transparent;box-shadow:none;
+  text-decoration:underline;text-underline-offset:3px;
+}
+#memoPanelDci .memo-dci-combined .memo-pair-specialty-card:focus-visible{
+  outline:2px solid #1e7169;outline-offset:2px;
+}
+#memoPanelDci .memo-dci-combined .memo-pair-substance,
+#memoPanelDci .memo-dci-combined .memo-pair-substance strong,
+#memoPanelDci .memo-dci-combined .memo-pair-substance span{color:#793f8f}
+#memoPanelDci .memo-dci-combined .memo-pair-dci{gap:0}
+#memoPanelDci .memo-dci-combined .memo-pair-substance + .memo-pair-substance{
+  border-top:1px solid #e4eae6;
+}
+#memoPanelDci .memo-dci-combined .memo-pair-half{padding:10px 20px}
+#memoPanelGeneric .memo-equiv-entry{
+  background:transparent;border:0;border-radius:0;box-shadow:none;
+}
+#memoPanelGeneric .memo-pair-half .memo-equiv-entry + .memo-equiv-entry{
+  border-top:1px solid #e4eae6;
+}
+#memoPanelGeneric .memo-equiv-entry summary{
+  background:transparent;border:0;border-radius:0;color:#793f8f;
+}
+#memoPanelGeneric .memo-equiv-entry summary:hover{background:transparent}
+#memoPanelGeneric .memo-equiv-entry-body{background:transparent}
+#memoPanelGeneric .memo-pair-combined-title{
+  background:transparent;border-bottom:1px solid #e4eae6;color:#793f8f;
+}
+#memoPanelGeneric .memo-pair-half{gap:0}
+#memoPanelGeneric .memo-princeps-source{color:#793f8f}
+#memoPanelGeneric .memo-princeps-source .memo-nsfp-badge{color:#a52e2a;text-decoration:none!important}
+@media(max-width:730px){
+ #memoPanelDci .memo-dci-combined .memo-pair-half{padding:8px 11px}
+ #memoPanelDci .memo-dci-combined .memo-pair-specialty-card,
+ #memoPanelDci .memo-dci-combined .memo-pair-substance{padding:10px 2px;min-height:0}
+}
+
 </style>
 </head>
 <body>
