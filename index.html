@@ -845,30 +845,48 @@ function restoreLocalDraft(){
 // V116.67 : évolution douce des rubriques des fiches molécules existantes.
 // Une ancienne rubrique Grossesse renseignée n'est jamais effacée : elle est
 // conservée masquée pour que les données puissent être récupérées si besoin.
-function memoUpgradeMoleculeSections(sections, entryType){
+// V116.70 : modèle concis des fiches molécules. Les contenus personnalisés
+// sont conservés ; les anciennes rubriques sont masquées plutôt que supprimées.
+const MEMO_MOLECULE_GLANCE="__C’est quoi ?__\n\n__Comment ça marche ?__\n\n__Comment ça se prend ?__";
+const MEMO_MOLECULE_POSOLOGY=" | Adulte | Enfant\n |  | \n |  | ";
+const MEMO_MOLECULE_TEMPLATE=[
+ {id:"alerte-delivrance",title:"🚨 Alerte à la délivrance",type:"text",content:"",enabled:true},
+ {id:"coup-oeil",title:"👀 En un coup d’œil",type:"text",content:MEMO_MOLECULE_GLANCE,enabled:true},
+ {id:"conseils-comptoir",title:"💗 Conseils au comptoir",type:"text",content:"",enabled:true},
+ {id:"indications",title:"📍 Indications",type:"text",content:"",enabled:true},
+ {id:"mecanisme",title:"⚙️ Mécanisme d’action",type:"text",content:"",enabled:true},
+ {id:"posologie",title:"🔢 Posologie",type:"table",content:MEMO_MOLECULE_POSOLOGY,enabled:true},
+ {id:"effets",title:"🌀 Effets indésirables",type:"text",content:"",enabled:true},
+ {id:"interactions",title:"⚠️ Interactions médicamenteuses",type:"text",content:"",enabled:true}
+];
+function memoUpgradeMoleculeSections(sections,entryType,force=false){
  if(!Array.isArray(sections))return sections;
- if(entryType!=="dci"||!sections.some(s=>s?.moleculeRoot))return sections;
- const list=sections.map(s=>({...s}));
- const oldIndex=list.findIndex(s=>s.id==="grossesse");
- const mechanismIndex=list.findIndex(s=>s.id==="mecanisme");
- if(oldIndex>=0){
-  const old=list[oldIndex];
-  const template="Grossesse : à vérifier dans les sources de référence.\nAllaitement : à vérifier dans les sources de référence.";
-  if(String(old.content||"").trim()===template||!String(old.content||"").trim()){
-   list.splice(oldIndex,1);
-  }else{
-   // Données historiques personnalisées : ne pas supprimer leur contenu.
-   old.enabled=false;
-   old.title="🤰 Grossesse et allaitement (ancienne rubrique conservée)";
-  }
- }
- const index=list.findIndex(s=>s.id==="mecanisme");
- const section=index>=0?list.splice(index,1)[0]:{id:"mecanisme",title:"⚙️ Mécanisme d’action",type:"text",content:"",enabled:true};
- const indications=list.findIndex(s=>s.id==="indications");
- const posologie=list.findIndex(s=>s.id==="posologie");
- const insertion=indications>=0?indications+1:posologie>=0?posologie:list.length;
- list.splice(insertion,0,section);
- return list;
+ if(!force&&(entryType!=="dci"||!sections.some(s=>s?.moleculeRoot)))return sections;
+ const original=sections.map(s=>({...s}));
+ const oldGlance=[DEFAULT_SECTIONS.find(s=>s.id==="coup-oeil")?.content,
+  GROUP_SECTIONS.find(s=>s.id==="coup-oeil")?.content];
+ const placeholders=new Map(DEFAULT_SECTIONS.map(s=>[s.id,s.content]));
+ const used=new Set();
+ const updated=MEMO_MOLECULE_TEMPLATE.map(template=>{
+  const idx=original.findIndex((sec,i)=>!used.has(i)&&sec.id===template.id);
+  if(idx<0)return clone(template);
+  used.add(idx);
+  const sec={...original[idx],title:template.title};
+  const value=String(sec.content||"").trim();
+  const oldDefault=String(placeholders.get(sec.id)||"").trim();
+  const untouched=!value||(oldDefault&&value===oldDefault)||(sec.id==="coup-oeil"&&oldGlance.some(v=>value===String(v||"").trim()));
+  if(untouched){sec.type=template.type;sec.content=template.content;}
+  // Une posologie déjà renseignée reste intacte, même au format texte.
+  return sec;
+ });
+ original.forEach((sec,i)=>{
+  if(used.has(i))return;
+  const value=String(sec.content||"").trim();
+  const oldDefault=String(placeholders.get(sec.id)||"").trim();
+  if(!value||value===oldDefault)return;
+  updated.push({...sec,enabled:false,title:sec.title+(sec.title?.includes("ancienne rubrique")?"":" (ancienne rubrique conservée)")});
+ });
+ return updated;
 }
 function rowToMed(row){return {parent_dci:row.parent_dci||"",presentations:Array.isArray(row.presentations)?row.presentations:[],id:row.id,name:row.name||"",dosage:row.dosage||"",dci:row.dci||"",category:row.category||"Autres",form:row.form||"",aliases:Array.isArray(row.aliases)?row.aliases.join(", "):(row.aliases||""),entry_type:row.entry_type||"specialite",status:row.review_status||"À vérifier",updated:row.verified_at||"",modifiedAt:row.updated_at||"",source:row.source_url||"",sections:memoUpgradeMoleculeSections(Array.isArray(row.sections)?row.sections:clone(DEFAULT_SECTIONS),row.entry_type||"specialite"),published:row.status==="published"}}
 function medToRow(m){return {parent_dci:isDciFamilyType(m)?null:(m.parent_dci||null),presentations:m.presentations||[],id:m.id,name:m.name,dosage:m.dosage||null,dci:isDciFamilyType(m)?null:(m.dci||null),entry_type:m.entry_type||"specialite",category:m.category||"Autres",form:m.form||null,aliases:String(m.aliases||"").split(",").map(x=>x.trim()).filter(Boolean),review_status:m.status||"À vérifier",verified_at:m.updated||null,source_url:m.source||null,sections:(m.sections||[]).map(({imageData,...section})=>section),status:m.published?"published":"draft"}}
@@ -3734,7 +3752,12 @@ function renderEditor(id){
    setHierarchy(m,"groupe",priorParent);
    $("sectionEditors").innerHTML=m.sections.map((sec,i)=>sectionEditor(sec,i)).join("");
   }
-  
+  if($("f-entry-type").value==="molecule"){
+   captureEditorFields(m);
+   m.sections[0].moleculeRoot=true;
+   m.sections=memoUpgradeMoleculeSections(m.sections,"dci",true);
+   $("sectionEditors").innerHTML=m.sections.map((sec,i)=>sectionEditor(sec,i)).join("");
+  }
  toggleType();
  };toggleType();
  // Édition intégrée des présentations : les enregistrements Supabase existants
