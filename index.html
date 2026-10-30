@@ -1187,7 +1187,7 @@ function openMedication(id,presentationIndex=null,sectionId=null){
  const requested=meds.find(x=>String(x.id)===String(id));
  const variantTarget=requested&&isVariantFiche(requested)?requested:null;
  const parentTarget=variantTarget?meds.find(x=>String(x.id)===String(moleculeParentId(variantTarget))&&isMolecule(x)):null;
- if(parentTarget){id=parentTarget.id;presentationIndex=null;sectionId=null;}
+ if(parentTarget){id=parentTarget.id;presentationIndex=null;/* conserver la rubrique de la variante */}
 
  // Conserver le contexte exact de la recherche dans l'entrée d'historique précédente.
  if(currentView==='home'&&!openedSearchFiche&&!editorId&&$('search').value.trim()){
@@ -2348,11 +2348,10 @@ function previewSearchResult(item){
   const open=()=>{
    const childId=el.dataset.v109Child;
    if(childId){const child=publicMeds().find(x=>String(x.id)===String(childId));if(child){memoSetViewChoice(m.id,{form:child.form||medicationForms(child)[0]||'',doseId:child.id});}}
-   openMedication(m.id,null,el.dataset.v109Rubric);
-   requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    const root=$('detail');const target=[...root.querySelectorAll('[id^="section-"]')].find(x=>x.id==='section-'+el.dataset.v109Rubric);
-    if(target){target.closest('details')?.setAttribute('open','');target.scrollIntoView({block:'start',behavior:'smooth'});}
-   }));
+   // Respecter la fiche propriétaire de la rubrique (molécule ou dosage).
+   const ownerId=el.dataset.v109Owner;
+   const targetId=String(ownerId)===String(m.id)?m.id:(childId||ownerId||m.id);
+   openMedication(targetId,null,el.dataset.v109Rubric);
   };
   const body=el.querySelector('.memo-v74-rubric-content');if(body){
    body.addEventListener('click',e=>{
@@ -2918,6 +2917,9 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDo
     const target=document.getElementById("section-"+CSS.escape(sectionId));
     if(!target)return;
     target.classList.add("direct-target");
+    for(let ancestor=target.parentElement;ancestor;ancestor=ancestor.parentElement){
+     if(ancestor.tagName==="DETAILS")ancestor.open=true;
+    }
     const top=Math.max(0,window.scrollY+target.getBoundingClientRect().top-18);
     window.scrollTo({top,behavior:attempt===0?"smooth":"instant"});
     viewScrollPositions.home=top;
