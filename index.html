@@ -3462,7 +3462,20 @@ function memoInlineRead(table){
   for(const td of table.rows[r].cells){
    while(occupied.has(r+":"+c))c++;
    const rs=td.rowSpan||1,cs=td.colSpan||1;
-   cells.push({r,c,rs,cs,text:memoRichSerialize(td).trim()});
+   // Dans une cellule, les <div>/<p> insérés automatiquement par contenteditable
+   // après un lien ne doivent pas créer un saut de ligne à la sauvegarde.
+   // Les vrais <br> restent conservés comme retours à la ligne volontaires.
+   const normalized=td.cloneNode(true);
+   normalized.querySelectorAll('div,p').forEach(block=>{
+    const span=document.createElement('span');
+    while(block.firstChild)span.appendChild(block.firstChild);
+    const previous=block.previousSibling;
+    if(previous&&previous.textContent&&!/\s$/.test(previous.textContent)&&span.textContent&&!/^\s/.test(span.textContent)){
+     block.before(document.createTextNode(' '));
+    }
+    block.replaceWith(span);
+   });
+   cells.push({r,c,rs,cs,text:memoRichSerialize(normalized).trim()});
    for(let rr=r;rr<r+rs;rr++)for(let cc=c;cc<c+cs;cc++)occupied.add(rr+":"+cc);
    c+=cs;
   }
