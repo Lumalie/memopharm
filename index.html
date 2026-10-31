@@ -3475,7 +3475,7 @@ function memoInlineRead(table){
     }
     block.replaceWith(span);
    });
-   cells.push({r,c,rs,cs,text:memoRichSerialize(normalized).trim(),valign:["top","middle","bottom"].includes(td.style.verticalAlign)?td.style.verticalAlign:"top"});
+   cells.push({r,c,rs,cs,text:memoRichSerialize(normalized,true).trim(),valign:["top","middle","bottom"].includes(td.style.verticalAlign)?td.style.verticalAlign:"top"});
    for(let rr=r;rr<r+rs;rr++)for(let cc=c;cc<c+cs;cc++)occupied.add(rr+":"+cc);
    c+=cs;
   }
@@ -3503,7 +3503,7 @@ function richText(raw){
  close();return html;
 }
 // Édition WYSIWYG : stockage conservé dans le format texte historique de Mémopharm.
-function memoRichSerialize(root){
+function memoRichSerialize(root,inlineOnly=false){
  const clean=t=>String(t||'').replace(/\u00a0/g,' ');
  const inline=node=>{
   if(node.nodeType===3)return clean(node.nodeValue);
@@ -3534,6 +3534,7 @@ function memoRichSerialize(root){
   }
   return value;
  };
+ if(inlineOnly)return [...root.childNodes].map(inline).join('');
  const blocks=[];
  const visit=(node)=>{
   if(node.nodeType===3){if(node.nodeValue.trim())blocks.push(inline(node));return}
