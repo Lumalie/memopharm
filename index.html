@@ -636,6 +636,12 @@ html[data-memo-theme="dark"] .table-grid-editor td.memo-merge-selected{backgroun
 
 #editor .section-editor{scroll-margin-top:20px}
 #editor .memo-rubric-jump-target{outline:2px solid #7baa89;outline-offset:3px;transition:outline-color .5s}
+
+/* V116.84 : aperçu de rubrique uniquement sur le premier résultat de recherche dans la bannière */
+.memo-header-first-rubric-preview{display:none}
+body.header-search-active #headerSearchSlot #searchSuggestions .result:first-child .memo-header-first-rubric-preview{display:block;margin-top:8px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--card);font-size:.86rem;max-height:210px;overflow:auto}
+body.header-search-active #headerSearchSlot #searchSuggestions .memo-header-first-rubric-preview .explore-hit-content{margin:0}
+body.header-search-active #headerSearchSlot #searchSuggestions .memo-header-first-rubric-preview .section{padding:0;border:0}
 </style>
 </head>
 <body>
@@ -2581,7 +2587,7 @@ function renderResults(){
  dropdown.classList.toggle('hidden',!query);
  highlightedSearchIndex=-1;
  $('count').textContent=found.length+' résultat'+(found.length===1?'':'s');
- $('results').innerHTML=found.length?found.map(item=>{
+ $('results').innerHTML=found.length?found.map((item,resultIndex)=>{
   const m=item.med,sec=item.section;
   const matchingVariant=item.presentation===null?memoSearchResultVariant(m,query):null;
   const p=item.presentation!==null?m.presentations?.[item.presentation]:null;
@@ -2615,10 +2621,15 @@ function renderResults(){
     <strong class="memo-search-princeps-target"><span class="result-dot memo-search-princeps-turn" aria-hidden="true">↳</span><span class="memo-search-molecule-name">${esc(displayMedName(m))}</span></strong>
    </div>`:'';
   const sectionDetail=sec&&isContentFicheType(m)&&!isPresentation?`<div class="result-section-direct"><span class="result-section-title">↳ ${esc(sec.title)}</span></div>`:"";
+  // Dans la recherche compacte de la bannière, seul le premier résultat
+  // affiche le contenu de la rubrique vers laquelle il redirige.
+  const firstHeaderSectionPreview=resultIndex===0&&sec&&!matchingVariant&&!isPresentation
+   ?searchSectionPreview(sec):"";
   return `<div class="result result-${kind}" role="option" aria-selected="false" tabindex="-1" data-id="${esc(matchingVariant?.id||m.id)}" data-preview-id="${esc(m.id)}" data-section="${esc(matchingVariant?'':sec?.id||'')}" data-presentation="${matchingVariant||item.presentation===null?'':item.presentation}">
    ${princepsRoute?princepsRoute:`<strong><span class="result-dot" aria-hidden="true">●</span>${esc(isPresentation?presentationTitle:name)}<span class="result-arrow" aria-hidden="true">↗</span></strong>`}
    ${isPresentation?`<div class="result-presentation-info">${badge}${cip}</div>`:mergedCip?`<div class="result-presentation-info memo-v106-merged-cip">${mergedCip}</div>`:(isDciFamilyType(m))?dciBadges:group?"":`<div class="sub">${esc(m.category||"Sans famille")}</div>`}
    ${sectionDetail}
+   ${firstHeaderSectionPreview?`<div class="memo-header-first-rubric-preview">${firstHeaderSectionPreview}</div>`:""}
   </div>`;
  }).join(''):'<div class="empty">Aucun résultat. Essaie un autre terme ou change de famille.</div>';
  $('results').querySelectorAll('.result').forEach(el=>{
