@@ -3576,6 +3576,14 @@ function wireTextFormatting(){
    }else if(action==="split"){
     const c=model.cells.find(c=>c.r===dragStart?.r&&c.c===dragStart?.c);
     if(!c||!memoTableSplit(model,c))return;
+   }else if(action==="remove-row"||action==="remove-col"){
+    // La dernière cellule cliquée / sélectionnée détermine la ligne ou colonne.
+    const target=dragEnd||dragStart;
+    if(!target){alert("Clique d’abord dans la cellule de la ligne ou colonne à supprimer.");return}
+    const index=action==="remove-row"?target.r:target.c;
+    if(!memoTableDeleteAt(model,action==="remove-row"?"row":"col",index)){
+     alert("Impossible de supprimer la dernière ligne ou colonne du tableau.");return;
+    }
    }else memoTableResize(model,action);
    const wrapper=activeTable.closest(".memo-inline-table-wrap");
    memoInlineRefresh(wrapper,model);
@@ -4478,6 +4486,25 @@ function memoTableSplit(model,cell){
  for(let r=cell.r;r<cell.r+cell.rs;r++)for(let c=cell.c;c<cell.c+cell.cs;c++)model.cells.push({r,c,rs:1,cs:1,text:r===cell.r&&c===cell.c?cell.text:""});
  return true;
 }
+// Supprime la ligne/colonne visée, même au milieu du tableau et en présence de fusions.
+function memoTableDeleteAt(model,axis,index){
+ const row=axis==="row",limit=row?model.rows:model.cols;
+ if(limit<=1||!Number.isInteger(index)||index<0||index>=limit)return false;
+ const next=[];
+ for(const source of model.cells){
+  const cell={...source},start=row?cell.r:cell.c,span=row?cell.rs:cell.cs;
+  if(index<start){if(row)cell.r--;else cell.c--;}
+  else if(index<start+span){
+   if(span===1)continue;
+   if(row)cell.rs--;else cell.cs--;
+   // Le contenu reste dans la cellule fusionnée survivante.
+  }
+  next.push(cell);
+ }
+ if(row)model.rows--;else model.cols--;
+ model.cells=next.sort((a,b)=>a.r-b.r||a.c-b.c);
+ return true;
+}
 function memoTableResize(model,action){
  if(action==="add-row"&&model.rows<100){for(let c=0;c<model.cols;c++)model.cells.push({r:model.rows,c,rs:1,cs:1,text:""});model.rows++}
  if(action==="add-col"&&model.cols<30){for(let r=0;r<model.rows;r++)model.cells.push({r,c:model.cols,rs:1,cs:1,text:""});model.cols++}
@@ -4671,7 +4698,7 @@ function memoLegacyTableToText(content){
  const model=memoTableModel(content||"");
  return memoInlineToken(model);
 }
-function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button type="button" data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button type="button" data-act="down" data-index="${i}" ${i===(meds.find(m=>m.id===editorId)?.sections?.length||0)-1?'disabled':''}>↓</button><button type="button" data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button type="button" class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Contenu</label>${true?`<div class="text-edit-wrap"><div class="memo-inline-table-toolbar" hidden><button type="button" data-inline-act="add-row">+ Ligne</button><button type="button" data-inline-act="remove-row">− Ligne</button><button type="button" data-inline-act="add-col">+ Colonne</button><button type="button" data-inline-act="remove-col">− Colonne</button><button type="button" data-inline-act="merge">Fusionner</button><button type="button" data-inline-act="split">Séparer</button><button type="button" data-inline-act="delete">Supprimer le tableau</button><span class="hint">Glisse la souris sur les cellules pour les sélectionner.</span></div><div class="text-format-bubble" hidden><button type="button" class="memo-insert-table" title="Insérer un tableau à la position du curseur">▦</button><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="link" title="Insérer un lien URL (Ctrl+K)">🔗 Lien</button><button type="button" data-format="bullets" title="Liste à puces">• Liste</button><button type="button" data-format="numbers" title="Liste numérotée">1. Liste</button><select data-format-align aria-label="Alignement du texte"><option value="">Aligner…</option><option value="left">Gauche</option><option value="center">Centré</option><option value="right">Droite</option><option value="justify">Justifié</option></select><select data-format-size aria-label="Taille de police"><option value="">Taille…</option><option value="12">12 px</option><option value="14">14 px</option><option value="16">16 px</option><option value="18">18 px</option><option value="20">20 px</option><option value="24">24 px</option><option value="28">28 px</option></select><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris précision</option><option value="pink">Rose conseil</option></select></div><textarea data-field="content" class="memo-rich-storage" tabindex="-1" aria-hidden="true">${esc(s.type==="table"?memoLegacyTableToText(s.content):s.content||"")}</textarea><div class="memo-rich-editor" contenteditable="true" role="textbox" aria-label="Contenu de la rubrique" aria-multiline="true"></div></div>`:`${tableGridEditor(s.content||"")}`}</div></div>`}
+function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button type="button" data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button type="button" data-act="down" data-index="${i}" ${i===(meds.find(m=>m.id===editorId)?.sections?.length||0)-1?'disabled':''}>↓</button><button type="button" data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button type="button" class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Contenu</label>${true?`<div class="text-edit-wrap"><div class="memo-inline-table-toolbar" hidden><button type="button" data-inline-act="add-row">+ Ligne</button><button type="button" data-inline-act="remove-row">− Ligne</button><button type="button" data-inline-act="add-col">+ Colonne</button><button type="button" data-inline-act="remove-col">− Colonne</button><button type="button" data-inline-act="merge">Fusionner</button><button type="button" data-inline-act="split">Séparer</button><button type="button" data-inline-act="delete">Supprimer le tableau</button><span class="hint">Clique dans une cellule pour supprimer sa ligne ou sa colonne ; glisse pour fusionner.</span></div><div class="text-format-bubble" hidden><button type="button" class="memo-insert-table" title="Insérer un tableau à la position du curseur">▦</button><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="link" title="Insérer un lien URL (Ctrl+K)">🔗 Lien</button><button type="button" data-format="bullets" title="Liste à puces">• Liste</button><button type="button" data-format="numbers" title="Liste numérotée">1. Liste</button><select data-format-align aria-label="Alignement du texte"><option value="">Aligner…</option><option value="left">Gauche</option><option value="center">Centré</option><option value="right">Droite</option><option value="justify">Justifié</option></select><select data-format-size aria-label="Taille de police"><option value="">Taille…</option><option value="12">12 px</option><option value="14">14 px</option><option value="16">16 px</option><option value="18">18 px</option><option value="20">20 px</option><option value="24">24 px</option><option value="28">28 px</option></select><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris précision</option><option value="pink">Rose conseil</option></select></div><textarea data-field="content" class="memo-rich-storage" tabindex="-1" aria-hidden="true">${esc(s.type==="table"?memoLegacyTableToText(s.content):s.content||"")}</textarea><div class="memo-rich-editor" contenteditable="true" role="textbox" aria-label="Contenu de la rubrique" aria-multiline="true"></div></div>`:`${tableGridEditor(s.content||"")}`}</div></div>`}
 function captureEditorFields(m){
  const get=id=>$(id)?.value;
  if(get("f-entry-type")===undefined)return;
