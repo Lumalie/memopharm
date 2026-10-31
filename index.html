@@ -3657,9 +3657,90 @@ function wireTextFormatting(){
    memoInlineRefresh(wrapper,model);
    activeTable=null;dragStart=null;dragEnd=null;tableTools.hidden=true;sync();
   });
+  // Sélection rectangulaire de cellules : copie et collage en conservant les positions.
+  // Les cellules sélectionnées sont signalées par la surbrillance existante.
+  let gridClipboard=null;
+  const selectedGrid=()=>{
+   if(!activeTable||!dragStart||!dragEnd)return null;
+   const cells=selectionCells();
+   if(!cells.length)return null;
+   const top=Math.min(...cells.map(c=>c.r)),left=Math.min(...cells.map(c=>c.c));
+   const bottom=Math.max(...cells.map(c=>c.r+c.rs)),right=Math.max(...cells.map(c=>c.c+c.cs));
+   return {cells,top,left,rows:bottom-top,cols:right-left};
+  };
+  const gridData=()=>{
+   const area=selectedGrid();if(!area)return null;
+   const data=Array.from({length:area.rows},()=>Array(area.cols).fill(''));
+   for(const cell of area.cells){
+    const td=activeTable.querySelector(`td[data-r="${cell.r}"][data-c="${cell.c}"]`);
+    if(td)data[cell.r-area.top][cell.c-area.left]=memoRichSerialize(td,true);
+   }
+   return data;
+  };
+  const gridPlain=data=>data.map(row=>row.join('\t')).join('\n');
+  const gridHtml=data=>'<table><tbody>'+data.map(row=>'<tr>'+row.map(v=>'<td>'+richInline(v).replace(/\n/g,'<br>')+'</td>').join('')+'</tr>').join('')+'</tbody></table>';
+  const gridPaste=(data)=>{
+   if(!activeTable||!dragStart||!data?.length)return false;
+   const target=activeTable.querySelector(`td[data-r="${dragStart.r}"][data-c="${dragStart.c}"]`);
+   if(!target)return false;
+   const model=memoInlineRead(activeTable);
+   const neededRows=dragStart.r+data.length,neededCols=dragStart.c+Math.max(...data.map(r=>r.length));
+   while(model.rows<neededRows)memoTableResize(model,'add-row');
+   while(model.cols<neededCols)memoTableResize(model,'add-col');
+   // Ne pas écraser partiellement des cellules fusionnées.
+   for(let r=0;r<data.length;r++)for(let c=0;c<data[r].length;c++){
+    const rr=dragStart.r+r,cc=dragStart.c+c;
+    const cell=model.cells.find(x=>rr>=x.r&&rr<x.r+x.rs&&cc>=x.c&&cc<x.c+x.cs);
+    if(!cell||cell.r!==rr||cell.c!==cc||cell.rs!==1||cell.cs!==1){
+     alert('Collage impossible sur une cellule fusionnée : défusionne-la d’abord.');return true;
+    }
+   }
+   for(let r=0;r<data.length;r++)for(let c=0;c<data[r].length;c++){
+    const cell=model.cells.find(x=>x.r===dragStart.r+r&&x.c===dragStart.c+c);
+    cell.text=data[r][c];
+   }
+   const wrapper=activeTable.closest('.memo-inline-table-wrap');
+   memoInlineRefresh(wrapper,model);
+   activeTable=wrapper.querySelector('table');
+   dragEnd={r:dragStart.r+data.length-1,c:dragStart.c+Math.max(...data.map(r=>r.length))-1};
+   highlight();sync();return true;
+  };
+  const decodeGridHtml=html=>{
+   if(!html||!/<table[\\s>]/i.test(html))return null;
+   const doc=new DOMParser().parseFromString(html,'text/html');
+   const table=doc.querySelector('table');if(!table)return null;
+   return [...table.rows].map(tr=>[...tr.cells].map(td=>memoRichSerialize(td,true)));
+  };
+  editor.addEventListener('copy',event=>{
+   const data=gridData();if(!data||!event.clipboardData)return;
+   const sel=window.getSelection();
+   // Une sélection de texte à l'intérieur d'une seule cellule reste une copie native.
+   if(data.length===1&&data[0].length===1&&sel&&!sel.isCollapsed)return;
+   event.preventDefault();gridClipboard=data;
+   event.clipboardData.setData('text/plain',gridPlain(data));
+   event.clipboardData.setData('text/html',gridHtml(data));
+  });
+  editor.addEventListener('keydown',event=>{
+   if(!(event.ctrlKey||event.metaKey)||event.key.toLowerCase()!=='a')return;
+   const td=event.target.closest?.('.memo-inline-table td');
+   if(!td||!activeTable||!activeTable.contains(td))return;
+   // Ctrl+A dans une cellule sélectionne son texte, pas toute la page.
+   event.preventDefault();
+   const range=document.createRange();range.selectNodeContents(td);
+   const sel=window.getSelection();sel.removeAllRanges();sel.addRange(range);
+  });
   editor.addEventListener('input',sync);
   editor.addEventListener('blur',sync);
   editor.addEventListener('paste',event=>{
+   const td=event.target.closest?.('.memo-inline-table td');
+   if(td&&activeTable&&activeTable.contains(td)){
+    const html=event.clipboardData.getData('text/html');
+    const parsed=decodeGridHtml(html);
+    const plain=event.clipboardData.getData('text/plain');
+    const grid=parsed||(plain.includes('\\t')?plain.split(/\\r?\\n/).map(row=>row.split('\\t')):null);
+    if(grid&&gridPaste(grid)){event.preventDefault();return}
+   }
+
    event.preventDefault();
    const plain=event.clipboardData.getData('text/plain');
    document.execCommand('insertText',false,plain);
