@@ -595,6 +595,16 @@ html[data-memo-theme="dark"] :is(.search-preview-section,.search-preview-found,.
     background:#20342a;color:#e7f1ea;border-color:#41594b;
   }
 }
+
+/* V116.71 — tableaux fusionnables */
+.memo-table-scroll{max-width:100%;overflow-x:auto}
+.memo-merge-tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 0}
+.memo-merge-tools button{padding:7px 10px}
+.memo-merge-tools [data-merge-status]{flex-basis:100%}
+.table-grid-editor td.memo-merge-selected{outline:3px solid #538e6d;outline-offset:-3px;background:#e1f1e7}
+.table-grid-editor td[data-merge-cell]{min-width:110px;vertical-align:top}
+.table-grid-editor td[data-merge-cell] textarea{min-width:100px;max-width:100%}
+html[data-memo-theme="dark"] .table-grid-editor td.memo-merge-selected{background:#345e46}
 </style>
 </head>
 <body>
@@ -3465,8 +3475,14 @@ function renderPrioritySection(s,targetSectionId=null){
 function renderSection(s,targetSectionId=null){
  let content="";
  if(s.type==="table"){
-   const rows=(s.content||"").split("\n").filter(Boolean).map(line=>line.split(/\s+\|\s+/).map(x=>x.trim()));
-   content=rows.length?`<table class="med-table"><tbody>${rows.map((r,i)=>`<tr class="${s.id==="interactions"?(i===0?"interaction-red":i===1?"interaction-orange":"interaction-muted"):""}">${r.map((c,j)=>{const isHeading=j===0||(s.id==="prise"&&j===1);const isExplanation=(s.id==="prise"&&j===r.length-1)||(s.id==="interactions"&&i>=2&&j===1);return `<${isHeading?"th":"td"} scope="${isHeading?"row":"auto"}" class="${isExplanation?"table-explanation":""}">${richInline(c).replace(/\[\[newline\]\]/g,"<br>")}</${isHeading?"th":"td"}>`}).join("")}</tr>`).join("")}</tbody></table>`:'<p class="muted">Aucun contenu renseigné.</p>';
+   const model=memoTableModel(s.content||"");
+   const cells=new Map(model.cells.map(cell=>[cell.r+":"+cell.c,cell]));
+   content=`<div class="memo-table-scroll"><table class="med-table"><tbody>${Array.from({length:model.rows},(_,i)=>`<tr class="${s.id==="interactions"?(i===0?"interaction-red":i===1?"interaction-orange":"interaction-muted"):""}">${Array.from({length:model.cols},(_,j)=>{
+    const cell=cells.get(i+":"+j);if(!cell)return "";
+    const isHeading=j===0||(s.id==="prise"&&j===1);
+    const isExplanation=(s.id==="prise"&&j===model.cols-1)||(s.id==="interactions"&&i>=2&&j===1);
+    return `<${isHeading?"th":"td"} rowspan="${cell.rs}" colspan="${cell.cs}" class="${isExplanation?"table-explanation":""}">${richInline(cell.text).replace(/\n/g,"<br>").replace(/\[\[newline\]\]/g,"<br>")}</${isHeading?"th":"td"}>`;
+   }).join("")}</tr>`).join("")}</tbody></table></div>`;
  }else{content=richText(s.content||"")}
  const imageSrc=s.imageData||s.imageUrl||"";
  const imageHtml=imageSrc?`<figure class="section-image"><img src="${esc(imageSrc)}" alt="${esc(s.imageCaption||s.title||"Image de la forme pharmaceutique")}" loading="lazy">${s.imageCaption?`<figcaption>${esc(s.imageCaption)}</figcaption>`:""}</figure>`:"";
@@ -4182,11 +4198,63 @@ function readPresentationEditors(m){
  p.clinicalSpecific={...memoV86Clinical(previous)};
  card.querySelectorAll("[data-v86-clinical]").forEach(input=>{p.clinicalSpecific[input.dataset.v86Clinical]=input.value.trim()});
  p.cipBoxes=[...card.querySelectorAll("[data-cip-pack-row]")].map(row=>({cip:row.querySelector("[data-cip-value]").value.trim(),pack:row.querySelector("[data-pack-value]").value.trim()})).filter(x=>x.cip||x.pack);p.cip=p.cipBoxes[0]?.cip||"";return p})}
+const MEMO_TABLE_V2="[[MEMO_TABLE_V2]]";
+function memoTableModel(content){
+ const raw=String(content||"");
+ if(raw.startsWith(MEMO_TABLE_V2)){
+  try{
+   const data=JSON.parse(raw.slice(MEMO_TABLE_V2.length));
+   if(Array.isArray(data.cells)&&Number.isInteger(data.rows)&&Number.isInteger(data.cols)&&data.rows>0&&data.cols>0&&data.rows<=100&&data.cols<=30){
+    const cells=data.cells.filter(c=>Number.isInteger(c.r)&&Number.isInteger(c.c)&&Number.isInteger(c.rs)&&Number.isInteger(c.cs)&&c.rs>0&&c.cs>0&&c.r>=0&&c.c>=0&&c.r+c.rs<=data.rows&&c.c+c.cs<=data.cols).map(c=>({r:c.r,c:c.c,rs:c.rs,cs:c.cs,text:String(c.text||"")}));
+    const covered=new Set();
+    for(const cell of cells)for(let r=cell.r;r<cell.r+cell.rs;r++)for(let c=cell.c;c<cell.c+cell.cs;c++){const k=r+":"+c;if(covered.has(k))throw Error("overlap");covered.add(k)}
+    for(let r=0;r<data.rows;r++)for(let c=0;c<data.cols;c++)if(!covered.has(r+":"+c))cells.push({r,c,rs:1,cs:1,text:""});
+    return {rows:data.rows,cols:data.cols,cells:cells.sort((a,b)=>a.r-b.r||a.c-b.c)};
+   }
+  }catch(e){console.warn("Tableau fusionné illisible :",e)}
+ }
+ const rows=raw.split("\n").filter(line=>line.trim()).map(line=>line.split(/\s+\|\s+/).map(cell=>cell.trim().replace(/\[\[newline\]\]/g,"\n")));
+ if(!rows.length)rows.push(["",""],["",""]);
+ const cols=Math.max(1,...rows.map(row=>row.length));
+ return {rows:rows.length,cols,cells:rows.flatMap((row,r)=>Array.from({length:cols},(_,c)=>({r,c,rs:1,cs:1,text:row[c]||""})))};
+}
+function memoTableEncode(model){
+ return MEMO_TABLE_V2+JSON.stringify({rows:model.rows,cols:model.cols,cells:model.cells.map(({r,c,rs,cs,text})=>({r,c,rs,cs,text}))});
+}
 function tableRows(content){
- const rows=String(content||"").split("\n").filter(line=>line.trim()).map(line=>line.split(/\s+\|\s+/).map(cell=>cell.trim()));
- if(!rows.length)return [["",""],["",""]];
- const count=Math.max(1,...rows.map(row=>row.length));
- return rows.map(row=>Array.from({length:count},(_,i)=>(row[i]||"").replace(/\[\[newline\]\]/g,"\n")));
+ const model=memoTableModel(content),rows=Array.from({length:model.rows},()=>Array(model.cols).fill(""));
+ model.cells.forEach(cell=>{rows[cell.r][cell.c]=cell.text});
+ return rows;
+}
+function memoTableMerge(model,a,b){
+ const top=Math.min(a.r,b.r),left=Math.min(a.c,b.c);
+ const bottom=Math.max(a.r+a.rs,b.r+b.rs),right=Math.max(a.c+a.cs,b.c+b.cs);
+ const inside=model.cells.filter(c=>c.r>=top&&c.c>=left&&c.r+c.rs<=bottom&&c.c+c.cs<=right);
+ const area=inside.reduce((n,c)=>n+c.rs*c.cs,0);
+ if(area!==(bottom-top)*(right-left))return false;
+ const text=inside.map(c=>c.text).filter(Boolean).join("\n");
+ model.cells=model.cells.filter(c=>!inside.includes(c));
+ model.cells.push({r:top,c:left,rs:bottom-top,cs:right-left,text});
+ return true;
+}
+function memoTableSplit(model,cell){
+ if(cell.rs===1&&cell.cs===1)return false;
+ model.cells=model.cells.filter(c=>c!==cell);
+ for(let r=cell.r;r<cell.r+cell.rs;r++)for(let c=cell.c;c<cell.c+cell.cs;c++)model.cells.push({r,c,rs:1,cs:1,text:r===cell.r&&c===cell.c?cell.text:""});
+ return true;
+}
+function memoTableResize(model,action){
+ if(action==="add-row"&&model.rows<100){for(let c=0;c<model.cols;c++)model.cells.push({r:model.rows,c,rs:1,cs:1,text:""});model.rows++}
+ if(action==="add-col"&&model.cols<30){for(let r=0;r<model.rows;r++)model.cells.push({r,c:model.cols,rs:1,cs:1,text:""});model.cols++}
+ if(action==="remove-row"&&model.rows>1){
+  const edge=model.rows-1;model.cells=model.cells.filter(c=>c.r<edge);
+  model.cells.forEach(c=>{if(c.r+c.rs>edge)c.rs=edge-c.r});model.rows--;
+ }
+ if(action==="remove-col"&&model.cols>1){
+  const edge=model.cols-1;model.cells=model.cells.filter(c=>c.c<edge);
+  model.cells.forEach(c=>{if(c.c+c.cs>edge)c.cs=edge-c.c});model.cols--;
+ }
+ model.cells.sort((a,b)=>a.r-b.r||a.c-b.c);
 }
 function tableCellToolbar(){
  return `<div class="table-cell-toolbar" hidden>
@@ -4198,12 +4266,88 @@ function tableCellToolbar(){
  </div><div class="table-cell-preview" hidden></div>`;
 }
 function tableGridEditor(content){
- const rows=tableRows(content);
- return `<div class="table-grid-wrap">${tableCellToolbar()}<table class="table-grid-editor"><tbody>${rows.map((row,r)=>`<tr>${row.map((cell,c)=>`<td><textarea rows="3" data-table-cell data-r="${r}" data-c="${c}" aria-label="Ligne ${r+1}, colonne ${c+1}">${esc(cell)}</textarea></td>`).join("")}</tr>`).join("")}</tbody></table></div><div class="table-grid-actions"><button type="button" data-grid-action="add-row">+ Ligne</button><button type="button" data-grid-action="remove-row">− Ligne</button><button type="button" data-grid-action="add-col">+ Colonne</button><button type="button" data-grid-action="remove-col">− Colonne</button></div><p class="hint">La première colonne contient les intitulés, sans gras imposé. Raccourcis sur une sélection : Ctrl+B (gras), Ctrl+I (italique), Ctrl+U (souligné), Ctrl+K (lien). Utilise Entrée pour aller à la ligne dans une cellule. Les modifications sont sauvegardées dans le brouillon.</p>`;
+ const model=memoTableModel(content);
+ const cells=new Map(model.cells.map(cell=>[cell.r+":"+cell.c,cell]));
+ const rows=Array.from({length:model.rows},(_,r)=>`<tr>${Array.from({length:model.cols},(_,c)=>{
+  const cell=cells.get(r+":"+c);
+  return cell?`<td rowspan="${cell.rs}" colspan="${cell.cs}" data-merge-cell data-r="${r}" data-c="${c}"><textarea rows="3" data-table-cell data-r="${r}" data-c="${c}" aria-label="Ligne ${r+1}, colonne ${c+1}">${esc(cell.text)}</textarea></td>`:"";
+ }).join("")}</tr>`).join("");
+ return `<div class="table-grid-wrap">${tableCellToolbar()}<div class="memo-table-scroll"><table class="table-grid-editor"><tbody>${rows}</tbody></table></div></div><div class="table-grid-actions"><button type="button" data-grid-action="add-row">+ Ligne</button><button type="button" data-grid-action="remove-row">− Ligne</button><button type="button" data-grid-action="add-col">+ Colonne</button><button type="button" data-grid-action="remove-col">− Colonne</button></div><div class="memo-merge-tools"><button type="button" data-merge-action="start">Sélectionner des cellules</button><button type="button" data-merge-action="merge" disabled>Fusionner la sélection</button><button type="button" data-merge-action="split" disabled>Séparer la cellule</button><button type="button" data-merge-action="cancel">Annuler</button><span class="hint" data-merge-status>Choisis « Sélectionner », puis touche deux cellules pour délimiter un rectangle.</span></div><p class="hint">Fusion horizontale et verticale possible. Le contenu des cellules fusionnées est conservé dans la nouvelle cellule. Les tableaux existants restent compatibles.</p>`;
 }
 function readTableGrid(card){
- const trs=[...card.querySelectorAll(".table-grid-editor tr")];
- return trs.map(tr=>[...tr.querySelectorAll("[data-table-cell]")].map(input=>input.value.replace(/\r\n?/g,"\n").replace(/\n/g,"[[newline]]").trim()).join(" | ")).join("\n");
+ const table=card.querySelector(".table-grid-editor");
+ if(!table)return "";
+ let model;
+ if(card.dataset.tableContent!==undefined)model=memoTableModel(card.dataset.tableContent);
+ else{
+  // Variantes : reconstruire le modèle depuis la grille DOM si aucun état n'est attaché.
+  const areas=[...table.querySelectorAll("td[data-merge-cell]")];
+  const rowCount=table.rows.length;
+  const colCount=Math.max(1,...areas.map(td=>Number(td.dataset.c)+(td.colSpan||1)));
+  model={rows:Math.max(1,rowCount),cols:colCount,cells:areas.map(td=>({r:Number(td.dataset.r),c:Number(td.dataset.c),rs:td.rowSpan||1,cs:td.colSpan||1,text:""}))};
+ }
+ for(const area of table.querySelectorAll("td[data-merge-cell]")){
+  const r=Number(area.dataset.r),c=Number(area.dataset.c);
+  const cell=model.cells.find(x=>x.r===r&&x.c===c);
+  if(cell)cell.text=(area.querySelector("textarea")?.value||"").replace(/\r\n?/g,"\n");
+ }
+ return memoTableEncode(model);
+}
+function wireMemoTableMerge(card){
+ const wrap=card.querySelector(".table-grid-wrap");
+ if(!wrap)return;
+ const tools=card.querySelector(".memo-merge-tools");
+ if(!tools)return;
+ const model=memoTableModel(card.dataset.tableContent||"");
+ const cells=[...wrap.querySelectorAll("td[data-merge-cell]")];
+ let first=null,second=null,selecting=false;
+ const status=tools.querySelector("[data-merge-status]");
+ const update=()=>{
+  cells.forEach(td=>td.classList.remove("memo-merge-selected"));
+  const selected=[first,second].filter(Boolean);
+  selected.forEach(c=>{const td=cells.find(td=>Number(td.dataset.r)===c.r&&Number(td.dataset.c)===c.c);td?.classList.add("memo-merge-selected")});
+  tools.querySelector('[data-merge-action="merge"]').disabled=selected.length!==2;
+  tools.querySelector('[data-merge-action="split"]').disabled=!first||first.rs===1&&first.cs===1;
+  status.textContent=selecting?(second?"Deux cellules sélectionnées : fusionne ou choisis une autre cellule.":"Choisis la seconde cellule du rectangle."):"Choisis « Sélectionner », puis touche deux cellules.";
+ };
+ tools.querySelector('[data-merge-action="start"]').onclick=()=>{selecting=true;first=null;second=null;update()};
+ tools.querySelector('[data-merge-action="cancel"]').onclick=()=>{selecting=false;first=null;second=null;update()};
+ cells.forEach(td=>td.addEventListener("click",event=>{
+  if(!selecting)return;
+  event.preventDefault();
+  const cell=model.cells.find(c=>c.r===Number(td.dataset.r)&&c.c===Number(td.dataset.c));
+  if(!cell)return;
+  if(!first||second){first=cell;second=null}else second=cell;
+  update();
+ }));
+ const commit=()=>{
+  const section=Number(card.dataset.section);
+  const m=meds.find(x=>x.id===editorId);
+  if(!m?.sections?.[section])return;
+  captureEditorFields(m);
+  m.sections[section].content=memoTableEncode(model);
+  renderEditor(m.id);saveLocalDraft();
+ };
+ tools.querySelector('[data-merge-action="merge"]').onclick=()=>{
+  if(!first||!second)return;
+  // Read all current edits before rebuilding the table.
+  const fresh=memoTableModel(readTableGrid(card));
+  const a=fresh.cells.find(c=>c.r===first.r&&c.c===first.c);
+  const b=fresh.cells.find(c=>c.r===second.r&&c.c===second.c);
+  if(!a||!b||!memoTableMerge(fresh,a,b)){status.textContent="Sélectionne deux cellules délimitant un rectangle complet, sans couper une cellule déjà fusionnée.";return}
+  const m=meds.find(x=>x.id===editorId),i=Number(card.dataset.section);
+  if(!m?.sections?.[i])return;
+  captureEditorFields(m);m.sections[i].content=memoTableEncode(fresh);renderEditor(m.id);saveLocalDraft();
+ };
+ tools.querySelector('[data-merge-action="split"]').onclick=()=>{
+  if(!first)return;
+  const fresh=memoTableModel(readTableGrid(card)),cell=fresh.cells.find(c=>c.r===first.r&&c.c===first.c);
+  if(!cell||!memoTableSplit(fresh,cell))return;
+  const m=meds.find(x=>x.id===editorId),i=Number(card.dataset.section);
+  if(!m?.sections?.[i])return;
+  captureEditorFields(m);m.sections[i].content=memoTableEncode(fresh);renderEditor(m.id);saveLocalDraft();
+ };
+ update();
 }
 function wireTableCellFormatting(){
  document.querySelectorAll("#editor .table-grid-wrap").forEach(wrap=>{
@@ -4251,16 +4395,20 @@ function wireTableCellFormatting(){
  });
 }
 function wireTableGrids(m){
+ $("editor").querySelectorAll(".section-editor").forEach(card=>{
+  const section=m.sections[Number(card.dataset.section)];
+  if(section?.type==="table"&&card.querySelector(".table-grid-editor")){
+   card.dataset.tableContent=section.content||"";
+   wireMemoTableMerge(card);
+  }
+ });
+
  $("editor").querySelectorAll("[data-grid-action]").forEach(button=>button.onclick=()=>{
   const card=button.closest(".section-editor"),i=Number(card.dataset.section);
   captureEditorFields(m);
-  let rows=tableRows(m.sections[i].content);
-  const action=button.dataset.gridAction;
-  if(action==="add-row")rows.push(Array(rows[0].length).fill(""));
-  if(action==="remove-row"&&rows.length>1)rows.pop();
-  if(action==="add-col")rows.forEach(row=>row.push(""));
-  if(action==="remove-col"&&rows[0].length>1)rows.forEach(row=>row.pop());
-  m.sections[i].content=rows.map(row=>row.join(" | ")).join("\n");
+  const model=memoTableModel(m.sections[i].content);
+  memoTableResize(model,button.dataset.gridAction);
+  m.sections[i].content=memoTableEncode(model);
   renderEditor(m.id);saveLocalDraft();
  });
  $("editor").querySelectorAll('[data-field="type"]').forEach(select=>select.onchange=()=>{
