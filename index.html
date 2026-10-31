@@ -834,7 +834,7 @@ async function checkAdminAccess(user){
 function requireAdmin(){if(admin&&currentUser)return true;toast("Action réservée à l’administration.");return false}
 
 const $=id=>document.getElementById(id);
-// Brouillon temporaire propre à cet onglet et à ce compte administrateur.
+// Brouillon temporaire persistant dans ce navigateur, propre au compte administrateur.
 const draftKey=()=>currentUser?.id?"memofficine-editor-v3:"+currentUser.id:null;
 let editorId=null,editorOriginalSnapshot=null;
 function saveLocalDraft(){
@@ -844,17 +844,27 @@ function saveLocalDraft(){
   // Sauvegarder aussi les changements encore non validés des sous-onglets.
   // Cette fonction est appelée lors des changements de focus/onglet navigateur.
   if(typeof window.memoCaptureVariantDraft==='function')window.memoCaptureVariantDraft(m);
- try{const key=draftKey();if(key)sessionStorage.setItem(key,JSON.stringify({id:m.id,med:m}));}
+ try{const key=draftKey();if(key)localStorage.setItem(key,JSON.stringify({id:m.id,med:m,savedAt:Date.now()}));}
  catch(e){console.warn("Brouillon local indisponible",e)}
 }
-function clearLocalDraft(){try{const key=draftKey();if(key)sessionStorage.removeItem(key)}catch(e){console.warn(e)}}
+function clearLocalDraft(){try{const key=draftKey();if(key)localStorage.removeItem(key)}catch(e){console.warn(e)}}
 function restoreLocalDraft(){
  if(!admin)return false;
  try{
-  const key=draftKey(),raw=key&&sessionStorage.getItem(key);if(!raw)return false;
+  const key=draftKey(),raw=key&&(localStorage.getItem(key)||sessionStorage.getItem(key));if(!raw)return false;
   const draft=JSON.parse(raw);if(!draft?.med?.id||!Array.isArray(draft.med.sections))return false;
   const params=new URLSearchParams(location.search);
-  if(params.get("edition")!=="1"||params.get("fiche")!==draft.med.id)return false;
+  const onSameEditor=params.get("edition")==="1"&&params.get("fiche")===draft.med.id;
+  if(!onSameEditor){
+   const name=String(draft.med.name||"cette fiche");
+   if(!confirm("Un brouillon non enregistré de « "+name+" » a été retrouvé dans ce navigateur. Reprendre les modifications ?"))return false;
+   const url=new URL(location.href);
+   url.searchParams.set("fiche",draft.med.id);
+   url.searchParams.set("edition","1");
+   history.replaceState({},"",url.pathname+url.search+url.hash);
+   currentView="home";
+   if(typeof setView==="function")setView("home");
+  }
   const i=meds.findIndex(m=>m.id===draft.med.id);
   if(i>=0)meds[i]=draft.med;else meds.unshift(draft.med);
   selectedId=draft.med.id;renderFilters();renderResults();renderEditor(selectedId);return true;
@@ -5075,6 +5085,18 @@ document.addEventListener("visibilitychange",()=>{
  }
 });
 window.addEventListener("pagehide",saveLocalDraft);
+window.addEventListener("beforeunload",saveLocalDraft);
+// Enregistrer automatiquement pendant la saisie, y compris sans quitter la page.
+let memoDraftTimer=null;
+document.addEventListener("input",event=>{
+ if(!admin||!editorId||!event.target.closest?.("#editor"))return;
+ clearTimeout(memoDraftTimer);
+ memoDraftTimer=setTimeout(saveLocalDraft,650);
+},true);
+document.addEventListener("change",event=>{
+ if(admin&&editorId&&event.target.closest?.("#editor"))saveLocalDraft();
+},true);
+
 if(!location.search&&!location.hash){
  try{
   const last=localStorage.getItem("memofficine-last-location-v1");
