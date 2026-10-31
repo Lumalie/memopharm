@@ -633,6 +633,9 @@ html[data-memo-theme="dark"] .table-grid-editor td.memo-merge-selected{backgroun
 .memo-v74-rubric>summary{display:flex;align-items:center;gap:8px}
 .priority-alert h3,.priority-advice h3,.group-glance h3{display:flex;align-items:center;gap:8px}
 .memo-edit-rubric svg{pointer-events:none}
+
+#editor .section-editor{scroll-margin-top:20px}
+#editor .memo-rubric-jump-target{outline:2px solid #7baa89;outline-offset:3px;transition:outline-color .5s}
 </style>
 </head>
 <body>
@@ -3773,13 +3776,27 @@ const memoRubricPencilSvg=`<svg xmlns="http://www.w3.org/2000/svg" width="19" he
 function memoEditOneRubric(med,section){
  const index=(med.sections||[]).findIndex(s=>s===section||String(s.id)===String(section?.id));
  if(index<0){toast("Cette rubrique n'est pas modifiable directement.");return}
- memoEditorActiveTab="general";memoEditorOpenSection=index;
+ memoEditorActiveTab="general";
+ memoEditorOpenSection=index;
  renderEditor(med.id);
- requestAnimationFrame(()=>requestAnimationFrame(()=>{
-  const card=$("editor").querySelector(`.section-editor[data-section="${index}"]`);
-  card?.scrollIntoView({behavior:"smooth",block:"center"});
-  card?.querySelector('.memo-rich-editor')?.focus({preventScroll:true});
- }));
+ // L'éditeur est réorganisé en onglets après son rendu : attendre que
+ // l'onglet soit visible et que le menu de la rubrique soit réellement déplié.
+ const reveal=()=>{
+  const editor=$("editor");
+  const tab=editor.querySelector('[data-memo-tab="general"]');
+  if(tab?.getAttribute('aria-selected')!=="true")tab?.click();
+  const card=editor.querySelector(`.section-editor[data-section="${index}"]`);
+  if(!card)return;
+  if(card.classList.contains("memo-collapsed"))card.querySelector(".memo-section-expand")?.click();
+  card.classList.add("memo-rubric-jump-target");
+  card.scrollIntoView({behavior:"instant",block:"start"});
+  // Ne pas focaliser le champ avant le défilement : cela replacerait
+  // automatiquement la page ailleurs selon le navigateur.
+  const input=card.querySelector('.memo-rich-editor')||card.querySelector('[data-field="title"]');
+  input?.focus({preventScroll:true});
+  setTimeout(()=>card.classList.remove("memo-rubric-jump-target"),1800);
+ };
+ requestAnimationFrame(()=>requestAnimationFrame(()=>setTimeout(reveal,80)));
 }
 function memoWireRubricEditButtons(m,root){
  const candidates=(m.sections||[]).filter(s=>s.enabled!==false&&!isDocumentationSection(s));
