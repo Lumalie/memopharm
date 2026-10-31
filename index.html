@@ -3117,7 +3117,11 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDo
     for(let ancestor=target.parentElement;ancestor;ancestor=ancestor.parentElement){
      if(ancestor.tagName==="DETAILS")ancestor.open=true;
     }
-    const top=Math.max(0,window.scrollY+target.getBoundingClientRect().top-18);
+    // Aligner l'en-tête du menu dépliable, et non le contenu de la rubrique.
+    // Les fiches plus anciennes sans accordéon gardent le comportement précédent.
+    const rubric=target.closest("details.memo-v74-rubric");
+    const anchor=rubric?.querySelector(":scope > summary")||target;
+    const top=Math.max(0,window.scrollY+anchor.getBoundingClientRect().top-14);
     window.scrollTo({top,behavior:attempt===0?"smooth":"instant"});
     viewScrollPositions.home=top;
     if(attempt===0)setTimeout(()=>jumpToSection(1),450);
