@@ -869,6 +869,7 @@ function restoreLocalDraft(){
 // V116.70 : modèle concis des fiches molécules. Les contenus personnalisés
 // sont conservés ; les anciennes rubriques sont masquées plutôt que supprimées.
 const MEMO_MOLECULE_GLANCE="__C’est quoi ?__\n\n__Comment ça marche ?__\n\n__Comment ça se prend ?__";
+const MEMO_INLINE_TABLE="[[memo-inline-table:";
 const MEMO_MOLECULE_POSOLOGY=" | Adulte | Enfant\n |  | \n |  | ";
 const MEMO_MOLECULE_TEMPLATE=[
  {id:"alerte-delivrance",title:"🚨 Alerte à la délivrance",type:"text",content:"",enabled:true},
@@ -3352,7 +3353,7 @@ function richInline(raw){
  return html;
 }
 
-const MEMO_INLINE_TABLE="[[memo-inline-table:";
+
 function memoInlineToken(model){return MEMO_INLINE_TABLE+encodeURIComponent(JSON.stringify(model))+"]]"}
 function memoInlineDecode(token){try{return memoTableModel(MEMO_TABLE_V2+decodeURIComponent(token))}catch{return memoTableModel(" | \n | ")}}
 function memoInlineHtml(model,editable=false){
