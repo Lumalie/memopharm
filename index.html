@@ -605,6 +605,17 @@ html[data-memo-theme="dark"] :is(.search-preview-section,.search-preview-found,.
 .table-grid-editor td[data-merge-cell]{min-width:110px;vertical-align:top}
 .table-grid-editor td[data-merge-cell] textarea{min-width:100px;max-width:100%}
 html[data-memo-theme="dark"] .table-grid-editor td.memo-merge-selected{background:#345e46}
+
+/* V116.72 — tableaux dans les zones de texte */
+.memo-insert-table{margin:7px 0;padding:7px 12px;border:1px solid #94bba0;border-radius:8px;background:#e9f4ed;color:#24583b;cursor:pointer;font-weight:700}
+.memo-inline-table-toolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:8px;margin:5px 0;background:var(--card,#fff);border:1px solid #b4cdbb;border-radius:9px}
+.memo-inline-table-toolbar[hidden]{display:none!important}
+.memo-inline-table-toolbar button{padding:6px 8px}
+.memo-inline-table-wrap{max-width:100%;overflow-x:auto;margin:9px 0}
+.memo-inline-table{border-collapse:collapse;width:100%;table-layout:auto}
+.memo-inline-table td{border:1px solid #a6bbae;padding:9px;min-width:65px;vertical-align:top;white-space:pre-wrap}
+.memo-rich-editor .memo-inline-table td:focus{outline:2px solid #598c70;outline-offset:-2px}
+.memo-rich-editor .memo-inline-table td.memo-cell-selected{background:#d3e9db;box-shadow:inset 0 0 0 2px #538e6d}
 </style>
 </head>
 <body>
@@ -3340,10 +3351,45 @@ function richInline(raw){
  html=html.replace(/\*([^*\n]+)\*/g,'<em>$1</em>');
  return html;
 }
+
+const MEMO_INLINE_TABLE="[[memo-inline-table:";
+function memoInlineToken(model){return MEMO_INLINE_TABLE+encodeURIComponent(JSON.stringify(model))+"]]"}
+function memoInlineDecode(token){try{return memoTableModel(MEMO_TABLE_V2+decodeURIComponent(token))}catch{return memoTableModel(" | \n | ")}}
+function memoInlineHtml(model,editable=false){
+ const lookup=new Map(model.cells.map(c=>[c.r+":"+c.c,c]));
+ return `<div class="memo-inline-table-wrap" ${editable?'contenteditable="false"':''}><table class="memo-inline-table"><tbody>${Array.from({length:model.rows},(_,r)=>`<tr>${Array.from({length:model.cols},(_,c)=>{
+  const cell=lookup.get(r+":"+c);if(!cell)return "";
+  return `<td rowspan="${cell.rs}" colspan="${cell.cs}" data-r="${r}" data-c="${c}" ${editable?'contenteditable="true"':''}>${esc(cell.text).replace(/\n/g,"<br>")}</td>`;
+ }).join("")}</tr>`).join("")}</tbody></table></div>`;
+}
+function memoInlineRead(table){
+ const rows=table.rows.length,cols=Math.max(...[...table.rows].map(row=>[...row.cells].reduce((n,c)=>n+c.colSpan,0)),1);
+ const cells=[],occupied=new Set();
+ for(let r=0;r<rows;r++){
+  let c=0;
+  for(const td of table.rows[r].cells){
+   while(occupied.has(r+":"+c))c++;
+   const rs=td.rowSpan||1,cs=td.colSpan||1;
+   cells.push({r,c,rs,cs,text:td.innerText.replace(/\r/g,"").trim()});
+   for(let rr=r;rr<r+rs;rr++)for(let cc=c;cc<c+cs;cc++)occupied.add(rr+":"+cc);
+   c+=cs;
+  }
+ }
+ const maxCols=Math.max(1,...cells.map(c=>c.c+c.cs));
+ return {rows,cols:maxCols,cells};
+}
+function memoInlineRefresh(wrapper,model){
+ wrapper.outerHTML=memoInlineHtml(model,true);
+}
+function memoInlineNew(){
+ return {rows:3,cols:3,cells:Array.from({length:9},(_,i)=>({r:Math.floor(i/3),c:i%3,rs:1,cs:1,text:i===1?"Adulte":i===2?"Enfant":""}))};
+}
 function richText(raw){
  const lines=String(raw||'').split('\n');let html='',list=null;
  const close=()=>{if(list){html+=`</${list}>`;list=null}};
  for(const line of lines){
+  const embedded=line.match(/^\[\[memo-inline-table:([^\]]+)\]\]$/);
+  if(embedded){close();html+=memoInlineHtml(memoInlineDecode(embedded[1]));continue}
   const bullet=line.match(/^\s*[-•] (.*)$/),number=line.match(/^\s*\d+\. (.*)$/);
   const kind=bullet?'ul':number?'ol':null;
   if(kind){if(list!==kind){close();html+=`<${kind}>`;list=kind}html+=`<li>${richInline((bullet||number)[1])}</li>`}
@@ -3388,7 +3434,10 @@ function memoRichSerialize(root){
   if(node.nodeType===3){if(node.nodeValue.trim())blocks.push(inline(node));return}
   if(node.nodeType!==1)return;
   const tag=node.tagName.toLowerCase();
-  if(tag==='ul'||tag==='ol'){
+  if(tag==='div'&&node.classList.contains('memo-inline-table-wrap')){
+   const table=node.querySelector('table.memo-inline-table');
+   if(table)blocks.push(memoInlineToken(memoInlineRead(table)));
+  }else if(tag==='ul'||tag==='ol'){
    [...node.children].filter(el=>el.tagName.toLowerCase()==='li').forEach((li,i)=>blocks.push((tag==='ul'?'- ':(i+1)+'. ')+[...li.childNodes].map(inline).join('')));
   }else if(['div','p','h1','h2','h3','blockquote'].includes(tag)){
    const value=[...node.childNodes].map(inline).join('');
@@ -3407,8 +3456,68 @@ function wireTextFormatting(){
   const bubble=card.querySelector('.text-format-bubble');
   if(!storage||!editor||!bubble||editor.dataset.memoRichWired)return;
   editor.dataset.memoRichWired='1';
-  editor.innerHTML=richText(storage.value);
+  editor.innerHTML=richText(storage.value).replaceAll('class="memo-inline-table-wrap" ','class="memo-inline-table-wrap" contenteditable="false" ').replace(/(<td\b[^>]*)(>)/g,'$1 contenteditable="true"$2');
   const sync=()=>{storage.value=memoRichSerialize(editor);storage.dispatchEvent(new Event('input',{bubbles:true}))};
+  const tableTools=card.querySelector(".memo-inline-table-toolbar");
+  let activeTable=null,dragStart=null,dragEnd=null,dragging=false;
+  const selectionCells=()=>{
+   if(!activeTable||!dragStart||!dragEnd)return [];
+   const model=memoInlineRead(activeTable);
+   const a=model.cells.find(c=>c.r===dragStart.r&&c.c===dragStart.c),b=model.cells.find(c=>c.r===dragEnd.r&&c.c===dragEnd.c);
+   if(!a||!b)return [];
+   const top=Math.min(a.r,b.r),left=Math.min(a.c,b.c),bottom=Math.max(a.r+a.rs,b.r+b.rs),right=Math.max(a.c+a.cs,b.c+b.cs);
+   return model.cells.filter(c=>c.r>=top&&c.c>=left&&c.r+c.rs<=bottom&&c.c+c.cs<=right);
+  };
+  const highlight=()=>{
+   editor.querySelectorAll(".memo-inline-table td").forEach(td=>td.classList.remove("memo-cell-selected"));
+   const selected=selectionCells();
+   for(const cell of selected)activeTable?.querySelector(`td[data-r="${cell.r}"][data-c="${cell.c}"]`)?.classList.add("memo-cell-selected");
+  };
+  const activate=table=>{activeTable=table;tableTools.hidden=false};
+  editor.addEventListener("mousedown",e=>{
+   const td=e.target.closest(".memo-inline-table td");if(!td||!editor.contains(td))return;
+   activate(td.closest("table"));dragStart={r:+td.dataset.r,c:+td.dataset.c};dragEnd={...dragStart};dragging=true;highlight();
+  });
+  editor.addEventListener("mouseover",e=>{
+   if(!dragging||!activeTable)return;
+   const td=e.target.closest(".memo-inline-table td");
+   if(td&&activeTable.contains(td)){dragEnd={r:+td.dataset.r,c:+td.dataset.c};highlight()}
+  });
+  document.addEventListener("mouseup",()=>{dragging=false});
+  editor.addEventListener("click",e=>{
+   if(e.target.closest(".memo-inline-table td"))activate(e.target.closest("table"));
+  });
+  card.querySelector(".memo-insert-table")?.addEventListener("click",()=>{
+   editor.focus();
+   const wrap=document.createElement("div");
+   wrap.innerHTML=memoInlineHtml(memoInlineNew(),true);
+   const node=wrap.firstElementChild;
+   const sel=window.getSelection();
+   if(sel&&sel.rangeCount&&editor.contains(sel.anchorNode)){
+    const range=sel.getRangeAt(0);
+    range.collapse(false);range.insertNode(node);
+   }else editor.append(node);
+   node.after(document.createElement("p"));
+   activate(node.querySelector("table"));sync();
+  });
+  tableTools?.addEventListener("mousedown",e=>{if(e.target.closest("button"))e.preventDefault()});
+  tableTools?.addEventListener("click",e=>{
+   const btn=e.target.closest("[data-inline-act]");if(!btn||!activeTable)return;
+   const action=btn.dataset.inlineAct;
+   if(action==="delete"){activeTable.closest(".memo-inline-table-wrap").remove();activeTable=null;tableTools.hidden=true;sync();return}
+   const model=memoInlineRead(activeTable);
+   if(action==="merge"){
+    if(!dragStart||!dragEnd){alert("Sélectionne plusieurs cellules avec la souris.");return}
+    const a=model.cells.find(c=>c.r===dragStart.r&&c.c===dragStart.c),b=model.cells.find(c=>c.r===dragEnd.r&&c.c===dragEnd.c);
+    if(!a||!b||!memoTableMerge(model,a,b)){alert("La sélection doit former un rectangle complet, sans couper une cellule fusionnée.");return}
+   }else if(action==="split"){
+    const c=model.cells.find(c=>c.r===dragStart?.r&&c.c===dragStart?.c);
+    if(!c||!memoTableSplit(model,c))return;
+   }else memoTableResize(model,action);
+   const wrapper=activeTable.closest(".memo-inline-table-wrap");
+   memoInlineRefresh(wrapper,model);
+   activeTable=null;dragStart=null;dragEnd=null;tableTools.hidden=true;sync();
+  });
   editor.addEventListener('input',sync);
   editor.addEventListener('blur',sync);
   editor.addEventListener('paste',event=>{
@@ -4432,7 +4541,7 @@ function wireTableGrids(m){
   renderEditor(m.id);saveLocalDraft();
  });
 }
-function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button type="button" data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button type="button" data-act="down" data-index="${i}" ${i===(meds.find(m=>m.id===editorId)?.sections?.length||0)-1?'disabled':''}>↓</button><button type="button" data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button type="button" class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Type</label><select data-field="type"><option value="text" ${s.type==="text"?'selected':''}>Texte</option><option value="table" ${s.type==="table"?'selected':''}>Tableau simple</option></select><label style="margin-top:8px">Contenu</label>${s.type==="text"?`<div class="text-edit-wrap"><div class="text-format-bubble" hidden><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="link" title="Insérer un lien URL (Ctrl+K)">🔗 Lien</button><button type="button" data-format="bullets" title="Liste à puces">• Liste</button><button type="button" data-format="numbers" title="Liste numérotée">1. Liste</button><select data-format-align aria-label="Alignement du texte"><option value="">Aligner…</option><option value="left">Gauche</option><option value="center">Centré</option><option value="right">Droite</option><option value="justify">Justifié</option></select><select data-format-size aria-label="Taille de police"><option value="">Taille…</option><option value="12">12 px</option><option value="14">14 px</option><option value="16">16 px</option><option value="18">18 px</option><option value="20">20 px</option><option value="24">24 px</option><option value="28">28 px</option></select><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris précision</option><option value="pink">Rose conseil</option></select></div><textarea data-field="content" class="memo-rich-storage" tabindex="-1" aria-hidden="true">${esc(s.content||"")}</textarea><div class="memo-rich-editor" contenteditable="true" role="textbox" aria-label="Contenu de la rubrique" aria-multiline="true"></div><p class="hint">Raccourcis : Ctrl+B gras · Ctrl+I italique · Ctrl+U souligné · Ctrl+K lien vers une source · Ctrl+Z annuler · Ctrl+Y rétablir (sur Mac : Cmd).</p></div>`:`${tableGridEditor(s.content||"")}`}</div></div>`}
+function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button type="button" data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button type="button" data-act="down" data-index="${i}" ${i===(meds.find(m=>m.id===editorId)?.sections?.length||0)-1?'disabled':''}>↓</button><button type="button" data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button type="button" class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Type</label><select data-field="type"><option value="text" ${s.type==="text"?'selected':''}>Texte</option><option value="table" ${s.type==="table"?'selected':''}>Tableau simple</option></select><label style="margin-top:8px">Contenu</label>${s.type==="text"?`<div class="text-edit-wrap"><button type="button" class="memo-insert-table">▦ Insérer un tableau</button><div class="memo-inline-table-toolbar" hidden><button type="button" data-inline-act="add-row">+ Ligne</button><button type="button" data-inline-act="remove-row">− Ligne</button><button type="button" data-inline-act="add-col">+ Colonne</button><button type="button" data-inline-act="remove-col">− Colonne</button><button type="button" data-inline-act="merge">Fusionner</button><button type="button" data-inline-act="split">Séparer</button><button type="button" data-inline-act="delete">Supprimer le tableau</button><span class="hint">Glisse la souris sur les cellules pour les sélectionner.</span></div><div class="text-format-bubble" hidden><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="link" title="Insérer un lien URL (Ctrl+K)">🔗 Lien</button><button type="button" data-format="bullets" title="Liste à puces">• Liste</button><button type="button" data-format="numbers" title="Liste numérotée">1. Liste</button><select data-format-align aria-label="Alignement du texte"><option value="">Aligner…</option><option value="left">Gauche</option><option value="center">Centré</option><option value="right">Droite</option><option value="justify">Justifié</option></select><select data-format-size aria-label="Taille de police"><option value="">Taille…</option><option value="12">12 px</option><option value="14">14 px</option><option value="16">16 px</option><option value="18">18 px</option><option value="20">20 px</option><option value="24">24 px</option><option value="28">28 px</option></select><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris précision</option><option value="pink">Rose conseil</option></select></div><textarea data-field="content" class="memo-rich-storage" tabindex="-1" aria-hidden="true">${esc(s.content||"")}</textarea><div class="memo-rich-editor" contenteditable="true" role="textbox" aria-label="Contenu de la rubrique" aria-multiline="true"></div><p class="hint">Raccourcis : Ctrl+B gras · Ctrl+I italique · Ctrl+U souligné · Ctrl+K lien vers une source · Ctrl+Z annuler · Ctrl+Y rétablir (sur Mac : Cmd).</p></div>`:`${tableGridEditor(s.content||"")}`}</div></div>`}
 function captureEditorFields(m){
  const get=id=>$(id)?.value;
  if(get("f-entry-type")===undefined)return;
