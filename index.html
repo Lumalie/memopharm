@@ -918,6 +918,7 @@ function memoUpgradeMoleculeSections(sections,entryType,force=false){
   if(used.has(i))return;
   const value=String(sec.content||"").trim();
   const oldDefault=String(placeholders.get(sec.id)||"").trim();
+  if(String(sec.id||"").startsWith("custom-")){updated.push(sec);return;}
   if(!value||value===oldDefault)return;
   updated.push({...sec,enabled:false,title:sec.title+(sec.title?.includes("ancienne rubrique")?"":" (ancienne rubrique conservée)")});
  });
@@ -3705,6 +3706,7 @@ function applyGroupTemplate(m){
  // réellement personnalisée pour éviter une perte de données.
  const extras=before.filter((sec,i)=>{
   if(used.has(i))return false;
+  if(String(sec.id||"").startsWith("custom-"))return true;
   const defaultSection=DEFAULT_SECTIONS.find(t=>t.id===sec.id);
   if(defaultSection&&String(sec.content||"").trim()===String(defaultSection.content||"").trim())return false;
   return !!String(sec.content||"").trim();
@@ -4692,7 +4694,7 @@ function sectionAction(action,index,id){const m=meds.find(x=>x.id===id);if(!m)re
  }
  if(action==="remove"){if(!confirm("Retirer cette rubrique de la fiche ?"))return;ss.splice(index,1)}
  memoEditorActiveTab="general";memoEditorOpenSection=null;renderEditor(id);saveLocalDraft()}
-function addSection(id,type){const m=meds.find(x=>x.id===id);if(!m)return;captureEditorFields(m);m.sections.push({id:"custom-"+Date.now(),title:"Nouvelle rubrique",type,content:type==="table"?"Colonne 1 | Colonne 2\nÀ renseigner | À renseigner":"À compléter à partir d’une source vérifiée.",enabled:true,imageData:"",imageUrl:"",imageCaption:""});memoEditorActiveTab="general";memoEditorOpenSection=m.sections.length-1;renderEditor(id);saveLocalDraft()}
+function addSection(id,type){const m=meds.find(x=>x.id===id);if(!m)return;captureEditorFields(m);m.sections.push({id:"custom-"+crypto.randomUUID(),title:"Nouvelle rubrique",type,content:type==="table"?"Colonne 1 | Colonne 2\nÀ renseigner | À renseigner":"À compléter à partir d’une source vérifiée.",enabled:true,imageData:"",imageUrl:"",imageCaption:""});memoEditorActiveTab="general";memoEditorOpenSection=m.sections.length-1;renderEditor(id);saveLocalDraft()}
 // V113 étape 7 : les formes/dosages sont préparés comme composants de la molécule.
 // Validation avant toute écriture cloud : une variante incomplète ne doit pas
 // laisser une molécule déjà enregistrée avec seulement une partie de ses enfants.
@@ -4990,8 +4992,8 @@ function safeSourceUrl(raw){try{const u=new URL(raw);return ["https:","http:"].i
 function renderSources(){
  const items=sourceItems();
  $("sourcesList").innerHTML=items.length?items.map(item=>{
-  const url=safeSourceUrl(item.url||"");
-  return `<article class="source-card"><h3>${esc(item.title||"Ressource sans titre")}</h3>${item.organization?`<div class="muted">${esc(item.organization)}</div>`:""}${item.description?`<p>${esc(item.description)}</p>`:""}${url?`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">Consulter la source ↗</a>`:""}</article>`;
+  const urls=[item.url,...String(item.extraUrls||"").split(/\r?\n/)].map(safeSourceUrl).filter(Boolean);
+  return `<article class="source-card"><h3>${esc(item.title||"Ressource sans titre")}</h3>${item.organization?`<div class="muted">${esc(item.organization)}</div>`:""}${item.description?`<p>${esc(item.description)}</p>`:""}${urls.map((url,i)=>`<div><a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${i===0?"Consulter la source":"Lien complémentaire "+i} ↗</a></div>`).join("")}</article>`;
  }).join(""):'<div class="source-empty">Aucune source commune publiée pour le moment.</div>';
  $("sourcesAdmin").classList.toggle("hidden",!admin);
  if(admin)renderSourcesEditor();
@@ -5002,18 +5004,18 @@ function renderSourcesEditor(){
  if(!requireAdmin())return;
  if(!admin)return;
  const items=pendingSources===null?clone(sourceItems()):pendingSources;
- $("sourcesAdmin").innerHTML=`<h3 style="margin-top:0">Gérer les sources communes</h3><p class="muted">Ajoute des ressources vérifiables. Utilise les flèches ↑ et ↓ pour choisir leur ordre d’affichage sur la page Sources, puis enregistre. Les modifications sont publiques après enregistrement.</p><div id="sourcesEntries">${items.map((item,i)=>`<div class="source-entry"><div class="sources-toolbar"><strong>Source ${i+1}</strong><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><button type="button" data-move-source="up" data-source-position="${i}" ${i===0?"disabled":""} title="Monter cette source" aria-label="Monter la source ${i+1}">↑</button><button type="button" data-move-source="down" data-source-position="${i}" ${i===items.length-1?"disabled":""} title="Descendre cette source" aria-label="Descendre la source ${i+1}">↓</button><button type="button" data-remove-source="${i}" class="danger">Supprimer</button></div></div><div class="admin-grid">${sourceField(item,i,"title","Titre de la ressource")}${sourceField(item,i,"organization","Organisme / éditeur")}${sourceField(item,i,"url","Adresse URL")}${sourceField(item,i,"description","Description (facultative)")}</div></div>`).join("")}</div><div class="sources-toolbar"><button type="button" id="addCommonSource" class="soft">+ Ajouter une source</button><button type="button" id="saveCommonSources" class="primary">Enregistrer les sources</button></div>`;
+ $("sourcesAdmin").innerHTML=`<h3 style="margin-top:0">Gérer les sources communes</h3><p class="muted">Ajoute des ressources vérifiables. Utilise les flèches ↑ et ↓ pour choisir leur ordre d’affichage sur la page Sources, puis enregistre. Les modifications sont publiques après enregistrement.</p><div id="sourcesEntries">${items.map((item,i)=>`<div class="source-entry"><div class="sources-toolbar"><strong>Source ${i+1}</strong><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><button type="button" data-move-source="up" data-source-position="${i}" ${i===0?"disabled":""} title="Monter cette source" aria-label="Monter la source ${i+1}">↑</button><button type="button" data-move-source="down" data-source-position="${i}" ${i===items.length-1?"disabled":""} title="Descendre cette source" aria-label="Descendre la source ${i+1}">↓</button><button type="button" data-remove-source="${i}" class="danger">Supprimer</button></div></div><div class="admin-grid">${sourceField(item,i,"title","Titre de la ressource")}${sourceField(item,i,"organization","Organisme / éditeur")}${sourceField(item,i,"url","Adresse URL principale")}${sourceField(item,i,"description","Description (facultative)")}<label class="full">Liens supplémentaires (un lien par ligne)<textarea data-source-index="${i}" data-source-key="extraUrls" rows="3" placeholder="https://…">${esc(item.extraUrls||"")}</textarea></label></div></div>`).join("")}</div><div class="sources-toolbar"><button type="button" id="addCommonSource" class="soft">+ Ajouter une source</button><button type="button" id="saveCommonSources" class="primary">Enregistrer les sources</button></div>`;
  $("sourcesAdmin").querySelectorAll("[data-source-key]").forEach(input=>input.addEventListener("input",()=>{items[Number(input.dataset.sourceIndex)][input.dataset.sourceKey]=input.value;pendingSources=items}));
  $("sourcesAdmin").querySelectorAll("[data-move-source]").forEach(btn=>btn.onclick=()=>{const i=Number(btn.dataset.sourcePosition),j=i+(btn.dataset.moveSource==="up"?-1:1);if(j<0||j>=items.length)return;[items[i],items[j]]=[items[j],items[i]];pendingSources=items;renderSourcesEditor()});
  $("sourcesAdmin").querySelectorAll("[data-remove-source]").forEach(btn=>btn.onclick=()=>{items.splice(Number(btn.dataset.removeSource),1);pendingSources=items;renderSourcesEditor()});
- $("addCommonSource").onclick=()=>{items.push({title:"",organization:"",url:"",description:""});pendingSources=items;renderSourcesEditor();const fields=$("sourcesEntries").querySelectorAll('[data-source-key="title"]');fields[fields.length-1]?.focus()};
+ $("addCommonSource").onclick=()=>{items.push({title:"",organization:"",url:"",description:"",extraUrls:""});pendingSources=items;renderSourcesEditor();const fields=$("sourcesEntries").querySelectorAll('[data-source-key="title"]');fields[fields.length-1]?.focus()};
  $("saveCommonSources").onclick=saveCommonSources;
 }
 async function saveCommonSources(){
  if(!admin)return;
- const items=(pendingSources===null?sourceItems():pendingSources).map(item=>({title:String(item.title||"").trim(),organization:String(item.organization||"").trim(),url:String(item.url||"").trim(),description:String(item.description||"").trim()}));
+ const items=(pendingSources===null?sourceItems():pendingSources).map(item=>({title:String(item.title||"").trim(),organization:String(item.organization||"").trim(),url:String(item.url||"").trim(),description:String(item.description||"").trim(),extraUrls:String(item.extraUrls||"").trim()}));
  if(items.some(item=>!item.title)){toast("Chaque source doit avoir un titre.");return}
- if(items.some(item=>item.url&&!safeSourceUrl(item.url))){toast("Utilise des liens http:// ou https:// valides.");return}
+ if(items.some(item=>[item.url,...item.extraUrls.split(/\r?\n/)].filter(Boolean).some(url=>!safeSourceUrl(url.trim())))){toast("Utilise des liens http:// ou https:// valides.");return}
  const existing=sourcesRecord();
  const record=existing?clone(existing):{id:SOURCES_RECORD_ID,name:"Sources communes Mémopharm",dci:"",dosage:"",category:"Documentation",form:"",aliases:"",entry_type:"specialite",status:"À vérifier",updated:"",source:"",presentations:[],sections:[],published:true};
  record.sections=[{id:"sources-communes",title:"Sources communes",type:"text",content:"",enabled:true,memofficineKind:"sources_communes",items}];record.published=true;
