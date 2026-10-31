@@ -3720,6 +3720,27 @@ function wireTextFormatting(){
    event.clipboardData.setData('text/plain',gridPlain(data));
    event.clipboardData.setData('text/html',gridHtml(data));
   });
+  // Couper une plage de cellules : copier d'abord, puis vider uniquement les cellules sources.
+  editor.addEventListener('cut',event=>{
+   const area=selectedGrid();
+   const data=gridData();
+   if(!area||!data||!event.clipboardData)return;
+   const sel=window.getSelection();
+   // Laisser le navigateur couper normalement une sélection partielle de texte.
+   if(data.length===1&&data[0].length===1&&sel&&!sel.isCollapsed)return;
+   const model=memoInlineRead(activeTable);
+   const selected=area.cells.map(c=>model.cells.find(x=>x.r===c.r&&x.c===c.c));
+   if(selected.some(c=>!c))return;
+   event.preventDefault();
+   event.clipboardData.setData('text/plain',gridPlain(data));
+   event.clipboardData.setData('text/html',gridHtml(data));
+   gridClipboard=data;
+   selected.forEach(c=>{c.text='';});
+   const wrapper=activeTable.closest('.memo-inline-table-wrap');
+   memoInlineRefresh(wrapper,model);
+   activeTable=wrapper.querySelector('table');
+   highlight();sync();
+  });
   editor.addEventListener('keydown',event=>{
    if(!(event.ctrlKey||event.metaKey)||event.key.toLowerCase()!=='a')return;
    const td=event.target.closest?.('.memo-inline-table td');
