@@ -637,11 +637,18 @@ html[data-memo-theme="dark"] .table-grid-editor td.memo-merge-selected{backgroun
 #editor .section-editor{scroll-margin-top:20px}
 #editor .memo-rubric-jump-target{outline:2px solid #7baa89;outline-offset:3px;transition:outline-color .5s}
 
-/* V116.84 : aperçu de rubrique uniquement sur le premier résultat de recherche dans la bannière */
+/* V116.85 : extrait compact, sans doubles barres de défilement */
 .memo-header-first-rubric-preview{display:none}
-body.header-search-active #headerSearchSlot #searchSuggestions .result:first-child .memo-header-first-rubric-preview{display:block;margin-top:8px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--card);font-size:.86rem;max-height:210px;overflow:auto}
-body.header-search-active #headerSearchSlot #searchSuggestions .memo-header-first-rubric-preview .explore-hit-content{margin:0}
-body.header-search-active #headerSearchSlot #searchSuggestions .memo-header-first-rubric-preview .section{padding:0;border:0}
+body.header-search-active #headerSearchSlot #searchSuggestions .result:first-child .memo-header-first-rubric-preview{
+ display:block;margin:7px 0 0 18px;padding:8px 10px;border:0;border-left:2px solid currentColor;
+ border-radius:0;background:rgba(255,255,255,.45);font-size:.82rem;
+ line-height:1.45;max-height:none;overflow:visible;min-width:0;
+}
+#headerSearchSlot .memo-header-excerpt-text{overflow-wrap:anywhere;word-break:normal;white-space:normal;
+ display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden;
+ color:var(--ink);font-weight:400}
+body.header-search-active #headerSearchSlot #searchSuggestions{overflow-y:auto;overflow-x:hidden}
+body.header-search-active #headerSearchSlot #searchSuggestions .result{min-width:0}
 </style>
 </head>
 <body>
@@ -2373,6 +2380,21 @@ function getSearchMatches(queryOverride=null){
   return score(b)-score(a)||String(a.med.name).localeCompare(String(b.med.name),"fr",{numeric:true,sensitivity:"base"})||(a.presentation??-1)-(b.presentation??-1);
  });
 }
+function memoHeaderSectionExcerpt(section){
+ const html=searchSectionPreview(section);
+ const el=document.createElement("div");
+ el.innerHTML=html;
+ // Les tableaux complexes restent lisibles sous forme de texte, sans grilles écrasées.
+ el.querySelectorAll("tr").forEach(tr=>{
+  const cells=[...tr.querySelectorAll("th,td")].map(c=>(c.textContent||"").trim()).filter(Boolean);
+  tr.replaceWith(document.createTextNode(cells.join(" · ")+" — "));
+ });
+ const plain=(el.textContent||"").replace(/\\s+/g," ").trim();
+ if(!plain)return "";
+ const limit=235;
+ const excerpt=plain.length>limit?plain.slice(0,limit).replace(/\\s+\\S*$/,"").trim()+"…":plain;
+ return `<div class="memo-header-excerpt-text">${esc(excerpt)}</div>`;
+}
 function searchSectionPreview(sec){
  if(!sec||!String(sec.content||"").trim())return "";
  // Utiliser le moteur de rendu existant pour préserver listes, tableaux,
@@ -2621,10 +2643,11 @@ function renderResults(){
     <strong class="memo-search-princeps-target"><span class="result-dot memo-search-princeps-turn" aria-hidden="true">↳</span><span class="memo-search-molecule-name">${esc(displayMedName(m))}</span></strong>
    </div>`:'';
   const sectionDetail=sec&&isContentFicheType(m)&&!isPresentation?`<div class="result-section-direct"><span class="result-section-title">↳ ${esc(sec.title)}</span></div>`:"";
+  // Aperçu compact en texte brut : aucun tableau imbriqué ni barre de défilement.
   // Dans la recherche compacte de la bannière, seul le premier résultat
   // affiche le contenu de la rubrique vers laquelle il redirige.
   const firstHeaderSectionPreview=resultIndex===0&&sec&&!matchingVariant&&!isPresentation
-   ?searchSectionPreview(sec):"";
+   ?memoHeaderSectionExcerpt(sec):"";
   return `<div class="result result-${kind}" role="option" aria-selected="false" tabindex="-1" data-id="${esc(matchingVariant?.id||m.id)}" data-preview-id="${esc(m.id)}" data-section="${esc(matchingVariant?'':sec?.id||'')}" data-presentation="${matchingVariant||item.presentation===null?'':item.presentation}">
    ${princepsRoute?princepsRoute:`<strong><span class="result-dot" aria-hidden="true">●</span>${esc(isPresentation?presentationTitle:name)}<span class="result-arrow" aria-hidden="true">↗</span></strong>`}
    ${isPresentation?`<div class="result-presentation-info">${badge}${cip}</div>`:mergedCip?`<div class="result-presentation-info memo-v106-merged-cip">${mergedCip}</div>`:(isDciFamilyType(m))?dciBadges:group?"":`<div class="sub">${esc(m.category||"Sans famille")}</div>`}
