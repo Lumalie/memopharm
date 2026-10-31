@@ -616,6 +616,9 @@ html[data-memo-theme="dark"] .table-grid-editor td.memo-merge-selected{backgroun
 .memo-inline-table td{border:1px solid #a6bbae;padding:9px;min-width:65px;vertical-align:top;white-space:pre-wrap}
 .memo-rich-editor .memo-inline-table td:focus{outline:2px solid #598c70;outline-offset:-2px}
 .memo-rich-editor .memo-inline-table td.memo-cell-selected{background:#d3e9db;box-shadow:inset 0 0 0 2px #538e6d}
+
+.text-format-bubble .memo-insert-table{margin:0;padding:5px 8px;font-size:.9rem;border-radius:7px;background:#e9f4ed}
+.memo-rich-editor .memo-inline-table td{white-space:normal}
 </style>
 </head>
 <body>
@@ -877,7 +880,7 @@ const MEMO_MOLECULE_TEMPLATE=[
  {id:"conseils-comptoir",title:"💗 Conseils au comptoir",type:"text",content:"",enabled:true},
  {id:"indications",title:"📍 Indications",type:"text",content:"",enabled:true},
  {id:"mecanisme",title:"⚙️ Mécanisme d’action",type:"text",content:"",enabled:true},
- {id:"posologie",title:"🔢 Posologie",type:"text",content:memoInlineToken(memoInlineNew()),enabled:true},
+ {id:"posologie",title:"🔢 Posologie",type:"text",content:"",enabled:true},
  {id:"effets",title:"🌀 Effets indésirables",type:"text",content:"",enabled:true},
  {id:"interactions",title:"⚠️ Interactions médicamenteuses",type:"text",content:"",enabled:true}
 ];
@@ -3360,7 +3363,7 @@ function memoInlineHtml(model,editable=false){
  const lookup=new Map(model.cells.map(c=>[c.r+":"+c.c,c]));
  return `<div class="memo-inline-table-wrap" ${editable?'contenteditable="false"':''}><table class="memo-inline-table"><tbody>${Array.from({length:model.rows},(_,r)=>`<tr>${Array.from({length:model.cols},(_,c)=>{
   const cell=lookup.get(r+":"+c);if(!cell)return "";
-  return `<td rowspan="${cell.rs}" colspan="${cell.cs}" data-r="${r}" data-c="${c}" ${editable?'contenteditable="true"':''}>${esc(cell.text).replace(/\n/g,"<br>")}</td>`;
+  return `<td rowspan="${cell.rs}" colspan="${cell.cs}" data-r="${r}" data-c="${c}" ${editable?'contenteditable="true"':''}>${richInline(cell.text).replace(/\n/g,"<br>")}</td>`;
  }).join("")}</tr>`).join("")}</tbody></table></div>`;
 }
 function memoInlineRead(table){
@@ -3371,7 +3374,7 @@ function memoInlineRead(table){
   for(const td of table.rows[r].cells){
    while(occupied.has(r+":"+c))c++;
    const rs=td.rowSpan||1,cs=td.colSpan||1;
-   cells.push({r,c,rs,cs,text:td.innerText.replace(/\r/g,"").trim()});
+   cells.push({r,c,rs,cs,text:memoRichSerialize(td).trim()});
    for(let rr=r;rr<r+rs;rr++)for(let cc=c;cc<c+cs;cc++)occupied.add(rr+":"+cc);
    c+=cs;
   }
@@ -3380,7 +3383,7 @@ function memoInlineRead(table){
  return {rows,cols:maxCols,cells};
 }
 function memoInlineRefresh(wrapper,model){
- wrapper.outerHTML=memoInlineHtml(model,true);
+ wrapper.innerHTML=memoInlineHtml(model,true).replace(/^<div[^>]*>|<\/div>$/g,"");
 }
 function memoInlineNew(){
  return {rows:3,cols:3,cells:Array.from({length:9},(_,i)=>({r:Math.floor(i/3),c:i%3,rs:1,cs:1,text:i===1?"Adulte":i===2?"Enfant":""}))};
@@ -3493,7 +3496,7 @@ function wireTextFormatting(){
    if(e.target.closest(".memo-inline-table td"))activate(e.target.closest("table"));
   });
   card.querySelector(".memo-insert-table")?.addEventListener("click",()=>{
-   editor.focus();
+   restore();
    const wrap=document.createElement("div");
    wrap.innerHTML=memoInlineHtml(memoInlineNew(),true);
    const node=wrap.firstElementChild;
@@ -3507,7 +3510,7 @@ function wireTextFormatting(){
     else range.insertNode(node);
    }else editor.append(node);
    node.after(document.createElement("p"));
-   activate(node.querySelector("table"));sync();
+   activate(node.querySelector("table"));sync();bubble.hidden=true;
   });
   tableTools?.addEventListener("mousedown",e=>{if(e.target.closest("button"))e.preventDefault()});
   tableTools?.addEventListener("click",e=>{
@@ -3536,13 +3539,16 @@ function wireTextFormatting(){
   });
   const show=()=>{
    const sel=window.getSelection();
-   bubble.hidden=!(sel&&!sel.isCollapsed&&editor.contains(sel.anchorNode)&&editor.contains(sel.focusNode));
+   bubble.hidden=!(sel&&editor.contains(sel.anchorNode)&&editor.contains(sel.focusNode)&&!sel.isCollapsed);
   };
   editor.addEventListener('mouseup',show);
+  editor.addEventListener('contextmenu',e=>{e.preventDefault();remember();bubble.hidden=false});
   editor.addEventListener('keyup',show);
   bubble.addEventListener('mousedown',e=>{if(e.target.closest('button'))e.preventDefault()});
   let savedRange=null;
   const remember=()=>{const sel=window.getSelection();if(sel&&sel.rangeCount&&editor.contains(sel.anchorNode))savedRange=sel.getRangeAt(0).cloneRange()};
+  editor.addEventListener('mouseup',remember);
+  editor.addEventListener('keyup',remember);
   const restore=()=>{editor.focus();if(savedRange){const sel=window.getSelection();sel.removeAllRanges();sel.addRange(savedRange)}};
   const apply=(mode)=>{
    restore();
@@ -3568,6 +3574,26 @@ function wireTextFormatting(){
    select.addEventListener('focus',remember);
    select.addEventListener('change',()=>{if(select.value)apply(prefix+select.value);select.value=''});
   }
+  editor.addEventListener('keydown',e=>{
+   if(e.key!=='Enter'||e.ctrlKey||e.metaKey||e.altKey)return;
+   const sel=window.getSelection();
+   const node=sel?.anchorNode;
+   const td=(node?.nodeType===1?node:node?.parentElement)?.closest?.('.memo-inline-table td');
+   if(!td||!editor.contains(td))return;
+   e.preventDefault();
+   if(e.shiftKey){document.execCommand('insertLineBreak',false,null);sync();return}
+   const table=td.closest('table.memo-inline-table');
+   const model=memoInlineRead(table);
+   const cell=model.cells.find(c=>c.r===Number(td.dataset.r)&&c.c===Number(td.dataset.c));
+   if(!cell||cell.r+cell.rs!==model.rows){document.execCommand('insertLineBreak',false,null);sync();return}
+   memoTableResize(model,'add-row');
+   const wrapper=table.closest('.memo-inline-table-wrap');
+   memoInlineRefresh(wrapper,model);
+   const actual=wrapper;
+   const target=actual?.querySelector(`td[data-r="${model.rows-1}"][data-c="${cell.c}"]`)||actual?.querySelector(`td[data-r="${model.rows-1}"]`);
+   if(target){const range=document.createRange();range.selectNodeContents(target);range.collapse(true);sel.removeAllRanges();sel.addRange(range);target.focus()}
+   sync();
+  });
   editor.addEventListener('keydown',e=>{
    if(!(e.ctrlKey||e.metaKey)||e.altKey)return;
    const key=e.key.toLowerCase();
@@ -4555,7 +4581,7 @@ function memoLegacyTableToText(content){
  const model=memoTableModel(content||"");
  return memoInlineToken(model);
 }
-function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button type="button" data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button type="button" data-act="down" data-index="${i}" ${i===(meds.find(m=>m.id===editorId)?.sections?.length||0)-1?'disabled':''}>↓</button><button type="button" data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button type="button" class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Contenu</label>${true?`<div class="text-edit-wrap"><button type="button" class="memo-insert-table">▦ Insérer un tableau</button><div class="memo-inline-table-toolbar" hidden><button type="button" data-inline-act="add-row">+ Ligne</button><button type="button" data-inline-act="remove-row">− Ligne</button><button type="button" data-inline-act="add-col">+ Colonne</button><button type="button" data-inline-act="remove-col">− Colonne</button><button type="button" data-inline-act="merge">Fusionner</button><button type="button" data-inline-act="split">Séparer</button><button type="button" data-inline-act="delete">Supprimer le tableau</button><span class="hint">Glisse la souris sur les cellules pour les sélectionner.</span></div><div class="text-format-bubble" hidden><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="link" title="Insérer un lien URL (Ctrl+K)">🔗 Lien</button><button type="button" data-format="bullets" title="Liste à puces">• Liste</button><button type="button" data-format="numbers" title="Liste numérotée">1. Liste</button><select data-format-align aria-label="Alignement du texte"><option value="">Aligner…</option><option value="left">Gauche</option><option value="center">Centré</option><option value="right">Droite</option><option value="justify">Justifié</option></select><select data-format-size aria-label="Taille de police"><option value="">Taille…</option><option value="12">12 px</option><option value="14">14 px</option><option value="16">16 px</option><option value="18">18 px</option><option value="20">20 px</option><option value="24">24 px</option><option value="28">28 px</option></select><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris précision</option><option value="pink">Rose conseil</option></select></div><textarea data-field="content" class="memo-rich-storage" tabindex="-1" aria-hidden="true">${esc(s.type==="table"?memoLegacyTableToText(s.content):s.content||"")}</textarea><div class="memo-rich-editor" contenteditable="true" role="textbox" aria-label="Contenu de la rubrique" aria-multiline="true"></div><p class="hint">Raccourcis : Ctrl+B gras · Ctrl+I italique · Ctrl+U souligné · Ctrl+K lien vers une source · Ctrl+Z annuler · Ctrl+Y rétablir (sur Mac : Cmd).</p></div>`:`${tableGridEditor(s.content||"")}`}</div></div>`}
+function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button type="button" data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button type="button" data-act="down" data-index="${i}" ${i===(meds.find(m=>m.id===editorId)?.sections?.length||0)-1?'disabled':''}>↓</button><button type="button" data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button type="button" class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Contenu</label>${true?`<div class="text-edit-wrap"><div class="memo-inline-table-toolbar" hidden><button type="button" data-inline-act="add-row">+ Ligne</button><button type="button" data-inline-act="remove-row">− Ligne</button><button type="button" data-inline-act="add-col">+ Colonne</button><button type="button" data-inline-act="remove-col">− Colonne</button><button type="button" data-inline-act="merge">Fusionner</button><button type="button" data-inline-act="split">Séparer</button><button type="button" data-inline-act="delete">Supprimer le tableau</button><span class="hint">Glisse la souris sur les cellules pour les sélectionner.</span></div><div class="text-format-bubble" hidden><button type="button" class="memo-insert-table" title="Insérer un tableau à la position du curseur">▦</button><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="link" title="Insérer un lien URL (Ctrl+K)">🔗 Lien</button><button type="button" data-format="bullets" title="Liste à puces">• Liste</button><button type="button" data-format="numbers" title="Liste numérotée">1. Liste</button><select data-format-align aria-label="Alignement du texte"><option value="">Aligner…</option><option value="left">Gauche</option><option value="center">Centré</option><option value="right">Droite</option><option value="justify">Justifié</option></select><select data-format-size aria-label="Taille de police"><option value="">Taille…</option><option value="12">12 px</option><option value="14">14 px</option><option value="16">16 px</option><option value="18">18 px</option><option value="20">20 px</option><option value="24">24 px</option><option value="28">28 px</option></select><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris précision</option><option value="pink">Rose conseil</option></select></div><textarea data-field="content" class="memo-rich-storage" tabindex="-1" aria-hidden="true">${esc(s.type==="table"?memoLegacyTableToText(s.content):s.content||"")}</textarea><div class="memo-rich-editor" contenteditable="true" role="textbox" aria-label="Contenu de la rubrique" aria-multiline="true"></div><p class="hint">Raccourcis : Ctrl+B gras · Ctrl+I italique · Ctrl+U souligné · Ctrl+K lien vers une source · Ctrl+Z annuler · Ctrl+Y rétablir (sur Mac : Cmd).</p></div>`:`${tableGridEditor(s.content||"")}`}</div></div>`}
 function captureEditorFields(m){
  const get=id=>$(id)?.value;
  if(get("f-entry-type")===undefined)return;
