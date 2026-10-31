@@ -619,6 +619,14 @@ html[data-memo-theme="dark"] .table-grid-editor td.memo-merge-selected{backgroun
 
 .text-format-bubble .memo-insert-table{margin:0;padding:5px 8px;font-size:.9rem;border-radius:7px;background:#e9f4ed}
 .memo-rich-editor .memo-inline-table td{white-space:normal}
+
+/* V116.79 — En-têtes des rubriques plus compacts et princeps en italique. */
+#editor .section-editor{padding:7px 10px;margin:6px 0}
+#editor .section-editor-head{gap:6px;min-height:28px}
+#editor .memo-section-expand{padding:2px 3px;line-height:1.2;font-size:.86rem;min-height:25px}
+#editor .section-editor-head .mini-actions{gap:3px}
+#editor .section-editor-head .mini-actions button{padding:2px 6px;line-height:1.2;font-size:.76rem}
+#detail .memo-princeps-name{font-style:italic}
 </style>
 </head>
 <body>
@@ -3548,13 +3556,17 @@ function wireTextFormatting(){
    const plain=event.clipboardData.getData('text/plain');
    document.execCommand('insertText',false,plain);
   });
-  const show=()=>{
+  const show=(allowCaret=false)=>{
    const sel=window.getSelection();
-   bubble.hidden=!(sel&&editor.contains(sel.anchorNode)&&editor.contains(sel.focusNode)&&!sel.isCollapsed);
+   const inside=!!(sel&&editor.contains(sel.anchorNode)&&editor.contains(sel.focusNode));
+   bubble.hidden=!(inside&&(allowCaret||!sel.isCollapsed));
   };
-  editor.addEventListener('mouseup',show);
-  editor.addEventListener('contextmenu',e=>{e.preventDefault();remember();bubble.hidden=false});
-  editor.addEventListener('keyup',show);
+  // Un clic gauche dans l'éditeur affiche la barre, même sans sélection.
+  editor.addEventListener('mouseup',e=>{if(e.button===0)show(true)});
+  // La sélection au clavier affiche également la barre.
+  editor.addEventListener('keyup',()=>show(false));
+  // Le clic droit conserve le menu natif du navigateur.
+  editor.addEventListener('contextmenu',()=>{bubble.hidden=true});
   bubble.addEventListener('mousedown',e=>{if(e.target.closest('button'))e.preventDefault()});
   let savedRange=null;
   const remember=()=>{const sel=window.getSelection();if(sel&&sel.rangeCount&&editor.contains(sel.anchorNode))savedRange=sel.getRangeAt(0).cloneRange()};
@@ -3758,7 +3770,7 @@ function renderEditor(id){
    
    <div id="variant-editors"></div>
  </div>
- <h3>Rubriques de cette fiche</h3>
+ 
  <div id="sectionEditors">${(m.sections||[]).map((s,i)=>sectionEditor(s,i)).join("")}</div><div class="section-bottom-actions"><button type="button" id="addTextSection">+ Rubrique</button><button type="button" id="editorBackToTop">↑ Retour en haut</button></div>
  <div class="admin-grid admin-meta" style="margin-top:24px"><div><label>Statut de vérification</label><select id="f-status">${["à vérifier","en cours de vérification","vérifiée"].map(v=>`<option ${String(m.status||"à vérifier").toLocaleLowerCase("fr")===v?"selected":""}>${v}</option>`).join("")}</select></div><div><label>Publication</label><select id="f-published"><option value="false" ${!m.published?"selected":""}>Brouillon — privé</option><option value="true" ${m.published?"selected":""}>Publié — visible publiquement</option></select></div><div class="full"><label for="f-updated">Date de mise à jour</label><input id="f-updated" type="date" value="${esc(m.updated)}"></div></div>`;
 // V8 : réorganiser les contrôles existants dans quatre panneaux, sans les recréer.
@@ -3825,8 +3837,7 @@ function renderEditor(id){
  const showFlags=()=>{if(flagsField)flagsField.classList.toggle("hidden",!["molecule","specialite"].includes($("f-entry-type").value))};
  $("f-entry-type").addEventListener("change",showFlags);
  showFlags();
- const generalHeading=document.createElement("div");generalHeading.className="memo-editor-panel-heading";generalHeading.textContent="Rubriques de cette fiche";
- panels.general.append(generalHeading,sectionHint,sectionsRoot,sectionActions);
+ panels.general.append(sectionHint,sectionsRoot,sectionActions);
  if(sectionHeading)sectionHeading.remove();
  const variantHeading=document.createElement("div");variantHeading.className="memo-editor-panel-heading";variantHeading.textContent=isSpecialiteFiche(m)?"Présentations":"Présentations et particularités";
  const variantTitleRow=document.createElement("div");variantTitleRow.className="memo-variant-title-row";
