@@ -627,6 +627,12 @@ html[data-memo-theme="dark"] .table-grid-editor td.memo-merge-selected{backgroun
 #editor .section-editor-head .mini-actions{gap:3px}
 #editor .section-editor-head .mini-actions button{padding:2px 6px;line-height:1.2;font-size:.76rem}
 #detail .memo-princeps-name{font-style:italic}
+
+/* V116.81 — édition directe des rubriques */
+.memo-edit-rubric{display:inline-flex!important;align-items:center;justify-content:center;vertical-align:middle;margin-left:auto!important;padding:4px!important;width:30px;height:30px;flex-shrink:0;position:relative;z-index:2}
+.memo-v74-rubric>summary{display:flex;align-items:center;gap:8px}
+.priority-alert h3,.priority-advice h3,.group-glance h3{display:flex;align-items:center;gap:8px}
+.memo-edit-rubric svg{pointer-events:none}
 </style>
 </head>
 <body>
@@ -1012,6 +1018,11 @@ function rememberEditorFocus(){
   const selection=window.getSelection();
   if(selection&&selection.rangeCount&&el.contains(selection.anchorNode)){
    saved.range=selection.getRangeAt(0).cloneRange();
+   const cell=el.closest(".memo-inline-table td");
+   if(cell){saved.cellR=cell.dataset.r;saved.cellC=cell.dataset.c;
+    const before=selection.getRangeAt(0).cloneRange();before.selectNodeContents(cell);before.setEnd(selection.anchorNode,selection.anchorOffset);
+    saved.caretOffset=before.toString().length;
+   }
   }
  }
  editorReturnFocus=saved;
@@ -1025,6 +1036,10 @@ function restoreEditorFocus(){
   if(!el&&saved.elementId)el=document.getElementById(saved.elementId);
   if(!el&&saved.sectionIndex!==null){const card=$("editor").querySelector(`.section-editor[data-section="${Number(saved.sectionIndex)}"]`);el=saved.field?card?.querySelector(`[data-field="${saved.field}"]`):null;}
   if(!el&&saved.presentationIndex!==null){const card=[...$("presentationEditors").children][Number(saved.presentationIndex)];el=saved.field?card?.querySelector(`[data-field="${saved.field}"]`):null;}
+  if((!el||!$("editor").contains(el))&&saved.sectionIndex!==null&&saved.cellR!==undefined){
+   const card=$("editor").querySelector(`.section-editor[data-section="${Number(saved.sectionIndex)}"]`);
+   el=card?.querySelector(`.memo-inline-table td[data-r="${saved.cellR}"][data-c="${saved.cellC}"]`)||null;
+  }
   if(!el||!$("editor").contains(el))return;
   // Ne pas interrompre une nouvelle interaction volontaire.
   const active=document.activeElement;
@@ -1032,6 +1047,14 @@ function restoreEditorFocus(){
   el.focus({preventScroll:true});
   if(typeof saved.start==="number"&&typeof el.setSelectionRange==="function"){
    try{el.setSelectionRange(saved.start,saved.end,saved.direction||"none")}catch(e){}
+  }else if(saved.cellR!==undefined&&el.matches?.(".memo-inline-table td")){
+   try{
+    const walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);
+    let remaining=saved.caretOffset||0,node,range=document.createRange(),found=false;
+    while((node=walker.nextNode())){if(remaining<=node.textContent.length){range.setStart(node,remaining);found=true;break}remaining-=node.textContent.length}
+    if(!found){range.selectNodeContents(el);range.collapse(false)}else range.collapse(true);
+    const selection=window.getSelection();selection.removeAllRanges();selection.addRange(range);
+   }catch(e){}
   }else if(saved.range&&el.isContentEditable){
    try{const selection=window.getSelection();selection.removeAllRanges();selection.addRange(saved.range)}catch(e){}
   }
@@ -2933,6 +2956,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDo
   ${isMolecule(m)&&moleculeDosages.length?`<details class="molecule-general memo-v92-specialty-presentations memo-v105-molecule-presentations" id="molecule-presentations" open><summary>💊 Présentations</summary><div class="molecule-general-inner"><section class="molecule-tabs" id="molecule-tabs" aria-label="Présentations"><div class="molecule-tabs-inner"><div class="molecule-tab-strip molecule-form-strip" role="tablist" aria-label="Formes pharmaceutiques de ${esc(displayMedName(m))}"></div><div class="molecule-tab-strip molecule-dose-strip" role="tablist" aria-label="Dosages disponibles"></div><div class="molecule-tab-content" id="molecule-tab-content"></div></div></section></div></details>`:""}
 `;
  memoV96RestoreDetails(m.id,$("detail"));
+ if(admin)memoWireRubricEditButtons(m,$("detail"));
  const memoExternalSources=$("memo-combined-sources-slot");
  if(memoExternalSources){memoExternalSources.innerHTML=ficheCombinedSources(m,documentationSections);memoExternalSources.classList.toggle("hidden",!memoExternalSources.innerHTML.trim());}
  memoLinkifyCips($("detail"));
@@ -2971,6 +2995,10 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDo
    const moleculeName=displayMedName(m);
    const selectedTitle=[moleculeName,dose].filter(Boolean).join(" ")+(form?" — "+form:"");
    panel.innerHTML=`<div class="memo-selected-presentation"><span class="memo-selected-caption">PRÉSENTATION SÉLECTIONNÉE</span><div class="memo-v44-heading"><strong class="memo-v44-title">${esc(selectedTitle)}</strong><span class="memo-v44-regulatory"></span></div>${ficheDateLabel(child)}</div>${presentationHtml}${priorityHtml}${rubricTools}${specificHtml}${(!priorityHtml&&!specificHtml&&!presentationHtml)?'<p class="memo-specific-empty">Aucune particularité renseignée pour cette présentation.</p>':''}`;
+   if(admin){
+    const headings=[...panel.querySelectorAll('.memo-v74-rubric > summary')];
+    headings.forEach((heading,i)=>{const sec=specificSections[i];if(sec)memoAppendRubricEdit(heading,child,sec)});
+   }
    panel.querySelectorAll("[data-v74-expand]").forEach(btn=>btn.addEventListener("click",()=>{
     const expand=btn.dataset.v74Expand==="all";
     panel.querySelectorAll(".memo-v74-rubric").forEach(r=>{r.open=expand});
@@ -3501,6 +3529,10 @@ function wireTextFormatting(){
    for(const cell of selected)activeTable?.querySelector(`td[data-r="${cell.r}"][data-c="${cell.c}"]`)?.classList.add("memo-cell-selected");
   };
   const activate=table=>{activeTable=table;tableTools.hidden=false};
+  editor.addEventListener("focusin",e=>{
+   const td=e.target.closest?.(".memo-inline-table td");
+   if(td){card.dataset.memoLastCellR=td.dataset.r;card.dataset.memoLastCellC=td.dataset.c;}
+  });
   editor.addEventListener("mousedown",e=>{
    const td=e.target.closest(".memo-inline-table td");if(!td||!editor.contains(td))return;
    activate(td.closest("table"));dragStart={r:+td.dataset.r,c:+td.dataset.c};dragEnd={...dragStart};dragging=true;highlight();
@@ -3729,6 +3761,41 @@ function applyGroupTemplate(m){
 }
 let memoEditorActiveTab="identity";
 let memoEditorOpenSection=null;
+const memoRubricPencilSvg=`<svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/></svg>`;
+function memoEditOneRubric(med,section){
+ const index=(med.sections||[]).findIndex(s=>s===section||String(s.id)===String(section?.id));
+ if(index<0){toast("Cette rubrique n'est pas modifiable directement.");return}
+ memoEditorActiveTab="general";memoEditorOpenSection=index;
+ renderEditor(med.id);
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  const card=$("editor").querySelector(`.section-editor[data-section="${index}"]`);
+  card?.scrollIntoView({behavior:"smooth",block:"center"});
+  card?.querySelector('.memo-rich-editor')?.focus({preventScroll:true});
+ }));
+}
+function memoWireRubricEditButtons(m,root){
+ const candidates=(m.sections||[]).filter(s=>s.enabled!==false&&!isDocumentationSection(s));
+ const priorityIds=new Set(["alerte-delivrance","coup-oeil","conseils-comptoir"]);
+ const standard=candidates.filter(s=>!priorityIds.has(s.id));
+ const summaryNodes=[...root.querySelectorAll('.memo-v102-general .memo-v74-rubric > summary')];
+ summaryNodes.forEach((summary,i)=>{
+  const section=standard[i];if(!section)return;
+  memoAppendRubricEdit(summary,m,section);
+ });
+ const selectors=[[".priority-alert","alerte-delivrance"],[".group-glance","coup-oeil"],[".priority-advice","conseils-comptoir"]];
+ selectors.forEach(([selector,id])=>{
+  const host=root.querySelector(selector);const section=candidates.find(s=>s.id===id);
+  if(host&&section){const heading=host.querySelector('h3')||host;memoAppendRubricEdit(heading,m,section)}
+ });
+}
+function memoAppendRubricEdit(host,med,section){
+ if(host.querySelector(':scope > .memo-edit-rubric'))return;
+ const button=document.createElement('button');button.type='button';button.className='memo-admin-icon-button memo-edit-rubric';
+ button.title='Modifier la rubrique';button.setAttribute('aria-label','Modifier la rubrique '+section.title);
+ button.innerHTML=memoRubricPencilSvg;
+ button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();memoEditOneRubric(med,section)});
+ host.append(button);
+}
 function renderEditor(id){
  if(!requireAdmin())return;
  openedSearchFiche=true;showView("home");$("searchLayout").classList.remove("hidden");
