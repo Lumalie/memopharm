@@ -874,6 +874,21 @@ html[data-memo-theme="dark"] #excView .memo-exc-matrix,html[data-memo-theme="dar
 .memo-selected-presentation:has(.memo-selected-edit){padding-right:67px}
 #editor .memo-v26-commercial [data-variant-commercial-root] .section-editor-head>strong[data-memo-presentation-title]{display:none}
 #editor .memo-v26-commercial [data-variant-commercial-root] .section-editor-head{justify-content:flex-end;margin-top:0;margin-bottom:4px;min-height:0}
+
+/* V117.14 — statut de manipulation et éditeur commercial */
+.presentation-v33-fields .memo-manip-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:6px 0}
+.presentation-v33-fields .memo-manip-icon{display:inline-flex;align-items:center;vertical-align:middle;line-height:1}
+.presentation-v33-fields .memo-manip-icon svg{display:block}
+.presentation-v33-fields .memo-manip-yes{color:#24834c}
+.presentation-v33-fields .memo-manip-no{color:#c94c4c}
+.presentation-v33-fields .memo-equal-dose-display{display:inline-flex;align-items:center;gap:5px;font-size:.8rem;color:#718078;font-weight:450;margin-left:5px}
+.presentation-v33-fields .memo-equal-dose-display .memo-manip-yes{color:#24834c}
+.presentation-v33-fields .memo-equal-dose-display .memo-manip-no{color:#c94c4c}
+.presentation-v33-fields .memo-manip-reason{color:#687970;font-size:.83rem}
+#editor .memo-v26-commercial [data-variant-commercial-root] .presentation-card{position:relative}
+#editor .memo-v26-commercial [data-variant-commercial-root] .section-editor-head{position:absolute;right:0;top:0;z-index:2;margin:0!important;min-height:0!important}
+#editor .memo-v26-commercial [data-variant-commercial-root] .section-editor-head button[data-remove-presentation]{margin:0}
+#editor .memo-v26-commercial [data-variant-commercial-root] .presentation-kind-row{padding-right:95px!important;min-height:40px;align-items:center}
 </style>
 </head>
 <body>
@@ -3279,7 +3294,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDo
    const dose=dosageLabel(child);
    const moleculeName=displayMedName(m);
    const selectedTitle=[moleculeName,dose].filter(Boolean).join(" ")+(form?" — "+form:"");
-   panel.innerHTML=`<div class="memo-selected-presentation">${admin?`<button type="button" class="memo-selected-edit" data-memo-edit-selected title="Modifier cette présentation commerciale" aria-label="Modifier la présentation commerciale sélectionnée"><svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3v5a1 1 0 0 0 1 1h5"/><path d="M18 15v6"/><path d="M21 12.356V9a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 15 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7.355"/><path d="M21 18h-6"/></svg></button>`:''}<span class="memo-selected-caption">PRÉSENTATION SÉLECTIONNÉE</span><div class="memo-v44-heading"><strong class="memo-v44-title">${esc(selectedTitle)}</strong><span class="memo-v44-regulatory"></span></div>${ficheDateLabel(child)}</div>${presentationHtml}${priorityHtml}${rubricTools}${specificHtml}${(!priorityHtml&&!specificHtml&&!presentationHtml)?'<p class="memo-specific-empty">Aucune particularité renseignée pour cette présentation.</p>':''}`;
+   panel.innerHTML=`<div class="memo-selected-presentation">${admin?`<button type="button" class="memo-selected-edit" data-memo-edit-selected title="Modifier cette présentation commerciale" aria-label="Modifier la présentation commerciale sélectionnée"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/></svg></button>`:''}<span class="memo-selected-caption">PRÉSENTATION SÉLECTIONNÉE</span><div class="memo-v44-heading"><strong class="memo-v44-title">${esc(selectedTitle)}</strong><span class="memo-v44-regulatory"></span></div>${ficheDateLabel(child)}</div>${presentationHtml}${priorityHtml}${rubricTools}${specificHtml}${(!priorityHtml&&!specificHtml&&!presentationHtml)?'<p class="memo-specific-empty">Aucune particularité renseignée pour cette présentation.</p>':''}`;
    if(admin){
     const headings=[...panel.querySelectorAll('.memo-v74-rubric > summary')];
     headings.forEach((heading,i)=>{const sec=specificSections[i];if(sec)memoAppendRubricEdit(heading,child,sec)});
@@ -3512,6 +3527,11 @@ function memoV48Sync(section,p){
  const cip=section.querySelector("[data-v48-cip]");
  if(cip)cip.innerHTML=section.hasAttribute("data-variant-commercial")?memoMoleculeCipAndPack(p):memoV48Cip(p);
 }
+function memoManipStatus(possible,impossible){
+ if(impossible===true)return `<span class="memo-manip-icon memo-manip-no" title="Impossible" aria-label="Impossible"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></span>`;
+ if(possible===true)return `<span class="memo-manip-icon memo-manip-yes" title="Possible" aria-label="Possible"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg></span>`;
+ return `<span class="memo-manip-undetermined">Non renseigné</span>`;
+}
 function presentationInfo(p,m=null, specialtyBoxesHtml=""){
  if(!p)return '<p class="muted">Aucune présentation documentée.</p>';
  const img=safeHttp(p.imageUrl||"");
@@ -3520,9 +3540,9 @@ function presentationInfo(p,m=null, specialtyBoxesHtml=""){
   line("showLab","Laboratoire",p.lab||"À renseigner"),
   line("showAspect","Aspect",p.description||"Non documenté"),
   line("showExcipients","Excipients",p.excipients||"Non documentés"),
-  p.showSplit===true?`<p><strong>Fractionnement :</strong> <span class="${p.cannotSplit===true?"presentation-status-note":""}">${p.cannotSplit===true?"Impossible":p.canSplit===true?"Possible (confirmé)":"Non confirmé — vérifier"}${p.canSplit===true&&typeof p.equalDoses==="boolean"?` · <span class="memo-equal-dose-display">Doses égales : <strong>${p.equalDoses?"Oui":"Non"}</strong></span>`:""}${p.splitReason?` — ${esc(p.splitReason)}`:""}</span></p>`:"",
-  p.showCrush===true?`<p><strong>Écrasement :</strong> <span class="${p.cannotCrush===true?"presentation-status-note":""}">${p.cannotCrush===true?"Impossible":p.canCrush===true?"Possible selon vérification":"Non confirmé — vérifier"}${p.crushReason?` — ${esc(p.crushReason)}`:""}</span></p>`:"",
-  p.showOpen===true?`<p><strong>Ouverture de la gélule :</strong> <span class="${p.cannotOpen===true?"presentation-status-note":""}">${p.cannotOpen===true?"Impossible":p.canOpen===true?"Possible selon vérification":"Non confirmé — vérifier"}${p.openReason?` — ${esc(p.openReason)}`:""}</span></p>`:""
+  p.showSplit===true?`<p class="memo-manip-row"><strong>Fractionnement :</strong> ${memoManipStatus(p.canSplit,p.cannotSplit)}${p.canSplit===true&&p.cannotSplit!==true&&typeof p.equalDoses==="boolean"?` <span class="memo-equal-dose-display">Doses égales : ${memoManipStatus(p.equalDoses,!p.equalDoses)}</span>`:""}${p.splitReason?` <span class="memo-manip-reason">— ${esc(p.splitReason)}</span>`:""}</p>`:"",
+  p.showCrush===true?`<p class="memo-manip-row"><strong>Écrasement :</strong> ${memoManipStatus(p.canCrush,p.cannotCrush)}${p.crushReason?` <span class="memo-manip-reason">— ${esc(p.crushReason)}</span>`:""}</p>`:"",
+  p.showOpen===true?`<p class="memo-manip-row"><strong>Ouverture de la gélule :</strong> ${memoManipStatus(p.canOpen,p.cannotOpen)}${p.openReason?` <span class="memo-manip-reason">— ${esc(p.openReason)}</span>`:""}</p>`:""
  ].filter(Boolean);
  const tabletImg=safeHttp(p.tabletImageUrl||"");
  const imageTile=(url,label)=>`<figure class="memo-v52-photo-tile"><button type="button" class="presentation-v37-zoom" data-presentation-zoom="${esc(url)}" aria-label="Agrandir la photo : ${label}" title="Cliquer pour agrandir"><img src="${esc(url)}" alt="${label} de la présentation" loading="lazy"><span class="presentation-v37-zoom-icon" aria-hidden="true">⤢</span></button></figure>`;
