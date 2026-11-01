@@ -947,6 +947,26 @@ html[data-memo-theme="dark"] #excView .memo-exc-matrix,html[data-memo-theme="dar
  #excView .memo-equiv-page{max-width:100%;padding:0 10px}
  #excView .memo-exc-shared-columns{min-width:max(690px,calc(180px + var(--memo-exc-cols,3) * 125px))}
 }
+
+/* V117.23 — élargir le conteneur principal, pas seulement son contenu */
+main.memo-exc-wide-main{
+  width:100%;
+  max-width:1840px;
+  padding-left:clamp(18px,2.4vw,44px);
+  padding-right:clamp(18px,2.4vw,44px);
+}
+main.memo-exc-wide-main #excView,
+main.memo-exc-wide-main #excView>.memo-equiv-page{
+  width:100%;
+  max-width:100%;
+  min-width:0;
+}
+main.memo-exc-wide-main #excView .memo-exc-matrix-scroll{
+  overflow-x:auto;
+}
+@media(max-width:760px){
+ main.memo-exc-wide-main{padding-left:12px;padding-right:12px}
+}
 </style>
 </head>
 <body>
@@ -1424,6 +1444,7 @@ function showView(view){
  }
  if(changing&&!restoringViewScroll)viewScrollPositions[currentView]=window.scrollY;
  currentView=view;
+ document.querySelector("main")?.classList.toggle("memo-exc-wide-main",view==="exc");
  $("homeView").classList.toggle("hidden",view!=="home");
  $("dashboardListView").classList.toggle("hidden",view!=="dashboard-list");
  $("exploreView").classList.toggle("hidden",view!=="explore");
