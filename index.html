@@ -768,6 +768,44 @@ header .header-action-stack .header-actions > #excNav[aria-current="page"]{
 #excView .memo-exc-fiche-link:hover,#excView .memo-exc-fiche-link:focus-visible{text-decoration-color:currentColor;color:#236e4b}
 #excView .memo-exc-fiche-link:focus-visible{outline:2px solid #38805b;outline-offset:2px;border-radius:4px}
 html[data-memo-theme="dark"] #excView .memo-exc-matrix,html[data-memo-theme="dark"] #excView .memo-exc-aroma-table tbody tr>*{background:var(--card)!important}
+
+/* V117.08 — éditeur des présentations : mise en page sans cadres ni séparateurs.
+   Les contours des champs de saisie restent visibles pour l'accessibilité. */
+#editor #presentationEditors .presentation-card,
+#editor .memo-v26-commercial .presentation-card,
+#editor .memo-v26-commercial .presentation-fields,
+#editor #presentationEditors .presentation-fields{
+  border:0!important;border-radius:0!important;box-shadow:none!important;
+  background:transparent!important;outline:0!important;
+}
+#editor #presentationEditors .presentation-card,
+#editor .memo-v26-commercial .presentation-card{padding:0!important;margin:0!important}
+#editor #presentationEditors .presentation-edit-row,
+#editor .memo-v26-commercial .presentation-edit-row,
+#editor #presentationEditors .presentation-status-row,
+#editor .memo-v26-commercial .presentation-status-row,
+#editor #presentationEditors .memo-practical-editor,
+#editor .memo-v26-commercial .memo-practical-editor,
+#editor #presentationEditors .presentation-kind-row,
+#editor .memo-v26-commercial .presentation-kind-row,
+#editor #presentationEditors .memo-v43-regulation,
+#editor .memo-v26-commercial .memo-v43-regulation,
+#editor #presentationEditors .memo-v86-fields,
+#editor .memo-v26-commercial .memo-v86-fields{
+  border:0!important;border-top:0!important;border-bottom:0!important;
+  border-left:0!important;border-right:0!important;box-shadow:none!important;
+  outline:0!important;background:transparent!important;border-radius:0!important;
+}
+#editor #presentationEditors .presentation-edit-row::before,
+#editor #presentationEditors .presentation-edit-row::after,
+#editor .memo-v26-commercial .presentation-edit-row::before,
+#editor .memo-v26-commercial .presentation-edit-row::after{border:0!important;box-shadow:none!important}
+#editor #presentationEditors .presentation-fields,
+#editor .memo-v26-commercial .presentation-fields{row-gap:14px!important}
+#editor #presentationEditors .presentation-edit-row,
+#editor .memo-v26-commercial .presentation-edit-row{padding:4px 0!important;margin:0!important}
+#editor #presentationEditors .section-editor-head,
+#editor .memo-v26-commercial .presentation-card>.section-editor-head{border:0!important;box-shadow:none!important;background:transparent!important}
 </style>
 </head>
 <body>
