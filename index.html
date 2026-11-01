@@ -742,6 +742,11 @@ body.header-search-active #headerSearchSlot #searchSuggestions .result{min-width
 .memo-exc-sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .memo-exc-empty{text-align:center!important;color:var(--muted);padding:25px!important}
 @media(max-width:650px){.memo-exc-matrix{padding:10px}.memo-exc-matrix-table thead th:first-child,.memo-exc-matrix-table tbody th{min-width:140px}.memo-exc-matrix-table th,.memo-exc-matrix-table td{padding:9px}}
+
+/* V117.05 — arômes au-dessus et regroupements ciblés */
+.memo-exc-second-head{margin-top:23px;margin-bottom:7px}
+.memo-exc-aroma-table td{text-align:center;line-height:1.55;font-weight:600;color:var(--ink)}
+.memo-exc-aroma-table tbody tr>*{background:#edf5ef!important}
 </style>
 </head>
 <body>
@@ -3445,7 +3450,16 @@ function memoExcipientCanonical(v){
  // Une quantité isolée, un morceau de phrase ou une parenthèse non fermée ne sont pas des excipients fiables.
  if(!label||/^[\d\s]/.test(label)||/\b(?:et|dont)\s*$/i.test(label))return null;
  if((label.match(/\(/g)||[]).length!==(label.match(/\)/g)||[]).length)return null;
- return {key:memoExcipientNormalize(label),label};
+ // Rapprochements ciblés pour l'affichage : conserver le libellé brut dans les données.
+ const normalized=memoExcipientNormalize(label);
+ const families=[
+  [/^crospovidone(?:\s*\(type\s*[a-z0-9]+\))?$/i,"crospovidone"],
+  [/^cellulose microcristalline(?:\s*\(grade[-\s]*[a-z0-9]+\))?$/i,"cellulose microcristalline"],
+  [/^maltodextrine(?:\s*\(source de glucose\))?$/i,"maltodextrine"]
+ ];
+ const match=families.find(([rx])=>rx.test(normalized));
+ if(match)return {key:match[1],label:match[1]};
+ return {key:normalized,label};
 }
 function memoExcipientParsed(raw){
  const items=[];let uncertain=false;
@@ -3503,8 +3517,16 @@ function memoExcipientComparator(child){
  }));
  if(!products.length)return "";
  return `<section class="memo-exc-matrix" data-memo-exc-matrix>
-  <div class="memo-exc-matrix-head"><strong>Tableau comparatif des excipients</strong><span>${products.length} spécialité(s)</span></div>
-  <p class="memo-exc-matrix-hint">Chaque colonne représente une spécialité ; chaque ligne, un excipient renseigné dans au moins une formule. Les noms sont harmonisés uniquement pour les variations de ponctuation et de présentation.</p>
+  <div class="memo-exc-matrix-head"><strong>Tableau des arômes</strong></div>
+  <p class="memo-exc-matrix-hint">Les arômes sont présentés séparément, par spécialité.</p>
+  <div class="memo-exc-matrix-scroll" role="region" tabindex="0" aria-label="Tableau des arômes par spécialité">
+   <table class="memo-exc-matrix-table memo-exc-aroma-table">
+    <thead><tr><th scope="col" class="memo-exc-sticky">Arômes</th>${products.map(({label})=>`<th scope="col">${esc(label)}</th>`).join("")}</tr></thead>
+    <tbody><tr><th scope="row" class="memo-exc-sticky">Arômes renseignés</th>${products.map(()=>'<td class="memo-exc-aroma-cell">—</td>').join("")}</tr></tbody>
+   </table>
+  </div>
+  <div class="memo-exc-matrix-head memo-exc-second-head"><strong>Tableau comparatif des excipients</strong><span>${products.length} spécialité(s)</span></div>
+  <p class="memo-exc-matrix-hint">Chaque colonne représente une spécialité ; chaque ligne, un excipient renseigné dans au moins une formule. Les trois familles demandées (crospovidone, cellulose microcristalline, maltodextrine) sont regroupées pour la lecture.</p>
   <div class="memo-exc-matrix-scroll" role="region" tabindex="0" aria-label="Tableau comparatif des excipients, défilement horizontal possible">
    <table class="memo-exc-matrix-table">
     <thead><tr><th scope="col" class="memo-exc-sticky">Excipients</th>${products.map(({label})=>`<th scope="col">${esc(label)}</th>`).join("")}</tr></thead>
@@ -3516,7 +3538,7 @@ function memoExcipientComparator(child){
    <span><span class="memo-exc-icon memo-exc-no" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x preview-icon"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></span> Non retrouvé (composition vérifiée)</span>
    <span><span class="memo-exc-icon memo-exc-unknown" aria-hidden="true">?</span> Composition non vérifiée</span>
   </div>
-  <p class="memo-exc-disclaimer">Les appellations différentes (grades, dérivés, synonymes) ne sont pas fusionnées automatiquement. Les fragments ambigus sont ignorés et empêchent de conclure à une absence. Une croix rouge signifie uniquement que l’excipient n’a pas été retrouvé dans la composition déclarée complète et vérifiée. Cela ne garantit pas l’absence de risque allergique : contrôler le RCP de la formule exacte, les synonymes, dérivés et traces éventuelles avant délivrance.</p>
+  <p class="memo-exc-disclaimer">Les rapprochements de noms servent à la lecture du tableau et ne remplacent pas une vérification des grades, dérivés et formulations. Les fragments ambigus sont ignorés et empêchent de conclure à une absence. Une croix rouge signifie uniquement que l’excipient n’a pas été retrouvé dans la composition déclarée complète et vérifiée. Cela ne garantit pas l’absence de risque allergique : contrôler le RCP de la formule exacte, les synonymes, dérivés et traces éventuelles avant délivrance.</p>
  </section>`;
 }
 function memoWireExcipientComparator(panel,child){
@@ -3527,9 +3549,19 @@ function memoWireExcipientComparator(panel,child){
   parsed:memoExcipientParsed(p.excipients),
   notable:memoExcipientParsed(p.excipientsNotable)
  }));
+ const aromaRow=root.querySelector('.memo-exc-aroma-table tbody tr');
+ if(aromaRow){
+  const cells=aromaRow.querySelectorAll('td');
+  products.forEach(({parsed,notable},i)=>{
+   const aromas=[...parsed.items,...notable.items].filter(item=>/^ar[oô]mes?(?:\s|$)/i.test(item.label));
+   const names=[...new Set(aromas.map(item=>item.label.replace(/^ar[oô]mes?\s*(?:de|d’|d'|:)?\s*/i,"").replace(/[.]+$/g,"").trim()).filter(Boolean))];
+   cells[i].textContent=names.length?names.join(' · '):'—';
+   cells[i].title=names.length?'Arômes mentionnés dans la composition':'Aucun arôme renseigné';
+  });
+ }
  const all=new Map();
  products.forEach(({parsed,notable})=>[...parsed.items,...notable.items].forEach(item=>{
-  if(item.key&&!all.has(item.key))all.set(item.key,item.label);
+  if(item.key&&!/^ar[oô]mes?(?:\s|$)/i.test(item.label)&&!all.has(item.key))all.set(item.key,item.label);
  }));
  const excipients=[...all.entries()].sort((a,b)=>a[1].localeCompare(b[1],"fr"));
  if(!excipients.length){
