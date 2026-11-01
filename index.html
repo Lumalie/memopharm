@@ -703,6 +703,16 @@ body.header-search-active #headerSearchSlot #searchSuggestions .result{min-width
 .memo-exc-page-title strong{font-size:1.1rem}
 .memo-exc-page-title span{font-size:.82rem;color:var(--muted)}
 #excView .memo-exc-compare{max-width:100%;margin-top:14px}
+
+/* V117.02 — recherche unique avec suggestions de présentations */
+.memo-exc-autocomplete{position:relative;width:100%}
+.memo-exc-autocomplete input{width:100%}
+.memo-exc-suggestions{position:absolute;top:calc(100% + 5px);left:0;right:0;z-index:30;max-height:300px;overflow:auto;background:var(--card);border:1px solid #b8cfc0;border-radius:10px;box-shadow:0 12px 28px #243b3026;padding:5px}
+.memo-exc-suggestions.hidden{display:none!important}
+.memo-exc-suggestions button{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;text-align:left;border:0;border-radius:7px;padding:10px 12px;background:transparent;color:var(--ink);font:inherit;cursor:pointer}
+.memo-exc-suggestions button:hover,.memo-exc-suggestions button:focus{background:#e6f1e9;outline:none}
+.memo-exc-suggestions small{font-size:.76rem;color:var(--muted);white-space:nowrap}
+.memo-exc-no-match{margin:8px 10px;font-size:.86rem;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -814,9 +824,10 @@ body.header-search-active #headerSearchSlot #searchSuggestions .result{min-width
   <div class="explore-heading"><h2>Comparateur d’excipients</h2><p>Comparer les compositions des médicaments commerciaux pour un même dosage et une même forme.</p></div>
   <div class="memo-exc-page-controls">
    <label for="memoExcVariantSearch">Rechercher une molécule ou une présentation</label>
-   <input type="search" id="memoExcVariantSearch" placeholder="Ex. : amoxicilline 1 g comprimé" autocomplete="off">
-   <label for="memoExcVariantSelect">Présentation à comparer</label>
-   <select id="memoExcVariantSelect"><option value="">Choisir une présentation…</option></select>
+   <div class="memo-exc-autocomplete">
+    <input type="search" id="memoExcVariantSearch" placeholder="Ex. : amoxicilline 1 g comprimé" autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="memoExcSuggestions" aria-expanded="false">
+    <div id="memoExcSuggestions" class="memo-exc-suggestions hidden" role="listbox"></div>
+   </div>
   </div>
   <div id="memoExcPageContent" aria-live="polite"><p class="memo-equiv-empty">Sélectionne une présentation pour comparer les formules référencées.</p></div>
  </div>
@@ -3403,20 +3414,38 @@ function memoExcipientVariantLabel(m){
  const parent=meds.find(x=>String(x.id)===String(moleculeParentId(m)));
  return [parent?.name||m.name,m.dosage,m.form].map(x=>String(x||"").trim()).filter(Boolean).join(" · ");
 }
+let memoExcSelectedVariantId="";
+function memoExcSearchVariants(q){
+ const terms=memoExcipientNormalize(q).split(/\s+/).filter(Boolean);
+ return memoExcipientVariants().filter(m=>{
+  const label=memoExcipientNormalize(memoExcipientVariantLabel(m));
+  return terms.every(t=>label.includes(t));
+ }).sort((a,b)=>memoExcipientVariantLabel(a).localeCompare(memoExcipientVariantLabel(b),"fr"));
+}
 function memoRenderExcipientPage(){
- const input=$("memoExcVariantSearch"),select=$("memoExcVariantSelect"),host=$("memoExcPageContent");
- if(!input||!select||!host)return;
- const q=norm(input.value.trim());
- const variants=memoExcipientVariants().filter(m=>!q||norm(memoExcipientVariantLabel(m)).includes(q))
-  .sort((a,b)=>memoExcipientVariantLabel(a).localeCompare(memoExcipientVariantLabel(b),"fr"));
- const selected=select.value;
- select.innerHTML='<option value="">Choisir une présentation…</option>'+variants.map(m=>
-  `<option value="${esc(m.id)}">${esc(memoExcipientVariantLabel(m))}</option>`).join("");
- if(variants.some(m=>String(m.id)===selected))select.value=selected;
- const variant=variants.find(m=>String(m.id)===select.value);
+ const input=$("memoExcVariantSearch"),host=$("memoExcPageContent");
+ if(!input||!host)return;
+ const variant=memoExcipientVariants().find(m=>String(m.id)===String(memoExcSelectedVariantId));
  host.innerHTML=variant?`<div class="memo-exc-page-title"><strong>${esc(memoExcipientVariantLabel(variant))}</strong><span>${variant.presentations.length} médicament(s) commercial(aux) référencé(s)</span></div>${memoExcipientComparator(variant)}`:
-  `<p class="memo-equiv-empty">${variants.length?"Sélectionne une présentation pour comparer ses formules.":"Aucune présentation correspondante trouvée."}</p>`;
+  '<p class="memo-equiv-empty">Recherche une molécule, puis sélectionne sa présentation dans les suggestions.</p>';
  if(variant)memoWireExcipientComparator(host,variant);
+}
+function memoExcShowSuggestions(){
+ const input=$("memoExcVariantSearch"),list=$("memoExcSuggestions");
+ if(!input||!list)return;
+ const query=input.value.trim();
+ if(!query){list.classList.add("hidden");input.setAttribute("aria-expanded","false");return;}
+ const variants=memoExcSearchVariants(query).slice(0,12);
+ list.innerHTML=variants.length?variants.map(m=>`<button type="button" role="option" data-memo-exc-choice="${esc(m.id)}">${esc(memoExcipientVariantLabel(m))}<small>${(m.presentations||[]).length} formule(s)</small></button>`).join(""):'<p class="memo-exc-no-match">Aucune présentation trouvée.</p>';
+ list.classList.remove("hidden");input.setAttribute("aria-expanded","true");
+}
+function memoExcChooseVariant(id){
+ const variant=memoExcipientVariants().find(m=>String(m.id)===String(id));if(!variant)return;
+ memoExcSelectedVariantId=String(variant.id);
+ $("memoExcVariantSearch").value=memoExcipientVariantLabel(variant);
+ $("memoExcSuggestions").classList.add("hidden");
+ $("memoExcVariantSearch").setAttribute("aria-expanded","false");
+ memoRenderExcipientPage();
 }
 function memoExcipientComparator(child){
  const products=(child.presentations||[]).map((p,i)=>({
@@ -5565,8 +5594,28 @@ async function saveCommonSources(){
 }
 
 $("excNav").onclick=()=>navigateToView("exc");
-$("memoExcVariantSearch").addEventListener("input",memoRenderExcipientPage);
-$("memoExcVariantSelect").addEventListener("change",memoRenderExcipientPage);
+$("memoExcVariantSearch").addEventListener("input",()=>{
+ memoExcSelectedVariantId="";
+ memoRenderExcipientPage();memoExcShowSuggestions();
+});
+$("memoExcVariantSearch").addEventListener("focus",memoExcShowSuggestions);
+$("memoExcVariantSearch").addEventListener("keydown",event=>{
+ const list=$("memoExcSuggestions");
+ if(event.key==="Escape"){list.classList.add("hidden");event.currentTarget.setAttribute("aria-expanded","false");}
+ if(event.key==="Enter"&&!list.classList.contains("hidden")){
+  const first=list.querySelector("[data-memo-exc-choice]");if(first){event.preventDefault();memoExcChooseVariant(first.dataset.memoExcChoice);}
+ }
+});
+$("memoExcSuggestions").addEventListener("click",event=>{
+ const btn=event.target.closest("[data-memo-exc-choice]");
+ if(btn)memoExcChooseVariant(btn.dataset.memoExcChoice);
+});
+document.addEventListener("click",event=>{
+ if(!event.target.closest(".memo-exc-autocomplete")){
+  $("memoExcSuggestions").classList.add("hidden");
+  $("memoExcVariantSearch").setAttribute("aria-expanded","false");
+ }
+});
 $("equivNav").onclick=()=>{navigateToView("equiv");(memoCorrespondenceTab==="dci"?$("memoSpecialtySearch"):$("equivPrincepsSearch")).focus()};
 $("memoTabDci").onclick=()=>memoSetCorrespondenceTab("dci");
 $("memoTabGeneric").onclick=()=>memoSetCorrespondenceTab("generic");
