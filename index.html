@@ -855,6 +855,16 @@ html[data-memo-theme="dark"] #excView .memo-exc-matrix,html[data-memo-theme="dar
 #editor .presentation-card .memo-presentation-regulation .memo-practical-editor>label input[type=checkbox]{margin:0!important;flex:none}
 #editor .presentation-card .memo-presentation-regulation .memo-practical-editor input[data-practical-duration]{flex:0 1 170px!important;min-width:145px!important;max-width:100%!important;margin:0!important}
 @media(max-width:520px){#editor .presentation-card .memo-presentation-regulation .memo-v43-regulation>label{flex-basis:100%!important}#editor .presentation-card .memo-presentation-regulation .memo-v43-regulation>select{flex-basis:100%!important;width:100%!important}}
+
+/* V117.12 : statut à gauche, sous-question doses égales */
+#editor .presentation-card .presentation-kind-row{justify-content:flex-start!important;text-align:left!important;margin-left:0!important;padding-left:0!important;gap:16px!important}
+#editor .presentation-card .memo-presentation-identity{align-items:stretch}
+#editor .memo-equal-dose{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:9px 0 3px 18px;font-size:.88rem;color:var(--ink)}
+#editor .memo-equal-dose[hidden]{display:none!important}
+#editor .memo-equal-dose>span{font-weight:650}
+#editor .memo-equal-dose label{display:inline-flex;align-items:center;gap:5px;font-weight:550;cursor:pointer}
+#editor .memo-equal-dose input{width:auto;margin:0;accent-color:var(--green)}
+.presentation-v33-fields .memo-equal-dose-display{font-weight:500;color:#28684b}
 </style>
 </head>
 <body>
@@ -3490,7 +3500,7 @@ function presentationInfo(p,m=null, specialtyBoxesHtml=""){
   line("showLab","Laboratoire",p.lab||"À renseigner"),
   line("showAspect","Aspect",p.description||"Non documenté"),
   line("showExcipients","Excipients",p.excipients||"Non documentés"),
-  p.showSplit===true?`<p><strong>Fractionnement :</strong> <span class="${p.cannotSplit===true?"presentation-status-note":""}">${p.cannotSplit===true?"Impossible":p.canSplit===true?"Possible selon vérification":"Non confirmé — vérifier"}${p.splitReason?` — ${esc(p.splitReason)}`:""}</span></p>`:"",
+  p.showSplit===true?`<p><strong>Fractionnement :</strong> <span class="${p.cannotSplit===true?"presentation-status-note":""}">${p.cannotSplit===true?"Impossible":p.canSplit===true?"Possible (confirmé)":"Non confirmé — vérifier"}${p.canSplit===true&&typeof p.equalDoses==="boolean"?` · <span class="memo-equal-dose-display">Doses égales : <strong>${p.equalDoses?"Oui":"Non"}</strong></span>`:""}${p.splitReason?` — ${esc(p.splitReason)}`:""}</span></p>`:"",
   p.showCrush===true?`<p><strong>Écrasement :</strong> <span class="${p.cannotCrush===true?"presentation-status-note":""}">${p.cannotCrush===true?"Impossible":p.canCrush===true?"Possible selon vérification":"Non confirmé — vérifier"}${p.crushReason?` — ${esc(p.crushReason)}`:""}</span></p>`:"",
   p.showOpen===true?`<p><strong>Ouverture de la gélule :</strong> <span class="${p.cannotOpen===true?"presentation-status-note":""}">${p.cannotOpen===true?"Impossible":p.canOpen===true?"Possible selon vérification":"Non confirmé — vérifier"}${p.openReason?` — ${esc(p.openReason)}`:""}</span></p>`:""
  ].filter(Boolean);
@@ -3717,6 +3727,15 @@ document.addEventListener("change",e=>{
  const kind=el.dataset.memoKind;
  if(kind)rememberChoice(kind,el.value);
 });
+document.addEventListener("change",e=>{
+ if(!e.target.matches('[data-can-split],[data-cannot-split]'))return;
+ const card=e.target.closest('[data-presentation]');if(!card)return;
+ const row=card.querySelector('[data-equal-dose-row]');if(!row)return;
+ // Wait until existing mutually exclusive checkbox handlers have run.
+ const possible=card.querySelector('[data-can-split]')?.checked===true;
+ row.hidden=!possible;
+ if(!possible)row.querySelectorAll('[data-equal-dose]').forEach(el=>el.checked=false);
+});
 function presentationEditor(p,i){
  const currentPhoto=safeHttp(p.imageUrl||"");
  const pending=pendingPresentationPhotos.get(editorId)?.get(i);
@@ -3727,7 +3746,7 @@ function presentationEditor(p,i){
  const field=(key,label,showKey)=>`<div class="full presentation-edit-row">${check(showKey,label)}<input aria-label="${label}" data-pfield="${key}" ${key==="lab"?'data-memo-kind="lab" list="memo-labs"':""} value="${esc(p[key]||"")}" placeholder="${label}"></div>`;
  return `<div class="presentation-card" data-presentation="${i}"><div class="section-editor-head"><strong data-memo-presentation-title>${esc((p.presentationKind==="generic"?(p.lab||p.name):(p.name||p.lab))||`Présentation ${i+1}`)}</strong><button type="button" data-remove-presentation="${i}" class="danger">Retirer</button></div>
  <div class="presentation-fields">
- <div class="memo-presentation-group memo-presentation-identity"> ${specialty?"":`<div class="presentation-kind-row"><span>Statut de la présentation :</span><label><input type="checkbox" data-pkind="princeps" ${p.presentationKind==="princeps"?"checked":""}> Princeps</label><label><input type="checkbox" data-pkind="generic" ${p.presentationKind==="generic"?"checked":""}> Générique</label></div>`}
+ <div class="memo-presentation-group memo-presentation-identity"> ${specialty?"":`<div class="presentation-kind-row"><label><input type="checkbox" data-pkind="princeps" ${p.presentationKind==="princeps"?"checked":""}> Princeps</label><label><input type="checkbox" data-pkind="generic" ${p.presentationKind==="generic"?"checked":""}> Générique</label></div>`}
 
  <div class="memo-presentation-name-lab"> ${specialty?"":field("name","Nom","showName")}
  ${field("lab","Laboratoire","showLab")}
@@ -3738,7 +3757,7 @@ function presentationEditor(p,i){
  <input type="hidden" data-pfield="marking" value="${esc(p.marking||"")}">
  <input type="hidden" data-pfield="excipientsNotable" value="${esc(p.excipientsNotable||"")}">
  <input type="checkbox" data-show-field="excipientsVerified" ${p.excipientsVerified===true?"checked":""} hidden tabindex="-1" aria-hidden="true">
-<div class="memo-presentation-manipulations"> <div class="full presentation-edit-row">${check("showSplit","Fractionnement")}<div class="presentation-status-row"><label class="presentation-verified"><input type="checkbox" data-can-split ${p.canSplit===true&&!p.cannotSplit?"checked":""}>Possible (confirmé)</label><label class="presentation-verified"><input type="checkbox" data-cannot-split ${p.cannotSplit===true?"checked":""}>Impossible (confirmé)</label><input type="text" data-pfield="splitReason" value="${esc(p.splitReason||"")}" placeholder="Pourquoi ? (facultatif)" data-reason-for="split"></div></div>
+<div class="memo-presentation-manipulations"> <div class="full presentation-edit-row">${check("showSplit","Fractionnement")}<div class="presentation-status-row"><label class="presentation-verified"><input type="checkbox" data-can-split ${p.canSplit===true&&!p.cannotSplit?"checked":""}>Possible (confirmé)</label><label class="presentation-verified"><input type="checkbox" data-cannot-split ${p.cannotSplit===true?"checked":""}>Impossible (confirmé)</label><input type="text" data-pfield="splitReason" value="${esc(p.splitReason||"")}" placeholder="Pourquoi ? (facultatif)" data-reason-for="split"></div><div class="memo-equal-dose" data-equal-dose-row ${p.canSplit===true&&!p.cannotSplit?"":"hidden"}><span>Doses égales</span><label><input type="radio" name="memo-equal-${editorId}-${i}" data-equal-dose value="yes" ${p.equalDoses===true?"checked":""}> Oui</label><label><input type="radio" name="memo-equal-${editorId}-${i}" data-equal-dose value="no" ${p.equalDoses===false?"checked":""}> Non</label></div></div>
  <div class="full presentation-edit-row">${check("showCrush","Écrasement")}<div class="presentation-status-row"><label class="presentation-verified"><input type="checkbox" data-can-crush ${p.canCrush===true&&!p.cannotCrush?"checked":""}>Possible (confirmé)</label><label class="presentation-verified"><input type="checkbox" data-cannot-crush ${p.cannotCrush===true?"checked":""}>Impossible (confirmé)</label><input type="text" data-pfield="crushReason" value="${esc(p.crushReason||"")}" placeholder="Pourquoi ? (facultatif)" data-reason-for="crush"></div></div>
  <div class="full presentation-edit-row">${check("showOpen","Ouverture de la gélule")}<div class="presentation-status-row"><label class="presentation-verified"><input type="checkbox" data-can-open ${p.canOpen===true&&!p.cannotOpen?"checked":""}>Possible (confirmé)</label><label class="presentation-verified"><input type="checkbox" data-cannot-open ${p.cannotOpen===true?"checked":""}>Impossible (confirmé)</label><input type="text" data-pfield="openReason" value="${esc(p.openReason||"")}" placeholder="Pourquoi ? (facultatif)" data-reason-for="open"></div></div>
 </div></div>
@@ -4736,6 +4755,7 @@ function renderEditor(id){
    const old=child.presentations[i]||{};
    const p={...old,presentationKind:card.querySelector('[data-pkind]:checked')?.dataset.pkind||"",
     canSplit:!!card.querySelector('[data-can-split]')?.checked,
+    equalDoses:card.querySelector('[data-can-split]')?.checked?(card.querySelector('[data-equal-dose]:checked')?.value==="yes"?true:card.querySelector('[data-equal-dose]:checked')?.value==="no"?false:null):null,
     canCrush:!!card.querySelector('[data-can-crush]')?.checked,
     canOpen:!!card.querySelector('[data-can-open]')?.checked,
     cannotSplit:!!card.querySelector('[data-cannot-split]')?.checked,
@@ -5126,7 +5146,7 @@ function readPresentationEditors(m){
   if(!m.sections?.length)m.sections=[{id:"notes",title:"Notes",type:"text",content:""}];
   m.sections[0].specialtyStorage=storage;
  }
- const cards=[...$("presentationEditors").querySelectorAll("[data-presentation]")];m.presentations=cards.map((card,i)=>{const p={imageUrl:m.presentations?.[i]?.imageUrl||"",tabletImageUrl:m.presentations?.[i]?.tabletImageUrl||"",presentationKind:card.querySelector("[data-pkind]:checked")?.dataset.pkind||"",canSplit:card.querySelector("[data-can-split]")?.checked===true,canCrush:card.querySelector("[data-can-crush]")?.checked===true,canOpen:card.querySelector("[data-can-open]")?.checked===true,cannotSplit:card.querySelector("[data-cannot-split]")?.checked===true,cannotCrush:card.querySelector("[data-cannot-crush]")?.checked===true,cannotOpen:card.querySelector("[data-cannot-open]")?.checked===true};if(isSpecialiteFiche(m)){const st=m.sections?.[0]?.specialtyStorage||{};p.coldStorage=!!st.coldStorage;p.afterOpening=!!st.afterOpening;p.afterOpeningDuration=st.afterOpeningDuration||"";}else{p.coldStorage=!!card.querySelector("[data-practical-cold]")?.checked;p.afterOpening=!!card.querySelector("[data-practical-after]")?.checked;p.afterOpeningDuration=card.querySelector("[data-practical-duration]")?.value.trim()||"";}p.regulatoryList=card.querySelector("[data-regulation]")?.value||"";const photoSetting=card.querySelector("[data-practical-photo]")?.value;p.photosensitizingOverride=photoSetting==="yes"?true:photoSetting==="no"?false:null;const mteSetting=card.querySelector("[data-practical-mte]")?.value;p.mteOverride=mteSetting==="yes"?true:mteSetting==="no"?false:null;card.querySelectorAll("[data-show-field]").forEach(input=>p[input.dataset.showField]=input.checked);card.querySelectorAll("[data-pfield]").forEach(input=>p[input.dataset.pfield]=input.value.trim());
+ const cards=[...$("presentationEditors").querySelectorAll("[data-presentation]")];m.presentations=cards.map((card,i)=>{const p={imageUrl:m.presentations?.[i]?.imageUrl||"",tabletImageUrl:m.presentations?.[i]?.tabletImageUrl||"",presentationKind:card.querySelector("[data-pkind]:checked")?.dataset.pkind||"",canSplit:card.querySelector("[data-can-split]")?.checked===true,equalDoses:card.querySelector("[data-can-split]")?.checked===true?(card.querySelector("[data-equal-dose]:checked")?.value==="yes"?true:card.querySelector("[data-equal-dose]:checked")?.value==="no"?false:null):null,canCrush:card.querySelector("[data-can-crush]")?.checked===true,canOpen:card.querySelector("[data-can-open]")?.checked===true,cannotSplit:card.querySelector("[data-cannot-split]")?.checked===true,cannotCrush:card.querySelector("[data-cannot-crush]")?.checked===true,cannotOpen:card.querySelector("[data-cannot-open]")?.checked===true};if(isSpecialiteFiche(m)){const st=m.sections?.[0]?.specialtyStorage||{};p.coldStorage=!!st.coldStorage;p.afterOpening=!!st.afterOpening;p.afterOpeningDuration=st.afterOpeningDuration||"";}else{p.coldStorage=!!card.querySelector("[data-practical-cold]")?.checked;p.afterOpening=!!card.querySelector("[data-practical-after]")?.checked;p.afterOpeningDuration=card.querySelector("[data-practical-duration]")?.value.trim()||"";}p.regulatoryList=card.querySelector("[data-regulation]")?.value||"";const photoSetting=card.querySelector("[data-practical-photo]")?.value;p.photosensitizingOverride=photoSetting==="yes"?true:photoSetting==="no"?false:null;const mteSetting=card.querySelector("[data-practical-mte]")?.value;p.mteOverride=mteSetting==="yes"?true:mteSetting==="no"?false:null;card.querySelectorAll("[data-show-field]").forEach(input=>p[input.dataset.showField]=input.checked);card.querySelectorAll("[data-pfield]").forEach(input=>p[input.dataset.pfield]=input.value.trim());
  const previous=m.presentations?.[i]||{};
  p.clinicalSpecific={...memoV86Clinical(previous)};
  card.querySelectorAll("[data-v86-clinical]").forEach(input=>{p.clinicalSpecific[input.dataset.v86Clinical]=input.value.trim()});
