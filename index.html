@@ -615,7 +615,7 @@ html[data-memo-theme="dark"] .table-grid-editor td.memo-merge-selected{backgroun
 .memo-inline-table{border-collapse:collapse;width:100%;table-layout:auto}
 .memo-inline-table td{border:1px solid #a6bbae;padding:9px;min-width:65px;vertical-align:top;white-space:pre-wrap}
 .memo-rich-editor .memo-inline-table td:focus{outline:2px solid #598c70;outline-offset:-2px}
-.memo-rich-editor .memo-inline-table td.memo-cell-selected{background:#d3e9db;box-shadow:inset 0 0 0 2px #538e6d}
+.memo-rich-editor .memo-inline-table td.memo-cell-selected{outline:2px solid #538e6d;box-shadow:inset 0 0 0 2px #538e6d}
 
 .text-format-bubble .memo-insert-table{margin:0;padding:5px 8px;font-size:.9rem;border-radius:7px;background:#e9f4ed}
 .memo-rich-editor .memo-inline-table td{white-space:normal}
@@ -652,6 +652,16 @@ body.header-search-active #headerSearchSlot #searchSuggestions .result{min-width
 
 /* V116.91 : barre de mise en forme flottante */
 .text-format-bubble{position:fixed!important;bottom:auto!important;z-index:1000!important;max-width:min(96vw,680px);width:max-content;box-sizing:border-box}
+
+/* V116.96 — outils homogènes et fonds d'interaction */
+.text-format-bubble button{min-width:30px;min-height:30px;padding:5px 8px;border-radius:7px;font-size:.86rem;line-height:1.2}
+.text-format-bubble select{min-height:30px;padding:4px 6px;border-radius:7px;font-size:.82rem}
+.memo-inline-table-toolbar select{min-height:30px}
+.memo-interaction-legend{display:flex;flex-wrap:wrap;gap:7px 14px;margin:12px 0 3px;font-size:.78rem;color:var(--ink)}
+.memo-interaction-legend span{display:inline-flex;align-items:center;gap:6px}
+.memo-interaction-legend i{display:inline-block;width:14px;height:14px;border:1px solid #b4bfc0;border-radius:4px;flex:none}
+.memo-rich-editor>.memo-inline-table-wrap:last-child{margin-bottom:12px}
+.memo-rich-editor>.memo-inline-table-wrap+p{min-height:1.4em}
 </style>
 </head>
 <body>
@@ -3448,13 +3458,24 @@ function richInline(raw){
 }
 
 
+const MEMO_INTERACTION_BG={
+ ci:"#f8e2e1",deconseillee:"#fff0d8",precaution:"#fff8db",prendre:"#e7f1f8"
+};
+const MEMO_INTERACTION_LABELS={
+ ci:"Contre-indication",deconseillee:"Association déconseillée",
+ precaution:"Précaution d’emploi",prendre:"À prendre en compte"
+};
+function memoInteractionLegend(){
+ return '<div class="memo-interaction-legend" aria-label="Légende des interactions médicamenteuses">'+
+ Object.keys(MEMO_INTERACTION_BG).map(k=>'<span><i style="background:'+MEMO_INTERACTION_BG[k]+'"></i>'+MEMO_INTERACTION_LABELS[k]+'</span>').join('')+'</div>';
+}
 function memoInlineToken(model){return MEMO_INLINE_TABLE+encodeURIComponent(JSON.stringify(model))+"]]"}
 function memoInlineDecode(token){try{return memoTableModel(MEMO_TABLE_V2+decodeURIComponent(token))}catch{return memoTableModel(" | \n | ")}}
 function memoInlineHtml(model,editable=false){
  const lookup=new Map(model.cells.map(c=>[c.r+":"+c.c,c]));
  return `<div class="memo-inline-table-wrap" ${editable?'contenteditable="false"':''}><table class="memo-inline-table"><tbody>${Array.from({length:model.rows},(_,r)=>`<tr>${Array.from({length:model.cols},(_,c)=>{
   const cell=lookup.get(r+":"+c);if(!cell)return "";
-  return `<td rowspan="${cell.rs}" colspan="${cell.cs}" data-r="${r}" data-c="${c}" style="vertical-align:${["top","middle","bottom"].includes(cell.valign)?cell.valign:"top"};text-align:${["left","center","right","justify"].includes(cell.align)?cell.align:"left"}" ${editable?'contenteditable="true"':''}>${richInline(cell.text).replace(/\n/g,"<br>")}</td>`;
+  return `<td rowspan="${cell.rs}" colspan="${cell.cs}" data-r="${r}" data-c="${c}" style="vertical-align:${["top","middle","bottom"].includes(cell.valign)?cell.valign:"top"};text-align:${["left","center","right","justify"].includes(cell.align)?cell.align:"left"};${MEMO_INTERACTION_BG[cell.bg]?"background-color:"+MEMO_INTERACTION_BG[cell.bg]:""}" data-memo-bg="${MEMO_INTERACTION_BG[cell.bg]?cell.bg:""}" ${editable?'contenteditable="true"':''}>${richInline(cell.text).replace(/\n/g,"<br>")}</td>`;
  }).join("")}</tr>`).join("")}</tbody></table></div>`;
 }
 function memoInlineRead(table){
@@ -3478,7 +3499,7 @@ function memoInlineRead(table){
     }
     block.replaceWith(span);
    });
-   cells.push({r,c,rs,cs,text:memoRichSerialize(normalized,true).trim(),valign:["top","middle","bottom"].includes(td.style.verticalAlign)?td.style.verticalAlign:"top",align:["left","center","right","justify"].includes(td.style.textAlign)?td.style.textAlign:(["left","center","right","justify"].includes(td.querySelector("[style*=text-align]")?.style.textAlign)?td.querySelector("[style*=text-align]").style.textAlign:"left")});
+   cells.push({r,c,rs,cs,bg:MEMO_INTERACTION_BG[td.dataset.memoBg]?td.dataset.memoBg:"",text:memoRichSerialize(normalized,true).trim(),valign:["top","middle","bottom"].includes(td.style.verticalAlign)?td.style.verticalAlign:"top",align:["left","center","right","justify"].includes(td.style.textAlign)?td.style.textAlign:(["left","center","right","justify"].includes(td.querySelector("[style*=text-align]")?.style.textAlign)?td.querySelector("[style*=text-align]").style.textAlign:"left")});
    for(let rr=r;rr<r+rs;rr++)for(let cc=c;cc<c+cs;cc++)occupied.add(rr+":"+cc);
    c+=cs;
   }
@@ -3570,6 +3591,11 @@ function wireTextFormatting(){
   if(!storage||!editor||!bubble||editor.dataset.memoRichWired)return;
   editor.dataset.memoRichWired='1';
   editor.innerHTML=richText(storage.value).replaceAll('class="memo-inline-table-wrap" ','class="memo-inline-table-wrap" contenteditable="false" ').replace(/(<td\b[^>]*)(>)/g,'$1 contenteditable="true"$2');
+  // Garantir un paragraphe éditable après le dernier tableau, même après sauvegarde.
+  const lastContent=editor.lastElementChild;
+  if(lastContent?.classList.contains('memo-inline-table-wrap')){
+   const p=document.createElement('p');p.innerHTML='<br>';editor.append(p);
+  }
   const sync=()=>{storage.value=memoRichSerialize(editor);storage.dispatchEvent(new Event('input',{bubbles:true}))};
   const tableTools=card.querySelector(".memo-inline-table-toolbar");
   let activeTable=null,dragStart=null,dragEnd=null,dragging=false;
@@ -3621,7 +3647,18 @@ function wireTextFormatting(){
    node.after(document.createElement("p"));
    activate(node.querySelector("table"));sync();bubble.hidden=true;
   });
-  const verticalSelect=tableTools?.querySelector('[data-inline-valign]');
+  const bgSelect=tableTools?.querySelector('[data-inline-bg]');
+  bgSelect?.addEventListener('change',()=>{
+   const value=bgSelect.value;bgSelect.value='';
+   if(!activeTable)return;
+   const targets=selectionCells();
+   for(const cell of targets){
+    const td=activeTable.querySelector(`td[data-r="${cell.r}"][data-c="${cell.c}"]`);
+    if(td){td.dataset.memoBg=MEMO_INTERACTION_BG[value]?value:"";td.style.backgroundColor=MEMO_INTERACTION_BG[value]||""}
+   }
+   sync();
+  });
+  const verticalSelect=bubble.querySelector('[data-inline-valign]');
   verticalSelect?.addEventListener('change',()=>{
    const value=verticalSelect.value;verticalSelect.value='';
    if(!activeTable||!['top','middle','bottom'].includes(value))return;
@@ -3635,6 +3672,16 @@ function wireTextFormatting(){
   tableTools?.addEventListener("click",e=>{
    const btn=e.target.closest("[data-inline-act]");if(!btn||!activeTable)return;
    const action=btn.dataset.inlineAct;
+   if(action==="after"){
+    const wrapper=activeTable.closest(".memo-inline-table-wrap");
+    let paragraph=wrapper.nextElementSibling;
+    if(!paragraph||paragraph.tagName!=="P"){
+     paragraph=document.createElement("p");paragraph.innerHTML="<br>";wrapper.after(paragraph);
+    }
+    const range=document.createRange();range.selectNodeContents(paragraph);range.collapse(false);
+    const sel=window.getSelection();sel.removeAllRanges();sel.addRange(range);
+    editor.focus();sync();return;
+   }
    if(action==="delete"){activeTable.closest(".memo-inline-table-wrap").remove();activeTable=null;tableTools.hidden=true;sync();return}
    const model=memoInlineRead(activeTable);
    if(action==="merge"){
@@ -3648,10 +3695,18 @@ function wireTextFormatting(){
     // La dernière cellule cliquée / sélectionnée détermine la ligne ou colonne.
     const target=dragEnd||dragStart;
     if(!target){alert("Clique d’abord dans la cellule de la ligne ou colonne à supprimer.");return}
-    const index=action==="remove-row"?target.r:target.c;
-    if(!memoTableDeleteAt(model,action==="remove-row"?"row":"col",index)){
-     alert("Impossible de supprimer la dernière ligne ou colonne du tableau.");return;
-    }
+    const axis=action==="remove-row"?"row":"col";
+    const selected=selectionCells();
+    const indices=new Set();
+    if(selected.length>1){
+     for(const cell of selected){
+      const start=axis==="row"?cell.r:cell.c,span=axis==="row"?cell.rs:cell.cs;
+      for(let i=start;i<start+span;i++)indices.add(i);
+     }
+    }else indices.add(axis==="row"?target.r:target.c);
+    const count=axis==="row"?model.rows:model.cols;
+    if(indices.size>=count){alert("Le tableau doit conserver au moins une ligne et une colonne.");return}
+    [...indices].sort((a,b)=>b-a).forEach(index=>memoTableDeleteAt(model,axis,index));
    }else memoTableResize(model,action);
    const wrapper=activeTable.closest(".memo-inline-table-wrap");
    memoInlineRefresh(wrapper,model);
@@ -3882,6 +3937,8 @@ function renderPrioritySection(s,targetSectionId=null){
  return `<section class="section priority-section ${targetSectionId&&s.id===targetSectionId?'direct-target':''}" id="section-${esc(s.id)}">${heading}${list}</section>`;
 }
 function renderSection(s,targetSectionId=null){
+ const showInteractionLegend=/interaction/i.test(s.title||"")&&String(s.content||"").includes(MEMO_INLINE_TABLE);
+
  let content="";
  if(s.type==="table"){
    const model=memoTableModel(s.content||"");
@@ -3896,7 +3953,7 @@ function renderSection(s,targetSectionId=null){
  const imageSrc=s.imageData||s.imageUrl||"";
  const imageHtml=imageSrc?`<figure class="section-image"><img src="${esc(imageSrc)}" alt="${esc(s.imageCaption||s.title||"Image de la forme pharmaceutique")}" loading="lazy">${s.imageCaption?`<figcaption>${esc(s.imageCaption)}</figcaption>`:""}</figure>`:"";
  const isConseil = (s.title || "").toLowerCase().includes("à dire au comptoir");  
- return `<section class="section ${isConseil ? 'conseil-comptoir' : ''} ${targetSectionId&&s.id===targetSectionId?'direct-target':''}" id="section-${esc(s.id)}"><h3>${esc(s.title)}</h3>${s.sharedSourceName?`<p class="shared-origin">🔗 Rubrique partagée depuis ${esc(s.sharedSourceName)}</p>`:""}${imageHtml}${content}</section>`;
+ return `<section class="section ${isConseil ? 'conseil-comptoir' : ''} ${targetSectionId&&s.id===targetSectionId?'direct-target':''}" id="section-${esc(s.id)}"><h3>${esc(s.title)}</h3>${s.sharedSourceName?`<p class="shared-origin">🔗 Rubrique partagée depuis ${esc(s.sharedSourceName)}</p>`:""}${imageHtml}${content}${showInteractionLegend?memoInteractionLegend():""}</section>`;
 }
 function setAdmin(value){admin=!!value;dashSetUser();document.body.classList.toggle("admin-header-mode",admin);$("headerAdminActions").classList.toggle("hidden",!admin);$("loginBtn").classList.toggle("hidden",admin);renderResults();if(selectedId&&!editorId&&!$("detail").classList.contains("hidden"))renderDetail()}
 function showLogin(){
@@ -4663,7 +4720,7 @@ function memoTableModel(content){
   try{
    const data=JSON.parse(raw.slice(MEMO_TABLE_V2.length));
    if(Array.isArray(data.cells)&&Number.isInteger(data.rows)&&Number.isInteger(data.cols)&&data.rows>0&&data.cols>0&&data.rows<=100&&data.cols<=30){
-    const cells=data.cells.filter(c=>Number.isInteger(c.r)&&Number.isInteger(c.c)&&Number.isInteger(c.rs)&&Number.isInteger(c.cs)&&c.rs>0&&c.cs>0&&c.r>=0&&c.c>=0&&c.r+c.rs<=data.rows&&c.c+c.cs<=data.cols).map(c=>({r:c.r,c:c.c,rs:c.rs,cs:c.cs,text:String(c.text||""),valign:["top","middle","bottom"].includes(c.valign)?c.valign:"top",align:["left","center","right","justify"].includes(c.align)?c.align:"left"}));
+    const cells=data.cells.filter(c=>Number.isInteger(c.r)&&Number.isInteger(c.c)&&Number.isInteger(c.rs)&&Number.isInteger(c.cs)&&c.rs>0&&c.cs>0&&c.r>=0&&c.c>=0&&c.r+c.rs<=data.rows&&c.c+c.cs<=data.cols).map(c=>({r:c.r,c:c.c,rs:c.rs,cs:c.cs,text:String(c.text||""),valign:["top","middle","bottom"].includes(c.valign)?c.valign:"top",align:["left","center","right","justify"].includes(c.align)?c.align:"left",bg:MEMO_INTERACTION_BG[c.bg]?c.bg:""}));
     const covered=new Set();
     for(const cell of cells)for(let r=cell.r;r<cell.r+cell.rs;r++)for(let c=cell.c;c<cell.c+cell.cs;c++){const k=r+":"+c;if(covered.has(k))throw Error("overlap");covered.add(k)}
     for(let r=0;r<data.rows;r++)for(let c=0;c<data.cols;c++)if(!covered.has(r+":"+c))cells.push({r,c,rs:1,cs:1,text:""});
@@ -4677,7 +4734,7 @@ function memoTableModel(content){
  return {rows:rows.length,cols,cells:rows.flatMap((row,r)=>Array.from({length:cols},(_,c)=>({r,c,rs:1,cs:1,text:row[c]||""})))};
 }
 function memoTableEncode(model){
- return MEMO_TABLE_V2+JSON.stringify({rows:model.rows,cols:model.cols,cells:model.cells.map(({r,c,rs,cs,text,valign,align})=>({r,c,rs,cs,text,valign:valign||"top",align:align||"left"}))});
+ return MEMO_TABLE_V2+JSON.stringify({rows:model.rows,cols:model.cols,cells:model.cells.map(({r,c,rs,cs,text,valign,align,bg})=>({r,c,rs,cs,text,valign:valign||"top",align:align||"left",bg:MEMO_INTERACTION_BG[bg]?bg:""}))});
 }
 function tableRows(content){
  const model=memoTableModel(content),rows=Array.from({length:model.rows},()=>Array(model.cols).fill(""));
@@ -4913,7 +4970,7 @@ function memoLegacyTableToText(content){
  const model=memoTableModel(content||"");
  return memoInlineToken(model);
 }
-function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button type="button" data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button type="button" data-act="down" data-index="${i}" ${i===(meds.find(m=>m.id===editorId)?.sections?.length||0)-1?'disabled':''}>↓</button><button type="button" data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button type="button" class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Contenu</label>${true?`<div class="text-edit-wrap"><div class="memo-inline-table-toolbar" hidden><button type="button" data-inline-act="add-row">+ Ligne</button><button type="button" data-inline-act="remove-row">− Ligne</button><button type="button" data-inline-act="add-col">+ Colonne</button><button type="button" data-inline-act="remove-col">− Colonne</button><button type="button" data-inline-act="merge">Fusionner</button><button type="button" data-inline-act="split">Séparer</button><select data-inline-valign aria-label="Alignement vertical du texte dans la cellule" title="Alignement vertical de la cellule"><option value="">↕ Vertical…</option><option value="top">En haut</option><option value="middle">Au milieu</option><option value="bottom">En bas</option></select><button type="button" data-inline-act="delete">Supprimer le tableau</button><span class="hint">Clique dans une cellule pour supprimer sa ligne ou sa colonne ; glisse pour fusionner.</span></div><div class="text-format-bubble" hidden><button type="button" class="memo-insert-table" title="Insérer un tableau à la position du curseur">▦</button><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="reset" title="Effacer la mise en forme du texte sélectionné">↺ Normal</button><button type="button" data-format="link" title="Insérer un lien URL (Ctrl+K)">🔗 Lien</button><button type="button" data-format="bullets" title="Liste à puces">• Liste</button><button type="button" data-format="numbers" title="Liste numérotée">1. Liste</button><select data-format-align aria-label="Alignement du texte"><option value="">Aligner…</option><option value="left">Gauche</option><option value="center">Centré</option><option value="right">Droite</option><option value="justify">Justifié</option></select><select data-format-size aria-label="Taille de police"><option value="">Taille…</option><option value="12">12 px</option><option value="14">14 px</option><option value="16">16 px</option><option value="18">18 px</option><option value="20">20 px</option><option value="24">24 px</option><option value="28">28 px</option></select><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris précision</option><option value="pink">Rose conseil</option><optgroup label="Couleurs des fiches"><option value="ficheGroup">🟢 Fiche groupe</option><option value="ficheMolecule">🟣 Fiche molécule</option><option value="ficheVariant">🟠 Variante / dosage</option><option value="ficheSpecialite">🔷 Fiche spécialité</option><option value="fichePresentation">🔵 Présentation</option></optgroup></select></div><textarea data-field="content" class="memo-rich-storage" tabindex="-1" aria-hidden="true">${esc(s.type==="table"?memoLegacyTableToText(s.content):s.content||"")}</textarea><div class="memo-rich-editor" contenteditable="true" role="textbox" aria-label="Contenu de la rubrique" aria-multiline="true"></div></div>`:`${tableGridEditor(s.content||"")}`}</div></div>`}
+function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button type="button" data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button type="button" data-act="down" data-index="${i}" ${i===(meds.find(m=>m.id===editorId)?.sections?.length||0)-1?'disabled':''}>↓</button><button type="button" data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button type="button" class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Contenu</label>${true?`<div class="text-edit-wrap"><div class="memo-inline-table-toolbar" hidden><button type="button" data-inline-act="add-row">+ Ligne</button><button type="button" data-inline-act="remove-row">− Ligne</button><button type="button" data-inline-act="add-col">+ Colonne</button><button type="button" data-inline-act="remove-col">− Colonne</button><button type="button" data-inline-act="merge">Fusionner</button><button type="button" data-inline-act="split">Séparer</button><select data-inline-bg aria-label="Couleur de fond des cellules"><option value="">Fond cellule…</option><option value="none">Sans couleur</option><option value="ci">⛔ Contre-indication</option><option value="deconseillee">🟠 Association déconseillée</option><option value="precaution">🟡 Précaution d’emploi</option><option value="prendre">🔵 À prendre en compte</option></select><button type="button" data-inline-act="after">+ Texte après</button><button type="button" data-inline-act="delete">Supprimer le tableau</button><span class="hint">Clique dans une cellule pour supprimer sa ligne ou sa colonne ; glisse pour fusionner.</span></div><div class="text-format-bubble" hidden><button type="button" class="memo-insert-table" title="Insérer un tableau à la position du curseur">▦</button><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="reset" title="Effacer la mise en forme" aria-label="Effacer la mise en forme">T̸</button><button type="button" data-format="link" title="Insérer un lien URL (Ctrl+K)">🔗</button><button type="button" data-format="bullets" title="Liste à puces">☷</button><button type="button" data-format="numbers" title="Liste numérotée">1.</button><select data-format-align aria-label="Alignement du texte"><option value="">Aligner…</option><option value="left">Gauche</option><option value="center">Centré</option><option value="right">Droite</option><option value="justify">Justifié</option></select><select data-inline-valign aria-label="Alignement vertical de la cellule" title="Alignement vertical de la cellule"><option value="">↕ Vertical…</option><option value="top">En haut</option><option value="middle">Au milieu</option><option value="bottom">En bas</option></select><select data-format-size aria-label="Taille de police"><option value="">Taille…</option><option value="12">12 px</option><option value="14">14 px</option><option value="16">16 px</option><option value="18">18 px</option><option value="20">20 px</option><option value="24">24 px</option><option value="28">28 px</option></select><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris précision</option><option value="pink">Rose conseil</option><optgroup label="Couleurs des fiches"><option value="ficheGroup">🟢 Fiche groupe</option><option value="ficheMolecule">🟣 Fiche molécule</option><option value="ficheVariant">🟠 Variante / dosage</option><option value="ficheSpecialite">🔷 Fiche spécialité</option><option value="fichePresentation">🔵 Présentation</option></optgroup></select></div><textarea data-field="content" class="memo-rich-storage" tabindex="-1" aria-hidden="true">${esc(s.type==="table"?memoLegacyTableToText(s.content):s.content||"")}</textarea><div class="memo-rich-editor" contenteditable="true" role="textbox" aria-label="Contenu de la rubrique" aria-multiline="true"></div></div>`:`${tableGridEditor(s.content||"")}`}</div></div>`}
 function captureEditorFields(m){
  const get=id=>$(id)?.value;
  if(get("f-entry-type")===undefined)return;
