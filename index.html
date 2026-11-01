@@ -3618,7 +3618,8 @@ function memoV102SyncStorage(section,p){
 }
 
 function memoExcipientTokens(raw){
- // Enlever les balises de mise en forme, sans conserver les marqueurs Markdown.
+ // Supprimer uniquement la mise en forme, puis séparer les éléments au niveau
+ // principal : les virgules situées dans les parenthèses restent intactes.
  const text=String(raw||"")
   .replace(/\[\[(?:[^|\]]+)\|([^\]]+)\]\]/g,"$1")
   .replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g,"$1")
@@ -3627,14 +3628,25 @@ function memoExcipientTokens(raw){
   .replace(/<[^>]*>/g,"")
   .replace(/\*\*|__|(?<!\w)\*(?=\S)|(?<=\S)\*(?!\w)/g,"")
   .replace(/&nbsp;/gi," ").replace(/&amp;/gi,"&");
- return text.split(/[\n;,]+/).map(v=>v.replace(/^\s*[-•]\s*/,"").trim()).filter(Boolean);
+ const result=[];let token="",depth=0;
+ for(const char of text){
+  if(char==="(")depth++;
+  else if(char===")")depth=Math.max(0,depth-1);
+  if((char===","||char===";"||char==="\n")&&depth===0){
+   if(token.trim())result.push(token.trim());
+   token="";continue;
+  }
+  token+=char;
+ }
+ if(token.trim())result.push(token.trim());
+ return result.map(v=>v.replace(/^\s*[-•]\s*/,"").trim()).filter(Boolean);
 }
 function memoExcipientAroma(item){
- // Les arômes peuvent être qualifiés (naturel, artificiel...) ou pluriels.
  const label=String(item?.label||"").replace(/^[\s:.-]+/,"").trim();
- const match=label.match(/^(?:ar[oô]mes?)(?:\s+(?:naturels?|artificiels?|identiques? au naturel))?\s*(?:(?:de|d[’']|:|\s*-\s*)\s*)?(.*)$/i);
+ const match=label.match(/^ar[oô]mes?\s*(?:naturels?\s+|artificiels?\s+)?(?:de\s+|d[’']\s*|:\s*)?(.+)$/i);
  if(!match)return null;
- const flavor=match[1].replace(/[.]+$/g,"").trim();
+ // Le détail entre parenthèses est une composition d'arôme, pas son nom.
+ const flavor=match[1].replace(/\s*\([^)]*(?:\([^)]*\)[^)]*)*\)\s*$/,"").replace(/[.]+$/,"").trim();
  return flavor||"Arôme non précisé";
 }
 function memoExcipientNormalize(v){
@@ -3664,7 +3676,24 @@ function memoExcipientParsed(raw){
  const items=[];let uncertain=false;
  for(const token of memoExcipientTokens(raw)){
   const x=memoExcipientCanonical(token);
-  if(x)items.push(x);else uncertain=true;
+  if(x){
+   items.push(x);
+   // Les composants explicitement mentionnés dans la parenthèse d'un arôme
+   // restent consultables dans le tableau principal.
+   if(memoExcipientAroma(x)){
+    const opening=token.indexOf("(");
+    if(opening>=0){
+     const detail=token.slice(opening+1,token.lastIndexOf(")"));
+     if(detail&&token.lastIndexOf(")")>opening){
+      for(const ingredient of memoExcipientTokens(detail)){
+       const component=memoExcipientCanonical(ingredient.replace(/^(?:contient(?:\s+de|\s+du|\s+des|\s+de l[’'])?|agent)\s+/i,""));
+       if(component)items.push(component);
+       else uncertain=true;
+      }
+     }
+    }
+   }
+  }else uncertain=true;
  }
  return {items,uncertain};
 }
