@@ -824,6 +824,26 @@ html[data-memo-theme="dark"] #excView .memo-exc-matrix,html[data-memo-theme="dar
 #editor .presentation-card .memo-presentation-manipulations{display:grid;gap:12px}
 #editor .presentation-card .memo-presentation-regulation{gap:16px}
 @media(max-width:580px){#editor .presentation-card .memo-presentation-name-lab{grid-template-columns:minmax(0,1fr)}}
+
+/* V117.10 — alignement et densité de l’éditeur des présentations */
+#editor .presentation-card .memo-presentation-name-lab{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important;align-items:start}
+#editor .presentation-card .memo-presentation-name-lab>.presentation-edit-row.full{grid-column:auto!important;min-width:0;width:100%}
+#editor .presentation-card .memo-presentation-name-lab input{width:100%;min-width:0}
+#editor .presentation-card .memo-presentation-group{gap:10px!important}
+#editor .presentation-card .memo-presentation-divider{margin:16px 0!important}
+#editor .presentation-card .presentation-edit-row{padding:2px 0!important}
+#editor .presentation-card .presentation-toggle{display:flex;align-items:center;gap:6px;margin-bottom:5px!important;font-size:.84rem!important;line-height:1.35!important}
+#editor .presentation-card .presentation-toggle input[type=checkbox]{width:14px;height:14px;margin:0;accent-color:var(--green)}
+#editor .presentation-card .presentation-status-row{gap:10px;align-items:center}
+#editor .presentation-card .presentation-status-row label{font-size:.82rem}
+#editor .presentation-card .memo-presentation-regulation .memo-v43-regulation{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(155px,230px);align-items:center;gap:12px;width:100%}
+#editor .presentation-card .memo-presentation-regulation .memo-v43-regulation>label{margin:0!important}
+#editor .presentation-card .memo-presentation-regulation .memo-v43-regulation select{width:100%;min-width:0}
+#editor .presentation-card .memo-presentation-regulation .memo-practical-editor{display:flex!important;flex-wrap:wrap;align-items:center;gap:12px 18px!important;padding:0!important;margin:0!important}
+#editor .presentation-card .memo-presentation-regulation .memo-practical-editor label{display:inline-flex!important;align-items:center;gap:5px;margin:0!important;font-size:.84rem!important}
+#editor .presentation-card .memo-presentation-regulation .memo-practical-editor input[data-practical-duration]{width:170px;max-width:100%;flex:0 1 170px}
+#editor .presentation-card [data-memo-presentation-title]{font-size:.95rem;line-height:1.35;overflow-wrap:anywhere}
+@media(max-width:600px){#editor .presentation-card .memo-presentation-name-lab{grid-template-columns:1fr!important}#editor .presentation-card .memo-presentation-regulation .memo-v43-regulation{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -3694,7 +3714,7 @@ function presentationEditor(p,i){
  const specialty=isSpecialiteFiche(meds.find(x=>x.id===editorId)||{});
  const check=(key,label)=>`<label class="presentation-toggle"><input type="checkbox" data-show-field="${key}" ${p[key]===true?"checked":""}><span>${label}</span></label>`;
  const field=(key,label,showKey)=>`<div class="full presentation-edit-row">${check(showKey,label)}<input aria-label="${label}" data-pfield="${key}" ${key==="lab"?'data-memo-kind="lab" list="memo-labs"':""} value="${esc(p[key]||"")}" placeholder="${label}"></div>`;
- return `<div class="presentation-card" data-presentation="${i}"><div class="section-editor-head"><strong>Présentation ${i+1}</strong><button type="button" data-remove-presentation="${i}" class="danger">Retirer</button></div>
+ return `<div class="presentation-card" data-presentation="${i}"><div class="section-editor-head"><strong data-memo-presentation-title>${esc((p.presentationKind==="generic"?(p.lab||p.name):(p.name||p.lab))||`Présentation ${i+1}`)}</strong><button type="button" data-remove-presentation="${i}" class="danger">Retirer</button></div>
  <div class="presentation-fields">
  <div class="memo-presentation-group memo-presentation-identity"> ${specialty?"":`<div class="presentation-kind-row"><span>Statut de la présentation :</span><label><input type="checkbox" data-pkind="princeps" ${p.presentationKind==="princeps"?"checked":""}> Princeps</label><label><input type="checkbox" data-pkind="generic" ${p.presentationKind==="generic"?"checked":""}> Générique</label></div>`}
 
@@ -4801,11 +4821,22 @@ function renderEditor(id){
    else remove.closest('[data-cip-pack-row]').remove();
   });
   root.querySelector('[data-variant-commercial-root]')?.addEventListener('input',e=>{
-   if(e.target.matches('[data-pfield="name"],[data-pfield="lab"]'))memoRefreshCommercialTabLabels(root);
+   if(e.target.matches('[data-pfield="name"],[data-pfield="lab"]')){
+    memoRefreshCommercialTabLabels(root);
+    const card=e.target.closest('.presentation-card');
+    const title=card?.querySelector('[data-memo-presentation-title]');
+    if(title){const name=card.querySelector('[data-pfield="name"]')?.value.trim()||'';
+      const lab=card.querySelector('[data-pfield="lab"]')?.value.trim()||'';
+      const generic=card.querySelector('[data-pkind="generic"]')?.checked;
+      title.textContent=(generic?(lab||name):(name||lab))||'Présentation '+(Number(card.dataset.presentation)+1);
+    }
+   }
   });
   root.querySelectorAll('[data-pkind]').forEach(el=>el.onchange=()=>{
    if(el.checked)root.querySelectorAll('[data-pkind]').forEach(other=>{if(other!==el)other.checked=false});
    memoRefreshCommercialTabLabels(root);
+    const card=e.target.closest('.presentation-card');const title=card?.querySelector('[data-memo-presentation-title]');
+    if(title){const name=card.querySelector('[data-pfield="name"]')?.value.trim()||'';const lab=card.querySelector('[data-pfield="lab"]')?.value.trim()||'';title.textContent=(card.querySelector('[data-pkind="generic"]')?.checked?(lab||name):(name||lab))||'Présentation '+(Number(card.dataset.presentation)+1);}
   });
   root.querySelectorAll('[data-can-split],[data-cannot-split],[data-can-crush],[data-cannot-crush],[data-can-open],[data-cannot-open]').forEach(el=>el.onchange=()=>{
    if(!el.checked)return;
