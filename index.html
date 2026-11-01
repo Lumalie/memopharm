@@ -747,6 +747,27 @@ body.header-search-active #headerSearchSlot #searchSuggestions .result{min-width
 .memo-exc-second-head{margin-top:23px;margin-bottom:7px}
 .memo-exc-aroma-table td{text-align:center;line-height:1.55;font-weight:600;color:var(--ink)}
 .memo-exc-aroma-table tbody tr>*{background:#edf5ef!important}
+
+/* V117.06 — harmonisation de la page et des actions de navigation */
+header .header-action-stack .header-actions > #excNav{
+  background:#f7faf8!important;color:#234e3d!important;
+  border:1px solid #d3e5d7!important;font-weight:400!important;
+  font-size:inherit;white-space:nowrap;
+}
+header .header-action-stack .header-actions > #excNav:hover,
+header .header-action-stack .header-actions > #excNav[aria-current="page"]{
+  background:#e1efe5!important;border-color:#a8ccb3!important;
+}
+#excView .memo-equiv-page{max-width:1100px;margin:0 auto 50px;padding:0 12px}
+#excView .explore-heading{margin-bottom:24px}
+#excView .memo-exc-page-controls{max-width:100%;margin:0 0 20px}
+#excView .memo-exc-page-controls input{font:inherit;border-radius:var(--m-radius-11);padding:12px 14px}
+#excView .memo-exc-matrix{background:#fff;border:1px solid #dce7df;border-radius:16px;box-shadow:0 4px 15px rgba(31,70,48,.045)}
+#excView .memo-exc-aroma-table tbody tr > *{background:#fff!important}
+#excView .memo-exc-fiche-link{display:inline-block;border:0;background:transparent;color:var(--memo-group-deep);font:inherit;font-weight:750;line-height:1.35;padding:2px 3px;cursor:pointer;text-align:center;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px}
+#excView .memo-exc-fiche-link:hover,#excView .memo-exc-fiche-link:focus-visible{text-decoration-color:currentColor;color:#236e4b}
+#excView .memo-exc-fiche-link:focus-visible{outline:2px solid #38805b;outline-offset:2px;border-radius:4px}
+html[data-memo-theme="dark"] #excView .memo-exc-matrix,html[data-memo-theme="dark"] #excView .memo-exc-aroma-table tbody tr>*{background:var(--card)!important}
 </style>
 </head>
 <body>
@@ -3518,18 +3539,16 @@ function memoExcipientComparator(child){
  if(!products.length)return "";
  return `<section class="memo-exc-matrix" data-memo-exc-matrix>
   <div class="memo-exc-matrix-head"><strong>Tableau des arômes</strong></div>
-  <p class="memo-exc-matrix-hint">Les arômes sont présentés séparément, par spécialité.</p>
   <div class="memo-exc-matrix-scroll" role="region" tabindex="0" aria-label="Tableau des arômes par spécialité">
    <table class="memo-exc-matrix-table memo-exc-aroma-table">
-    <thead><tr><th scope="col" class="memo-exc-sticky">Arômes</th>${products.map(({label})=>`<th scope="col">${esc(label)}</th>`).join("")}</tr></thead>
+    <thead><tr><th scope="col" class="memo-exc-sticky">Arômes</th>${products.map(({label,i})=>`<th scope="col"><button type="button" class="memo-exc-fiche-link" data-memo-exc-open="${i}" title="Ouvrir la fiche de ${esc(label)}">${esc(label)}</button></th>`).join("")}</tr></thead>
     <tbody><tr><th scope="row" class="memo-exc-sticky">Arômes renseignés</th>${products.map(()=>'<td class="memo-exc-aroma-cell">—</td>').join("")}</tr></tbody>
    </table>
   </div>
   <div class="memo-exc-matrix-head memo-exc-second-head"><strong>Tableau comparatif des excipients</strong><span>${products.length} spécialité(s)</span></div>
-  <p class="memo-exc-matrix-hint">Chaque colonne représente une spécialité ; chaque ligne, un excipient renseigné dans au moins une formule. Les trois familles demandées (crospovidone, cellulose microcristalline, maltodextrine) sont regroupées pour la lecture.</p>
   <div class="memo-exc-matrix-scroll" role="region" tabindex="0" aria-label="Tableau comparatif des excipients, défilement horizontal possible">
    <table class="memo-exc-matrix-table">
-    <thead><tr><th scope="col" class="memo-exc-sticky">Excipients</th>${products.map(({label})=>`<th scope="col">${esc(label)}</th>`).join("")}</tr></thead>
+    <thead><tr><th scope="col" class="memo-exc-sticky">Excipients</th>${products.map(({label,i})=>`<th scope="col"><button type="button" class="memo-exc-fiche-link" data-memo-exc-open="${i}" title="Ouvrir la fiche de ${esc(label)}">${esc(label)}</button></th>`).join("")}</tr></thead>
     <tbody data-memo-exc-matrix-body></tbody>
    </table>
   </div>
@@ -3544,6 +3563,14 @@ function memoExcipientComparator(child){
 function memoWireExcipientComparator(panel,child){
  const root=panel.querySelector('[data-memo-exc-matrix]');if(!root)return;
  const tbody=root.querySelector('[data-memo-exc-matrix-body]');
+ root.addEventListener("click",event=>{
+  const link=event.target.closest("[data-memo-exc-open]");
+  if(!link)return;
+  const index=Number(link.dataset.memoExcOpen);
+  const option=memoV116CommercialOptions(child)[index];
+  if(option)memoSetViewChoice(child.id,{presentation:option.key});
+  openMedication(child.id);
+ });
  const products=(child.presentations||[]).map((p,i)=>({
   p,i,label:presentationLabel(p,child,i),
   parsed:memoExcipientParsed(p.excipients),
