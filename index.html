@@ -3618,7 +3618,24 @@ function memoV102SyncStorage(section,p){
 }
 
 function memoExcipientTokens(raw){
- return String(raw||"").replace(/\[\[(?:[^|\]]+)\|([^\]]+)\]\]/g,"$1").replace(/\*\*|__/g,"").replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g,"$1").replace(/<[^>]*>/g,"").split(/[\n;,]+/).map(v=>v.replace(/^\s*[-•]\s*/,"").trim()).filter(Boolean);
+ // Enlever les balises de mise en forme, sans conserver les marqueurs Markdown.
+ const text=String(raw||"")
+  .replace(/\[\[(?:[^|\]]+)\|([^\]]+)\]\]/g,"$1")
+  .replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g,"$1")
+  .replace(/<\/\s*(?:p|div|li|br)\s*>/gi,"\n")
+  .replace(/<br\s*\/?>/gi,"\n")
+  .replace(/<[^>]*>/g,"")
+  .replace(/\*\*|__|(?<!\w)\*(?=\S)|(?<=\S)\*(?!\w)/g,"")
+  .replace(/&nbsp;/gi," ").replace(/&amp;/gi,"&");
+ return text.split(/[\n;,]+/).map(v=>v.replace(/^\s*[-•]\s*/,"").trim()).filter(Boolean);
+}
+function memoExcipientAroma(item){
+ // Les arômes peuvent être qualifiés (naturel, artificiel...) ou pluriels.
+ const label=String(item?.label||"").replace(/^[\s:.-]+/,"").trim();
+ const match=label.match(/^(?:ar[oô]mes?)(?:\s+(?:naturels?|artificiels?|identiques? au naturel))?\s*(?:(?:de|d[’']|:|\s*-\s*)\s*)?(.*)$/i);
+ if(!match)return null;
+ const flavor=match[1].replace(/[.]+$/g,"").trim();
+ return flavor||"Arôme non précisé";
 }
 function memoExcipientNormalize(v){
  return String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("fr")
@@ -3741,15 +3758,14 @@ function memoWireExcipientComparator(panel,child){
  if(aromaRow){
   const cells=aromaRow.querySelectorAll('td');
   products.forEach(({parsed,notable},i)=>{
-   const aromas=[...parsed.items,...notable.items].filter(item=>/^ar[oô]mes?(?:\s|$)/i.test(item.label));
-   const names=[...new Set(aromas.map(item=>item.label.replace(/^ar[oô]mes?\s*(?:de|d’|d'|:)?\s*/i,"").replace(/[.]+$/g,"").trim()).filter(Boolean))];
+   const names=[...new Set([...parsed.items,...notable.items].map(memoExcipientAroma).filter(Boolean))];
    cells[i].textContent=names.length?names.join(' · '):'—';
    cells[i].title=names.length?'Arômes mentionnés dans la composition':'Aucun arôme renseigné';
   });
  }
  const all=new Map();
  products.forEach(({parsed,notable})=>[...parsed.items,...notable.items].forEach(item=>{
-  if(item.key&&!/^ar[oô]mes?(?:\s|$)/i.test(item.label)&&!all.has(item.key))all.set(item.key,item.label);
+  if(item.key&&!memoExcipientAroma(item)&&!all.has(item.key))all.set(item.key,item.label);
  }));
  const excipients=[...all.entries()].sort((a,b)=>a[1].localeCompare(b[1],"fr"));
  if(!excipients.length){
