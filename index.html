@@ -668,6 +668,30 @@ body.header-search-active #headerSearchSlot #searchSuggestions .result{min-width
 
 /* V116.98 : pastilles commerciales centrées */
 #editor .memo-v26-commercial-pills .memo-v113-pill-wrap>button[data-v26-select-commercial]{display:flex;align-items:center;justify-content:center;text-align:center;padding-left:15px;padding-right:15px;min-height:42px;line-height:1.25;white-space:normal;overflow-wrap:anywhere}
+
+/* V116.99 — composition propre à chaque formule */
+.memo-excipients-editor{align-items:start}
+.memo-excipients-editor textarea{width:100%;min-height:75px;resize:vertical;border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:var(--card);color:var(--ink);font:inherit;line-height:1.45}
+.presentation-v33-fields p{overflow-wrap:anywhere}
+.presentation-v33-fields p:has(strong){white-space:pre-line}
+
+/* V117.00 — comparateur d'excipients par présentation similaire */
+.memo-exc-compare{margin:12px 0 18px;border:1px solid #cbded2;border-radius:12px;padding:14px 16px;background:var(--card)}
+.memo-exc-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;color:var(--green)}
+.memo-exc-heading span{font-size:.78rem;font-weight:500;color:var(--muted)}
+.memo-exc-intro,.memo-exc-disclaimer{font-size:.82rem;color:var(--muted);line-height:1.5;margin:8px 0 12px}
+.memo-exc-search-label{display:grid;gap:6px;font-weight:650;font-size:.87rem}
+.memo-exc-search-label input{width:100%;padding:10px;border:1px solid #b9d1c1;border-radius:8px;background:var(--card);color:var(--ink);font:inherit}
+.memo-exc-results{display:grid;gap:8px;margin:12px 0}
+.memo-exc-result{border:1px solid var(--line);border-left:4px solid #a8b8ae;border-radius:9px;padding:9px 11px;background:var(--card)}
+.memo-exc-result[data-state="present"]{border-left-color:#b46b5c}
+.memo-exc-result[data-state="non-retrouve"]{border-left-color:#51966d}
+.memo-exc-result>div:first-child{display:grid;gap:3px}
+.memo-exc-result small{font-size:.78rem;color:var(--muted)}
+.memo-exc-result details{font-size:.79rem;margin-top:7px;overflow-wrap:anywhere}
+.memo-exc-result summary{cursor:pointer;color:var(--green);font-weight:650}
+.memo-exc-result details div{margin-top:5px}
+.memo-exc-disclaimer{border-top:1px solid var(--line);padding-top:10px;margin-bottom:0}
 </style>
 </head>
 <body>
@@ -3058,7 +3082,8 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDo
    const dose=dosageLabel(child);
    const moleculeName=displayMedName(m);
    const selectedTitle=[moleculeName,dose].filter(Boolean).join(" ")+(form?" — "+form:"");
-   panel.innerHTML=`<div class="memo-selected-presentation"><span class="memo-selected-caption">PRÉSENTATION SÉLECTIONNÉE</span><div class="memo-v44-heading"><strong class="memo-v44-title">${esc(selectedTitle)}</strong><span class="memo-v44-regulatory"></span></div>${ficheDateLabel(child)}</div>${presentationHtml}${priorityHtml}${rubricTools}${specificHtml}${(!priorityHtml&&!specificHtml&&!presentationHtml)?'<p class="memo-specific-empty">Aucune particularité renseignée pour cette présentation.</p>':''}`;
+   panel.innerHTML=`<div class="memo-selected-presentation"><span class="memo-selected-caption">PRÉSENTATION SÉLECTIONNÉE</span><div class="memo-v44-heading"><strong class="memo-v44-title">${esc(selectedTitle)}</strong><span class="memo-v44-regulatory"></span></div>${ficheDateLabel(child)}</div>${memoExcipientComparator(child)}${presentationHtml}${priorityHtml}${rubricTools}${specificHtml}${(!priorityHtml&&!specificHtml&&!presentationHtml)?'<p class="memo-specific-empty">Aucune particularité renseignée pour cette présentation.</p>':''}`;
+   memoWireExcipientComparator(panel,child);
    if(admin){
     const headings=[...panel.querySelectorAll('.memo-v74-rubric > summary')];
     headings.forEach((heading,i)=>{const sec=specificSections[i];if(sec)memoAppendRubricEdit(heading,child,sec)});
@@ -3287,6 +3312,8 @@ function presentationInfo(p,m=null, specialtyBoxesHtml=""){
  const rows=[
   line("showLab","Laboratoire",p.lab||"À renseigner"),
   line("showAspect","Aspect",p.description||"Non documenté"),
+  line("showExcipients","Excipients",p.excipients||"Non documentés"),
+  line("showExcipientsNotable","Excipients à effet notoire",p.excipientsNotable||"Non documentés"),
   m?.entry_type==="specialite"?"":line("showMarking","Marquage / sécabilité",p.marking||"Non documenté"),
   p.showSplit===true?`<p><strong>Fractionnement :</strong> <span class="${p.cannotSplit===true?"presentation-status-note":""}">${p.cannotSplit===true?"Impossible":p.canSplit===true?"Possible selon vérification":"Non confirmé — vérifier"}${p.splitReason?` — ${esc(p.splitReason)}`:""}</span></p>`:"",
   p.showCrush===true?`<p><strong>Écrasement :</strong> <span class="${p.cannotCrush===true?"presentation-status-note":""}">${p.cannotCrush===true?"Impossible":p.canCrush===true?"Possible selon vérification":"Non confirmé — vérifier"}${p.crushReason?` — ${esc(p.crushReason)}`:""}</span></p>`:"",
@@ -3338,6 +3365,52 @@ function memoV102SyncStorage(section,p){
  const badges=section?.querySelector(".memo-v102-commercial-storage");
  if(badges)badges.outerHTML=memoV102CommercialStorageBadges(p);
 }
+
+function memoExcipientTokens(raw){
+ return String(raw||"").split(/[\n;,]+/).map(v=>v.replace(/^\s*[-•]\s*/,"").trim()).filter(Boolean);
+}
+function memoExcipientNormalize(v){
+ return String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("fr").replace(/\s+/g," ").trim();
+}
+function memoExcipientComparator(child){
+ const products=(child.presentations||[]).map((p,i)=>({
+  p,i,label:presentationLabel(p,child,i),
+  items:memoExcipientTokens(p.excipients),
+  notable:memoExcipientTokens(p.excipientsNotable)
+ }));
+ if(!products.length)return "";
+ return `<section class="memo-exc-compare" data-memo-exc-compare>
+  <div class="memo-exc-heading"><strong>🔬 Comparateur d’excipients</strong><span>${products.length} formule(s) référencée(s)</span></div>
+  <p class="memo-exc-intro">Recherche parmi les médicaments commerciaux de cette présentation (même dosage et même forme).</p>
+  <label class="memo-exc-search-label">Excipient à éviter <input type="search" data-memo-exc-query placeholder="Ex. : lactose, amidon…" autocomplete="off"></label>
+  <div class="memo-exc-results" data-memo-exc-results></div>
+  <p class="memo-exc-disclaimer">L’absence dans une liste ne garantit pas l’absence de risque allergique. Vérifier le RCP de la spécialité et du conditionnement exacts, les synonymes, dérivés et traces éventuelles avant toute délivrance.</p>
+ </section>`;
+}
+function memoWireExcipientComparator(panel,child){
+ const root=panel.querySelector('[data-memo-exc-compare]');if(!root)return;
+ const query=root.querySelector('[data-memo-exc-query]');
+ const results=root.querySelector('[data-memo-exc-results]');
+ const products=(child.presentations||[]).map((p,i)=>({
+  p,i,label:presentationLabel(p,child,i),
+  items:memoExcipientTokens(p.excipients),
+  notable:memoExcipientTokens(p.excipientsNotable)
+ }));
+ const draw=()=>{
+  const q=memoExcipientNormalize(query.value);
+  results.innerHTML=products.map(({p,i,label,items,notable})=>{
+   const complete=p.excipientsVerified===true&&items.length>0;
+   const match=q&&[...items,...notable].some(x=>memoExcipientNormalize(x).includes(q));
+   const state=!q?"initial":match?"present":complete?"non-retrouve":"inconnu";
+   const desc=state==="present"?"Présent dans les données renseignées":state==="non-retrouve"?"Non retrouvé dans la composition déclarée vérifiée":state==="inconnu"?"Composition incomplète ou non vérifiée":"Saisir un excipient pour comparer";
+   return `<div class="memo-exc-result" data-state="${state}">
+    <div><strong>${esc(label)}</strong><small>${esc(desc)}</small></div>
+    <details><summary>Voir la composition</summary><div>${items.length?esc(items.join(" · ")):"Non renseignée"}</div>${notable.length?`<p><strong>À effet notoire :</strong> ${esc(notable.join(" · "))}</p>`:""}</details>
+   </div>`;
+  }).join("");
+ };
+ query.addEventListener("input",draw);draw();
+}
 function renderPresentations(m,targetPresentationIndex=null,selectedPack=null){
  const options=isVariantFiche(m)?memoV116CommercialOptions(m):memoV44Options(m).filter(x=>selectedPack===null||x.pack===selectedPack),saved=isVariantFiche(m)?memoV116CommercialChosen(m):memoV44Chosen(m),chosen=options.find(x=>x.key===saved?.key)||options[0]||null;
  return `<section class="section presentation-fixed ${chosen?.p&&((chosen.p.showPhoto===true&&safeHttp(chosen.p.imageUrl||""))||(chosen.p.showTabletPhoto===true&&safeHttp(chosen.p.tabletImageUrl||"")))?'memo-v48-has-photo':''}" id="presentations-details" ${isVariantFiche(m)?'data-variant-commercial="true"':''}>${options.length?`<div class="memo-v48-identity"><div class="memo-v48-selector"><select id="presentation-choice" aria-label="Médicament commercial" data-presentation-select ${options.length===1?'aria-label="Médicament commercial"':''}>${options.map(x=>`<option value="${esc(x.key)}" ${chosen?.key===x.key?"selected":""}>${esc(presentationLabel(x.p,m,Number(x.key.split(":")[0])))}</option>`).join("")}</select></div><div class="memo-v48-cip"><div data-v48-cip>${isVariantFiche(m)?memoMoleculeCipAndPack(chosen?.p):memoV48Cip(chosen?.p)}</div></div>${memoV102CommercialStorageBadges(chosen?.p)}</div><div id="presentation-info" style="margin-top:12px">${chosen?presentationInfo(chosen.p,m):""}</div><div id="memo-v86-specific-root">${m.entry_type==="specialite"&&chosen?memoV86SpecificHtml(chosen.p):""}</div>`:'<p class="muted">Aucune présentation renseignée.</p>'}</section>`
@@ -3387,6 +3460,9 @@ function presentationEditor(p,i){
  ${field("lab","Laboratoire","showLab")}
  <div class="full presentation-edit-row cip-pack-editor">${check("showCip","CIP / conditionnements")}<div class="cip-pack-rows">${cipConditionnements(p).concat(cipConditionnements(p).length?[]:[{cip:"",pack:""}]).map((item,j)=>`<div class="cip-pack-edit-row" data-cip-pack-row><input type="text" inputmode="numeric" data-cip-value value="${esc(item.cip)}" placeholder="Code CIP (13 chiffres)" aria-label="Code CIP"><input type="text" data-pack-value value="${esc(item.pack)}" placeholder="Boîte de 30, boîte de 90…" aria-label="Conditionnement / boîtage"><button type="button" data-remove-cip-pack title="Supprimer ce conditionnement" aria-label="Supprimer ce conditionnement">×</button></div>`).join("")}<button type="button" class="cip-pack-add" data-add-cip-pack>+ Ajouter un conditionnement</button></div></div>
  ${field("description","Aspect","showAspect")}
+ <div class="full presentation-edit-row memo-excipients-editor">${check("excipientsVerified","Composition complète vérifiée sur le RCP")}<small>Cocher uniquement après vérification de la formule exacte.</small></div>
+ <div class="full presentation-edit-row memo-excipients-editor">${check("showExcipients","Excipients de la formule")}<textarea data-pfield="excipients" rows="3" placeholder="Liste des excipients de cette présentation (RCP, rubrique 6.1)">${esc(p.excipients||"")}</textarea></div>
+ <div class="full presentation-edit-row memo-excipients-editor">${check("showExcipientsNotable","Excipients à effet notoire")}<textarea data-pfield="excipientsNotable" rows="2" placeholder="Excipients à effet notoire, avec les quantités et seuils pertinents si indiqués">${esc(p.excipientsNotable||"")}</textarea></div>
  ${specialty?"":field("marking","Marquage / sécabilité","showMarking")}
  <div class="full presentation-edit-row">${check("showSplit","Fractionnement")}<div class="presentation-status-row"><label class="presentation-verified"><input type="checkbox" data-can-split ${p.canSplit===true&&!p.cannotSplit?"checked":""}>Possible (confirmé)</label><label class="presentation-verified"><input type="checkbox" data-cannot-split ${p.cannotSplit===true?"checked":""}>Impossible (confirmé)</label><input type="text" data-pfield="splitReason" value="${esc(p.splitReason||"")}" placeholder="Pourquoi ? (facultatif)" data-reason-for="split"></div></div>
  <div class="full presentation-edit-row">${check("showCrush","Écrasement")}<div class="presentation-status-row"><label class="presentation-verified"><input type="checkbox" data-can-crush ${p.canCrush===true&&!p.cannotCrush?"checked":""}>Possible (confirmé)</label><label class="presentation-verified"><input type="checkbox" data-cannot-crush ${p.cannotCrush===true?"checked":""}>Impossible (confirmé)</label><input type="text" data-pfield="crushReason" value="${esc(p.crushReason||"")}" placeholder="Pourquoi ? (facultatif)" data-reason-for="crush"></div></div>
