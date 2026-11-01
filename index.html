@@ -713,6 +713,35 @@ body.header-search-active #headerSearchSlot #searchSuggestions .result{min-width
 .memo-exc-suggestions button:hover,.memo-exc-suggestions button:focus{background:#e6f1e9;outline:none}
 .memo-exc-suggestions small{font-size:.76rem;color:var(--muted);white-space:nowrap}
 .memo-exc-no-match{margin:8px 10px;font-size:.86rem;color:var(--muted)}
+
+/* V117.03 — matrice des excipients : spécialités en colonnes, excipients en lignes */
+.memo-exc-matrix{margin:16px 0;border:1px solid #cbded2;border-radius:12px;padding:14px;background:var(--card)}
+.memo-exc-matrix-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;color:var(--green)}
+.memo-exc-matrix-head span,.memo-exc-matrix-hint{font-size:.8rem;color:var(--muted)}
+.memo-exc-matrix-hint{margin:8px 0 12px;line-height:1.5}
+.memo-exc-matrix-scroll{overflow-x:auto;max-width:100%;border:1px solid var(--line);border-radius:9px}
+.memo-exc-matrix-table{width:100%;border-collapse:separate;border-spacing:0;table-layout:auto;font-size:.83rem}
+.memo-exc-matrix-table th,.memo-exc-matrix-table td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:11px 13px}
+.memo-exc-matrix-table thead th{background:#e3efe6;text-align:center;vertical-align:middle;font-weight:750;min-width:135px;overflow-wrap:anywhere}
+.memo-exc-matrix-table thead th:first-child{min-width:195px;text-align:left}
+.memo-exc-matrix-table tbody th{text-align:left;font-weight:600;min-width:195px;overflow-wrap:anywhere}
+.memo-exc-matrix-table tbody tr:nth-child(even)>*{background:#eef5f0}
+.memo-exc-matrix-table tbody tr:nth-child(odd)>*{background:var(--card)}
+.memo-exc-matrix-table .memo-exc-sticky{position:sticky;left:0;z-index:1}
+.memo-exc-matrix-table thead .memo-exc-sticky{z-index:2}
+.memo-exc-matrix-table td{text-align:center;min-width:135px}
+.memo-exc-matrix-table tr>*:last-child{border-right:0}
+.memo-exc-matrix-table tbody tr:last-child>*{border-bottom:0}
+.memo-exc-icon{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}
+.memo-exc-icon svg{display:block;stroke:currentColor}
+.memo-exc-yes{color:#28854d}
+.memo-exc-no{color:#c14d4d}
+.memo-exc-unknown{color:#8a7960;font-weight:800;font-size:1.05rem}
+.memo-exc-matrix-legend{display:flex;flex-wrap:wrap;gap:10px 20px;margin:13px 0 8px;font-size:.77rem}
+.memo-exc-matrix-legend>span{display:inline-flex;align-items:center;gap:7px}
+.memo-exc-sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.memo-exc-empty{text-align:center!important;color:var(--muted);padding:25px!important}
+@media(max-width:650px){.memo-exc-matrix{padding:10px}.memo-exc-matrix-table thead th:first-child,.memo-exc-matrix-table tbody th{min-width:140px}.memo-exc-matrix-table th,.memo-exc-matrix-table td{padding:9px}}
 </style>
 </head>
 <body>
@@ -3454,37 +3483,52 @@ function memoExcipientComparator(child){
   notable:memoExcipientTokens(p.excipientsNotable)
  }));
  if(!products.length)return "";
- return `<section class="memo-exc-compare" data-memo-exc-compare>
-  <div class="memo-exc-heading"><strong>🔬 Comparateur d’excipients</strong><span>${products.length} formule(s) référencée(s)</span></div>
-  <p class="memo-exc-intro">Recherche parmi les médicaments commerciaux de cette présentation (même dosage et même forme).</p>
-  <label class="memo-exc-search-label">Excipient à éviter <input type="search" data-memo-exc-query placeholder="Ex. : lactose, amidon…" autocomplete="off"></label>
-  <div class="memo-exc-results" data-memo-exc-results></div>
-  <p class="memo-exc-disclaimer">L’absence dans une liste ne garantit pas l’absence de risque allergique. Vérifier le RCP de la spécialité et du conditionnement exacts, les synonymes, dérivés et traces éventuelles avant toute délivrance.</p>
+ return `<section class="memo-exc-matrix" data-memo-exc-matrix>
+  <div class="memo-exc-matrix-head"><strong>Tableau comparatif des excipients</strong><span>${products.length} spécialité(s)</span></div>
+  <p class="memo-exc-matrix-hint">Chaque colonne représente une spécialité ; chaque ligne, un excipient renseigné dans au moins une formule.</p>
+  <div class="memo-exc-matrix-scroll" role="region" tabindex="0" aria-label="Tableau comparatif des excipients, défilement horizontal possible">
+   <table class="memo-exc-matrix-table">
+    <thead><tr><th scope="col" class="memo-exc-sticky">Excipients</th>${products.map(({label})=>`<th scope="col">${esc(label)}</th>`).join("")}</tr></thead>
+    <tbody data-memo-exc-matrix-body></tbody>
+   </table>
+  </div>
+  <div class="memo-exc-matrix-legend">
+   <span><span class="memo-exc-icon memo-exc-yes" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-check-big preview-icon"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg></span> Présent</span>
+   <span><span class="memo-exc-icon memo-exc-no" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x preview-icon"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></span> Non retrouvé (composition vérifiée)</span>
+   <span><span class="memo-exc-icon memo-exc-unknown" aria-hidden="true">?</span> Composition non vérifiée</span>
+  </div>
+  <p class="memo-exc-disclaimer">Une croix rouge signifie uniquement que l’excipient n’a pas été retrouvé dans la composition déclarée complète et vérifiée. Cela ne garantit pas l’absence de risque allergique : contrôler le RCP de la formule exacte, les synonymes, dérivés et traces éventuelles avant délivrance.</p>
  </section>`;
 }
 function memoWireExcipientComparator(panel,child){
- const root=panel.querySelector('[data-memo-exc-compare]');if(!root)return;
- const query=root.querySelector('[data-memo-exc-query]');
- const results=root.querySelector('[data-memo-exc-results]');
+ const root=panel.querySelector('[data-memo-exc-matrix]');if(!root)return;
+ const tbody=root.querySelector('[data-memo-exc-matrix-body]');
  const products=(child.presentations||[]).map((p,i)=>({
   p,i,label:presentationLabel(p,child,i),
   items:memoExcipientTokens(p.excipients),
   notable:memoExcipientTokens(p.excipientsNotable)
  }));
- const draw=()=>{
-  const q=memoExcipientNormalize(query.value);
-  results.innerHTML=products.map(({p,i,label,items,notable})=>{
-   const complete=p.excipientsVerified===true&&items.length>0;
-   const match=q&&[...items,...notable].some(x=>memoExcipientNormalize(x).includes(q));
-   const state=!q?"initial":match?"present":complete?"non-retrouve":"inconnu";
-   const desc=state==="present"?"Présent dans les données renseignées":state==="non-retrouve"?"Non retrouvé dans la composition déclarée vérifiée":state==="inconnu"?"Composition incomplète ou non vérifiée":"Saisir un excipient pour comparer";
-   return `<div class="memo-exc-result" data-state="${state}">
-    <div><strong>${esc(label)}</strong><small>${esc(desc)}</small></div>
-    <details><summary>Voir la composition</summary><div>${items.length?esc(items.join(" · ")):"Non renseignée"}</div>${notable.length?`<p><strong>À effet notoire :</strong> ${esc(notable.join(" · "))}</p>`:""}</details>
-   </div>`;
+ const all=new Map();
+ products.forEach(({items,notable})=>[...items,...notable].forEach(item=>{
+  const key=memoExcipientNormalize(item);
+  if(key&&!all.has(key))all.set(key,item);
+ }));
+ const excipients=[...all.entries()].sort((a,b)=>a[1].localeCompare(b[1],"fr"));
+ if(!excipients.length){
+  tbody.innerHTML=`<tr><td colspan="${products.length+1}" class="memo-exc-empty">Aucun excipient renseigné pour cette présentation.</td></tr>`;
+  return;
+ }
+ tbody.innerHTML=excipients.map(([key,label])=>{
+  const cells=products.map(({p,items,notable})=>{
+   const known=[...items,...notable].some(item=>memoExcipientNormalize(item)===key);
+   const verified=p.excipientsVerified===true&&items.length>0;
+   const state=known?"yes":verified?"no":"unknown";
+   const txt=known?"Présent":verified?"Non retrouvé dans la composition vérifiée":"Composition non vérifiée ou incomplète";
+   const icon=state==="yes"?'<svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-check-big preview-icon"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg>':state==="no"?'<svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x preview-icon"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>':'?';
+   return `<td class="memo-exc-cell memo-exc-cell-${state}" aria-label="${esc(txt)}"><span class="memo-exc-icon memo-exc-${state}" title="${esc(txt)}" aria-hidden="true">${icon}</span><span class="memo-exc-sr-only">${esc(txt)}</span></td>`;
   }).join("");
- };
- query.addEventListener("input",draw);draw();
+  return `<tr><th scope="row" class="memo-exc-sticky">${esc(label)}</th>${cells}</tr>`;
+ }).join("");
 }
 function renderPresentations(m,targetPresentationIndex=null,selectedPack=null){
  const options=isVariantFiche(m)?memoV116CommercialOptions(m):memoV44Options(m).filter(x=>selectedPack===null||x.pack===selectedPack),saved=isVariantFiche(m)?memoV116CommercialChosen(m):memoV44Chosen(m),chosen=options.find(x=>x.key===saved?.key)||options[0]||null;
