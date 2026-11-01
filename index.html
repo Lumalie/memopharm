@@ -662,6 +662,9 @@ body.header-search-active #headerSearchSlot #searchSuggestions .result{min-width
 .memo-interaction-legend i{display:inline-block;width:14px;height:14px;border:1px solid #b4bfc0;border-radius:4px;flex:none}
 .memo-rich-editor>.memo-inline-table-wrap:last-child{margin-bottom:12px}
 .memo-rich-editor>.memo-inline-table-wrap+p{min-height:1.4em}
+\n/* V116.97 — rubrique de sécurité unifiée, sous-parties éditables */
+.section .memo-safety-subheading{font-size:.98rem;font-weight:750;margin:16px 0 8px;padding:7px 10px;border-left:3px solid var(--line);border-radius:5px;background:var(--card)}
+.section .memo-safety-subheading:first-of-type{margin-top:5px}
 </style>
 </head>
 <body>
@@ -927,6 +930,13 @@ function restoreLocalDraft(){
 const MEMO_MOLECULE_GLANCE="__C’est quoi ?__\n\n__Comment ça marche ?__\n\n__Comment ça se prend ?__";
 const MEMO_INLINE_TABLE="[[memo-inline-table:";
 const MEMO_MOLECULE_POSOLOGY=" | Adulte | Enfant\n |  | \n |  | ";
+const MEMO_SAFETY_HEADINGS="**⛔ Contre-indications**\\n\\n**🟡 Précautions d’emploi**\\n\\n**💊 Interactions médicamenteuses**";
+const MEMO_SAFETY_TITLE="⚠️ Sécurité & interactions";
+function memoSafetyContent(content){
+ const value=String(content||"");
+ if(/\\*\\*⛔ Contre-indications\\*\\*/.test(value))return value;
+ return MEMO_SAFETY_HEADINGS+(value.trim()?"\\n"+value:"");
+}
 const MEMO_MOLECULE_TEMPLATE=[
  {id:"alerte-delivrance",title:"🚨 Alerte à la délivrance",type:"text",content:"",enabled:true},
  {id:"coup-oeil",title:"👀 En un coup d’œil",type:"text",content:MEMO_MOLECULE_GLANCE,enabled:true},
@@ -935,7 +945,7 @@ const MEMO_MOLECULE_TEMPLATE=[
  {id:"mecanisme",title:"⚙️ Mécanisme d’action",type:"text",content:"",enabled:true},
  {id:"posologie",title:"🔢 Posologie",type:"text",content:"",enabled:true},
  {id:"effets",title:"🌀 Effets indésirables",type:"text",content:"",enabled:true},
- {id:"interactions",title:"⚠️ Interactions médicamenteuses",type:"text",content:"",enabled:true}
+ {id:"interactions",title:MEMO_SAFETY_TITLE,type:"text",content:MEMO_SAFETY_HEADINGS,enabled:true}
 ];
 function memoUpgradeMoleculeSections(sections,entryType,force=false){
  if(!Array.isArray(sections))return sections;
@@ -954,6 +964,7 @@ function memoUpgradeMoleculeSections(sections,entryType,force=false){
   const oldDefault=String(placeholders.get(sec.id)||"").trim();
   const untouched=!value||(oldDefault&&value===oldDefault)||(sec.id==="coup-oeil"&&oldGlance.some(v=>value===String(v||"").trim()));
   if(untouched){sec.type=template.type;sec.content=template.content;}
+  if(sec.id==="interactions")sec.content=memoSafetyContent(sec.content);
   // Une posologie déjà renseignée reste intacte, même au format texte.
   return sec;
  });
@@ -3937,7 +3948,7 @@ function renderPrioritySection(s,targetSectionId=null){
  return `<section class="section priority-section ${targetSectionId&&s.id===targetSectionId?'direct-target':''}" id="section-${esc(s.id)}">${heading}${list}</section>`;
 }
 function renderSection(s,targetSectionId=null){
- const showInteractionLegend=/interaction/i.test(s.title||"")&&String(s.content||"").includes(MEMO_INLINE_TABLE);
+ const showInteractionLegend=(s.id==="interactions"||/interaction/i.test(s.title||""))&&String(s.content||"").includes(MEMO_INLINE_TABLE);
 
  let content="";
  if(s.type==="table"){
@@ -3949,7 +3960,14 @@ function renderSection(s,targetSectionId=null){
     const isExplanation=(s.id==="prise"&&j===model.cols-1)||(s.id==="interactions"&&i>=2&&j===1);
     return `<${isHeading?"th":"td"} rowspan="${cell.rs}" colspan="${cell.cs}" class="${isExplanation?"table-explanation":""}">${richInline(cell.text).replace(/\n/g,"<br>").replace(/\[\[newline\]\]/g,"<br>")}</${isHeading?"th":"td"}>`;
    }).join("")}</tr>`).join("")}</tbody></table></div>`;
- }else{content=richText(s.content||"")}
+ }else{
+  content=richText(s.content||"");
+  if(s.id==="interactions"){
+   for(const heading of ["⛔ Contre-indications","🟡 Précautions d’emploi","💊 Interactions médicamenteuses"]){
+    content=content.replace(`<p><strong>${heading}</strong></p>`,`<h4 class="memo-safety-subheading">${heading}</h4>`);
+   }
+  }
+ }
  const imageSrc=s.imageData||s.imageUrl||"";
  const imageHtml=imageSrc?`<figure class="section-image"><img src="${esc(imageSrc)}" alt="${esc(s.imageCaption||s.title||"Image de la forme pharmaceutique")}" loading="lazy">${s.imageCaption?`<figcaption>${esc(s.imageCaption)}</figcaption>`:""}</figure>`:"";
  const isConseil = (s.title || "").toLowerCase().includes("à dire au comptoir");  
