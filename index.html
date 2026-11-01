@@ -3434,7 +3434,26 @@ function memoExcipientTokens(raw){
  return String(raw||"").split(/[\n;,]+/).map(v=>v.replace(/^\s*[-•]\s*/,"").trim()).filter(Boolean);
 }
 function memoExcipientNormalize(v){
- return String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("fr").replace(/\s+/g," ").trim();
+ return String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("fr")
+  .replace(/[.。\s]+$/g,"").replace(/\s+/g," ").trim();
+}
+// Nettoyage conservateur : pas de rapprochement automatique entre dérivés ou grades.
+function memoExcipientCanonical(v){
+ let label=String(v||"").trim().replace(/^\s*[-•]\s*/,"")
+  .replace(/^(?:noyau du comprim[eé]|pelliculage du comprim[eé]|enrobage|composition)\s*:\s*/i,"")
+  .replace(/[.;:]+\s*$/g,"").replace(/\s+/g," ").trim();
+ // Une quantité isolée, un morceau de phrase ou une parenthèse non fermée ne sont pas des excipients fiables.
+ if(!label||/^[\d\s]/.test(label)||/\b(?:et|dont)\s*$/i.test(label))return null;
+ if((label.match(/\(/g)||[]).length!==(label.match(/\)/g)||[]).length)return null;
+ return {key:memoExcipientNormalize(label),label};
+}
+function memoExcipientParsed(raw){
+ const items=[];let uncertain=false;
+ for(const token of memoExcipientTokens(raw)){
+  const x=memoExcipientCanonical(token);
+  if(x)items.push(x);else uncertain=true;
+ }
+ return {items,uncertain};
 }
 function memoExcipientVariants(){
  return publicMeds().filter(m=>isVariantFiche(m)&&Array.isArray(m.presentations)&&m.presentations.length);
@@ -3485,7 +3504,7 @@ function memoExcipientComparator(child){
  if(!products.length)return "";
  return `<section class="memo-exc-matrix" data-memo-exc-matrix>
   <div class="memo-exc-matrix-head"><strong>Tableau comparatif des excipients</strong><span>${products.length} spécialité(s)</span></div>
-  <p class="memo-exc-matrix-hint">Chaque colonne représente une spécialité ; chaque ligne, un excipient renseigné dans au moins une formule.</p>
+  <p class="memo-exc-matrix-hint">Chaque colonne représente une spécialité ; chaque ligne, un excipient renseigné dans au moins une formule. Les noms sont harmonisés uniquement pour les variations de ponctuation et de présentation.</p>
   <div class="memo-exc-matrix-scroll" role="region" tabindex="0" aria-label="Tableau comparatif des excipients, défilement horizontal possible">
    <table class="memo-exc-matrix-table">
     <thead><tr><th scope="col" class="memo-exc-sticky">Excipients</th>${products.map(({label})=>`<th scope="col">${esc(label)}</th>`).join("")}</tr></thead>
@@ -3497,7 +3516,7 @@ function memoExcipientComparator(child){
    <span><span class="memo-exc-icon memo-exc-no" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x preview-icon"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></span> Non retrouvé (composition vérifiée)</span>
    <span><span class="memo-exc-icon memo-exc-unknown" aria-hidden="true">?</span> Composition non vérifiée</span>
   </div>
-  <p class="memo-exc-disclaimer">Une croix rouge signifie uniquement que l’excipient n’a pas été retrouvé dans la composition déclarée complète et vérifiée. Cela ne garantit pas l’absence de risque allergique : contrôler le RCP de la formule exacte, les synonymes, dérivés et traces éventuelles avant délivrance.</p>
+  <p class="memo-exc-disclaimer">Les appellations différentes (grades, dérivés, synonymes) ne sont pas fusionnées automatiquement. Les fragments ambigus sont ignorés et empêchent de conclure à une absence. Une croix rouge signifie uniquement que l’excipient n’a pas été retrouvé dans la composition déclarée complète et vérifiée. Cela ne garantit pas l’absence de risque allergique : contrôler le RCP de la formule exacte, les synonymes, dérivés et traces éventuelles avant délivrance.</p>
  </section>`;
 }
 function memoWireExcipientComparator(panel,child){
@@ -3505,13 +3524,12 @@ function memoWireExcipientComparator(panel,child){
  const tbody=root.querySelector('[data-memo-exc-matrix-body]');
  const products=(child.presentations||[]).map((p,i)=>({
   p,i,label:presentationLabel(p,child,i),
-  items:memoExcipientTokens(p.excipients),
-  notable:memoExcipientTokens(p.excipientsNotable)
+  parsed:memoExcipientParsed(p.excipients),
+  notable:memoExcipientParsed(p.excipientsNotable)
  }));
  const all=new Map();
- products.forEach(({items,notable})=>[...items,...notable].forEach(item=>{
-  const key=memoExcipientNormalize(item);
-  if(key&&!all.has(key))all.set(key,item);
+ products.forEach(({parsed,notable})=>[...parsed.items,...notable.items].forEach(item=>{
+  if(item.key&&!all.has(item.key))all.set(item.key,item.label);
  }));
  const excipients=[...all.entries()].sort((a,b)=>a[1].localeCompare(b[1],"fr"));
  if(!excipients.length){
@@ -3519,9 +3537,9 @@ function memoWireExcipientComparator(panel,child){
   return;
  }
  tbody.innerHTML=excipients.map(([key,label])=>{
-  const cells=products.map(({p,items,notable})=>{
-   const known=[...items,...notable].some(item=>memoExcipientNormalize(item)===key);
-   const verified=p.excipientsVerified===true&&items.length>0;
+  const cells=products.map(({p,parsed,notable})=>{
+   const known=[...parsed.items,...notable.items].some(item=>item.key===key);
+   const verified=p.excipientsVerified===true&&parsed.items.length>0&&!parsed.uncertain&&!notable.uncertain;
    const state=known?"yes":verified?"no":"unknown";
    const txt=known?"Présent":verified?"Non retrouvé dans la composition vérifiée":"Composition non vérifiée ou incomplète";
    const icon=state==="yes"?'<svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-check-big preview-icon"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg>':state==="no"?'<svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x preview-icon"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>':'?';
