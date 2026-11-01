@@ -928,6 +928,25 @@ html[data-memo-theme="dark"] #excView .memo-exc-matrix,html[data-memo-theme="dar
 #excView .memo-exc-filter input::placeholder{color:var(--muted);opacity:.8}
 #excView .memo-exc-matrix-table tr[hidden]{display:none!important}
 @media(max-width:700px){#excView .memo-exc-shared-columns{min-width:700px}}
+
+/* V117.22 : page élargie pour les grandes comparaisons, défilement en dernier recours */
+#excView .memo-equiv-page{
+ max-width:min(1740px,calc(100vw - 48px));
+ width:100%;
+ box-sizing:border-box;
+}
+#excView .memo-exc-shared-columns{
+ min-width:max(690px,calc(225px + var(--memo-exc-cols,3) * 135px));
+ width:100%;
+}
+#excView .memo-exc-shared-columns col.memo-exc-first-col{
+ width:clamp(190px,23%,280px);
+}
+#excView .memo-exc-matrix-scroll{width:100%;max-width:100%;overflow-x:auto}
+@media(max-width:760px){
+ #excView .memo-equiv-page{max-width:100%;padding:0 10px}
+ #excView .memo-exc-shared-columns{min-width:max(690px,calc(180px + var(--memo-exc-cols,3) * 125px))}
+}
 </style>
 </head>
 <body>
@@ -1267,6 +1286,7 @@ async function loadCloudMeds(){
  // la reconstruire dès que les fiches sont chargées, sans intervention utilisateur.
  if(currentView==="explore")renderExplorer();
  if(currentView==="equiv")memoSetCorrespondenceTab(memoCorrespondenceTab);
+ if(currentView==="exc")memoRenderExcipientPage();
  dashRender();
  const requestedId=new URLSearchParams(window.location.search).get("fiche");
  selectedId=meds.find(m=>m.id===requestedId&&!isSourcesRecord(m))?.id||meds.find(m=>!isSourcesRecord(m))?.id||null;
@@ -3773,7 +3793,7 @@ function memoExcipientComparator(child){
   notable:[]
  }));
  if(!products.length)return "";
- return `<section class="memo-exc-matrix" data-memo-exc-matrix>
+ return `<section class="memo-exc-matrix" data-memo-exc-matrix style="--memo-exc-cols:${products.length}">
   <div class="memo-exc-matrix-head"><strong>Tableau des arômes</strong></div>
   <div class="memo-exc-matrix-scroll" role="region" tabindex="0" aria-label="Tableau des arômes par spécialité">
    <table class="memo-exc-matrix-table memo-exc-aroma-table memo-exc-shared-columns">
