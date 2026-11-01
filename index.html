@@ -3654,22 +3654,31 @@ function memoExcipientNormalize(v){
   .replace(/[.。\s]+$/g,"").replace(/\s+/g," ").trim();
 }
 // Nettoyage conservateur : pas de rapprochement automatique entre dérivés ou grades.
+// Dictionnaire de synonymes STRICTS (substance identique, avec ou sans code E).
+// Les grades et dérivés distincts ne sont pas fusionnés automatiquement.
+const MEMO_EXC_SYNONYMS=[
+ ["crospovidone",/^crospovidone(?:\s*\(type\s*[a-z0-9]+\))?$/i],
+ ["cellulose microcristalline",/^cellulose microcristalline(?:\s*\((?:grade[-\s]*[a-z0-9]+|e460)\))?$/i],
+ ["maltodextrine",/^maltodextrine(?:\s*\(source de glucose\))?$/i],
+ ["mannitol",/^mannitol(?:\s*\(e421\))?$/i],
+ ["talc",/^talc(?:\s*\(e553b\))?$/i],
+ ["stéarate de magnésium",/^stearate de magnesium(?:\s*\(e470b\))?$/i],
+ ["silice colloïdale anhydre",/^silice colloidale anhydre(?:\s*\(e551\))?$/i],
+ ["hypromellose",/^hypromellose(?:\s*\(e464\))?$/i],
+ ["dioxyde de titane",/^dioxyde de titane(?:\s*\(e171\))?$/i],
+ ["aspartam",/^aspartam(?:\s*\(e951\))?$/i],
+ ["sorbitol",/^sorbitol(?:\s*\(e420\))?$/i]
+];
 function memoExcipientCanonical(v){
  let label=String(v||"").trim().replace(/^\s*[-•]\s*/,"")
   .replace(/^(?:noyau du comprim[eé]|pelliculage du comprim[eé]|enrobage|composition)\s*:\s*/i,"")
+  .replace(/^(?:du|de la|de l[’']|des)\s+/i,"")
   .replace(/[.;:]+\s*$/g,"").replace(/\s+/g," ").trim();
- // Une quantité isolée, un morceau de phrase ou une parenthèse non fermée ne sont pas des excipients fiables.
  if(!label||/^[\d\s]/.test(label)||/\b(?:et|dont)\s*$/i.test(label))return null;
  if((label.match(/\(/g)||[]).length!==(label.match(/\)/g)||[]).length)return null;
- // Rapprochements ciblés pour l'affichage : conserver le libellé brut dans les données.
  const normalized=memoExcipientNormalize(label);
- const families=[
-  [/^crospovidone(?:\s*\(type\s*[a-z0-9]+\))?$/i,"crospovidone"],
-  [/^cellulose microcristalline(?:\s*\(grade[-\s]*[a-z0-9]+\))?$/i,"cellulose microcristalline"],
-  [/^maltodextrine(?:\s*\(source de glucose\))?$/i,"maltodextrine"]
- ];
- const match=families.find(([rx])=>rx.test(normalized));
- if(match)return {key:match[1],label:match[1]};
+ const match=MEMO_EXC_SYNONYMS.find(([,rx])=>rx.test(normalized));
+ if(match)return {key:memoExcipientNormalize(match[0]),label:match[0]};
  return {key:normalized,label};
 }
 function memoExcipientParsed(raw){
@@ -3761,10 +3770,10 @@ function memoExcipientComparator(child){
   </div>
   <div class="memo-exc-matrix-legend">
    <span><span class="memo-exc-icon memo-exc-yes" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-check-big preview-icon"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg></span> Présent</span>
-   <span><span class="memo-exc-icon memo-exc-no" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x preview-icon"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></span> Non retrouvé (composition vérifiée)</span>
-   <span><span class="memo-exc-icon memo-exc-unknown" aria-hidden="true">?</span> Composition non vérifiée</span>
+   <span><span class="memo-exc-icon memo-exc-no" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x preview-icon"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></span> Non retrouvé dans la composition renseignée</span>
+   <span><span class="memo-exc-icon memo-exc-unknown" aria-hidden="true">?</span> Composition manquante ou ambiguë</span>
   </div>
-  <p class="memo-exc-disclaimer">Les rapprochements de noms servent à la lecture du tableau et ne remplacent pas une vérification des grades, dérivés et formulations. Les fragments ambigus sont ignorés et empêchent de conclure à une absence. Une croix rouge signifie uniquement que l’excipient n’a pas été retrouvé dans la composition déclarée complète et vérifiée. Cela ne garantit pas l’absence de risque allergique : contrôler le RCP de la formule exacte, les synonymes, dérivés et traces éventuelles avant délivrance.</p>
+  <p class="memo-exc-disclaimer">Les rapprochements de noms servent à la lecture du tableau et ne remplacent pas une vérification des grades, dérivés et formulations. Les fragments ambigus empêchent de conclure à une absence. Une croix rouge signifie uniquement que l’excipient n’a pas été retrouvé dans la composition renseignée et interprétable ; elle ne prouve pas l’absence de traces ou de dérivés. Cela ne garantit pas l’absence de risque allergique : contrôler le RCP de la formule exacte, les synonymes, dérivés et traces éventuelles avant délivrance.</p>
  </section>`;
 }
 function memoWireExcipientComparator(panel,child){
@@ -3804,9 +3813,12 @@ function memoWireExcipientComparator(panel,child){
  tbody.innerHTML=excipients.map(([key,label])=>{
   const cells=products.map(({p,parsed,notable})=>{
    const known=[...parsed.items,...notable.items].some(item=>item.key===key);
-   const verified=p.excipientsVerified===true&&parsed.items.length>0&&!parsed.uncertain&&!notable.uncertain;
+   // L'ancienne case de vérification n'existe plus dans l'éditeur.
+   // Une composition non vide, découpée sans ambiguïté, permet d'indiquer
+   // « non retrouvé dans les excipients renseignés », jamais « sans allergène ».
+   const verified=String(p.excipients||"").trim().length>0&&parsed.items.length>0&&!parsed.uncertain;
    const state=known?"yes":verified?"no":"unknown";
-   const txt=known?"Présent":verified?"Non retrouvé dans la composition vérifiée":"Composition non vérifiée ou incomplète";
+   const txt=known?"Présent":verified?"Non retrouvé dans la composition renseignée":"Composition manquante ou ambiguë ou incomplète";
    const icon=state==="yes"?'<svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-check-big preview-icon"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg>':state==="no"?'<svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x preview-icon"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>':'?';
    return `<td class="memo-exc-cell memo-exc-cell-${state}" aria-label="${esc(txt)}"><span class="memo-exc-icon memo-exc-${state}" title="${esc(txt)}" aria-hidden="true">${icon}</span><span class="memo-exc-sr-only">${esc(txt)}</span></td>`;
   }).join("");
