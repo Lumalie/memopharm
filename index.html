@@ -967,6 +967,44 @@ main.memo-exc-wide-main #excView .memo-exc-matrix-scroll{
 @media(max-width:760px){
  main.memo-exc-wide-main{padding-left:12px;padding-right:12px}
 }
+
+/* V117.24 — largeur progressive et barre de navigation sur deux lignes */
+main.memo-exc-wide-main{max-width:1840px}
+main.memo-exc-wide-main #excView>.memo-equiv-page{
+ width:100%;max-width:min(100%,calc(880px + var(--memo-exc-extra,0) * 125px));
+ margin-left:auto;margin-right:auto;
+}
+#excView .memo-exc-shared-columns{min-width:max(690px,calc(225px + var(--memo-exc-cols,3) * 125px))}
+header .topline{display:grid!important;grid-template-columns:auto minmax(210px,1fr) auto!important;align-items:center;gap:20px}
+header .topline .brand{grid-column:1;min-width:0}
+body.header-search-active header #headerSearchSlot{grid-column:2!important;grid-row:1!important;width:100%!important;min-width:0!important;max-width:none!important;margin:0!important}
+header .header-action-stack{grid-column:3!important;grid-row:1!important;justify-self:end;min-width:0!important}
+header .header-action-stack .header-actions{display:grid!important;grid-template-columns:repeat(3,max-content);grid-template-rows:auto auto;justify-content:end;align-items:center;gap:7px!important}
+header .header-action-stack .header-actions #exploreNav{grid-column:1;grid-row:1}
+header .header-action-stack .header-actions #equivNav{grid-column:2;grid-row:1}
+header .header-action-stack .header-actions #excNav{grid-column:3;grid-row:1}
+header .header-action-stack .header-actions #sourcesNav{grid-column:1;grid-row:2}
+header .header-action-stack .header-actions #loginBtn,
+header .header-action-stack .header-actions #logoutBtn{grid-column:2 / 4;grid-row:2;justify-self:stretch}
+header .header-action-stack .header-actions #loginBtn{min-height:39px;display:inline-flex;align-items:center;justify-content:center;background:#f7faf8;color:#234e3d;border-color:#d3e5d7;border-radius:10px}
+header .header-action-stack .header-actions #loginBtn.hidden,
+header .header-action-stack .header-actions #logoutBtn.hidden{display:none!important}
+body.header-search-active header #headerSearchSlot .searchcard{width:100%!important;max-width:none!important}
+@media(max-width:1050px){
+ header .topline{grid-template-columns:minmax(0,1fr) auto!important;gap:12px!important}
+ header .topline .brand{grid-column:1;grid-row:1}
+ header .header-action-stack{grid-column:2!important;grid-row:1!important}
+ body.header-search-active header #headerSearchSlot{grid-column:1 / -1!important;grid-row:2!important}
+}
+@media(max-width:700px){
+ header .topline{grid-template-columns:minmax(0,1fr)!important}
+ header .topline .brand{grid-column:1;grid-row:1}
+ header .header-action-stack{grid-column:1!important;grid-row:2!important;justify-self:start}
+ body.header-search-active header #headerSearchSlot{grid-column:1!important;grid-row:3!important}
+ header .header-action-stack .header-actions{grid-template-columns:repeat(3,minmax(0,max-content));justify-content:start}
+ main.memo-exc-wide-main #excView>.memo-equiv-page{max-width:100%}
+}
+#excView .memo-exc-suggestions button[aria-selected="true"]{background:#dcefe3!important;outline:2px solid #55986f;outline-offset:-2px}
 </style>
 </head>
 <body>
@@ -981,7 +1019,7 @@ main.memo-exc-wide-main #excView .memo-exc-matrix-scroll{
   </div>
 </a>
     <div id="headerSearchSlot" class="header-search-slot"></div>
-    <div class="header-action-stack"><div class="header-actions"><button id="excNav" type="button" title="Comparer les excipients des spécialités de même dosage et forme">Excipients</button><button id="equivNav" type="button" title="Rechercher une correspondance entre un nom commercial et une DCI">Équivalences</button><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="memoThemeToggle" class="memo-theme-toggle" type="button" aria-label="Activer le mode sombre" title="Passer en mode sombre" aria-pressed="false"><svg class="memo-moon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.9 13.1A9 9 0 0 1 10.9 3.1 9 9 0 1 0 20.9 13.1Z"/></svg><svg class="memo-sun" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg></button><button id="loginBtn" type="button" class="admin-lock" title="Administration (Ctrl + Alt + A)" aria-label="Connexion administrateur" aria-keyshortcuts="Control+Alt+A"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="10" width="17" height="11.5" rx="2.5"/><path d="M7.5 10V7a4.5 4.5 0 0 1 9 0v3"/><path d="M12 15.1v2.9"/><circle cx="12" cy="14.8" r="1" fill="currentColor" stroke="none"/></svg></button><button id="logoutBtn" type="button" class="header-logout hidden">Déconnexion</button></div><div class="header-admin-actions hidden" id="headerAdminActions"><details class="header-json-menu hidden" id="headerJsonMenu"><summary>JSON <span aria-hidden="true">⌄</span></summary><div class="header-json-items"><button id="exportBtn" type="button">Exporter JSON</button><button id="importBtn" type="button">Importer JSON</button></div></details><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
+    <div class="header-action-stack"><div class="header-actions"><button id="excNav" type="button" title="Comparer les excipients des spécialités de même dosage et forme">Excipients</button><button id="equivNav" type="button" title="Rechercher une correspondance entre un nom commercial et une DCI">Équivalences</button><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="loginBtn" type="button" class="admin-lock" title="Administration (Ctrl + Alt + A)" aria-label="Connexion administrateur" aria-keyshortcuts="Control+Alt+A"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="10" width="17" height="11.5" rx="2.5"/><path d="M7.5 10V7a4.5 4.5 0 0 1 9 0v3"/><path d="M12 15.1v2.9"/><circle cx="12" cy="14.8" r="1" fill="currentColor" stroke="none"/></svg></button><button id="logoutBtn" type="button" class="header-logout hidden">Déconnexion</button></div><div class="header-admin-actions hidden" id="headerAdminActions"><details class="header-json-menu hidden" id="headerJsonMenu"><summary>JSON <span aria-hidden="true">⌄</span></summary><div class="header-json-items"><button id="exportBtn" type="button">Exporter JSON</button><button id="importBtn" type="button">Importer JSON</button></div></details><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
   </div>
   <p>Une base de repères pour retrouver rapidement les informations utiles sur les médicaments, leurs modalités de prise et les points de vigilance.</p>
 </div></header>
@@ -3785,9 +3823,20 @@ function memoRenderExcipientPage(){
  if(!input||!host)return;
  const variant=memoExcipientVariants().find(m=>String(m.id)===String(memoExcSelectedVariantId));
  if(variant&&document.activeElement!==input)input.value=memoExcipientVariantLabel(variant);
+ if(!variant)document.querySelector("#excView>.memo-equiv-page")?.style.setProperty("--memo-exc-extra",0);
  host.innerHTML=variant?`<div class="memo-exc-page-title"><strong>${esc(memoExcipientVariantLabel(variant))}</strong><span>${variant.presentations.length} médicament(s) commercial(aux) référencé(s)</span></div>${memoExcipientComparator(variant)}`:
   '<p class="memo-equiv-empty">Recherche une molécule, puis sélectionne sa présentation dans les suggestions.</p>';
  if(variant)memoWireExcipientComparator(host,variant);
+}
+let memoExcSuggestionIndex=-1;
+function memoExcHighlightSuggestion(){
+ const list=$("memoExcSuggestions"),input=$("memoExcVariantSearch");
+ const options=[...list.querySelectorAll("[data-memo-exc-choice]")];
+ options.forEach((option,i)=>{option.setAttribute("aria-selected",String(i===memoExcSuggestionIndex));option.id="memo-exc-option-"+i;});
+ if(memoExcSuggestionIndex>=0&&options[memoExcSuggestionIndex]){
+  input.setAttribute("aria-activedescendant",options[memoExcSuggestionIndex].id);
+  options[memoExcSuggestionIndex].scrollIntoView({block:"nearest"});
+ }else input.removeAttribute("aria-activedescendant");
 }
 function memoExcShowSuggestions(){
  const input=$("memoExcVariantSearch"),list=$("memoExcSuggestions");
@@ -3796,7 +3845,9 @@ function memoExcShowSuggestions(){
  if(!query){list.classList.add("hidden");input.setAttribute("aria-expanded","false");return;}
  const variants=memoExcSearchVariants(query).slice(0,12);
  list.innerHTML=variants.length?variants.map(m=>`<button type="button" role="option" data-memo-exc-choice="${esc(m.id)}">${esc(memoExcipientVariantLabel(m))}<small>${(m.presentations||[]).length} formule(s)</small></button>`).join(""):'<p class="memo-exc-no-match">Aucune présentation trouvée.</p>';
+ memoExcSuggestionIndex=-1;
  list.classList.remove("hidden");input.setAttribute("aria-expanded","true");
+ memoExcHighlightSuggestion();
 }
 function memoExcChooseVariant(id){
  const variant=memoExcipientVariants().find(m=>String(m.id)===String(id));if(!variant)return;
@@ -3804,10 +3855,14 @@ function memoExcChooseVariant(id){
  try{sessionStorage.setItem("memo-exc-selected-variant",memoExcSelectedVariantId)}catch(e){}
  $("memoExcVariantSearch").value=memoExcipientVariantLabel(variant);
  $("memoExcSuggestions").classList.add("hidden");
+ memoExcSuggestionIndex=-1;
+ $("memoExcVariantSearch").removeAttribute("aria-activedescendant");
  $("memoExcVariantSearch").setAttribute("aria-expanded","false");
  memoRenderExcipientPage();
 }
 function memoExcipientComparator(child){
+ const page=document.querySelector("#excView>.memo-equiv-page");
+ if(page)page.style.setProperty("--memo-exc-extra",Math.max(0,(child.presentations||[]).length-4));
  const products=(child.presentations||[]).map((p,i)=>({
   p,i,label:presentationLabel(p,child,i),
   items:memoExcipientTokens(p.excipients),
@@ -6098,9 +6153,18 @@ $("memoExcVariantSearch").addEventListener("input",()=>{
 $("memoExcVariantSearch").addEventListener("focus",memoExcShowSuggestions);
 $("memoExcVariantSearch").addEventListener("keydown",event=>{
  const list=$("memoExcSuggestions");
- if(event.key==="Escape"){list.classList.add("hidden");event.currentTarget.setAttribute("aria-expanded","false");}
+ if(event.key==="Escape"){
+  list.classList.add("hidden");event.currentTarget.setAttribute("aria-expanded","false");
+  event.currentTarget.removeAttribute("aria-activedescendant");memoExcSuggestionIndex=-1;return;
+ }
+ if((event.key==="ArrowDown"||event.key==="ArrowUp")&&!list.classList.contains("hidden")){
+  const options=[...list.querySelectorAll("[data-memo-exc-choice]")];
+  if(options.length){event.preventDefault();memoExcSuggestionIndex=event.key==="ArrowDown"?(memoExcSuggestionIndex+1)%options.length:(memoExcSuggestionIndex<0?options.length-1:(memoExcSuggestionIndex-1+options.length)%options.length);memoExcHighlightSuggestion();}
+ }
  if(event.key==="Enter"&&!list.classList.contains("hidden")){
-  const first=list.querySelector("[data-memo-exc-choice]");if(first){event.preventDefault();memoExcChooseVariant(first.dataset.memoExcChoice);}
+  const options=[...list.querySelectorAll("[data-memo-exc-choice]")];
+  const chosen=options[memoExcSuggestionIndex>=0?memoExcSuggestionIndex:0];
+  if(chosen){event.preventDefault();memoExcChooseVariant(chosen.dataset.memoExcChoice);}
  }
 });
 $("memoExcSuggestions").addEventListener("click",event=>{
@@ -6784,36 +6848,6 @@ const MEMOPHARM_CONTACT_ENDPOINT = `${SUPABASE_URL}/functions/v1/memopharm-conta
 
 </script>
 
-<script>
-/* Préférence locale, indépendante de Supabase et des droits administrateur. */
-(function(){
- const storageKey='memopharm-theme';
- let saved=null;
- try{saved=localStorage.getItem(storageKey)}catch(e){}
- const media=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)');
- let explicit=saved==='dark'||saved==='light';
- function apply(mode){
-   document.documentElement.setAttribute('data-memo-theme',mode);
-   const button=document.getElementById('memoThemeToggle');
-   if(button){
-     const dark=mode==='dark';
-     button.setAttribute('aria-pressed',String(dark));
-     button.setAttribute('aria-label',dark?'Activer le mode clair':'Activer le mode sombre');
-     button.title=dark?'Passer en mode clair':'Passer en mode sombre';
-   }
- }
- apply(explicit?saved:(media&&media.matches?'dark':'light'));
- document.getElementById('memoThemeToggle')?.addEventListener('click',function(){
-   const next=document.documentElement.getAttribute('data-memo-theme')==='dark'?'light':'dark';
-   explicit=true;apply(next);
-   try{localStorage.setItem(storageKey,next)}catch(e){}
- });
- if(media){
-   const update=function(){if(!explicit)apply(media.matches?'dark':'light')};
-   if(media.addEventListener)media.addEventListener('change',update);
-   else if(media.addListener)media.addListener(update);
- }
-})();
-</script>
+<script>document.documentElement.setAttribute("data-memo-theme","light");</script>
 </body></html>
 
