@@ -692,6 +692,17 @@ body.header-search-active #headerSearchSlot #searchSuggestions .result{min-width
 .memo-exc-result summary{cursor:pointer;color:var(--green);font-weight:650}
 .memo-exc-result details div{margin-top:5px}
 .memo-exc-disclaimer{border-top:1px solid var(--line);padding-top:10px;margin-bottom:0}
+
+/* V117.01 — comparateur déplacé sur une page indépendante */
+#excNav{white-space:nowrap;background:#edf6ee;color:var(--memo-group-deep);border:1px solid #aacbb6}
+#excNav:hover,#excNav[aria-current="page"]{background:#dbeee0;border-color:#75aa89}
+.memo-exc-page-controls{display:grid;gap:9px;max-width:740px;margin:22px 0 20px}
+.memo-exc-page-controls label{font-weight:650;color:var(--ink);font-size:.88rem}
+.memo-exc-page-controls input,.memo-exc-page-controls select{width:100%;min-width:0;padding:11px 13px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font:inherit}
+.memo-exc-page-title{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.memo-exc-page-title strong{font-size:1.1rem}
+.memo-exc-page-title span{font-size:.82rem;color:var(--muted)}
+#excView .memo-exc-compare{max-width:100%;margin-top:14px}
 </style>
 </head>
 <body>
@@ -706,7 +717,7 @@ body.header-search-active #headerSearchSlot #searchSuggestions .result{min-width
   </div>
 </a>
     <div id="headerSearchSlot" class="header-search-slot"></div>
-    <div class="header-action-stack"><div class="header-actions"><button id="equivNav" type="button" title="Rechercher une correspondance entre un nom commercial et une DCI">Équivalences</button><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="memoThemeToggle" class="memo-theme-toggle" type="button" aria-label="Activer le mode sombre" title="Passer en mode sombre" aria-pressed="false"><svg class="memo-moon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.9 13.1A9 9 0 0 1 10.9 3.1 9 9 0 1 0 20.9 13.1Z"/></svg><svg class="memo-sun" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg></button><button id="loginBtn" type="button" class="admin-lock" title="Administration (Ctrl + Alt + A)" aria-label="Connexion administrateur" aria-keyshortcuts="Control+Alt+A"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="10" width="17" height="11.5" rx="2.5"/><path d="M7.5 10V7a4.5 4.5 0 0 1 9 0v3"/><path d="M12 15.1v2.9"/><circle cx="12" cy="14.8" r="1" fill="currentColor" stroke="none"/></svg></button><button id="logoutBtn" type="button" class="header-logout hidden">Déconnexion</button></div><div class="header-admin-actions hidden" id="headerAdminActions"><details class="header-json-menu hidden" id="headerJsonMenu"><summary>JSON <span aria-hidden="true">⌄</span></summary><div class="header-json-items"><button id="exportBtn" type="button">Exporter JSON</button><button id="importBtn" type="button">Importer JSON</button></div></details><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
+    <div class="header-action-stack"><div class="header-actions"><button id="excNav" type="button" title="Comparer les excipients des spécialités de même dosage et forme">Excipients</button><button id="equivNav" type="button" title="Rechercher une correspondance entre un nom commercial et une DCI">Équivalences</button><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="memoThemeToggle" class="memo-theme-toggle" type="button" aria-label="Activer le mode sombre" title="Passer en mode sombre" aria-pressed="false"><svg class="memo-moon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.9 13.1A9 9 0 0 1 10.9 3.1 9 9 0 1 0 20.9 13.1Z"/></svg><svg class="memo-sun" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg></button><button id="loginBtn" type="button" class="admin-lock" title="Administration (Ctrl + Alt + A)" aria-label="Connexion administrateur" aria-keyshortcuts="Control+Alt+A"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="10" width="17" height="11.5" rx="2.5"/><path d="M7.5 10V7a4.5 4.5 0 0 1 9 0v3"/><path d="M12 15.1v2.9"/><circle cx="12" cy="14.8" r="1" fill="currentColor" stroke="none"/></svg></button><button id="logoutBtn" type="button" class="header-logout hidden">Déconnexion</button></div><div class="header-admin-actions hidden" id="headerAdminActions"><details class="header-json-menu hidden" id="headerJsonMenu"><summary>JSON <span aria-hidden="true">⌄</span></summary><div class="header-json-items"><button id="exportBtn" type="button">Exporter JSON</button><button id="importBtn" type="button">Importer JSON</button></div></details><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
   </div>
   <p>Une base de repères pour retrouver rapidement les informations utiles sur les médicaments, leurs modalités de prise et les points de vigilance.</p>
 </div></header>
@@ -797,6 +808,17 @@ body.header-search-active #headerSearchSlot #searchSuggestions .result{min-width
   <div class="memo-equiv-reset"><button id="equivClear" type="button">Effacer la recherche</button></div>
   <p class="memo-equiv-note">Statuts issus exclusivement des fiches molécules et de leurs variantes. Les noms de princeps historiques restent consultables ; leur commercialisation et la substituabilité sont à vérifier.</p>
   </div>
+ </div>
+ </section><section id="excView" class="hidden" aria-label="Comparateur d’excipients">
+ <div class="memo-equiv-page">
+  <div class="explore-heading"><h2>Comparateur d’excipients</h2><p>Comparer les compositions des médicaments commerciaux pour un même dosage et une même forme.</p></div>
+  <div class="memo-exc-page-controls">
+   <label for="memoExcVariantSearch">Rechercher une molécule ou une présentation</label>
+   <input type="search" id="memoExcVariantSearch" placeholder="Ex. : amoxicilline 1 g comprimé" autocomplete="off">
+   <label for="memoExcVariantSelect">Présentation à comparer</label>
+   <select id="memoExcVariantSelect"><option value="">Choisir une présentation…</option></select>
+  </div>
+  <div id="memoExcPageContent" aria-live="polite"><p class="memo-equiv-empty">Sélectionne une présentation pour comparer les formules référencées.</p></div>
  </div>
  </section><section id="exploreView" class="hidden"><div class="explore-heading"><h2>Explorer les fiches</h2><p>Parcourez les fiches communes et leurs spécialités associées.</p></div><div class="explore-search"><label for="exploreSearch">Rechercher dans les fiches</label><div class="explore-search-row"><input id="exploreSearch" type="search" autocomplete="off" placeholder="Ex. : amoxicilline, oubli de prise, CIP, conservation…"><button id="clearExploreSearch" type="button">Effacer</button></div><p id="exploreSearchCount" class="muted" aria-live="polite"></p></div><div class="explore-controls"><label>Classe thérapeutique<select id="exploreClass"></select></label><label>Indication thérapeutique<select id="exploreIndication"></select></label><label>Forme pharmaceutique<select id="exploreForm"></select></label><label>Badge pharmaceutique<select id="exploreBadge"><option value="">Tous les badges</option><option value="mte">⚠ MTE</option><option value="photo">☀ Photosensibilisant</option><option value="exception">EXC · Médicament d’exception</option><option value="stup">STUP · Stupéfiant</option><option value="cold">❄ Conservation au froid</option><option value="after">◷ Conservation après ouverture</option><option value="listI">Liste I</option><option value="listII">Liste II</option></select></label><button id="resetExplore" type="button">Effacer les filtres</button></div> <div id="memoThemeIntro" class="memo-theme-intro hidden" aria-live="polite"></div><div class="memo-explorer-split"><aside class="memo-explorer-sidebar" aria-label="Arborescence des fiches"><h3>Arborescence</h3><div id="exploreSidebarTree"></div></aside><div class="memo-explorer-results"><h3>Résultats par type de fiche</h3><div id="exploreCards" class="explore-cards"></div></div></div></section><section id="sourcesView" class="hidden"><div class="explore-heading"><h2>Sources documentaires</h2><p>Références communes utilisées pour construire et vérifier les fiches de Mémopharm.</p></div><div id="sourcesList" class="sources-list"></div><div id="sourcesAdmin" class="panel hidden" style="padding:18px;margin-top:18px"></div></section><div class="memo-v43-footer"><strong>📖 Une ressource pratique pour les professionnels de santé</strong><p>Mémopharm est une base documentaire indépendante conçue pour faciliter l’accès aux informations essentielles sur les médicaments et accompagner la pratique quotidienne des professionnels de santé.</p><p>Les fiches sont enrichies progressivement à partir de sources de référence. Les dates de mise à jour et de vérification permettent d’en apprécier l’actualité. Pour toute décision de prise en charge, les informations doivent être confrontées aux référentiels officiels en vigueur et aux données de la spécialité concernée.</p></div>
 <div id="dashMobileToolbar" role="toolbar" aria-label="Outils de modification de la liste">
@@ -1160,10 +1182,13 @@ function showView(view){
  $("dashboardListView").classList.toggle("hidden",view!=="dashboard-list");
  $("exploreView").classList.toggle("hidden",view!=="explore");
  $("equivView").classList.toggle("hidden",view!=="equiv");
+ $("excView").classList.toggle("hidden",view!=="exc");
  $("sourcesView").classList.toggle("hidden",view!=="sources");
  
  $("exploreNav").setAttribute("aria-current",view==="explore"?"page":"false");
  $("equivNav").setAttribute("aria-current",view==="equiv"?"page":"false");
+ $("excNav").setAttribute("aria-current",view==="exc"?"page":"false");
+ if(view==="exc")memoRenderExcipientPage();
  if(view==="equiv")memoSetCorrespondenceTab(memoCorrespondenceTab);
  $("sourcesNav").setAttribute("aria-current",view==="sources"?"page":"false");
  if(view==="explore")renderExplorer();
@@ -2249,7 +2274,7 @@ function navigateToView(view){
  url.searchParams.delete("edition");
  url.searchParams.delete("presentation");
  url.searchParams.delete("rubrique");
- url.hash=view==="explore"?"explorer":view==="sources"?"sources":view==="equiv"?"equivalences":"";
+ url.hash=view==="explore"?"explorer":view==="sources"?"sources":view==="equiv"?"equivalences":view==="exc"?"excipients":"";
  history.pushState({view},"",url);rememberNavigation();
  editorId=null;
  openedSearchFiche=false;
@@ -2322,7 +2347,7 @@ function restoreHistoryPage(state=history.state){
   if(params.get("edition")==="1"&&admin){renderEditor(med.id);return}
   renderDetail(params.get("rubrique"),params.has("presentation")?Number(params.get("presentation")):null);
  }else{
-  showView(location.hash==="#explorer"?"explore":location.hash==="#sources"?"sources":location.hash==="#equivalences"?"equiv":"home");
+  showView(location.hash==="#explorer"?"explore":location.hash==="#sources"?"sources":location.hash==="#equivalences"?"equiv":location.hash==="#excipients"?"exc":"home");
   if(location.hash==="#explorer"&&state?.memopharmExplorerFilter)memoApplyExplorerFilter(state.memopharmExplorerFilter);
  }
  window.scrollTo({top:0,behavior:"instant"});
@@ -3082,8 +3107,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDo
    const dose=dosageLabel(child);
    const moleculeName=displayMedName(m);
    const selectedTitle=[moleculeName,dose].filter(Boolean).join(" ")+(form?" — "+form:"");
-   panel.innerHTML=`<div class="memo-selected-presentation"><span class="memo-selected-caption">PRÉSENTATION SÉLECTIONNÉE</span><div class="memo-v44-heading"><strong class="memo-v44-title">${esc(selectedTitle)}</strong><span class="memo-v44-regulatory"></span></div>${ficheDateLabel(child)}</div>${memoExcipientComparator(child)}${presentationHtml}${priorityHtml}${rubricTools}${specificHtml}${(!priorityHtml&&!specificHtml&&!presentationHtml)?'<p class="memo-specific-empty">Aucune particularité renseignée pour cette présentation.</p>':''}`;
-   memoWireExcipientComparator(panel,child);
+   panel.innerHTML=`<div class="memo-selected-presentation"><span class="memo-selected-caption">PRÉSENTATION SÉLECTIONNÉE</span><div class="memo-v44-heading"><strong class="memo-v44-title">${esc(selectedTitle)}</strong><span class="memo-v44-regulatory"></span></div>${ficheDateLabel(child)}</div>${presentationHtml}${priorityHtml}${rubricTools}${specificHtml}${(!priorityHtml&&!specificHtml&&!presentationHtml)?'<p class="memo-specific-empty">Aucune particularité renseignée pour cette présentation.</p>':''}`;
    if(admin){
     const headings=[...panel.querySelectorAll('.memo-v74-rubric > summary')];
     headings.forEach((heading,i)=>{const sec=specificSections[i];if(sec)memoAppendRubricEdit(heading,child,sec)});
@@ -3371,6 +3395,28 @@ function memoExcipientTokens(raw){
 }
 function memoExcipientNormalize(v){
  return String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("fr").replace(/\s+/g," ").trim();
+}
+function memoExcipientVariants(){
+ return publicMeds().filter(m=>isVariantFiche(m)&&Array.isArray(m.presentations)&&m.presentations.length);
+}
+function memoExcipientVariantLabel(m){
+ const parent=meds.find(x=>String(x.id)===String(moleculeParentId(m)));
+ return [parent?.name||m.name,m.dosage,m.form].map(x=>String(x||"").trim()).filter(Boolean).join(" · ");
+}
+function memoRenderExcipientPage(){
+ const input=$("memoExcVariantSearch"),select=$("memoExcVariantSelect"),host=$("memoExcPageContent");
+ if(!input||!select||!host)return;
+ const q=norm(input.value.trim());
+ const variants=memoExcipientVariants().filter(m=>!q||norm(memoExcipientVariantLabel(m)).includes(q))
+  .sort((a,b)=>memoExcipientVariantLabel(a).localeCompare(memoExcipientVariantLabel(b),"fr"));
+ const selected=select.value;
+ select.innerHTML='<option value="">Choisir une présentation…</option>'+variants.map(m=>
+  `<option value="${esc(m.id)}">${esc(memoExcipientVariantLabel(m))}</option>`).join("");
+ if(variants.some(m=>String(m.id)===selected))select.value=selected;
+ const variant=variants.find(m=>String(m.id)===select.value);
+ host.innerHTML=variant?`<div class="memo-exc-page-title"><strong>${esc(memoExcipientVariantLabel(variant))}</strong><span>${variant.presentations.length} médicament(s) commercial(aux) référencé(s)</span></div>${memoExcipientComparator(variant)}`:
+  `<p class="memo-equiv-empty">${variants.length?"Sélectionne une présentation pour comparer ses formules.":"Aucune présentation correspondante trouvée."}</p>`;
+ if(variant)memoWireExcipientComparator(host,variant);
 }
 function memoExcipientComparator(child){
  const products=(child.presentations||[]).map((p,i)=>({
@@ -5518,6 +5564,9 @@ async function saveCommonSources(){
  pendingSources=null;renderSources();toast("Sources communes enregistrées !");
 }
 
+$("excNav").onclick=()=>navigateToView("exc");
+$("memoExcVariantSearch").addEventListener("input",memoRenderExcipientPage);
+$("memoExcVariantSelect").addEventListener("change",memoRenderExcipientPage);
 $("equivNav").onclick=()=>{navigateToView("equiv");(memoCorrespondenceTab==="dci"?$("memoSpecialtySearch"):$("equivPrincepsSearch")).focus()};
 $("memoTabDci").onclick=()=>memoSetCorrespondenceTab("dci");
 $("memoTabGeneric").onclick=()=>memoSetCorrespondenceTab("generic");
