@@ -665,6 +665,9 @@ body.header-search-active #headerSearchSlot #searchSuggestions .result{min-width
 \n/* V116.97 — rubrique de sécurité unifiée, sous-parties éditables */
 .section .memo-safety-subheading{font-size:.98rem;font-weight:750;margin:16px 0 8px;padding:7px 10px;border-left:3px solid var(--line);border-radius:5px;background:var(--card)}
 .section .memo-safety-subheading:first-of-type{margin-top:5px}
+
+/* V116.98 : pastilles commerciales centrées */
+#editor .memo-v26-commercial-pills .memo-v113-pill-wrap>button[data-v26-select-commercial]{display:flex;align-items:center;justify-content:center;text-align:center;padding-left:15px;padding-right:15px;min-height:42px;line-height:1.25;white-space:normal;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
@@ -4388,12 +4391,27 @@ function renderEditor(id){
    child.presentations[i]=p;
   });
  }
+ function memoCommercialTabLabel(p,i){
+  const kind=p?.presentationKind||'';
+  const label=kind==='generic'?(p.lab||p.name):kind==='princeps'?(p.name||p.lab):(p.name||p.lab);
+  return String(label||'Médicament '+(i+1)).trim();
+ }
+ function memoRefreshCommercialTabLabels(root){
+  const card=root.querySelector('[data-variant-commercial-root] [data-presentation]');
+  if(!card)return;
+  const kind=card.querySelector('[data-pkind]:checked')?.dataset.pkind||'';
+  const name=card.querySelector('[data-pfield="name"]')?.value.trim()||'';
+  const lab=card.querySelector('[data-pfield="lab"]')?.value.trim()||'';
+  const label=kind==='generic'?(lab||name):kind==='princeps'?(name||lab):(name||lab);
+  const btn=root.querySelector('[data-v26-select-commercial="'+variantCommercialIndex+'"]');
+  if(btn)btn.textContent=label||'Médicament '+(variantCommercialIndex+1);
+ }
  function variantCommercialMarkup(child){
   const presentations=child.presentations||[];
   if(variantCommercialIndex>=presentations.length)variantCommercialIndex=Math.max(0,presentations.length-1);
   return `<div class="memo-v26-commercial">
    <div class="memo-v26-commercial-header"><strong>Médicaments commerciaux</strong></div>
-   <div class="memo-v26-commercial-pills">${presentations.map((p,i)=>`<span class="memo-v113-pill-wrap"><button type="button" class="${i===variantCommercialIndex?'is-active':''}" data-v26-select-commercial="${i}">${esc(p.name||'Médicament '+(i+1))}</button><button type="button" class="memo-v113-delete-mini" data-v113-remove-commercial="${i}" aria-label="Supprimer le médicament commercial ${esc(p.name||'Médicament '+(i+1))}" title="Supprimer ce médicament commercial"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></span>`).join('')}<button type="button" class="memo-variant-add-round" data-v26-add-commercial title="Ajouter un médicament commercial" aria-label="Ajouter un médicament commercial"><svg class="memo-add-plus-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
+   <div class="memo-v26-commercial-pills">${presentations.map((p,i)=>`<span class="memo-v113-pill-wrap"><button type="button" class="${i===variantCommercialIndex?'is-active':''}" data-v26-select-commercial="${i}">${esc(memoCommercialTabLabel(p,i))}</button><button type="button" class="memo-v113-delete-mini" data-v113-remove-commercial="${i}" aria-label="Supprimer le médicament commercial ${esc(p.name||'Médicament '+(i+1))}" title="Supprimer ce médicament commercial"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></span>`).join('')}<button type="button" class="memo-variant-add-round" data-v26-add-commercial title="Ajouter un médicament commercial" aria-label="Ajouter un médicament commercial"><svg class="memo-add-plus-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
    <div data-variant-commercial-root>${presentations.length?presentationEditor(presentations[variantCommercialIndex],variantCommercialIndex):''}</div>
   </div>`;
  }
@@ -4446,8 +4464,12 @@ function renderEditor(id){
    if(rows.querySelectorAll('[data-cip-pack-row]').length===1)rows.querySelectorAll('input').forEach(el=>el.value='');
    else remove.closest('[data-cip-pack-row]').remove();
   });
+  root.querySelector('[data-variant-commercial-root]')?.addEventListener('input',e=>{
+   if(e.target.matches('[data-pfield="name"],[data-pfield="lab"]'))memoRefreshCommercialTabLabels(root);
+  });
   root.querySelectorAll('[data-pkind]').forEach(el=>el.onchange=()=>{
    if(el.checked)root.querySelectorAll('[data-pkind]').forEach(other=>{if(other!==el)other.checked=false});
+   memoRefreshCommercialTabLabels(root);
   });
   root.querySelectorAll('[data-can-split],[data-cannot-split],[data-can-crush],[data-cannot-crush],[data-can-open],[data-cannot-open]').forEach(el=>el.onchange=()=>{
    if(!el.checked)return;
