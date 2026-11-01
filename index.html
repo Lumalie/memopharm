@@ -806,6 +806,24 @@ html[data-memo-theme="dark"] #excView .memo-exc-matrix,html[data-memo-theme="dar
 #editor .memo-v26-commercial .presentation-edit-row{padding:4px 0!important;margin:0!important}
 #editor #presentationEditors .section-editor-head,
 #editor .memo-v26-commercial .presentation-card>.section-editor-head{border:0!important;box-shadow:none!important;background:transparent!important}
+
+/* V117.09 — hiérarchie et typographie harmonisées dans les présentations */
+#editor .presentation-card .presentation-fields{display:block}
+#editor .presentation-card .memo-presentation-group{display:grid;gap:14px;padding:4px 0}
+#editor .presentation-card .memo-presentation-divider{height:1px;background:#d6e3d9;margin:20px 0;border:0}
+#editor .presentation-card .memo-presentation-name-lab{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+#editor .presentation-card .memo-presentation-name-lab .presentation-edit-row{min-width:0;margin:0}
+#editor .presentation-card .memo-presentation-group .presentation-edit-row{margin-top:0;margin-bottom:0;padding-top:0;padding-bottom:0}
+#editor .presentation-card .memo-presentation-group .presentation-toggle,
+#editor .presentation-card .memo-presentation-group .presentation-kind-row,
+#editor .presentation-card .memo-presentation-group .memo-v43-regulation>label{font-size:.88rem;line-height:1.45;font-weight:650}
+#editor .presentation-card .memo-presentation-group input:not([type=checkbox]):not([type=file]),
+#editor .presentation-card .memo-presentation-group textarea,
+#editor .presentation-card .memo-presentation-group select{font-size:.88rem;line-height:1.4}
+#editor .presentation-card .memo-presentation-group .hint{font-size:.77rem;line-height:1.45}
+#editor .presentation-card .memo-presentation-manipulations{display:grid;gap:12px}
+#editor .presentation-card .memo-presentation-regulation{gap:16px}
+@media(max-width:580px){#editor .presentation-card .memo-presentation-name-lab{grid-template-columns:minmax(0,1fr)}}
 </style>
 </head>
 <body>
@@ -3677,8 +3695,31 @@ function presentationEditor(p,i){
  const check=(key,label)=>`<label class="presentation-toggle"><input type="checkbox" data-show-field="${key}" ${p[key]===true?"checked":""}><span>${label}</span></label>`;
  const field=(key,label,showKey)=>`<div class="full presentation-edit-row">${check(showKey,label)}<input aria-label="${label}" data-pfield="${key}" ${key==="lab"?'data-memo-kind="lab" list="memo-labs"':""} value="${esc(p[key]||"")}" placeholder="${label}"></div>`;
  return `<div class="presentation-card" data-presentation="${i}"><div class="section-editor-head"><strong>Présentation ${i+1}</strong><button type="button" data-remove-presentation="${i}" class="danger">Retirer</button></div>
- ${specialty?"":`<div class="presentation-kind-row"><span>Statut de la présentation :</span><label><input type="checkbox" data-pkind="princeps" ${p.presentationKind==="princeps"?"checked":""}> Princeps</label><label><input type="checkbox" data-pkind="generic" ${p.presentationKind==="generic"?"checked":""}> Générique</label></div>`}
- <div class="memo-v43-regulation"><label for="memo-v43-reg-${i}">Classement réglementaire</label><select id="memo-v43-reg-${i}" data-regulation><option value="" ${!p.regulatoryList?"selected":""}>Non renseigné</option><option value="I" ${p.regulatoryList==="I"?"selected":""}>Liste I</option><option value="II" ${p.regulatoryList==="II"?"selected":""}>Liste II</option><option value="none" ${p.regulatoryList==="none"?"selected":""}>Non listé</option></select></div>
+ <div class="presentation-fields">
+ <div class="memo-presentation-group memo-presentation-identity"> ${specialty?"":`<div class="presentation-kind-row"><span>Statut de la présentation :</span><label><input type="checkbox" data-pkind="princeps" ${p.presentationKind==="princeps"?"checked":""}> Princeps</label><label><input type="checkbox" data-pkind="generic" ${p.presentationKind==="generic"?"checked":""}> Générique</label></div>`}
+
+ <div class="memo-presentation-name-lab"> ${specialty?"":field("name","Nom","showName")}
+ ${field("lab","Laboratoire","showLab")}
+</div> <div class="full presentation-edit-row cip-pack-editor">${check("showCip","CIP / conditionnements")}<div class="cip-pack-rows">${cipConditionnements(p).concat(cipConditionnements(p).length?[]:[{cip:"",pack:""}]).map((item,j)=>`<div class="cip-pack-edit-row" data-cip-pack-row><input type="text" inputmode="numeric" data-cip-value value="${esc(item.cip)}" placeholder="Code CIP (13 chiffres)" aria-label="Code CIP"><input type="text" data-pack-value value="${esc(item.pack)}" placeholder="Boîte de 30, boîte de 90…" aria-label="Conditionnement / boîtage"><button type="button" data-remove-cip-pack title="Supprimer ce conditionnement" aria-label="Supprimer ce conditionnement">×</button></div>`).join("")}<button type="button" class="cip-pack-add" data-add-cip-pack>+ Ajouter un conditionnement</button></div></div>
+</div>
+ <div class="memo-presentation-divider" aria-hidden="true"></div>
+ <div class="memo-presentation-group"> ${field("description","Aspect","showAspect")}
+ <input type="hidden" data-pfield="marking" value="${esc(p.marking||"")}">
+ <input type="hidden" data-pfield="excipientsNotable" value="${esc(p.excipientsNotable||"")}">
+ <input type="checkbox" data-show-field="excipientsVerified" ${p.excipientsVerified===true?"checked":""} hidden tabindex="-1" aria-hidden="true">
+<div class="memo-presentation-manipulations"> <div class="full presentation-edit-row">${check("showSplit","Fractionnement")}<div class="presentation-status-row"><label class="presentation-verified"><input type="checkbox" data-can-split ${p.canSplit===true&&!p.cannotSplit?"checked":""}>Possible (confirmé)</label><label class="presentation-verified"><input type="checkbox" data-cannot-split ${p.cannotSplit===true?"checked":""}>Impossible (confirmé)</label><input type="text" data-pfield="splitReason" value="${esc(p.splitReason||"")}" placeholder="Pourquoi ? (facultatif)" data-reason-for="split"></div></div>
+ <div class="full presentation-edit-row">${check("showCrush","Écrasement")}<div class="presentation-status-row"><label class="presentation-verified"><input type="checkbox" data-can-crush ${p.canCrush===true&&!p.cannotCrush?"checked":""}>Possible (confirmé)</label><label class="presentation-verified"><input type="checkbox" data-cannot-crush ${p.cannotCrush===true?"checked":""}>Impossible (confirmé)</label><input type="text" data-pfield="crushReason" value="${esc(p.crushReason||"")}" placeholder="Pourquoi ? (facultatif)" data-reason-for="crush"></div></div>
+ <div class="full presentation-edit-row">${check("showOpen","Ouverture de la gélule")}<div class="presentation-status-row"><label class="presentation-verified"><input type="checkbox" data-can-open ${p.canOpen===true&&!p.cannotOpen?"checked":""}>Possible (confirmé)</label><label class="presentation-verified"><input type="checkbox" data-cannot-open ${p.cannotOpen===true?"checked":""}>Impossible (confirmé)</label><input type="text" data-pfield="openReason" value="${esc(p.openReason||"")}" placeholder="Pourquoi ? (facultatif)" data-reason-for="open"></div></div>
+</div></div>
+ <div class="memo-presentation-divider" aria-hidden="true"></div>
+ <div class="memo-presentation-group"> <div class="full presentation-edit-row memo-excipients-editor">${check("showExcipients","Excipients de la formule")}<textarea data-pfield="excipients" rows="3" placeholder="Liste des excipients de cette présentation (RCP, rubrique 6.1)">${esc(p.excipients||"")}</textarea></div>
+</div>
+ <div class="memo-presentation-divider" aria-hidden="true"></div>
+ <div class="memo-presentation-group memo-presentation-photos"> <div class="full presentation-edit-row">${check("showPhoto","Photo de la boîte")}<input type="file" accept="image/jpeg,image/png,image/webp" data-photo-file="${i}"><div class="hint" data-photo-hint="${i}">${pending?"Photo sélectionnée : "+esc(pending.name):currentPhoto?"Photo enregistrée : visible ci-dessous":"JPG, PNG ou WebP · maximum 2 Mo. Envoyée lors de l’enregistrement de la fiche."}</div>${currentPhoto?`<img class="image-preview" src="${esc(currentPhoto)}" alt="Photo enregistrée de la présentation">`:""}</div>
+ <div class="full presentation-edit-row">${check("showTabletPhoto","Photo du comprimé / de la gélule")}<input type="file" accept="image/jpeg,image/png,image/webp" data-tablet-photo-file="${i}"><div class="hint" data-tablet-photo-hint="${i}">${tabletPending?"Photo sélectionnée : "+esc(tabletPending.name):tabletPhoto?"Photo enregistrée : visible ci-dessous":"JPG, PNG ou WebP · maximum 2 Mo. Envoyée lors de l’enregistrement de la fiche."}</div>${tabletPhoto?`<img class="image-preview" src="${esc(tabletPhoto)}" alt="Photo enregistrée du comprimé ou de la gélule">`:""}</div>
+</div>
+ <div class="memo-presentation-divider" aria-hidden="true"></div>
+ <div class="memo-presentation-group memo-presentation-regulation"> <div class="memo-v43-regulation"><label for="memo-v43-reg-${i}">Classement réglementaire</label><select id="memo-v43-reg-${i}" data-regulation><option value="" ${!p.regulatoryList?"selected":""}>Non renseigné</option><option value="I" ${p.regulatoryList==="I"?"selected":""}>Liste I</option><option value="II" ${p.regulatoryList==="II"?"selected":""}>Liste II</option><option value="none" ${p.regulatoryList==="none"?"selected":""}>Non listé</option></select></div>
  ${specialty?"":` <div class="memo-practical-editor">
  <label><input type="checkbox" data-practical-cold ${p.coldStorage===true?"checked":""}> ❄ Conservation au froid</label>
  <label><input type="checkbox" data-practical-after ${p.afterOpening===true?"checked":""}> ◷ Durée après ouverture</label>
@@ -3687,20 +3728,7 @@ function presentationEditor(p,i){
  </div>
  
 `}
- <div class="presentation-fields">
- ${specialty?"":field("name","Nom","showName")}
- ${field("lab","Laboratoire","showLab")}
- <div class="full presentation-edit-row cip-pack-editor">${check("showCip","CIP / conditionnements")}<div class="cip-pack-rows">${cipConditionnements(p).concat(cipConditionnements(p).length?[]:[{cip:"",pack:""}]).map((item,j)=>`<div class="cip-pack-edit-row" data-cip-pack-row><input type="text" inputmode="numeric" data-cip-value value="${esc(item.cip)}" placeholder="Code CIP (13 chiffres)" aria-label="Code CIP"><input type="text" data-pack-value value="${esc(item.pack)}" placeholder="Boîte de 30, boîte de 90…" aria-label="Conditionnement / boîtage"><button type="button" data-remove-cip-pack title="Supprimer ce conditionnement" aria-label="Supprimer ce conditionnement">×</button></div>`).join("")}<button type="button" class="cip-pack-add" data-add-cip-pack>+ Ajouter un conditionnement</button></div></div>
- ${field("description","Aspect","showAspect")}
- <input type="hidden" data-pfield="marking" value="${esc(p.marking||"")}">
- <input type="hidden" data-pfield="excipientsNotable" value="${esc(p.excipientsNotable||"")}">
- <input type="checkbox" data-show-field="excipientsVerified" ${p.excipientsVerified===true?"checked":""} hidden tabindex="-1" aria-hidden="true">
- <div class="full presentation-edit-row memo-excipients-editor">${check("showExcipients","Excipients de la formule")}<textarea data-pfield="excipients" rows="3" placeholder="Liste des excipients de cette présentation (RCP, rubrique 6.1)">${esc(p.excipients||"")}</textarea></div>
- <div class="full presentation-edit-row">${check("showSplit","Fractionnement")}<div class="presentation-status-row"><label class="presentation-verified"><input type="checkbox" data-can-split ${p.canSplit===true&&!p.cannotSplit?"checked":""}>Possible (confirmé)</label><label class="presentation-verified"><input type="checkbox" data-cannot-split ${p.cannotSplit===true?"checked":""}>Impossible (confirmé)</label><input type="text" data-pfield="splitReason" value="${esc(p.splitReason||"")}" placeholder="Pourquoi ? (facultatif)" data-reason-for="split"></div></div>
- <div class="full presentation-edit-row">${check("showCrush","Écrasement")}<div class="presentation-status-row"><label class="presentation-verified"><input type="checkbox" data-can-crush ${p.canCrush===true&&!p.cannotCrush?"checked":""}>Possible (confirmé)</label><label class="presentation-verified"><input type="checkbox" data-cannot-crush ${p.cannotCrush===true?"checked":""}>Impossible (confirmé)</label><input type="text" data-pfield="crushReason" value="${esc(p.crushReason||"")}" placeholder="Pourquoi ? (facultatif)" data-reason-for="crush"></div></div>
- <div class="full presentation-edit-row">${check("showOpen","Ouverture de la gélule")}<div class="presentation-status-row"><label class="presentation-verified"><input type="checkbox" data-can-open ${p.canOpen===true&&!p.cannotOpen?"checked":""}>Possible (confirmé)</label><label class="presentation-verified"><input type="checkbox" data-cannot-open ${p.cannotOpen===true?"checked":""}>Impossible (confirmé)</label><input type="text" data-pfield="openReason" value="${esc(p.openReason||"")}" placeholder="Pourquoi ? (facultatif)" data-reason-for="open"></div></div>
- <div class="full presentation-edit-row">${check("showPhoto","Photo de la boîte")}<input type="file" accept="image/jpeg,image/png,image/webp" data-photo-file="${i}"><div class="hint" data-photo-hint="${i}">${pending?"Photo sélectionnée : "+esc(pending.name):currentPhoto?"Photo enregistrée : visible ci-dessous":"JPG, PNG ou WebP · maximum 2 Mo. Envoyée lors de l’enregistrement de la fiche."}</div>${currentPhoto?`<img class="image-preview" src="${esc(currentPhoto)}" alt="Photo enregistrée de la présentation">`:""}</div>
- <div class="full presentation-edit-row">${check("showTabletPhoto","Photo du comprimé / de la gélule")}<input type="file" accept="image/jpeg,image/png,image/webp" data-tablet-photo-file="${i}"><div class="hint" data-tablet-photo-hint="${i}">${tabletPending?"Photo sélectionnée : "+esc(tabletPending.name):tabletPhoto?"Photo enregistrée : visible ci-dessous":"JPG, PNG ou WebP · maximum 2 Mo. Envoyée lors de l’enregistrement de la fiche."}</div>${tabletPhoto?`<img class="image-preview" src="${esc(tabletPhoto)}" alt="Photo enregistrée du comprimé ou de la gélule">`:""}</div>
+</div>
  ${isSpecialiteFiche(meds.find(x=>x.id===editorId)||{})?`<div class="full memo-v86-fields"><h4>Formulation et informations spécifiques</h4><p class="muted">Chaque présentation peut avoir sa propre forme, son dosage et ses informations médicales. Renseigne les valeurs vérifiées ; laisse vide ce qui n'est pas documenté.</p><div class="memo-v86-grid"><div><label>Forme pharmaceutique</label><input data-pfield="form" data-memo-kind="form" list="memo-forms" value="${esc(p.form||"")}" placeholder="Comprimé, gélule…"></div><div><label>Dosage de cette présentation</label><input data-pfield="dosage" value="${esc(p.dosage||"")}" placeholder="Ex. : 80 mg"></div>${MEMO_V86_FIELDS.map(([key,label])=>`<div><label>${esc(label)}</label><textarea data-v86-clinical="${key}" placeholder="À renseigner selon les sources de cette présentation">${esc(memoV86Clinical(p)[key]||"")}</textarea></div>`).join("")}</div></div>`:`<input type="hidden" data-pfield="dosage" value="${esc(p.dosage||"")}"><input type="hidden" data-pfield="form" value="${esc(p.form||"")}">`}
  ${["cis","sourceUrl"].map(key=>`<input type="hidden" data-pfield="${key}" value="${esc(p[key]||"")}">`).join("")}
  
