@@ -3454,7 +3454,7 @@ function memoInlineHtml(model,editable=false){
  const lookup=new Map(model.cells.map(c=>[c.r+":"+c.c,c]));
  return `<div class="memo-inline-table-wrap" ${editable?'contenteditable="false"':''}><table class="memo-inline-table"><tbody>${Array.from({length:model.rows},(_,r)=>`<tr>${Array.from({length:model.cols},(_,c)=>{
   const cell=lookup.get(r+":"+c);if(!cell)return "";
-  return `<td rowspan="${cell.rs}" colspan="${cell.cs}" data-r="${r}" data-c="${c}" style="vertical-align:${["top","middle","bottom"].includes(cell.valign)?cell.valign:"top"}" ${editable?'contenteditable="true"':''}>${richInline(cell.text).replace(/\n/g,"<br>")}</td>`;
+  return `<td rowspan="${cell.rs}" colspan="${cell.cs}" data-r="${r}" data-c="${c}" style="vertical-align:${["top","middle","bottom"].includes(cell.valign)?cell.valign:"top"};text-align:${["left","center","right","justify"].includes(cell.align)?cell.align:"left"}" ${editable?'contenteditable="true"':''}>${richInline(cell.text).replace(/\n/g,"<br>")}</td>`;
  }).join("")}</tr>`).join("")}</tbody></table></div>`;
 }
 function memoInlineRead(table){
@@ -3478,7 +3478,7 @@ function memoInlineRead(table){
     }
     block.replaceWith(span);
    });
-   cells.push({r,c,rs,cs,text:memoRichSerialize(normalized,true).trim(),valign:["top","middle","bottom"].includes(td.style.verticalAlign)?td.style.verticalAlign:"top"});
+   cells.push({r,c,rs,cs,text:memoRichSerialize(normalized,true).trim(),valign:["top","middle","bottom"].includes(td.style.verticalAlign)?td.style.verticalAlign:"top",align:["left","center","right","justify"].includes(td.style.textAlign)?td.style.textAlign:(["left","center","right","justify"].includes(td.querySelector("[style*=text-align]")?.style.textAlign)?td.querySelector("[style*=text-align]").style.textAlign:"left")});
    for(let rr=r;rr<r+rs;rr++)for(let cc=c;cc<c+cs;cc++)occupied.add(rr+":"+cc);
    c+=cs;
   }
@@ -3818,7 +3818,13 @@ function wireTextFormatting(){
     const safe=validSourceLink(url||'');if(safe)document.execCommand('createLink',false,safe);
    }else if(mode.startsWith('color:')){
     const color=TEXT_COLORS[mode.slice(6)];if(color)document.execCommand('foreColor',false,color);
-   }else if(mode.startsWith('align:'))document.execCommand(({left:'justifyLeft',center:'justifyCenter',right:'justifyRight',justify:'justifyFull'})[mode.slice(6)],false,null);
+   }else if(mode.startsWith('align:')){
+    const anchor=sel.anchorNode;
+    const td=(anchor?.nodeType===1?anchor:anchor?.parentElement)?.closest?.('td.memo-inline-table-cell, table.memo-inline-table td');
+    if(td&&editor.contains(td)){
+     td.style.textAlign=mode.slice(6);
+    }else document.execCommand(({left:'justifyLeft',center:'justifyCenter',right:'justifyRight',justify:'justifyFull'})[mode.slice(6)],false,null);
+   }
    else if(mode.startsWith('size:')){
     const range=sel.getRangeAt(0);const span=document.createElement('span');span.style.fontSize=mode.slice(5)+'px';
     try{range.surroundContents(span)}catch{const frag=range.extractContents();span.append(frag);range.insertNode(span)}
@@ -4657,7 +4663,7 @@ function memoTableModel(content){
   try{
    const data=JSON.parse(raw.slice(MEMO_TABLE_V2.length));
    if(Array.isArray(data.cells)&&Number.isInteger(data.rows)&&Number.isInteger(data.cols)&&data.rows>0&&data.cols>0&&data.rows<=100&&data.cols<=30){
-    const cells=data.cells.filter(c=>Number.isInteger(c.r)&&Number.isInteger(c.c)&&Number.isInteger(c.rs)&&Number.isInteger(c.cs)&&c.rs>0&&c.cs>0&&c.r>=0&&c.c>=0&&c.r+c.rs<=data.rows&&c.c+c.cs<=data.cols).map(c=>({r:c.r,c:c.c,rs:c.rs,cs:c.cs,text:String(c.text||""),valign:["top","middle","bottom"].includes(c.valign)?c.valign:"top"}));
+    const cells=data.cells.filter(c=>Number.isInteger(c.r)&&Number.isInteger(c.c)&&Number.isInteger(c.rs)&&Number.isInteger(c.cs)&&c.rs>0&&c.cs>0&&c.r>=0&&c.c>=0&&c.r+c.rs<=data.rows&&c.c+c.cs<=data.cols).map(c=>({r:c.r,c:c.c,rs:c.rs,cs:c.cs,text:String(c.text||""),valign:["top","middle","bottom"].includes(c.valign)?c.valign:"top",align:["left","center","right","justify"].includes(c.align)?c.align:"left"}));
     const covered=new Set();
     for(const cell of cells)for(let r=cell.r;r<cell.r+cell.rs;r++)for(let c=cell.c;c<cell.c+cell.cs;c++){const k=r+":"+c;if(covered.has(k))throw Error("overlap");covered.add(k)}
     for(let r=0;r<data.rows;r++)for(let c=0;c<data.cols;c++)if(!covered.has(r+":"+c))cells.push({r,c,rs:1,cs:1,text:""});
@@ -4671,7 +4677,7 @@ function memoTableModel(content){
  return {rows:rows.length,cols,cells:rows.flatMap((row,r)=>Array.from({length:cols},(_,c)=>({r,c,rs:1,cs:1,text:row[c]||""})))};
 }
 function memoTableEncode(model){
- return MEMO_TABLE_V2+JSON.stringify({rows:model.rows,cols:model.cols,cells:model.cells.map(({r,c,rs,cs,text,valign})=>({r,c,rs,cs,text,valign:valign||"top"}))});
+ return MEMO_TABLE_V2+JSON.stringify({rows:model.rows,cols:model.cols,cells:model.cells.map(({r,c,rs,cs,text,valign,align})=>({r,c,rs,cs,text,valign:valign||"top",align:align||"left"}))});
 }
 function tableRows(content){
  const model=memoTableModel(content),rows=Array.from({length:model.rows},()=>Array(model.cols).fill(""));
