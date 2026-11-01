@@ -3731,7 +3731,7 @@ function memoExcipientVariantLabel(m){
  const parent=meds.find(x=>String(x.id)===String(moleculeParentId(m)));
  return [parent?.name||m.name,m.dosage,m.form].map(x=>String(x||"").trim()).filter(Boolean).join(" · ");
 }
-let memoExcSelectedVariantId="";
+let memoExcSelectedVariantId=(()=>{try{return sessionStorage.getItem("memo-exc-selected-variant")||""}catch{return ""}})();
 function memoExcSearchVariants(q){
  const terms=memoExcipientNormalize(q).split(/\s+/).filter(Boolean);
  return memoExcipientVariants().filter(m=>{
@@ -3743,6 +3743,7 @@ function memoRenderExcipientPage(){
  const input=$("memoExcVariantSearch"),host=$("memoExcPageContent");
  if(!input||!host)return;
  const variant=memoExcipientVariants().find(m=>String(m.id)===String(memoExcSelectedVariantId));
+ if(variant&&document.activeElement!==input)input.value=memoExcipientVariantLabel(variant);
  host.innerHTML=variant?`<div class="memo-exc-page-title"><strong>${esc(memoExcipientVariantLabel(variant))}</strong><span>${variant.presentations.length} médicament(s) commercial(aux) référencé(s)</span></div>${memoExcipientComparator(variant)}`:
   '<p class="memo-equiv-empty">Recherche une molécule, puis sélectionne sa présentation dans les suggestions.</p>';
  if(variant)memoWireExcipientComparator(host,variant);
@@ -3759,6 +3760,7 @@ function memoExcShowSuggestions(){
 function memoExcChooseVariant(id){
  const variant=memoExcipientVariants().find(m=>String(m.id)===String(id));if(!variant)return;
  memoExcSelectedVariantId=String(variant.id);
+ try{sessionStorage.setItem("memo-exc-selected-variant",memoExcSelectedVariantId)}catch(e){}
  $("memoExcVariantSearch").value=memoExcipientVariantLabel(variant);
  $("memoExcSuggestions").classList.add("hidden");
  $("memoExcVariantSearch").setAttribute("aria-expanded","false");
@@ -3768,7 +3770,7 @@ function memoExcipientComparator(child){
  const products=(child.presentations||[]).map((p,i)=>({
   p,i,label:presentationLabel(p,child,i),
   items:memoExcipientTokens(p.excipients),
-  notable:memoExcipientTokens(p.excipientsNotable)
+  notable:[]
  }));
  if(!products.length)return "";
  return `<section class="memo-exc-matrix" data-memo-exc-matrix>
@@ -3825,7 +3827,7 @@ function memoWireExcipientComparator(panel,child){
  const products=(child.presentations||[]).map((p,i)=>({
   p,i,label:presentationLabel(p,child,i),
   parsed:memoExcipientParsed(p.excipients),
-  notable:memoExcipientParsed(p.excipientsNotable)
+  notable:{items:[],uncertain:false}
  }));
  const aromaRow=root.querySelector('.memo-exc-aroma-table tbody tr');
  if(aromaRow){
@@ -3959,7 +3961,7 @@ function presentationEditor(p,i){
  <div class="memo-presentation-divider" aria-hidden="true"></div>
  <div class="memo-presentation-group"> ${field("description","Aspect","showAspect")}
  <input type="hidden" data-pfield="marking" value="${esc(p.marking||"")}">
- <input type="hidden" data-pfield="excipientsNotable" value="${esc(p.excipientsNotable||"")}">
+ <input type="hidden" data-pfield="excipientsNotable" value="">
  <input type="checkbox" data-show-field="excipientsVerified" ${p.excipientsVerified===true?"checked":""} hidden tabindex="-1" aria-hidden="true">
 <div class="memo-presentation-manipulations"> <div class="full presentation-edit-row">${check("showSplit","Fractionnement")}<div class="presentation-status-row"><label class="presentation-verified"><input type="checkbox" data-can-split ${p.canSplit===true&&!p.cannotSplit?"checked":""}>Possible</label><label class="presentation-verified"><input type="checkbox" data-cannot-split ${p.cannotSplit===true?"checked":""}>Impossible</label><input type="text" data-pfield="splitReason" value="${esc(p.splitReason||"")}" placeholder="Pourquoi ? (facultatif)" data-reason-for="split"></div><div class="memo-equal-dose" data-equal-dose-row ${p.canSplit===true&&!p.cannotSplit?"":"hidden"}><span>Doses égales</span><label><input type="radio" name="memo-equal-${editorId}-${i}" data-equal-dose value="yes" ${p.equalDoses===true?"checked":""}> Oui</label><label><input type="radio" name="memo-equal-${editorId}-${i}" data-equal-dose value="no" ${p.equalDoses===false?"checked":""}> Non</label></div></div>
  <div class="full presentation-edit-row">${check("showCrush","Écrasement")}<div class="presentation-status-row"><label class="presentation-verified"><input type="checkbox" data-can-crush ${p.canCrush===true&&!p.cannotCrush?"checked":""}>Possible</label><label class="presentation-verified"><input type="checkbox" data-cannot-crush ${p.cannotCrush===true?"checked":""}>Impossible</label><input type="text" data-pfield="crushReason" value="${esc(p.crushReason||"")}" placeholder="Pourquoi ? (facultatif)" data-reason-for="crush"></div></div>
@@ -6049,6 +6051,7 @@ async function saveCommonSources(){
 $("excNav").onclick=()=>navigateToView("exc");
 $("memoExcVariantSearch").addEventListener("input",()=>{
  memoExcSelectedVariantId="";
+ try{sessionStorage.removeItem("memo-exc-selected-variant")}catch(e){}
  memoRenderExcipientPage();memoExcShowSuggestions();
 });
 $("memoExcVariantSearch").addEventListener("focus",memoExcShowSuggestions);
@@ -6151,7 +6154,7 @@ if(!location.search&&!location.hash){
   }
  }catch(e){}
 }
-openedSearchFiche=!!new URLSearchParams(location.search).get("fiche");renderFilters();renderResults();if(location.hash==="#explorer")showView("explore");else if(location.hash==="#sources")showView("sources");else if(location.hash==="#a-propos"||location.hash==="#contact")navigateInfoPage(location.hash.slice(1),false);
+openedSearchFiche=!!new URLSearchParams(location.search).get("fiche");renderFilters();renderResults();if(location.hash==="#explorer")showView("explore");else if(location.hash==="#sources")showView("sources");else if(location.hash==="#excipients")showView("exc");else if(location.hash==="#equivalences")showView("equiv");else if(location.hash==="#a-propos"||location.hash==="#contact")navigateInfoPage(location.hash.slice(1),false);
 if(location.hash==="#explorer"&&history.state?.memopharmExplorerFilter)memoApplyExplorerFilter(history.state.memopharmExplorerFilter);
 if(currentView==="explore"&&!meds.length)$("exploreCards").innerHTML='<div class="empty">Chargement des fiches…</div>';
 initCloud();
