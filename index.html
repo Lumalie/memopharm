@@ -1049,6 +1049,39 @@ body.header-search-active header #headerSearchSlot .searchcard{width:100%!import
   .detail .presentation-v33-fields > .presentation-cip-list {padding:10px 11px!important}
 }
 </style>
+<style>
+/* Mémopharm — correction : suppression réelle des encadrés des informations commerciales */
+#detail .presentation-v33-fields > p,
+#detail .presentation-v33-fields > .memo-exc-formatted,
+#detail .presentation-v33-fields .memo-exc-formatted > p {
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  border-radius:0!important;
+  padding:0!important;
+  margin:0 0 15px!important;
+  min-height:0!important;
+}
+#detail .presentation-v33-fields > p > strong {
+  display:block!important;
+  width:fit-content;
+  max-width:100%;
+  color:#285d47!important;
+  border-bottom:2px solid #a6c9b1!important;
+  padding:0 0 5px!important;
+  margin:0 0 8px!important;
+  font-weight:800!important;
+}
+#detail .presentation-v33-fields > p.memo-manip-row > strong {
+  display:inline-block!important;
+  margin:0 5px 0 0!important;
+}
+#detail .presentation-v33-fields > p.memo-manip-row {display:flex!important;gap:9px!important;align-items:center!important;flex-wrap:wrap!important}
+#detail .presentation-v33-fields .memo-exc-formatted > p {display:block!important;margin:0!important}
+#detail .presentation-v33-fields .memo-exc-formatted > p:empty {display:none!important}
+#detail .presentation-v33-fields > p:empty {display:none!important}
+#detail .presentation-v33-fields {gap:0!important}
+</style>
 </head>
 <body>
 <header><div class="wrap">
