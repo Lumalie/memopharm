@@ -1053,6 +1053,30 @@ body.header-search-active header #headerSearchSlot .searchcard{width:100%!import
  #detail #presentations-details.presentation-fixed #presentation-info .memo-v52-photo-tile img{height:205px!important;max-height:205px!important}
  #detail #presentations-details.presentation-fixed #presentation-info .presentation-v33-photo.memo-v52-gallery{padding:10px 18px!important;gap:22px!important}
 }
+
+/* V117.27 — titres plus lisibles, sections resserrées et retrait parasite supprimé */
+.detail .memo-v125-compact-fields .memo-v125-field-label{
+ font-size:.92rem!important;font-weight:650!important;line-height:1.4!important;
+ margin-bottom:6px!important;color:#3c6852!important;
+}
+.detail .memo-v125-compact-fields .memo-v125-field{margin-top:15px!important}
+.detail .memo-v125-compact-fields .memo-v125-excipients .memo-exc-formatted p{
+ margin-bottom:6px!important;line-height:1.55!important;
+}
+.detail .memo-v125-compact-fields .memo-v125-excipients .memo-exc-formatted p+p{
+ margin-top:8px!important;
+}
+.detail .memo-v125-compact-fields .memo-v125-excipients .memo-exc-formatted p:last-child{
+ margin-bottom:0!important;
+}
+.detail .memo-v125-compact-fields .memo-v125-excipients .memo-exc-formatted p{
+ text-indent:0!important;padding-left:0!important;
+}
+.detail .memo-v125-compact-fields .memo-v125-excipients .memo-exc-formatted p:first-letter{
+ margin-left:0!important;
+}
+.detail .memo-v125-compact-fields .memo-v126-split{margin-top:12px!important}
+.detail .memo-v125-compact-fields .memo-v126-split-top .memo-v125-field-label{margin-bottom:0!important}
 </style>
 </head>
 <body>
@@ -3711,7 +3735,8 @@ function presentationInfo(p,m=null, specialtyBoxesHtml=""){
  // Préserver les sous-parties de composition, même si le copier-coller du RCP
  // n'a pas conservé le saut de ligne entre noyau et pelliculage.
  const memoCompositionHtml=()=>richText(String(p.excipients||"Non documentés")
-  .replace(/([^\n])\s+(?=(?:\*\*|__)?(?:Pelliculage|Enrobage|Noyau)\s+du\s+comprimé\s*:)/gi,"$1\n"));
+  .replace(/([^\n])\s+(?=(?:\*\*|__)?(?:Pelliculage|Enrobage|Noyau)\s+du\s+comprimé\s*:)/gi,"$1\n")
+  .replace(/(^|\n)[\t \u00a0]+(?=(?:<[^>]+>\s*)*(?:Pelliculage|Enrobage|Noyau))/gi,"$1"));
  const memoLabel=(name,icon="")=>`<span class="memo-v125-field-label">${icon}${esc(name)}</span>`;
  const memoField=(name,value,icon="",extra="")=>`<div class="memo-v125-field ${extra}">${memoLabel(name,icon)}<div class="memo-v125-field-value">${value}</div></div>`;
  const memoSvgPill=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>`;
