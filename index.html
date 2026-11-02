@@ -1006,6 +1006,49 @@ body.header-search-active header #headerSearchSlot .searchcard{width:100%!import
 }
 #excView .memo-exc-suggestions button[aria-selected="true"]{background:#dcefe3!important;outline:2px solid #55986f;outline-offset:-2px}
 </style>
+<style>
+
+/* Mémopharm — affinage visuel des titres et des présentations (2026-11) */
+.detail .memo-specific-section > h3,
+.detail .section > h3,
+.detail .presentation-fixed > h3,
+.detail .molecule-tab-content .section > h3 {
+  background:transparent!important;
+  box-shadow:none!important;
+  border:0!important;
+  border-radius:0!important;
+  border-bottom:2px solid #a6c9b1!important;
+  padding:0 0 9px!important;
+  margin:0 0 14px!important;
+  color:#285d47!important;
+  font-size:1.08rem!important;
+  font-weight:800!important;
+  letter-spacing:.005em;
+}
+.detail .memo-specific-body > .section > h3,
+.detail .memo-specific-section .memo-specific-body > .section > h3 {display:none!important}
+.detail .presentation-v33-layout {gap:18px!important;align-items:start}
+.detail .presentation-v33-fields {gap:12px!important;min-width:0}
+.detail .presentation-v33-fields > p,
+.detail .presentation-v33-fields > .presentation-cip-list {
+  padding:10px 13px!important;
+  background:#f8faf8;
+  border:1px solid #e1eae3;
+  border-radius:10px;
+  overflow-wrap:anywhere;
+}
+.detail .presentation-v33-fields > p strong {color:#285d47;font-weight:750}
+.detail .presentation-v33-fields .cip-pack-item {margin:4px 8px 4px 0}
+.detail .presentation-v33-fields .cip-pack-label {background:#edf4ee;border-color:#d4e4d7}
+.detail .presentation-v33-photo {border:1px solid #e0e9e2;border-radius:12px;padding:10px;background:#fff;max-width:100%;min-width:0}
+.detail .presentation-v33-photo img {max-width:100%;height:auto;object-fit:contain}
+@media(max-width:700px){
+  .detail .presentation-v33-layout.has-photo {gap:14px!important}
+  .detail .presentation-v33-photo {width:100%;max-width:280px;margin-inline:auto}
+  .detail .presentation-v33-fields > p,
+  .detail .presentation-v33-fields > .presentation-cip-list {padding:10px 11px!important}
+}
+</style>
 </head>
 <body>
 <header><div class="wrap">
