@@ -1089,6 +1089,23 @@ body.header-search-active header #headerSearchSlot .searchcard{width:100%!import
 .detail .memo-v125-compact-fields .memo-v125-excipients .memo-exc-formatted p{
  text-indent:0!important;padding-inline-start:0!important;
 }
+
+/* V117.29 : espaces symétriques autour des séparateurs et paragraphes alignés */
+#detail .memo-v125-compact-fields .memo-v101-cip-block{
+ margin:0 0 12px!important;padding:0 0 12px!important;
+}
+#detail .memo-v125-compact-fields .memo-v101-cip-block + .memo-v125-field{
+ margin-top:12px!important;
+}
+#detail .memo-v125-compact-fields .memo-v125-excipients .memo-exc-formatted p{
+ margin-left:0!important;padding-left:0!important;text-indent:0!important;
+}
+#detail .memo-v125-compact-fields .memo-v125-excipients .memo-exc-formatted p+p{
+ margin-left:0!important;padding-left:0!important;text-indent:0!important;
+}
+#detail .presentation-v33-content>.presentation-v33-warning{
+ margin-top:12px!important;padding-top:12px!important;
+}
 </style>
 </head>
 <body>
@@ -3748,7 +3765,11 @@ function presentationInfo(p,m=null, specialtyBoxesHtml=""){
  // n'a pas conservé le saut de ligne entre noyau et pelliculage.
  const memoCompositionHtml=()=>richText(String(p.excipients||"Non documentés")
   .replace(/([^\n])\s+(?=(?:\*\*|__)?(?:Pelliculage|Enrobage|Noyau)\s+du\s+comprimé\s*:)/gi,"$1\n")
-  .split("\n").map(line=>line.replace(/^[\s\u00a0\u202f\u200b\ufeff]+/,"")).join("\n"));
+  .split("\n").map(line=>line.replace(/^[\s\u00a0\u202f\u200b\ufeff]+/,"")).join("\n"))
+  // Neutraliser les espaces générés au début des paragraphes HTML, y compris
+  // lorsqu'un élément de mise en forme (<u>, <strong>, <span>) les précède.
+  .replace(/(<p(?:\s[^>]*)?>)(?:\s|&nbsp;|&#160;|&#xA0;)+/gi,"$1")
+  .replace(/(<p(?:\s[^>]*)?>)((?:<(?:u|strong|em|b|i|span)(?:\s[^>]*)?>)+)(?:\s|&nbsp;|&#160;|&#xA0;)+/gi,"$1$2");
  const memoLabel=(name,icon="")=>`<span class="memo-v125-field-label">${icon}${esc(name)}</span>`;
  const memoField=(name,value,icon="",extra="")=>`<div class="memo-v125-field ${extra}">${memoLabel(name,icon)}<div class="memo-v125-field-value">${value}</div></div>`;
  const memoSvgPill=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>`;
