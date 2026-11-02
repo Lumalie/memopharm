@@ -1007,80 +1007,28 @@ body.header-search-active header #headerSearchSlot .searchcard{width:100%!import
 #excView .memo-exc-suggestions button[aria-selected="true"]{background:#dcefe3!important;outline:2px solid #55986f;outline-offset:-2px}
 </style>
 <style>
-
-/* Mémopharm — affinage visuel des titres et des présentations (2026-11) */
-.detail .memo-specific-section > h3,
-.detail .section > h3,
-.detail .presentation-fixed > h3,
-.detail .molecule-tab-content .section > h3 {
-  background:transparent!important;
-  box-shadow:none!important;
-  border:0!important;
-  border-radius:0!important;
-  border-bottom:2px solid #a6c9b1!important;
-  padding:0 0 9px!important;
-  margin:0 0 14px!important;
-  color:#285d47!important;
-  font-size:1.08rem!important;
-  font-weight:800!important;
-  letter-spacing:.005em;
-}
-.detail .memo-specific-body > .section > h3,
-.detail .memo-specific-section .memo-specific-body > .section > h3 {display:none!important}
-.detail .presentation-v33-layout {gap:18px!important;align-items:start}
-.detail .presentation-v33-fields {gap:12px!important;min-width:0}
-.detail .presentation-v33-fields > p,
-.detail .presentation-v33-fields > .presentation-cip-list {
-  padding:10px 13px!important;
-  background:#f8faf8;
-  border:1px solid #e1eae3;
-  border-radius:10px;
-  overflow-wrap:anywhere;
-}
-.detail .presentation-v33-fields > p strong {color:#285d47;font-weight:750}
-.detail .presentation-v33-fields .cip-pack-item {margin:4px 8px 4px 0}
-.detail .presentation-v33-fields .cip-pack-label {background:#edf4ee;border-color:#d4e4d7}
-.detail .presentation-v33-photo {border:1px solid #e0e9e2;border-radius:12px;padding:10px;background:#fff;max-width:100%;min-width:0}
-.detail .presentation-v33-photo img {max-width:100%;height:auto;object-fit:contain}
-@media(max-width:700px){
-  .detail .presentation-v33-layout.has-photo {gap:14px!important}
-  .detail .presentation-v33-photo {width:100%;max-width:280px;margin-inline:auto}
-  .detail .presentation-v33-fields > p,
-  .detail .presentation-v33-fields > .presentation-cip-list {padding:10px 11px!important}
-}
-</style>
-<style>
-/* Mémopharm — correction : suppression réelle des encadrés des informations commerciales */
-#detail .presentation-v33-fields > p,
-#detail .presentation-v33-fields > .memo-exc-formatted,
-#detail .presentation-v33-fields .memo-exc-formatted > p {
-  background:transparent!important;
-  border:0!important;
-  box-shadow:none!important;
-  border-radius:0!important;
-  padding:0!important;
-  margin:0 0 15px!important;
-  min-height:0!important;
-}
-#detail .presentation-v33-fields > p > strong {
-  display:block!important;
-  width:fit-content;
-  max-width:100%;
-  color:#285d47!important;
-  border-bottom:2px solid #a6c9b1!important;
-  padding:0 0 5px!important;
-  margin:0 0 8px!important;
-  font-weight:800!important;
-}
-#detail .presentation-v33-fields > p.memo-manip-row > strong {
-  display:inline-block!important;
-  margin:0 5px 0 0!important;
-}
-#detail .presentation-v33-fields > p.memo-manip-row {display:flex!important;gap:9px!important;align-items:center!important;flex-wrap:wrap!important}
-#detail .presentation-v33-fields .memo-exc-formatted > p {display:block!important;margin:0!important}
-#detail .presentation-v33-fields .memo-exc-formatted > p:empty {display:none!important}
-#detail .presentation-v33-fields > p:empty {display:none!important}
-#detail .presentation-v33-fields {gap:0!important}
+/* Présentation épurée des détails de spécialité : aucune mise en forme basée sur le gras. */
+#detail .memo-clean-specialty{padding:0;min-width:0}
+#detail .memo-clean-specialty .memo-clean-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(170px,40%);gap:22px;align-items:start}
+#detail .memo-clean-specialty .memo-clean-meta{min-width:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+#detail .memo-clean-specialty .memo-clean-field{min-width:0}
+#detail .memo-clean-specialty .memo-clean-label{display:block;color:#68776f;font-size:.82rem;font-weight:600;margin:0 0 5px;text-decoration:none!important;border:0!important;padding:0!important}
+#detail .memo-clean-specialty .memo-clean-value{font-size:1rem;line-height:1.55;overflow-wrap:anywhere}
+#detail .memo-clean-specialty .memo-clean-value strong{font-weight:700;text-decoration:none!important;border:0!important}
+#detail .memo-clean-specialty .memo-clean-cips{margin:18px 0 0}
+#detail .memo-clean-specialty .memo-clean-cips .memo-v97-cip-area{margin:0}
+#detail .memo-clean-specialty .memo-clean-section{padding:17px 0 0;margin:17px 0 0;border-top:1px solid #e3ebe5;background:transparent!important;box-shadow:none!important}
+#detail .memo-clean-specialty .memo-clean-section h4{font-size:1.06rem;color:#253e33;font-weight:750;margin:0 0 9px;text-decoration:none!important;border:0!important}
+#detail .memo-clean-specialty .memo-clean-section .memo-clean-value{font-size:.96rem}
+#detail .memo-clean-specialty .memo-clean-section .memo-clean-value p{margin:0 0 8px;line-height:1.65}
+#detail .memo-clean-specialty .memo-clean-section .memo-clean-value p:last-child{margin-bottom:0}
+#detail .memo-clean-specialty .memo-clean-status{display:flex;flex-wrap:wrap;gap:12px 22px;align-items:center}
+#detail .memo-clean-specialty .memo-clean-status-item{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#detail .memo-clean-specialty .memo-clean-status-item .memo-clean-label{margin:0}
+#detail .memo-clean-specialty .presentation-v33-photo{width:100%;max-width:100%;padding:10px;border:1px solid #e0e9e2;border-radius:12px;background:#fff;box-sizing:border-box}
+#detail .memo-clean-specialty .presentation-v33-photo img{max-width:100%;object-fit:contain}
+#detail .memo-clean-specialty .presentation-v33-warning{margin:20px 0 0;padding-top:12px;border-top:1px solid #e3ebe5}
+@media(max-width:700px){#detail .memo-clean-specialty .memo-clean-top{grid-template-columns:1fr;gap:15px}#detail .memo-clean-specialty .presentation-v33-photo{max-width:340px;margin:0 auto}#detail .memo-clean-specialty .memo-clean-meta{gap:12px}}
 </style>
 </head>
 <body>
@@ -3749,8 +3697,15 @@ function presentationInfo(p,m=null, specialtyBoxesHtml=""){
  const photo=tiles.length?`<div class="presentation-v33-photo memo-v52-gallery">${tiles.join("")}</div>`:"";
  const badges=m&&isSpecialiteFiche(m)?"":m?practicalBadges(m,{...p,regulatoryList:"",coldStorage:false,afterOpening:false}):"";
  if(!rows.length&&!photo&&!badges&&!p.name)return '<p class="muted">Aucun critère de présentation affiché pour le moment.</p>';
- const title="";
- return `<div class="presentation-v33-content">${title}${m&&!isSpecialiteFiche(m)?"":badges}<div class="presentation-v33-layout${photo?' has-photo':''}"><div class="presentation-v33-fields">${m&&!isSpecialiteFiche(m)?`<div class="memo-v101-cip-block">${badges}<div class="memo-v101-cip-line">${memoMoleculeCipAndPack(p)}</div></div>`:""}${specialtyBoxesHtml?`<div class="memo-v97-cip-area">${specialtyBoxesHtml}</div>`:""}${rows.join('')}</div>${photo}</div><p class="hint presentation-v33-warning">L’aspect seul ne permet pas d’identifier avec certitude un médicament. Vérifier la concordance avec la présentation exacte.</p></div>`;
+ const cleanField=(label,html)=>`<div class="memo-clean-field"><span class="memo-clean-label">${label}</span><div class="memo-clean-value">${html}</div></div>`;
+ const lab=p.showLab===true?cleanField("Laboratoire",esc(p.lab||"À renseigner")):"";
+ const status=[];
+ if(p.showSplit===true)status.push(`<div class="memo-clean-status-item"><span class="memo-clean-label">Fractionnement</span>${memoManipStatus(p.canSplit,p.cannotSplit)}${p.canSplit===true&&p.cannotSplit!==true&&typeof p.equalDoses==="boolean"?`<span class="memo-clean-label">Doses égales</span>${memoManipStatus(p.equalDoses,!p.equalDoses)}`:""}${p.splitReason?`<span>${esc(p.splitReason)}</span>`:""}</div>`);
+ if(p.showCrush===true)status.push(`<div class="memo-clean-status-item"><span class="memo-clean-label">Écrasement</span>${memoManipStatus(p.canCrush,p.cannotCrush)}${p.crushReason?`<span>${esc(p.crushReason)}</span>`:""}</div>`);
+ if(p.showOpen===true)status.push(`<div class="memo-clean-status-item"><span class="memo-clean-label">Ouverture de la gélule</span>${memoManipStatus(p.canOpen,p.cannotOpen)}${p.openReason?`<span>${esc(p.openReason)}</span>`:""}</div>`);
+ const cipArea=`${m&&!isSpecialiteFiche(m)?`<div class="memo-v101-cip-block">${badges}<div class="memo-v101-cip-line">${memoMoleculeCipAndPack(p)}</div></div>`:""}${specialtyBoxesHtml?`<div class="memo-v97-cip-area">${specialtyBoxesHtml}</div>`:""}`;
+ const detailSection=(label,html)=>`<section class="memo-clean-section"><h4>${label}</h4><div class="memo-clean-value">${html}</div></section>`;
+ return `<div class="presentation-v33-content memo-clean-specialty">${m&&!isSpecialiteFiche(m)?"":badges}<div class="memo-clean-top"><div class="memo-clean-main"><div class="memo-clean-meta">${lab}${status.length?cleanField("Manipulation",`<div class="memo-clean-status">${status.join("")}</div>`):""}</div>${cipArea?`<div class="memo-clean-cips">${cipArea}</div>`:""}</div>${photo}</div>${p.showAspect===true?detailSection("Aspect du médicament",esc(p.description||"Non documenté")):""}${p.showExcipients===true?detailSection("Excipients",richText(p.excipients||"Non documentés")):""}<p class="hint presentation-v33-warning">L’aspect seul ne permet pas d’identifier avec certitude un médicament. Vérifier la concordance avec la présentation exacte.</p></div>`;
 }
 function presentationLabel(p,m,i){
  const name=(p.name||m.name||"").trim();
