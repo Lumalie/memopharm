@@ -1040,6 +1040,19 @@ body.header-search-active header #headerSearchSlot .searchcard{width:100%!import
 .detail .memo-v125-compact-fields .memo-equal-dose-display{font-size:.81rem;color:#728178;margin-left:10px}
 .detail .memo-v125-compact-fields .memo-v125-field-value>.memo-manip-icon{display:inline-flex;vertical-align:middle}
 @media(max-width:600px){.detail details.molecule-general>summary{font-size:1.2rem!important}.detail .memo-v125-compact-fields .memo-v125-excipients{margin-left:10px}}
+
+/* V117.26 — composition lisible, fractionnement regroupé et photos compactes */
+.detail .memo-v125-compact-fields .memo-v125-excipients .memo-exc-formatted p{display:block;margin:0 0 11px!important;line-height:1.58}
+.detail .memo-v125-compact-fields .memo-v125-excipients .memo-exc-formatted p+p{margin-top:9px!important}
+.detail .memo-v125-compact-fields .memo-v126-split-top{display:flex;align-items:center;gap:9px;min-height:22px}
+.detail .memo-v125-compact-fields .memo-v126-split-top .memo-v125-field-label{margin:0}
+.detail .memo-v125-compact-fields .memo-v126-split-detail{margin:4px 0 0 14px;color:#73847a;font-size:.82rem;display:flex;align-items:center;gap:7px}
+.detail .memo-v125-compact-fields .memo-v126-split-detail .memo-manip-icon svg{width:15px;height:15px}
+@media(min-width:701px){
+ #detail #presentations-details.presentation-fixed #presentation-info .memo-v52-photo-tile .presentation-v37-zoom{height:205px!important;min-height:205px!important}
+ #detail #presentations-details.presentation-fixed #presentation-info .memo-v52-photo-tile img{height:205px!important;max-height:205px!important}
+ #detail #presentations-details.presentation-fixed #presentation-info .presentation-v33-photo.memo-v52-gallery{padding:10px 18px!important;gap:22px!important}
+}
 </style>
 </head>
 <body>
@@ -3695,6 +3708,10 @@ function presentationInfo(p,m=null, specialtyBoxesHtml=""){
  const img=safeHttp(p.imageUrl||"");
  const line=(key,label,value)=>p[key]===true?`<p><strong>${label} :</strong> ${esc(value)}</p>`:"";
  const memoCompact=!!m&&!isSpecialiteFiche(m);
+ // Préserver les sous-parties de composition, même si le copier-coller du RCP
+ // n'a pas conservé le saut de ligne entre noyau et pelliculage.
+ const memoCompositionHtml=()=>richText(String(p.excipients||"Non documentés")
+  .replace(/([^\n])\s+(?=(?:\*\*|__)?(?:Pelliculage|Enrobage|Noyau)\s+du\s+comprimé\s*:)/gi,"$1\n"));
  const memoLabel=(name,icon="")=>`<span class="memo-v125-field-label">${icon}${esc(name)}</span>`;
  const memoField=(name,value,icon="",extra="")=>`<div class="memo-v125-field ${extra}">${memoLabel(name,icon)}<div class="memo-v125-field-value">${value}</div></div>`;
  const memoSvgPill=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>`;
@@ -3703,15 +3720,15 @@ function presentationInfo(p,m=null, specialtyBoxesHtml=""){
  const rows=[
   line("showLab","Laboratoire",p.lab||"À renseigner"),
   line("showAspect","Aspect",p.description||"Non documenté"),
-  p.showExcipients===true?`<p class="memo-exc-formatted"><strong>Excipients :</strong> ${richText(p.excipients||"Non documentés")}</p>`:"",
+  p.showExcipients===true?`<p class="memo-exc-formatted"><strong>Excipients :</strong> ${memoCompositionHtml()}</p>`:"",
   p.showSplit===true?`<p class="memo-manip-row"><strong>Fractionnement :</strong> ${memoManipStatus(p.canSplit,p.cannotSplit)}${p.canSplit===true&&p.cannotSplit!==true&&typeof p.equalDoses==="boolean"?` <span class="memo-equal-dose-display">Doses égales : ${memoManipStatus(p.equalDoses,!p.equalDoses)}</span>`:""}${p.splitReason?` <span class="memo-manip-reason">— ${esc(p.splitReason)}</span>`:""}</p>`:"",
   p.showCrush===true?`<p class="memo-manip-row"><strong>Écrasement :</strong> ${memoManipStatus(p.canCrush,p.cannotCrush)}${p.crushReason?` <span class="memo-manip-reason">— ${esc(p.crushReason)}</span>`:""}</p>`:"",
   p.showOpen===true?`<p class="memo-manip-row"><strong>Ouverture de la gélule :</strong> ${memoManipStatus(p.canOpen,p.cannotOpen)}${p.openReason?` <span class="memo-manip-reason">— ${esc(p.openReason)}</span>`:""}</p>`:""
  ].filter(Boolean);
  const compactRows=[
   p.showAspect===true?memoField("Aspect",esc(p.description||"Non documenté"),memoIcon(memoSvgPill)):"",
-  p.showExcipients===true?memoField("Excipients",`<div class="memo-exc-formatted">${richText(p.excipients||"Non documentés")}</div>`,memoIcon(memoSvgFlask),"memo-v125-excipients"):"",
-  p.showSplit===true?memoField("Fractionnement",`${memoManipStatus(p.canSplit,p.cannotSplit)}${p.canSplit===true&&p.cannotSplit!==true&&typeof p.equalDoses==="boolean"?` <span class="memo-equal-dose-display">Doses égales : ${memoManipStatus(p.equalDoses,!p.equalDoses)}</span>`:""}${p.splitReason?` <span class="memo-manip-reason">— ${esc(p.splitReason)}</span>`:""}`):"",
+  p.showExcipients===true?memoField("Excipients",`<div class="memo-exc-formatted">${memoCompositionHtml()}</div>`,memoIcon(memoSvgFlask),"memo-v125-excipients"):"",
+  p.showSplit===true?`<div class="memo-v125-field memo-v126-split"><div class="memo-v126-split-top">${memoLabel("Fractionnement")}${memoManipStatus(p.canSplit,p.cannotSplit)}</div>${p.canSplit===true&&p.cannotSplit!==true&&typeof p.equalDoses==="boolean"?`<div class="memo-v126-split-detail">Doses égales : ${memoManipStatus(p.equalDoses,!p.equalDoses)}</div>`:""}${p.splitReason?`<div class="memo-manip-reason">${esc(p.splitReason)}</div>`:""}</div>`:"",
   p.showCrush===true?memoField("Écrasement",`${memoManipStatus(p.canCrush,p.cannotCrush)}${p.crushReason?` <span class="memo-manip-reason">— ${esc(p.crushReason)}</span>`:""}`):"",
   p.showOpen===true?memoField("Ouverture de la gélule",`${memoManipStatus(p.canOpen,p.cannotOpen)}${p.openReason?` <span class="memo-manip-reason">— ${esc(p.openReason)}</span>`:""}`):""
  ].filter(Boolean);
