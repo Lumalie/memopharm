@@ -1113,6 +1113,21 @@ body.header-search-active header #headerSearchSlot .searchcard{width:100%!import
 #excView .memo-een-toggle input{accent-color:#27714f;width:15px;height:15px}
 #excView .memo-een-help{font-size:.72rem;color:#73827a}
 #excView .memo-een-chip{display:inline-block;margin-left:7px;padding:2px 5px;border-radius:5px;background:#fff2dc;color:#82571d;font-size:.67rem;font-weight:700;white-space:nowrap}
+
+/* V117.31 — séparateur discret au-dessus des CIP dans les fiches présentation */
+.presentation-v33-fields .memo-v101-cip-block{
+ border-top:1px solid #dce6df!important;
+ padding-top:10px!important;
+}
+/* Présentations commerciales : séparer également le sélecteur des CIP. */
+#presentations-details[data-variant-commercial="true"] .memo-v48-identity .memo-v48-cip{
+ border-top:1px solid #dce6df;
+ padding-top:10px;
+ margin-top:10px;
+}
+
+/* Glossaire : présentation sans encadrement superflu */
+.memo-gloss-page{max-width:1050px;margin:0 auto;width:100%}.memo-gloss-top{display:flex;gap:12px;margin:18px 0 20px}.memo-gloss-top input{flex:1}.memo-gloss-top button{white-space:nowrap}.memo-gloss-entry{padding:14px 2px;border-bottom:1px solid #dbe7df;display:flex;justify-content:space-between;gap:18px;align-items:flex-start}.memo-gloss-entry strong{color:#245d4b}.memo-gloss-entry p{margin:5px 0 0;white-space:pre-wrap}.memo-gloss-actions{display:flex;gap:6px}.memo-gloss-actions button{font-size:.78rem;padding:5px 9px}.memo-gloss-term{text-decoration-line:underline;text-decoration-style:dotted;text-decoration-color:#367a59;text-underline-offset:4px;text-decoration-thickness:2px;cursor:help}.memo-gloss-term:focus{outline:2px solid #7ba58b;outline-offset:3px;border-radius:2px}#memoGlossTooltip{position:fixed;z-index:99999;pointer-events:none;max-width:min(330px,calc(100vw - 16px));padding:12px 15px;background:#f8fcf9;color:#203b2d;border:1px solid #b8d5c2;box-shadow:0 8px 25px #193f3425;border-radius:11px;font-size:.85rem;line-height:1.45}#memoGlossTooltip[hidden]{display:none}#memoGlossTooltip p{margin:5px 0 0;white-space:pre-wrap}#memoGlossTooltip strong{color:#245d4b}
 </style>
 </head>
 <body>
@@ -1127,7 +1142,7 @@ body.header-search-active header #headerSearchSlot .searchcard{width:100%!import
   </div>
 </a>
     <div id="headerSearchSlot" class="header-search-slot"></div>
-    <div class="header-action-stack"><div class="header-actions"><button id="excNav" type="button" title="Comparer les excipients des spécialités de même dosage et forme">Excipients</button><button id="equivNav" type="button" title="Rechercher une correspondance entre un nom commercial et une DCI">Équivalences</button><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="loginBtn" type="button" class="admin-lock" title="Administration (Ctrl + Alt + A)" aria-label="Connexion administrateur" aria-keyshortcuts="Control+Alt+A"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="10" width="17" height="11.5" rx="2.5"/><path d="M7.5 10V7a4.5 4.5 0 0 1 9 0v3"/><path d="M12 15.1v2.9"/><circle cx="12" cy="14.8" r="1" fill="currentColor" stroke="none"/></svg></button><button id="logoutBtn" type="button" class="header-logout hidden">Déconnexion</button></div><div class="header-admin-actions hidden" id="headerAdminActions"><details class="header-json-menu hidden" id="headerJsonMenu"><summary>JSON <span aria-hidden="true">⌄</span></summary><div class="header-json-items"><button id="exportBtn" type="button">Exporter JSON</button><button id="importBtn" type="button">Importer JSON</button></div></details><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
+    <div class="header-action-stack"><div class="header-actions"><button id="excNav" type="button" title="Comparer les excipients des spécialités de même dosage et forme">Excipients</button><button type="button" id="memoGlossNav" onclick="location.hash='#glossaire';showView('gloss')">Glossaire</button><button id="equivNav" type="button" title="Rechercher une correspondance entre un nom commercial et une DCI">Équivalences</button><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="loginBtn" type="button" class="admin-lock" title="Administration (Ctrl + Alt + A)" aria-label="Connexion administrateur" aria-keyshortcuts="Control+Alt+A"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="10" width="17" height="11.5" rx="2.5"/><path d="M7.5 10V7a4.5 4.5 0 0 1 9 0v3"/><path d="M12 15.1v2.9"/><circle cx="12" cy="14.8" r="1" fill="currentColor" stroke="none"/></svg></button><button id="logoutBtn" type="button" class="header-logout hidden">Déconnexion</button></div><div class="header-admin-actions hidden" id="headerAdminActions"><details class="header-json-menu hidden" id="headerJsonMenu"><summary>JSON <span aria-hidden="true">⌄</span></summary><div class="header-json-items"><button id="exportBtn" type="button">Exporter JSON</button><button id="importBtn" type="button">Importer JSON</button></div></details><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
   </div>
   <p>Une base de repères pour retrouver rapidement les informations utiles sur les médicaments, leurs modalités de prise et les points de vigilance.</p>
 </div></header>
@@ -1219,7 +1234,7 @@ body.header-search-active header #headerSearchSlot .searchcard{width:100%!import
   <p class="memo-equiv-note">Statuts issus exclusivement des fiches molécules et de leurs variantes. Les noms de princeps historiques restent consultables ; leur commercialisation et la substituabilité sont à vérifier.</p>
   </div>
  </div>
- </section><section id="excView" class="hidden" aria-label="Comparateur d’excipients">
+ </section><section id="glossView" class="hidden" aria-label="Glossaire"><div class="memo-gloss-page"><div class="explore-heading"><h2>Glossaire</h2><p>Définitions associées manuellement aux mots des fiches.</p></div><div class="memo-gloss-top"><input id="memoGlossSearch" type="search" placeholder="Rechercher un terme…" aria-label="Rechercher dans le glossaire"><button id="memoGlossAdd" type="button" class="primary">+ Définition</button></div><div id="memoGlossList"></div><p id="memoGlossStatus" class="hint"></p></div></section><section id="excView" class="hidden" aria-label="Comparateur d’excipients">
  <div class="memo-equiv-page">
   <div class="explore-heading"><h2>Comparateur d’excipients</h2><p>Comparer les compositions des médicaments commerciaux pour un même dosage et une même forme.</p></div>
   <div class="memo-exc-page-controls">
@@ -1485,8 +1500,8 @@ async function initCloud(){
  const {data:{session},error:sessionError}=await supabaseClient.auth.getSession();
  if(sessionError)console.error(sessionError);currentUser=session?.user||null;admin=await checkAdminAccess(currentUser);
  updateAdminHeader();
- await loadCloudMeds();dashSetUser();
- supabaseClient.auth.onAuthStateChange((_event,session)=>{setTimeout(async()=>{currentUser=session?.user||null;admin=await checkAdminAccess(currentUser);updateAdminHeader();await loadCloudMeds();dashSetUser();},0);});
+ await loadCloudMeds();await memoGlossLoad();dashSetUser();
+ supabaseClient.auth.onAuthStateChange((_event,session)=>{setTimeout(async()=>{currentUser=session?.user||null;admin=await checkAdminAccess(currentUser);updateAdminHeader();await loadCloudMeds();await memoGlossLoad();dashSetUser();},0);});
 }
 let currentView="home";
 const viewScrollPositions={home:0,explore:0,sources:0};
@@ -1596,6 +1611,8 @@ function showView(view){
  $("exploreView").classList.toggle("hidden",view!=="explore");
  $("equivView").classList.toggle("hidden",view!=="equiv");
  $("excView").classList.toggle("hidden",view!=="exc");
+ $("glossView").classList.toggle("hidden",view!=="gloss");
+ if(view==="gloss")memoGlossRender();
  $("sourcesView").classList.toggle("hidden",view!=="sources");
  
  $("exploreNav").setAttribute("aria-current",view==="explore"?"page":"false");
@@ -4298,6 +4315,7 @@ async function uploadPresentationPhotos(m){
 const TEXT_COLORS={default:"#23352e",green:'#245d4b',red:'#a44c43',orange:'#a76a20',blue:'#326a9b',gray:'#87949c',pink:'#a34e7e',ficheGroup:'#2f684b',ficheMolecule:'#793f8f',ficheVariant:'#98553f',ficheSpecialite:'#1e7169',fichePresentation:'#315b87'};
 function richInline(raw){
  let html=esc(raw);
+ html=html.replace(/\[\[gloss:([a-zA-Z0-9_-]{1,80})\|([^\]\n]+)\]\]/g,(_m,id,label)=>`<span class="memo-gloss-term" tabindex="0" data-gloss-id="${id}">${label}</span>`);
  html=html.replace(/\[\[(default|green|red|orange|blue|gray|pink|ficheGroup|ficheMolecule|ficheVariant|ficheSpecialite|fichePresentation)\|([^\]\n]+)\]\]/g,(_m,c,t)=>`<span style="color:${TEXT_COLORS[c]}">${t}</span>`);
  // Liens Markdown : seules les adresses HTTP(S) sont autorisées.
  html=html.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s<>\)]+)\)/gi,(_match,label,url)=>{
@@ -4398,6 +4416,7 @@ function memoRichSerialize(root,inlineOnly=false){
    const url=validSourceLink(node.getAttribute('href')||'');
    return url?`[${value}](${url})`:value;
   }
+  if(tag==='span'&&node.dataset.glossId)return `[[gloss:${node.dataset.glossId}|${value}]]`;
   if(tag==='span'||tag==='font'){
    const style=getComputedStyle(node);
    const color=(node.getAttribute('color')||node.style.color||'').toLowerCase();
@@ -4741,6 +4760,19 @@ function wireTextFormatting(){
    }
    sync();remember();bubble.hidden=false;requestAnimationFrame(positionBubble);
   };
+  bubble.querySelector('[data-memo-gloss-attach]')?.addEventListener('mousedown',e=>e.preventDefault());
+  bubble.querySelector('[data-memo-gloss-attach]')?.addEventListener('click',()=>{
+   restore();const sel=window.getSelection();if(!sel||sel.isCollapsed)return;
+   const label=sel.toString().trim();if(!label)return;
+   memoGlossChoose(label,id=>{
+    restore();const selection=window.getSelection();if(!selection?.rangeCount)return;
+    const range=selection.getRangeAt(0);
+    if(range.collapsed)return;
+    const span=document.createElement('span');span.className='memo-gloss-term';span.dataset.glossId=id;
+    try{range.surroundContents(span)}catch{span.append(range.extractContents());range.insertNode(span)}
+    sync();bubble.hidden=true;
+   });
+  });
   bubble.querySelectorAll('[data-format]').forEach(btn=>btn.addEventListener('click',()=>apply(btn.dataset.format)));
   for(const [attr,prefix] of [['data-text-color','color:'],['data-format-align','align:'],['data-format-size','size:']]){
    const select=bubble.querySelector(`[${attr}]`);
@@ -4791,6 +4823,67 @@ function renderPrioritySection(s,targetSectionId=null){
  const heading=(s.id==="alerte-delivrance"||s.id==="conseils-comptoir")?"":`<h3>${esc(s.title)}</h3>`;
  return `<section class="section priority-section ${targetSectionId&&s.id===targetSectionId?'direct-target':''}" id="section-${esc(s.id)}">${heading}${list}</section>`;
 }
+// Glossaire centralisé : table Supabase memo_glossary (voir fichier SQL fourni).
+let memoGlossEntries=[];let memoGlossReady=false;let memoGlossError='';
+function memoGlossEscape(v){return esc(String(v??''))}
+async function memoGlossLoad(){
+ const {data,error}=await supabaseClient.from('memo_glossary').select('id,term,definition').order('term');
+ if(error){memoGlossError='Le glossaire partagé nécessite la table Supabase memo_glossary (voir le script SQL).';memoGlossReady=false;return}
+ memoGlossEntries=data||[];memoGlossReady=true;memoGlossError='';memoGlossRender();
+}
+function memoGlossRender(){
+ const host=$('memoGlossList');if(!host)return;
+ const q=($('memoGlossSearch')?.value||'').toLocaleLowerCase('fr');
+ const entries=memoGlossEntries.filter(x=>(x.term+' '+x.definition).toLocaleLowerCase('fr').includes(q));
+ host.innerHTML=entries.length?entries.map(x=>`<div class="memo-gloss-entry"><div><strong>${memoGlossEscape(x.term)}</strong><p>${memoGlossEscape(x.definition)}</p></div>${admin?`<div class="memo-gloss-actions"><button type="button" data-gloss-edit="${x.id}">Modifier</button><button type="button" data-gloss-delete="${x.id}">Supprimer</button></div>`:''}</div>`).join(''):'<p class="hint">Aucune définition correspondante.</p>';
+ $('memoGlossAdd').hidden=!admin;
+ $('memoGlossStatus').textContent=memoGlossError||(!memoGlossReady?'Chargement du glossaire…':'Les mots sont associés uniquement lorsque tu les sélectionnes dans l’éditeur.');
+}
+async function memoGlossSave(existing=null,prefill=''){
+ if(!requireAdmin())return null;
+ if(!memoGlossReady){alert(memoGlossError||'Glossaire indisponible.');return null}
+ const term=prompt('Terme du glossaire :',existing?.term||prefill);if(term===null)return null;
+ const cleanTerm=term.trim();if(!cleanTerm||cleanTerm.length>120){alert('Indique un terme de 1 à 120 caractères.');return null}
+ const definition=prompt('Définition courte :',existing?.definition||'');if(definition===null)return null;
+ if(!definition.trim()){alert('La définition ne peut pas être vide.');return null}
+ const payload={term:cleanTerm,definition:definition.trim()};if(existing)payload.id=existing.id;
+ const {data,error}=await supabaseClient.from('memo_glossary').upsert(payload).select('id,term,definition').single();
+ if(error){alert('Enregistrement impossible : '+error.message);return null}
+ await memoGlossLoad();return data;
+}
+function memoGlossChoose(label,callback){
+ if(!memoGlossReady){alert(memoGlossError||'Glossaire indisponible.');return}
+ const choices=memoGlossEntries.map((x,i)=>`${i+1}. ${x.term}`).join('\n');
+ const answer=prompt('Associer « '+label+' » à une définition.\nSaisis son numéro, ou N pour créer une définition :\n'+choices,'N');
+ if(answer===null)return;
+ if(answer.trim().toLowerCase()==='n')memoGlossSave(null,label).then(x=>{if(x)callback(x.id)});
+ else{const x=memoGlossEntries[Number(answer)-1];if(x)callback(x.id);else alert('Numéro non reconnu.')}
+}
+function memoGlossTooltipInit(){
+ const tip=document.createElement('div');tip.id='memoGlossTooltip';tip.hidden=true;document.body.append(tip);
+ let active=null;
+ const move=e=>{if(!active)return;const pad=14;const w=tip.offsetWidth,h=tip.offsetHeight;tip.style.left=Math.max(8,Math.min(e.clientX+16,innerWidth-w-8))+'px';tip.style.top=Math.max(8,Math.min(e.clientY+20,innerHeight-h-8))+'px'};
+ document.addEventListener('pointerover',e=>{const term=e.target.closest?.('.memo-gloss-term');if(!term||term.closest('#editor'))return;const entry=memoGlossEntries.find(x=>String(x.id)===term.dataset.glossId);if(!entry)return;active=term;tip.replaceChildren();const strong=document.createElement('strong');strong.textContent=entry.term;const p=document.createElement('p');p.textContent=entry.definition;tip.append(strong,p);tip.hidden=false;move(e)});
+ document.addEventListener('pointermove',move);
+ document.addEventListener('pointerout',e=>{if(active&&active.contains(e.target)&&!active.contains(e.relatedTarget)){active=null;tip.hidden=true}});
+ document.addEventListener('focusin',e=>{const term=e.target.closest?.('.memo-gloss-term');if(!term||term.closest('#editor'))return;const entry=memoGlossEntries.find(x=>String(x.id)===term.dataset.glossId);if(!entry)return;active=term;tip.replaceChildren();const strong=document.createElement('strong');strong.textContent=entry.term;const p=document.createElement('p');p.textContent=entry.definition;tip.append(strong,p);tip.hidden=false;const r=term.getBoundingClientRect();move({clientX:r.left,clientY:r.bottom})});
+ document.addEventListener('focusout',e=>{if(active===e.target){active=null;tip.hidden=true}});
+ document.addEventListener('click',e=>{const term=e.target.closest?.('.memo-gloss-term');if(term&&!term.closest('#editor')){term.focus();return}if(!e.target.closest?.('#memoGlossTooltip')){active=null;tip.hidden=true}});
+}
+document.addEventListener('DOMContentLoaded',()=>{
+ memoGlossTooltipInit();
+ $('memoGlossSearch')?.addEventListener('input',memoGlossRender);
+ $('memoGlossAdd')?.addEventListener('click',()=>memoGlossSave());
+ $('memoGlossList')?.addEventListener('click',async e=>{
+  const edit=e.target.closest('[data-gloss-edit]'),del=e.target.closest('[data-gloss-delete]');
+  if(edit){const item=memoGlossEntries.find(x=>String(x.id)===edit.dataset.glossEdit);if(item)await memoGlossSave(item)}
+  if(del&&requireAdmin()&&confirm('Supprimer cette définition ? Les occurrences déjà liées ne seront plus expliquées.')){
+   const {error}=await supabaseClient.from('memo_glossary').delete().eq('id',del.dataset.glossDelete);
+   if(error)alert(error.message);else await memoGlossLoad();
+  }
+ });
+});
+
 function renderSection(s,targetSectionId=null){
  const showInteractionLegend=(s.id==="interactions"||/interaction/i.test(s.title||""))&&String(s.content||"").includes(MEMO_INLINE_TABLE);
 
@@ -5865,7 +5958,7 @@ function memoLegacyTableToText(content){
  const model=memoTableModel(content||"");
  return memoInlineToken(model);
 }
-function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button type="button" data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button type="button" data-act="down" data-index="${i}" ${i===(meds.find(m=>m.id===editorId)?.sections?.length||0)-1?'disabled':''}>↓</button><button type="button" data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button type="button" class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Contenu</label>${true?`<div class="text-edit-wrap"><div class="memo-inline-table-toolbar" hidden><button type="button" data-inline-act="add-row">+ Ligne</button><button type="button" data-inline-act="remove-row">− Ligne</button><button type="button" data-inline-act="add-col">+ Colonne</button><button type="button" data-inline-act="remove-col">− Colonne</button><button type="button" data-inline-act="merge">Fusionner</button><button type="button" data-inline-act="split">Séparer</button><select data-inline-bg aria-label="Couleur de fond des cellules"><option value="">Fond cellule…</option><option value="none">Sans couleur</option><option value="ci">⛔ Contre-indication</option><option value="deconseillee">🟠 Association déconseillée</option><option value="precaution">🟡 Précaution d’emploi</option><option value="prendre">🔵 À prendre en compte</option></select><button type="button" data-inline-act="after">+ Texte après</button><button type="button" data-inline-act="delete">Supprimer le tableau</button><span class="hint">Clique dans une cellule pour supprimer sa ligne ou sa colonne ; glisse pour fusionner.</span></div><div class="text-format-bubble" hidden><button type="button" class="memo-insert-table" title="Insérer un tableau à la position du curseur">▦</button><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="reset" title="Effacer la mise en forme" aria-label="Effacer la mise en forme">T̸</button><button type="button" data-format="link" title="Insérer un lien URL (Ctrl+K)">🔗</button><button type="button" data-format="bullets" title="Liste à puces">☷</button><button type="button" data-format="numbers" title="Liste numérotée">1.</button><select data-format-align aria-label="Alignement du texte"><option value="">Aligner…</option><option value="left">Gauche</option><option value="center">Centré</option><option value="right">Droite</option><option value="justify">Justifié</option></select><select data-inline-valign aria-label="Alignement vertical de la cellule" title="Alignement vertical de la cellule"><option value="">↕ Vertical…</option><option value="top">En haut</option><option value="middle">Au milieu</option><option value="bottom">En bas</option></select><select data-format-size aria-label="Taille de police"><option value="">Taille…</option><option value="12">12 px</option><option value="14">14 px</option><option value="16">16 px</option><option value="18">18 px</option><option value="20">20 px</option><option value="24">24 px</option><option value="28">28 px</option></select><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris précision</option><option value="pink">Rose conseil</option><optgroup label="Couleurs des fiches"><option value="ficheGroup">🟢 Fiche groupe</option><option value="ficheMolecule">🟣 Fiche molécule</option><option value="ficheVariant">🟠 Variante / dosage</option><option value="ficheSpecialite">🔷 Fiche spécialité</option><option value="fichePresentation">🔵 Présentation</option></optgroup></select></div><textarea data-field="content" class="memo-rich-storage" tabindex="-1" aria-hidden="true">${esc(s.type==="table"?memoLegacyTableToText(s.content):s.content||"")}</textarea><div class="memo-rich-editor" contenteditable="true" role="textbox" aria-label="Contenu de la rubrique" aria-multiline="true"></div></div>`:`${tableGridEditor(s.content||"")}`}</div></div>`}
+function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button type="button" data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button type="button" data-act="down" data-index="${i}" ${i===(meds.find(m=>m.id===editorId)?.sections?.length||0)-1?'disabled':''}>↓</button><button type="button" data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button type="button" class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Contenu</label>${true?`<div class="text-edit-wrap"><div class="memo-inline-table-toolbar" hidden><button type="button" data-inline-act="add-row">+ Ligne</button><button type="button" data-inline-act="remove-row">− Ligne</button><button type="button" data-inline-act="add-col">+ Colonne</button><button type="button" data-inline-act="remove-col">− Colonne</button><button type="button" data-inline-act="merge">Fusionner</button><button type="button" data-inline-act="split">Séparer</button><select data-inline-bg aria-label="Couleur de fond des cellules"><option value="">Fond cellule…</option><option value="none">Sans couleur</option><option value="ci">⛔ Contre-indication</option><option value="deconseillee">🟠 Association déconseillée</option><option value="precaution">🟡 Précaution d’emploi</option><option value="prendre">🔵 À prendre en compte</option></select><button type="button" data-inline-act="after">+ Texte après</button><button type="button" data-inline-act="delete">Supprimer le tableau</button><span class="hint">Clique dans une cellule pour supprimer sa ligne ou sa colonne ; glisse pour fusionner.</span></div><div class="text-format-bubble" hidden><button type="button" class="memo-insert-table" title="Insérer un tableau à la position du curseur">▦</button><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="reset" title="Effacer la mise en forme" aria-label="Effacer la mise en forme">T̸</button><button type="button" data-format="link" title="Insérer un lien URL (Ctrl+K)">🔗</button><button type="button" data-memo-gloss-attach title="Associer la sélection au glossaire">📖 Glossaire</button><button type="button" data-format="bullets" title="Liste à puces">☷</button><button type="button" data-format="numbers" title="Liste numérotée">1.</button><select data-format-align aria-label="Alignement du texte"><option value="">Aligner…</option><option value="left">Gauche</option><option value="center">Centré</option><option value="right">Droite</option><option value="justify">Justifié</option></select><select data-inline-valign aria-label="Alignement vertical de la cellule" title="Alignement vertical de la cellule"><option value="">↕ Vertical…</option><option value="top">En haut</option><option value="middle">Au milieu</option><option value="bottom">En bas</option></select><select data-format-size aria-label="Taille de police"><option value="">Taille…</option><option value="12">12 px</option><option value="14">14 px</option><option value="16">16 px</option><option value="18">18 px</option><option value="20">20 px</option><option value="24">24 px</option><option value="28">28 px</option></select><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris précision</option><option value="pink">Rose conseil</option><optgroup label="Couleurs des fiches"><option value="ficheGroup">🟢 Fiche groupe</option><option value="ficheMolecule">🟣 Fiche molécule</option><option value="ficheVariant">🟠 Variante / dosage</option><option value="ficheSpecialite">🔷 Fiche spécialité</option><option value="fichePresentation">🔵 Présentation</option></optgroup></select></div><textarea data-field="content" class="memo-rich-storage" tabindex="-1" aria-hidden="true">${esc(s.type==="table"?memoLegacyTableToText(s.content):s.content||"")}</textarea><div class="memo-rich-editor" contenteditable="true" role="textbox" aria-label="Contenu de la rubrique" aria-multiline="true"></div></div>`:`${tableGridEditor(s.content||"")}`}</div></div>`}
 function captureEditorFields(m){
  const get=id=>$(id)?.value;
  if(get("f-entry-type")===undefined)return;
@@ -6412,7 +6505,7 @@ if(!location.search&&!location.hash){
   }
  }catch(e){}
 }
-openedSearchFiche=!!new URLSearchParams(location.search).get("fiche");renderFilters();renderResults();if(location.hash==="#explorer")showView("explore");else if(location.hash==="#sources")showView("sources");else if(location.hash==="#excipients")showView("exc");else if(location.hash==="#equivalences")showView("equiv");else if(location.hash==="#a-propos"||location.hash==="#contact")navigateInfoPage(location.hash.slice(1),false);
+openedSearchFiche=!!new URLSearchParams(location.search).get("fiche");renderFilters();renderResults();if(location.hash==="#explorer")showView("explore");else if(location.hash==="#sources")showView("sources");else if(location.hash==="#excipients")showView("exc");else if(location.hash==="#glossaire")showView("gloss");else if(location.hash==="#equivalences")showView("equiv");else if(location.hash==="#a-propos"||location.hash==="#contact")navigateInfoPage(location.hash.slice(1),false);
 if(location.hash==="#explorer"&&history.state?.memopharmExplorerFilter)memoApplyExplorerFilter(history.state.memopharmExplorerFilter);
 if(currentView==="explore"&&!meds.length)$("exploreCards").innerHTML='<div class="empty">Chargement des fiches…</div>';
 initCloud();
