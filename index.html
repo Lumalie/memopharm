@@ -1106,6 +1106,13 @@ body.header-search-active header #headerSearchSlot .searchcard{width:100%!import
 #detail .presentation-v33-content>.presentation-v33-warning{
  margin-top:12px!important;padding-top:12px!important;
 }
+
+/* V117.30 : repérage discret des EEN potentiels */
+#excView .memo-een-controls{display:flex;align-items:center;gap:10px 18px;flex-wrap:wrap;margin:0 0 11px}
+#excView .memo-een-toggle{display:inline-flex;align-items:center;gap:7px;font-size:.84rem;font-weight:600;color:#245d48;cursor:pointer}
+#excView .memo-een-toggle input{accent-color:#27714f;width:15px;height:15px}
+#excView .memo-een-help{font-size:.72rem;color:#73827a}
+#excView .memo-een-chip{display:inline-block;margin-left:7px;padding:2px 5px;border-radius:5px;background:#fff2dc;color:#82571d;font-size:.67rem;font-weight:700;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -3983,6 +3990,28 @@ function memoExcChooseVariant(id){
  $("memoExcVariantSearch").setAttribute("aria-expanded","false");
  memoRenderExcipientPage();
 }
+// Liste de repérage indicative : la qualification EEN dépend du RCP exact,
+// de la voie, de la quantité et des seuils réglementaires applicables.
+const MEMO_EEN_CANDIDATES=[
+ ["aspartam",/\\baspartam\\b|\\be951\\b/i],
+ ["sorbitol",/\\bsorbitol\\b|\\be420\\b/i],
+ ["dioxyde de soufre",/\\bdioxyde de soufre\\b|\\be220\\b|\\bsulfites?\\b/i],
+ ["alcool benzylique",/\\balcool benzylique\\b/i],
+ ["benzoate de benzyle",/\\bbenzoate de benzyle\\b/i],
+ ["propylène glycol",/\\bpropylene glycol\\b|\\bpropyl[eè]ne glycol\\b|\\be1520\\b/i],
+ ["lactose",/\\blactose\\b/i],
+ ["saccharose",/\\bsaccharose\\b/i],
+ ["glucose",/\\bglucose\\b/i],
+ ["éthanol",/\\bethanol\\b|\\béthanol\\b|\\balcool ethylique\\b/i],
+ ["sodium",/\\bsodium\\b/i],
+ ["huile d'arachide",/\\barachide\\b/i],
+ ["huile de soja",/\\bsoja\\b/i],
+ ["mannitol",/\\bmannitol\\b|\\be421\\b/i]
+];
+function memoEenCandidate(label){
+ const norm=memoExcipientNormalize(label);
+ return MEMO_EEN_CANDIDATES.some(([,rx])=>rx.test(norm));
+}
 function memoExcipientComparator(child){
  const page=document.querySelector("#excView>.memo-equiv-page");
  if(page)page.style.setProperty("--memo-exc-extra",Math.max(0,(child.presentations||[]).length-4));
@@ -4002,6 +4031,7 @@ function memoExcipientComparator(child){
    </table>
   </div>
   <div class="memo-exc-matrix-head memo-exc-second-head"><strong>Tableau comparatif des excipients</strong><span>${products.length} spécialité(s)</span></div>
+  <div class="memo-een-controls"><label class="memo-een-toggle"><input type="checkbox" data-memo-een-only> Afficher les EEN potentiels uniquement</label><span class="memo-een-help">Repérage indicatif · vérifier le RCP exact et les seuils applicables</span></div>
   <div class="memo-exc-matrix-scroll" role="region" tabindex="0" aria-label="Tableau comparatif des excipients, défilement horizontal possible">
    <table class="memo-exc-matrix-table memo-exc-shared-columns">
     <colgroup><col class="memo-exc-first-col">${products.map(()=>'<col class="memo-exc-product-col">').join("")}</colgroup>
@@ -4021,20 +4051,20 @@ function memoWireExcipientComparator(panel,child){
  const root=panel.querySelector('[data-memo-exc-matrix]');if(!root)return;
  const tbody=root.querySelector('[data-memo-exc-matrix-body]');
  const filter=root.querySelector("[data-memo-exc-filter]");
- if(filter){
-  filter.addEventListener("input",()=>{
-   const q=memoExcipientNormalize(filter.value);
-   let shown=0;
-   tbody.querySelectorAll("tr[data-memo-exc-row]").forEach(row=>{
-    const matches=!q||memoExcipientNormalize(row.dataset.memoExcRow).includes(q);
-    row.hidden=!matches;
-    if(matches)shown++;
-   });
-   const empty=tbody.querySelector("[data-memo-exc-no-results]");
-   if(empty)empty.hidden=shown!==0;
+ const eenOnly=root.querySelector("[data-memo-een-only]");
+ function applyExcFilters(){
+  const q=memoExcipientNormalize(filter?.value||"");
+  let shown=0;
+  tbody.querySelectorAll("tr[data-memo-exc-row]").forEach(row=>{
+   const matches=(!q||memoExcipientNormalize(row.dataset.memoExcRow).includes(q))&&(!eenOnly?.checked||row.dataset.memoEen==="true");
+   row.hidden=!matches;
+   if(matches)shown++;
   });
+  const empty=tbody.querySelector("[data-memo-exc-no-results]");
+  if(empty)empty.hidden=shown!==0;
  }
-
+ filter?.addEventListener("input",applyExcFilters);
+ eenOnly?.addEventListener("change",applyExcFilters);
  root.addEventListener("click",event=>{
   const link=event.target.closest("[data-memo-exc-open]");
   if(!link)return;
@@ -4078,7 +4108,7 @@ function memoWireExcipientComparator(panel,child){
    const icon=state==="yes"?'<svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-check-big preview-icon"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg>':state==="no"?'<svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x preview-icon"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>':'?';
    return `<td class="memo-exc-cell memo-exc-cell-${state}" aria-label="${esc(txt)}"><span class="memo-exc-icon memo-exc-${state}" title="${esc(txt)}" aria-hidden="true">${icon}</span><span class="memo-exc-sr-only">${esc(txt)}</span></td>`;
   }).join("");
-  return `<tr data-memo-exc-row="${esc(label)}"><th scope="row" class="memo-exc-sticky">${esc(label)}</th>${cells}</tr>`;
+  return `<tr data-memo-exc-row="${esc(label)}" data-memo-een="${memoEenCandidate(label)}"><th scope="row" class="memo-exc-sticky">${esc(label)}${memoEenCandidate(label)?'<span class="memo-een-chip" title="Excipient à effet notoire potentiel : vérifier le RCP, la voie et la quantité">EEN ?</span>':""}</th>${cells}</tr>`;
  }).join("")+`<tr data-memo-exc-no-results hidden><td colspan="${products.length+1}" class="memo-exc-empty">Aucun excipient correspondant.</td></tr>`;
 }
 function renderPresentations(m,targetPresentationIndex=null,selectedPack=null){
