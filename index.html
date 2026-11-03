@@ -1129,6 +1129,58 @@ body.header-search-active header #headerSearchSlot .searchcard{width:100%!import
 /* Glossaire : présentation sans encadrement superflu */
 .memo-gloss-page{max-width:1050px;margin:0 auto;width:100%}.memo-gloss-top{display:flex;gap:12px;margin:18px 0 20px}.memo-gloss-top input{flex:1}.memo-gloss-top button{white-space:nowrap}.memo-gloss-entry{padding:14px 2px;border-bottom:1px solid #dbe7df;display:flex;justify-content:space-between;gap:18px;align-items:flex-start}.memo-gloss-entry strong{color:#245d4b}.memo-gloss-entry p{margin:5px 0 0;white-space:pre-wrap}.memo-gloss-actions{display:flex;gap:6px}.memo-gloss-actions button{font-size:.78rem;padding:5px 9px}.memo-gloss-term{text-decoration-line:underline;text-decoration-style:dotted;text-decoration-color:#367a59;text-underline-offset:4px;text-decoration-thickness:2px;cursor:help}.memo-gloss-term:focus{outline:2px solid #7ba58b;outline-offset:3px;border-radius:2px}#memoGlossTooltip{position:fixed;z-index:99999;pointer-events:none;max-width:min(330px,calc(100vw - 16px));padding:12px 15px;background:#f8fcf9;color:#203b2d;border:1px solid #b8d5c2;box-shadow:0 8px 25px #193f3425;border-radius:11px;font-size:.85rem;line-height:1.45}#memoGlossTooltip[hidden]{display:none}#memoGlossTooltip p{margin:5px 0 0;white-space:pre-wrap}#memoGlossTooltip strong{color:#245d4b}
 </style>
+
+<style>
+/* V117.33 : navigation équilibrée, sans boutons isolés */
+header .topline{grid-template-columns:auto minmax(0,1fr) auto!important}
+header .header-action-stack .header-actions{
+ display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ grid-template-rows:none!important;gap:8px!important;width:max-content;max-width:100%;
+}
+header .header-action-stack .header-actions > :is(#exploreNav,#equivNav,#excNav,#sourcesNav,#memoGlossNav,#memoDocsNav){
+ grid-column:auto!important;grid-row:auto!important;min-width:104px;min-height:42px;
+ display:inline-flex;align-items:center;justify-content:center;text-align:center;
+ padding:9px 12px!important;font-size:.9rem!important;font-weight:500!important;
+ background:#f7faf8!important;color:#234e3d!important;border:1px solid #d3e5d7!important;
+ border-radius:11px!important;box-shadow:none!important;
+}
+header .header-action-stack .header-actions > :is(#exploreNav,#equivNav,#excNav,#sourcesNav,#memoGlossNav,#memoDocsNav):is(:hover,[aria-current="page"]){
+ background:#e1efe5!important;border-color:#a8ccb3!important;
+}
+header .header-action-stack .header-actions > #exploreNav{grid-column:1!important;grid-row:1!important}
+header .header-action-stack .header-actions > #equivNav{grid-column:2!important;grid-row:1!important}
+header .header-action-stack .header-actions > #excNav{grid-column:3!important;grid-row:1!important}
+header .header-action-stack .header-actions > #sourcesNav{grid-column:1!important;grid-row:2!important}
+header .header-action-stack .header-actions > #memoGlossNav{grid-column:2!important;grid-row:2!important}
+header .header-action-stack .header-actions > #memoDocsNav{grid-column:3!important;grid-row:2!important}
+header .header-action-stack .header-actions > :is(#loginBtn,#logoutBtn){
+ grid-column:3!important;grid-row:3!important;justify-self:end!important;width:42px!important;min-width:42px!important;
+}
+header .header-action-stack .header-actions > #logoutBtn{width:auto!important}
+@media(max-width:780px){
+ header .topline{grid-template-columns:minmax(0,1fr)!important}
+ header .topline .brand,header .header-action-stack{grid-column:1!important;grid-row:auto!important;justify-self:stretch!important}
+ header .header-action-stack{width:100%!important;align-items:stretch!important}
+ header .header-action-stack .header-actions{width:100%!important;grid-template-columns:repeat(3,minmax(0,1fr))!important}
+ header .header-action-stack .header-actions > :is(#exploreNav,#equivNav,#excNav,#sourcesNav,#memoGlossNav,#memoDocsNav){min-width:0!important}
+}
+@media(max-width:420px){header .header-action-stack .header-actions{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+.memo-docs-page{max-width:1000px;margin:0 auto;padding:8px 0 30px}
+.memo-docs-tools{display:flex;gap:10px;align-items:center;margin:20px 0}
+.memo-docs-tools input{flex:1;min-width:0}
+.memo-docs-tools button{width:auto;white-space:nowrap}
+.memo-docs-list{display:grid;gap:10px}
+.memo-doc-item{display:flex;align-items:flex-start;gap:14px;padding:15px 17px;background:#fff;border:1px solid #dce8df;border-radius:13px}
+.memo-doc-symbol{font-size:1.6rem;line-height:1.4}
+.memo-doc-body{flex:1;min-width:0}
+.memo-doc-title{font-weight:700;color:#285740;text-decoration:none;overflow-wrap:anywhere}
+.memo-doc-title:hover{text-decoration:underline}
+.memo-doc-desc{color:#52695a;margin:5px 0 0;white-space:pre-wrap;font-size:.9rem}
+.memo-doc-meta{font-size:.79rem;color:#6e8074;margin-top:6px}
+.memo-doc-actions{display:flex;gap:6px;flex-wrap:wrap}
+.memo-doc-actions button{width:auto;padding:6px 10px}
+@media(max-width:580px){.memo-docs-tools{flex-wrap:wrap}.memo-doc-item{flex-wrap:wrap}.memo-doc-actions{width:100%;justify-content:flex-end}}
+</style>
 </head>
 <body>
 <header><div class="wrap">
@@ -1142,7 +1194,7 @@ body.header-search-active header #headerSearchSlot .searchcard{width:100%!import
   </div>
 </a>
     <div id="headerSearchSlot" class="header-search-slot"></div>
-    <div class="header-action-stack"><div class="header-actions"><button id="excNav" type="button" title="Comparer les excipients des spécialités de même dosage et forme">Excipients</button><button type="button" id="memoGlossNav" onclick="location.hash='#glossaire';showView('gloss')">Glossaire</button><button id="equivNav" type="button" title="Rechercher une correspondance entre un nom commercial et une DCI">Équivalences</button><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="loginBtn" type="button" class="admin-lock" title="Administration (Ctrl + Alt + A)" aria-label="Connexion administrateur" aria-keyshortcuts="Control+Alt+A"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="10" width="17" height="11.5" rx="2.5"/><path d="M7.5 10V7a4.5 4.5 0 0 1 9 0v3"/><path d="M12 15.1v2.9"/><circle cx="12" cy="14.8" r="1" fill="currentColor" stroke="none"/></svg></button><button id="logoutBtn" type="button" class="header-logout hidden">Déconnexion</button></div><div class="header-admin-actions hidden" id="headerAdminActions"><details class="header-json-menu hidden" id="headerJsonMenu"><summary>JSON <span aria-hidden="true">⌄</span></summary><div class="header-json-items"><button id="exportBtn" type="button">Exporter JSON</button><button id="importBtn" type="button">Importer JSON</button></div></details><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
+    <div class="header-action-stack"><div class="header-actions"><button id="excNav" type="button" title="Comparer les excipients des spécialités de même dosage et forme">Excipients</button><button type="button" id="memoGlossNav">Glossaire</button><button type="button" id="memoDocsNav">Documents</button><button id="equivNav" type="button" title="Rechercher une correspondance entre un nom commercial et une DCI">Équivalences</button><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="loginBtn" type="button" class="admin-lock" title="Administration (Ctrl + Alt + A)" aria-label="Connexion administrateur" aria-keyshortcuts="Control+Alt+A"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="10" width="17" height="11.5" rx="2.5"/><path d="M7.5 10V7a4.5 4.5 0 0 1 9 0v3"/><path d="M12 15.1v2.9"/><circle cx="12" cy="14.8" r="1" fill="currentColor" stroke="none"/></svg></button><button id="logoutBtn" type="button" class="header-logout hidden">Déconnexion</button></div><div class="header-admin-actions hidden" id="headerAdminActions"><details class="header-json-menu hidden" id="headerJsonMenu"><summary>JSON <span aria-hidden="true">⌄</span></summary><div class="header-json-items"><button id="exportBtn" type="button">Exporter JSON</button><button id="importBtn" type="button">Importer JSON</button></div></details><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
   </div>
   <p>Une base de repères pour retrouver rapidement les informations utiles sur les médicaments, leurs modalités de prise et les points de vigilance.</p>
 </div></header>
@@ -1234,7 +1286,11 @@ body.header-search-active header #headerSearchSlot .searchcard{width:100%!import
   <p class="memo-equiv-note">Statuts issus exclusivement des fiches molécules et de leurs variantes. Les noms de princeps historiques restent consultables ; leur commercialisation et la substituabilité sont à vérifier.</p>
   </div>
  </div>
- </section><section id="glossView" class="hidden" aria-label="Glossaire"><div class="memo-gloss-page"><div class="explore-heading"><h2>Glossaire</h2><p>Définitions associées manuellement aux mots des fiches.</p></div><div class="memo-gloss-top"><input id="memoGlossSearch" type="search" placeholder="Rechercher un terme…" aria-label="Rechercher dans le glossaire"><button id="memoGlossAdd" type="button" class="primary">+ Définition</button></div><div id="memoGlossList"></div><p id="memoGlossStatus" class="hint"></p></div></section><section id="excView" class="hidden" aria-label="Comparateur d’excipients">
+ </section><section id="glossView" class="hidden" aria-label="Glossaire"><div class="memo-gloss-page"><div class="explore-heading"><h2>Glossaire</h2><p>Définitions associées manuellement aux mots des fiches.</p></div><div class="memo-gloss-top"><input id="memoGlossSearch" type="search" placeholder="Rechercher un terme…" aria-label="Rechercher dans le glossaire"><button id="memoGlossAdd" type="button" class="primary">+ Définition</button></div><div id="memoGlossList"></div><p id="memoGlossStatus" class="hint"></p></div></section><section id="memoDocsView" class="hidden" aria-label="Documents utiles">
+<div class="memo-docs-page"><div class="explore-heading"><h2>Documents</h2><p>Bibliothèque de documents utiles, consultables depuis tous les postes.</p></div>
+<div class="memo-docs-tools"><input id="memoDocsSearch" type="search" placeholder="Rechercher un document, un thème…" aria-label="Rechercher un document"><button type="button" id="memoDocsAdd" class="primary" hidden>+ Ajouter un document</button></div>
+<div id="memoDocsList" class="memo-docs-list"></div><p id="memoDocsStatus" class="hint"></p></div></section>
+<section id="excView" class="hidden" aria-label="Comparateur d’excipients">
  <div class="memo-equiv-page">
   <div class="explore-heading"><h2>Comparateur d’excipients</h2><p>Comparer les compositions des médicaments commerciaux pour un même dosage et une même forme.</p></div>
   <div class="memo-exc-page-controls">
@@ -1500,11 +1556,11 @@ async function initCloud(){
  const {data:{session},error:sessionError}=await supabaseClient.auth.getSession();
  if(sessionError)console.error(sessionError);currentUser=session?.user||null;admin=await checkAdminAccess(currentUser);
  updateAdminHeader();
- await loadCloudMeds();await memoGlossLoad();dashSetUser();
- supabaseClient.auth.onAuthStateChange((_event,session)=>{setTimeout(async()=>{currentUser=session?.user||null;admin=await checkAdminAccess(currentUser);updateAdminHeader();await loadCloudMeds();await memoGlossLoad();dashSetUser();},0);});
+ await loadCloudMeds();await memoGlossLoad();await memoDocsLoad();dashSetUser();
+ supabaseClient.auth.onAuthStateChange((_event,session)=>{setTimeout(async()=>{currentUser=session?.user||null;admin=await checkAdminAccess(currentUser);updateAdminHeader();await loadCloudMeds();await memoGlossLoad();await memoDocsLoad();dashSetUser();},0);});
 }
 let currentView="home";
-const viewScrollPositions={home:0,explore:0,sources:0};
+const viewScrollPositions={home:0,explore:0,sources:0,gloss:0,docs:0};
 let restoringViewScroll=false;
 // Mémoriser la position pendant la lecture, avant qu'une vue masquée réduise la page.
 window.addEventListener("scroll",()=>{
@@ -1612,7 +1668,11 @@ function showView(view){
  $("equivView").classList.toggle("hidden",view!=="equiv");
  $("excView").classList.toggle("hidden",view!=="exc");
  $("glossView").classList.toggle("hidden",view!=="gloss");
+ $("memoDocsView").classList.toggle("hidden",view!=="docs");
+ if(view==="docs")memoDocsRender();
  if(view==="gloss")memoGlossRender();
+ $("memoGlossNav").setAttribute("aria-current",view==="gloss"?"page":"false");
+ $("memoDocsNav").setAttribute("aria-current",view==="docs"?"page":"false");
  $("sourcesView").classList.toggle("hidden",view!=="sources");
  
  $("exploreNav").setAttribute("aria-current",view==="explore"?"page":"false");
@@ -2704,7 +2764,7 @@ function navigateToView(view){
  url.searchParams.delete("edition");
  url.searchParams.delete("presentation");
  url.searchParams.delete("rubrique");
- url.hash=view==="explore"?"explorer":view==="sources"?"sources":view==="equiv"?"equivalences":view==="exc"?"excipients":"";
+ url.hash=view==="explore"?"explorer":view==="sources"?"sources":view==="equiv"?"equivalences":view==="exc"?"excipients":view==="gloss"?"glossaire":view==="docs"?"documents":"";
  history.pushState({view},"",url);rememberNavigation();
  editorId=null;
  openedSearchFiche=false;
@@ -4823,6 +4883,88 @@ function renderPrioritySection(s,targetSectionId=null){
  const heading=(s.id==="alerte-delivrance"||s.id==="conseils-comptoir")?"":`<h3>${esc(s.title)}</h3>`;
  return `<section class="section priority-section ${targetSectionId&&s.id===targetSectionId?'direct-target':''}" id="section-${esc(s.id)}">${heading}${list}</section>`;
 }
+
+// Bibliothèque documentaire partagée : métadonnées Supabase et fichiers dans Storage.
+let memoDocsEntries=[],memoDocsReady=false,memoDocsError='';
+async function memoDocsLoad(){
+ const {data,error}=await supabaseClient.from('memo_documents').select('id,title,description,category,url,storage_path,created_at').order('title');
+ if(error){memoDocsReady=false;memoDocsError='La bibliothèque nécessite le script SQL Documents dans Supabase.';memoDocsRender();return}
+ memoDocsEntries=data||[];memoDocsReady=true;memoDocsError='';memoDocsRender();
+}
+function memoDocsRender(){
+ const list=$('memoDocsList');if(!list)return;
+ $('memoDocsAdd').hidden=!admin;
+ const q=($('memoDocsSearch').value||'').trim().toLocaleLowerCase('fr');
+ const entries=memoDocsEntries.filter(d=>([d.title,d.description,d.category].join(' ')).toLocaleLowerCase('fr').includes(q));
+ list.replaceChildren();
+ for(const d of entries){
+  const item=document.createElement('article');item.className='memo-doc-item';
+  const icon=document.createElement('span');icon.className='memo-doc-symbol';icon.textContent='📄';
+  const body=document.createElement('div');body.className='memo-doc-body';
+  const title=document.createElement('a');title.className='memo-doc-title';title.textContent=d.title;
+  const url=d.storage_path?supabaseClient.storage.from('memo-documents').getPublicUrl(d.storage_path).data.publicUrl:d.url;
+  if(url && /^https?:\/\//i.test(url)){title.href=url;title.target='_blank';title.rel='noopener noreferrer'}
+  else title.removeAttribute('href');
+  body.append(title);
+  if(d.description){const desc=document.createElement('p');desc.className='memo-doc-desc';desc.textContent=d.description;body.append(desc)}
+  if(d.category){const meta=document.createElement('div');meta.className='memo-doc-meta';meta.textContent=d.category;body.append(meta)}
+  item.append(icon,body);
+  if(admin){
+   const actions=document.createElement('div');actions.className='memo-doc-actions';
+   const edit=document.createElement('button');edit.type='button';edit.textContent='Modifier';edit.onclick=()=>memoDocsSave(d);
+   const del=document.createElement('button');del.type='button';del.textContent='Supprimer';del.onclick=()=>memoDocsDelete(d);
+   actions.append(edit,del);item.append(actions);
+  }
+  list.append(item);
+ }
+ $('memoDocsStatus').textContent=memoDocsError||(!memoDocsReady?'Chargement des documents…':entries.length?'':'Aucun document pour le moment.');
+}
+async function memoDocsSave(existing=null){
+ if(!requireAdmin())return;
+ if(!memoDocsReady){alert(memoDocsError||'Bibliothèque indisponible.');return}
+ const title=prompt('Titre du document :',existing?.title||'');if(title===null||!title.trim())return;
+ const category=prompt('Catégorie (facultatif) :',existing?.category||'');if(category===null)return;
+ const description=prompt('Description (facultative) :',existing?.description||'');if(description===null)return;
+ const url=prompt('Lien HTTPS du document (facultatif si tu ajoutes un fichier ensuite) :',existing?.url||'');
+ if(url===null)return;
+ if(url.trim()&&!/^https:\/\//i.test(url.trim())){alert('Utilise un lien HTTPS.');return}
+ let storagePath=existing?.storage_path||null;
+ if(!existing || confirm('Souhaites-tu importer un fichier PDF ou un document depuis ton ordinateur ?\nOK = choisir un fichier ; Annuler = conserver le lien saisi.')){
+  const file=await new Promise(resolve=>{
+   const input=document.createElement('input');input.type='file';input.accept='.pdf,.doc,.docx,.odt,.xls,.xlsx,.png,.jpg,.jpeg,.txt';
+   input.style.display='none';document.body.append(input);
+   input.onchange=()=>{const f=input.files?.[0]||null;input.remove();resolve(f)};
+   // La boîte peut être annulée sans événement change dans certains navigateurs.
+   input.addEventListener('cancel',()=>{input.remove();resolve(null)},{once:true});
+   input.click();
+  });
+  if(file){
+   if(file.size>20*1024*1024){alert('Le fichier dépasse 20 Mo.');return}
+   const ext=(file.name.split('.').pop()||'pdf').toLowerCase();
+   const allowed=['pdf','doc','docx','odt','xls','xlsx','png','jpg','jpeg','txt'];
+   if(!allowed.includes(ext)){alert('Format de fichier non autorisé.');return}
+   const path=crypto.randomUUID()+'.'+ext;
+   const {error}=await supabaseClient.storage.from('memo-documents').upload(path,file,{upsert:false});
+   if(error){alert('Import impossible : '+error.message);return}
+   storagePath=path;
+  }
+ }
+ if(!storagePath&&!url.trim()){alert('Ajoute un lien HTTPS ou un fichier.');return}
+ const payload={title:title.trim(),category:category.trim(),description:description.trim(),url:url.trim()||null,storage_path:storagePath};
+ const result=existing?await supabaseClient.from('memo_documents').update(payload).eq('id',existing.id):await supabaseClient.from('memo_documents').insert(payload);
+ if(result.error){alert('Enregistrement impossible : '+result.error.message);return}
+ await memoDocsLoad();
+}
+async function memoDocsDelete(d){
+ if(!requireAdmin()||!confirm('Supprimer « '+d.title+' » de la bibliothèque ?'))return;
+ const {error}=await supabaseClient.from('memo_documents').delete().eq('id',d.id);
+ if(error){alert('Suppression impossible : '+error.message);return}
+ if(d.storage_path)await supabaseClient.storage.from('memo-documents').remove([d.storage_path]);
+ await memoDocsLoad();
+}
+document.getElementById('memoDocsSearch')?.addEventListener('input',memoDocsRender);
+document.getElementById('memoDocsAdd')?.addEventListener('click',()=>memoDocsSave());
+
 // Glossaire centralisé : table Supabase memo_glossary (voir fichier SQL fourni).
 let memoGlossEntries=[];let memoGlossReady=false;let memoGlossError='';
 function memoGlossEscape(v){return esc(String(v??''))}
@@ -6442,6 +6584,8 @@ $("memoTabGeneric").onclick=()=>memoSetCorrespondenceTab("generic");
  $("equivClear").onclick=()=>{$("equivPrincepsSearch").value="";$("equivDciSearch").value="";renderEquivalences();$("equivPrincepsSearch").focus()};
  $("exploreNav").onclick=()=>navigateToView("explore");
 $("sourcesNav").onclick=()=>navigateToView("sources");
+$("memoGlossNav").onclick=()=>navigateToView("gloss");
+$("memoDocsNav").onclick=()=>navigateToView("docs");
 document.querySelector("a.brand").addEventListener("click",event=>{
  if(event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;
  event.preventDefault();
@@ -6505,7 +6649,7 @@ if(!location.search&&!location.hash){
   }
  }catch(e){}
 }
-openedSearchFiche=!!new URLSearchParams(location.search).get("fiche");renderFilters();renderResults();if(location.hash==="#explorer")showView("explore");else if(location.hash==="#sources")showView("sources");else if(location.hash==="#excipients")showView("exc");else if(location.hash==="#glossaire")showView("gloss");else if(location.hash==="#equivalences")showView("equiv");else if(location.hash==="#a-propos"||location.hash==="#contact")navigateInfoPage(location.hash.slice(1),false);
+openedSearchFiche=!!new URLSearchParams(location.search).get("fiche");renderFilters();renderResults();if(location.hash==="#explorer")showView("explore");else if(location.hash==="#sources")showView("sources");else if(location.hash==="#excipients")showView("exc");else if(location.hash==="#glossaire")showView("gloss");else if(location.hash==="#documents")showView("docs");else if(location.hash==="#equivalences")showView("equiv");else if(location.hash==="#a-propos"||location.hash==="#contact")navigateInfoPage(location.hash.slice(1),false);
 if(location.hash==="#explorer"&&history.state?.memopharmExplorerFilter)memoApplyExplorerFilter(history.state.memopharmExplorerFilter);
 if(currentView==="explore"&&!meds.length)$("exploreCards").innerHTML='<div class="empty">Chargement des fiches…</div>';
 initCloud();
