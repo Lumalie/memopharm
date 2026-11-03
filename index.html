@@ -1181,7 +1181,32 @@ header .header-action-stack .header-actions > #logoutBtn{width:auto!important}
 .memo-doc-actions button{width:auto;padding:6px 10px}
 @media(max-width:580px){.memo-docs-tools{flex-wrap:wrap}.memo-doc-item{flex-wrap:wrap}.memo-doc-actions{width:100%;justify-content:flex-end}}
 </style>
-</head>
+<style>
+/* V117.34 — formulaire documentaire */
+.memo-doc-overlay{position:fixed;inset:0;z-index:11000;background:rgba(13,39,29,.55);display:flex;align-items:center;justify-content:center;padding:18px;overflow:auto}
+.memo-doc-dialog{background:var(--card,#fff);color:var(--ink,#23352e);border-radius:18px;width:min(100%,590px);max-height:min(92vh,900px);overflow:auto;box-shadow:0 20px 70px #0d271d44;padding:25px}
+.memo-doc-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px}
+.memo-doc-dialog-head h2{margin:0;font-size:1.35rem}
+.memo-doc-close{border:0!important;background:transparent!important;font-size:1.6rem!important;width:35px!important;padding:0!important;cursor:pointer}
+.memo-doc-form{display:grid;gap:15px}
+.memo-doc-form label.memo-doc-field{display:grid;gap:6px;font-weight:650;font-size:.91rem}
+.memo-doc-form input:not([type=radio]):not([type=file]),.memo-doc-form select,.memo-doc-form textarea{width:100%;box-sizing:border-box;border:1px solid var(--line,#dce6de);border-radius:10px;padding:11px 12px;font:inherit;background:var(--card,#fff);color:inherit}
+.memo-doc-form textarea{resize:vertical;min-height:80px}
+.memo-doc-mode{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.memo-doc-mode label{border:1px solid var(--line,#dce6de);padding:12px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:.91rem}
+.memo-doc-mode label:has(input:checked){background:var(--green2,#e5f0e8);border-color:#8dbb9d}
+.memo-doc-drop{display:grid;place-items:center;text-align:center;gap:6px;border:2px dashed #a9c9b4;background:#f6faf6;color:#315d47;border-radius:13px;padding:24px 16px;cursor:pointer;min-height:120px}
+.memo-doc-drop.dragover{border-color:#387956;background:#e5f3e9}
+.memo-doc-drop strong{font-size:1rem}.memo-doc-drop small{font-size:.8rem;color:#607d6a}
+.memo-doc-drop input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.memo-doc-fileinfo{font-size:.84rem;color:#315d47;overflow-wrap:anywhere}
+.memo-doc-form .memo-doc-hint{font-size:.8rem;color:var(--muted,#687970);font-weight:400}
+.memo-doc-form .memo-doc-error{color:#a23f36;font-size:.87rem;min-height:1.1em}
+.memo-doc-form .memo-doc-footer{display:flex;justify-content:flex-end;gap:10px;border-top:1px solid var(--line,#dce6de);padding-top:15px}
+.memo-doc-form .memo-doc-footer button{width:auto;min-width:105px}
+@media(max-width:550px){.memo-doc-dialog{padding:18px}.memo-doc-mode{grid-template-columns:1fr}}
+html[data-memo-theme=dark] .memo-doc-drop{background:#253d30;color:#d7e8da}
+</style></head>
 <body>
 <header><div class="wrap">
   <div class="topline">
@@ -4919,41 +4944,91 @@ function memoDocsRender(){
  }
  $('memoDocsStatus').textContent=memoDocsError||(!memoDocsReady?'Chargement des documents…':entries.length?'':'Aucun document pour le moment.');
 }
-async function memoDocsSave(existing=null){
+function memoDocsCloseDialog(){
+ const overlay=document.getElementById('memoDocOverlay');if(overlay){overlay.remove();document.removeEventListener('keydown',memoDocsEscape)}
+}
+function memoDocsEscape(e){if(e.key==='Escape'&&!document.getElementById('memoDocSaveButton')?.disabled)memoDocsCloseDialog()}
+function memoDocsSave(existing=null){
  if(!requireAdmin())return;
  if(!memoDocsReady){alert(memoDocsError||'Bibliothèque indisponible.');return}
- const title=prompt('Titre du document :',existing?.title||'');if(title===null||!title.trim())return;
- const category=prompt('Catégorie (facultatif) :',existing?.category||'');if(category===null)return;
- const description=prompt('Description (facultative) :',existing?.description||'');if(description===null)return;
- const url=prompt('Lien HTTPS du document (facultatif si tu ajoutes un fichier ensuite) :',existing?.url||'');
- if(url===null)return;
- if(url.trim()&&!/^https:\/\//i.test(url.trim())){alert('Utilise un lien HTTPS.');return}
- let storagePath=existing?.storage_path||null;
- if(!existing || confirm('Souhaites-tu importer un fichier PDF ou un document depuis ton ordinateur ?\nOK = choisir un fichier ; Annuler = conserver le lien saisi.')){
-  const file=await new Promise(resolve=>{
-   const input=document.createElement('input');input.type='file';input.accept='.pdf,.doc,.docx,.odt,.xls,.xlsx,.png,.jpg,.jpeg,.txt';
-   input.style.display='none';document.body.append(input);
-   input.onchange=()=>{const f=input.files?.[0]||null;input.remove();resolve(f)};
-   // La boîte peut être annulée sans événement change dans certains navigateurs.
-   input.addEventListener('cancel',()=>{input.remove();resolve(null)},{once:true});
-   input.click();
-  });
-  if(file){
-   if(file.size>20*1024*1024){alert('Le fichier dépasse 20 Mo.');return}
-   const ext=(file.name.split('.').pop()||'pdf').toLowerCase();
-   const allowed=['pdf','doc','docx','odt','xls','xlsx','png','jpg','jpeg','txt'];
-   if(!allowed.includes(ext)){alert('Format de fichier non autorisé.');return}
-   const path=crypto.randomUUID()+'.'+ext;
-   const {error}=await supabaseClient.storage.from('memo-documents').upload(path,file,{upsert:false});
-   if(error){alert('Import impossible : '+error.message);return}
-   storagePath=path;
-  }
+ memoDocsCloseDialog();
+ const overlay=document.createElement('div');overlay.id='memoDocOverlay';overlay.className='memo-doc-overlay';
+ overlay.innerHTML=`<section class="memo-doc-dialog" role="dialog" aria-modal="true" aria-labelledby="memoDocDialogTitle">
+ <div class="memo-doc-dialog-head"><h2 id="memoDocDialogTitle">${existing?'Modifier le document':'Ajouter un document'}</h2><button type="button" class="memo-doc-close" aria-label="Fermer">×</button></div>
+ <form class="memo-doc-form" id="memoDocForm">
+ <label class="memo-doc-field">Titre du document *<input name="title" maxlength="250" required placeholder="Ex. : Calendrier vaccinal 2026"></label>
+ <label class="memo-doc-field">Catégorie <input name="category" list="memoDocCategories" placeholder="Ex. : Vaccination"><datalist id="memoDocCategories"><option value="Vaccination"><option value="Recommandations"><option value="Protocoles"><option value="Réglementation"><option value="Fiches pratiques"><option value="Autres"></datalist></label>
+ <label class="memo-doc-field">Description <textarea name="description" rows="3" placeholder="Quelques mots pour retrouver facilement ce document…"></textarea></label>
+ <div class="memo-doc-field"><strong>Source du document *</strong><div class="memo-doc-mode"><label><input type="radio" name="mode" value="file" checked> 📎 Importer un fichier</label><label><input type="radio" name="mode" value="link"> 🔗 Ajouter un lien</label></div></div>
+ <div id="memoDocFilePanel"><label class="memo-doc-drop" id="memoDocDrop"><span style="font-size:1.8rem">📄</span><strong>Choisir un fichier</strong><small>ou glisser-déposer ici · PDF, Word, Excel, image ou texte · 20 Mo max.</small><input id="memoDocFile" type="file" accept=".pdf,.doc,.docx,.odt,.xls,.xlsx,.png,.jpg,.jpeg,.txt"></label><div class="memo-doc-fileinfo" id="memoDocFileInfo"></div></div>
+ <div id="memoDocLinkPanel" hidden><label class="memo-doc-field">Adresse du document <input name="url" type="url" placeholder="https://…" inputmode="url"></label><p class="memo-doc-hint">Le document s'ouvrira dans un nouvel onglet.</p></div>
+ <div class="memo-doc-error" id="memoDocError" role="alert" aria-live="polite"></div>
+ <div class="memo-doc-footer"><button type="button" id="memoDocCancel">Annuler</button><button type="submit" class="primary" id="memoDocSaveButton">Enregistrer</button></div>
+ </form></section>`;
+ document.body.append(overlay);
+ const form=overlay.querySelector('form'), fileInput=overlay.querySelector('#memoDocFile');
+ const drop=overlay.querySelector('#memoDocDrop'), info=overlay.querySelector('#memoDocFileInfo');
+ const errorBox=overlay.querySelector('#memoDocError'),saveButton=overlay.querySelector('#memoDocSaveButton');
+ form.elements.title.value=existing?.title||'';form.elements.category.value=existing?.category||'';
+ form.elements.description.value=existing?.description||'';form.elements.url.value=existing?.url||'';
+ let file=null;
+ function setMode(mode){
+  overlay.querySelector('#memoDocFilePanel').hidden=mode!=='file';
+  overlay.querySelector('#memoDocLinkPanel').hidden=mode!=='link';
+  errorBox.textContent='';
  }
- if(!storagePath&&!url.trim()){alert('Ajoute un lien HTTPS ou un fichier.');return}
- const payload={title:title.trim(),category:category.trim(),description:description.trim(),url:url.trim()||null,storage_path:storagePath};
- const result=existing?await supabaseClient.from('memo_documents').update(payload).eq('id',existing.id):await supabaseClient.from('memo_documents').insert(payload);
- if(result.error){alert('Enregistrement impossible : '+result.error.message);return}
- await memoDocsLoad();
+ const initialMode=existing?.storage_path?'file':existing?.url?'link':'file';
+ form.querySelector(`input[name="mode"][value="${initialMode}"]`).checked=true;setMode(initialMode);
+ function selectFile(f){
+  if(!f)return;
+  const ext=(f.name.split('.').pop()||'').toLowerCase();
+  if(!['pdf','doc','docx','odt','xls','xlsx','png','jpg','jpeg','txt'].includes(ext)){errorBox.textContent='Format non pris en charge.';return}
+  if(f.size>20*1024*1024){errorBox.textContent='Ce fichier dépasse 20 Mo.';return}
+  file=f;errorBox.textContent='';info.textContent=`✓ ${f.name} (${(f.size/1024/1024).toFixed(2)} Mo)`;
+  if(!form.elements.title.value.trim())form.elements.title.value=f.name.replace(/\.[^.]+$/,'').replace(/[_-]/g,' ');
+ }
+ fileInput.addEventListener('change',()=>selectFile(fileInput.files?.[0]));
+ for(const radio of form.querySelectorAll('input[name="mode"]'))radio.addEventListener('change',()=>setMode(radio.value));
+ drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('dragover')});
+ drop.addEventListener('dragleave',()=>drop.classList.remove('dragover'));
+ drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('dragover');selectFile(e.dataTransfer?.files?.[0])});
+ if(existing?.storage_path)info.textContent='✓ Fichier déjà enregistré. Choisis un autre fichier pour le remplacer.';
+ overlay.querySelector('.memo-doc-close').onclick=memoDocsCloseDialog;
+ overlay.querySelector('#memoDocCancel').onclick=memoDocsCloseDialog;
+ overlay.addEventListener('click',e=>{if(e.target===overlay&&!saveButton.disabled)memoDocsCloseDialog()});
+ document.addEventListener('keydown',memoDocsEscape);
+ form.addEventListener('submit',async e=>{
+  e.preventDefault();if(saveButton.disabled)return;
+  errorBox.textContent='';
+  const mode=form.querySelector('input[name="mode"]:checked').value;
+  const title=form.elements.title.value.trim(),category=form.elements.category.value.trim(),description=form.elements.description.value.trim();
+  const url=form.elements.url.value.trim();
+  if(!title){errorBox.textContent='Le titre est obligatoire.';return}
+  if(mode==='link'&&!/^https:\/\//i.test(url)){errorBox.textContent='Saisis un lien commençant par https://';return}
+  if(mode==='file'&&!file&&!existing?.storage_path){errorBox.textContent='Choisis un fichier à importer.';return}
+  saveButton.disabled=true;saveButton.textContent='Enregistrement…';
+  let uploadedPath=null;
+  try{
+   let storagePath=mode==='file'?(existing?.storage_path||null):null;
+   if(mode==='file'&&file){
+    const ext=file.name.split('.').pop().toLowerCase();
+    const path=crypto.randomUUID()+'.'+ext;
+    const uploaded=await supabaseClient.storage.from('memo-documents').upload(path,file,{upsert:false});
+    if(uploaded.error)throw uploaded.error;
+    storagePath=path;uploadedPath=path;
+   }
+   const payload={title,category,description,url:mode==='link'?url:null,storage_path:storagePath};
+   const result=existing?await supabaseClient.from('memo_documents').update(payload).eq('id',existing.id):await supabaseClient.from('memo_documents').insert(payload);
+   if(result.error)throw result.error;
+   memoDocsCloseDialog();await memoDocsLoad();
+   // Après sauvegarde réussie, supprimer l'ancien fichier remplacé.
+   if(existing?.storage_path&&existing.storage_path!==storagePath)await supabaseClient.storage.from('memo-documents').remove([existing.storage_path]);
+  }catch(err){
+   if(uploadedPath)await supabaseClient.storage.from('memo-documents').remove([uploadedPath]);
+   errorBox.textContent='Enregistrement impossible : '+(err?.message||String(err));
+  }finally{saveButton.disabled=false;saveButton.textContent='Enregistrer'}
+ });
+ form.elements.title.focus();
 }
 async function memoDocsDelete(d){
  if(!requireAdmin()||!confirm('Supprimer « '+d.title+' » de la bibliothèque ?'))return;
