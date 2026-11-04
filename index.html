@@ -1418,6 +1418,58 @@ header #headerAdminActions .header-json-menu>summary{
  }
 }
 </style>
+
+<style>
+/* V117.43 : un seul conteneur grille pour Déconnexion et Sauvegardes. */
+body.admin-header-mode > header{padding-bottom:initial!important}
+header .header-action-stack .header-actions:has(> #logoutBtn:not(.hidden)){
+ grid-template-columns:repeat(3,minmax(104px,1fr)) minmax(122px,max-content)!important;
+ grid-template-rows:repeat(2,42px)!important;
+ column-gap:10px!important;row-gap:8px!important;
+}
+header .header-action-stack .header-actions > #logoutBtn:not(.hidden){
+ grid-column:4!important;grid-row:1!important;
+ justify-self:stretch!important;align-self:stretch!important;
+ width:100%!important;min-width:122px!important;max-width:none!important;
+ height:42px!important;margin:0!important;padding:9px 12px!important;
+ position:static!important;white-space:nowrap!important;
+}
+header .header-action-stack .header-actions > #headerAdminActions:not(.hidden){
+ grid-column:4!important;grid-row:2!important;
+ display:flex!important;align-items:stretch!important;justify-content:stretch!important;
+ position:static!important;inset:auto!important;
+ width:100%!important;min-width:122px!important;max-width:none!important;
+ margin:0!important;padding:0!important;z-index:5!important;
+}
+header .header-action-stack .header-actions > #headerAdminActions.hidden{display:none!important}
+header #headerAdminActions .header-json-menu{width:100%!important;position:relative!important}
+header #headerAdminActions .header-json-menu > summary{
+ width:100%!important;min-width:122px!important;height:42px!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ padding:9px 12px!important;box-sizing:border-box!important;
+ font-size:.8rem!important;font-weight:650!important;
+ background:#f7faf8!important;color:#234e3d!important;
+ border:1px solid #d3e5d7!important;border-radius:11px!important;
+}
+header #headerAdminActions .header-json-items{right:0!important;left:auto!important;top:calc(100% + 5px)!important}
+@media(max-width:780px){
+ header .header-action-stack .header-actions:has(> #logoutBtn:not(.hidden)){
+  grid-template-columns:repeat(3,minmax(0,1fr)) minmax(100px,max-content)!important;
+ }
+ header .header-action-stack .header-actions > #logoutBtn:not(.hidden),
+ header .header-action-stack .header-actions > #headerAdminActions:not(.hidden){min-width:100px!important}
+ header #headerAdminActions .header-json-menu > summary{min-width:100px!important}
+}
+@media(max-width:420px){
+ header .header-action-stack .header-actions:has(> #logoutBtn:not(.hidden)){
+  grid-template-columns:repeat(2,minmax(0,1fr)) minmax(96px,max-content)!important;
+  grid-template-rows:repeat(3,42px)!important;
+ }
+ header .header-action-stack .header-actions > #logoutBtn:not(.hidden){grid-column:3!important;grid-row:1!important;min-width:96px!important}
+ header .header-action-stack .header-actions > #headerAdminActions:not(.hidden){grid-column:3!important;grid-row:2!important;min-width:96px!important}
+ header #headerAdminActions .header-json-menu > summary{min-width:96px!important}
+}
+</style>
 </head>
 <body>
 <header><div class="wrap">
@@ -1431,7 +1483,7 @@ header #headerAdminActions .header-json-menu>summary{
   </div>
 </a>
     <div id="headerSearchSlot" class="header-search-slot"></div>
-    <div class="header-action-stack"><div class="header-actions"><button id="excNav" type="button" title="Comparer les excipients des spécialités de même dosage et forme">Excipients</button><button type="button" id="memoGlossNav">Glossaire</button><button type="button" id="memoDocsNav">Documents</button><button id="equivNav" type="button" title="Rechercher une correspondance entre un nom commercial et une DCI">Équivalences</button><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="loginBtn" type="button" class="admin-lock" title="Administration (Ctrl + Alt + A)" aria-label="Connexion administrateur" aria-keyshortcuts="Control+Alt+A"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="10" width="17" height="11.5" rx="2.5"/><path d="M7.5 10V7a4.5 4.5 0 0 1 9 0v3"/><path d="M12 15.1v2.9"/><circle cx="12" cy="14.8" r="1" fill="currentColor" stroke="none"/></svg></button><button id="logoutBtn" type="button" class="header-logout hidden">Déconnexion</button></div><div class="header-admin-actions hidden" id="headerAdminActions"><details class="header-json-menu" id="headerJsonMenu"><summary>Sauvegardes <span aria-hidden="true">⌄</span></summary><div class="header-json-items"><button id="exportBtn" type="button">Exporter JSON</button><button id="memoTrashNav" type="button">Corbeille</button><button id="importBtn" type="button">Importer JSON</button></div></details><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
+    <div class="header-action-stack"><div class="header-actions"><button id="excNav" type="button" title="Comparer les excipients des spécialités de même dosage et forme">Excipients</button><button type="button" id="memoGlossNav">Glossaire</button><button type="button" id="memoDocsNav">Documents</button><button id="equivNav" type="button" title="Rechercher une correspondance entre un nom commercial et une DCI">Équivalences</button><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="loginBtn" type="button" class="admin-lock" title="Administration (Ctrl + Alt + A)" aria-label="Connexion administrateur" aria-keyshortcuts="Control+Alt+A"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="10" width="17" height="11.5" rx="2.5"/><path d="M7.5 10V7a4.5 4.5 0 0 1 9 0v3"/><path d="M12 15.1v2.9"/><circle cx="12" cy="14.8" r="1" fill="currentColor" stroke="none"/></svg></button><button id="logoutBtn" type="button" class="header-logout hidden">Déconnexion</button><div class="header-admin-actions hidden" id="headerAdminActions"><details class="header-json-menu" id="headerJsonMenu"><summary>Sauvegardes <span aria-hidden="true">⌄</span></summary><div class="header-json-items"><button id="exportBtn" type="button">Exporter JSON</button><button id="memoTrashNav" type="button">Corbeille</button><button id="importBtn" type="button">Importer JSON</button></div></details><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
   </div>
   <p>Une base de repères pour retrouver rapidement les informations utiles sur les médicaments, leurs modalités de prise et les points de vigilance.</p>
 </div></header>
