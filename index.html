@@ -1510,6 +1510,38 @@ header .header-action-stack .header-actions > #headerAdminActions:not(.hidden){
  header .header-action-stack .header-actions > #headerAdminActions:not(.hidden){grid-column:3!important;grid-row:2!important}
 }
 </style>
+<style>
+/* V117.45 : grille cohérente, aucun élément positionné sur ses voisins. */
+@media(min-width:761px){
+ body.header-search-active header .topline{
+  display:grid!important;grid-template-columns:minmax(240px,1fr) minmax(330px,410px)!important;
+  grid-template-rows:auto auto!important;gap:16px 24px!important;
+  align-items:center!important;justify-content:space-between!important;
+ }
+ body.header-search-active header .topline>.brand{grid-column:1!important;grid-row:1!important;min-width:0!important}
+ body.header-search-active header #headerSearchSlot{
+  grid-column:2!important;grid-row:1!important;min-width:0!important;
+  width:100%!important;max-width:410px!important;justify-self:end!important;
+  margin:0!important;position:relative!important;transform:none!important;
+ }
+ body.header-search-active header .header-action-stack{
+  grid-column:1 / -1!important;grid-row:2!important;justify-self:end!important;
+  position:relative!important;width:max-content!important;max-width:100%!important;
+  margin:0!important;transform:none!important;
+ }
+}
+@media(min-width:1551px){
+ body.header-search-active header .topline{grid-template-columns:minmax(220px,1fr) minmax(330px,410px) auto!important;grid-template-rows:auto!important}
+ body.header-search-active header #headerSearchSlot{grid-column:2!important;grid-row:1!important}
+ body.header-search-active header .header-action-stack{grid-column:3!important;grid-row:1!important}
+}
+@media(max-width:760px){
+ body.header-search-active header .topline{display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto auto auto!important}
+ body.header-search-active header .topline>.brand{grid-column:1!important;grid-row:1!important}
+ body.header-search-active header #headerSearchSlot{grid-column:1!important;grid-row:2!important;min-width:0!important;width:100%!important}
+ body.header-search-active header .header-action-stack{grid-column:1!important;grid-row:3!important;min-width:0!important;width:100%!important}
+}
+</style>
 </head>
 <body>
 <header><div class="wrap">
@@ -3321,7 +3353,7 @@ function searchSectionPreview(sec){
 let openedSearchFiche=false;
 function updateSearchPlacement(){
  const detailMode=currentView==="home"&&openedSearchFiche&&!editorId;
- const compactMode=detailMode||(currentView!=="home"&&currentView!=="explore")||(admin&&currentView==="home"&&!editorId);
+ const compactMode=detailMode||(currentView!=="home"&&currentView!=="explore");
  document.body.classList.toggle("fiche-open",detailMode);
  document.body.classList.toggle("header-search-active",compactMode);
  const card=$("mainSearchCard");
