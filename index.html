@@ -5998,8 +5998,51 @@ function renderEditor(id){
    const key=String(sec.title).trim().toLocaleLowerCase('fr');
    if(!map.has(key))map.set(key,{id:sec.id||'variant-'+crypto.randomUUID(),title:sec.title,type:sec.type==='table'?'table':'text',content:'',enabled:true});
   });
-  return [...map.values()].map(sec=>({...sec,id:'variant-'+crypto.randomUUID()}));
+  const presentationTopics=new Set(['modalites-prise','posologie','age minimum','en cas d oubli de prise','manipulation reconstitution','modalites de conservation','precautions specifiques','composition substances actives et quantites']);
+  return [...map.values()].filter(sec=>presentationTopics.has(memoVariantKey(sec))).map(sec=>({...sec,id:'variant-'+crypto.randomUUID()}));
  };
+ // Organisation des rubriques de présentation : un seul intitulé par sujet,
+ // et le conseil immédiatement utile au comptoir en première position.
+ // Les contenus distincts sont conservés ; aucune migration Supabase nécessaire.
+ const memoVariantKey=sec=>{
+  const title=String(sec.title||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+  if(/\ba dire au comptoir\b|\bconseils? au comptoir\b/.test(title))return 'dire-comptoir';
+  if(/\bmodalites? de prise\b/.test(title))return 'modalites-prise';
+  if(/\bgrossesse et allaitement\b/.test(title))return 'grossesse-allaitement';
+  if(/\binteractions? (medicamenteuses?|importantes?)\b/.test(title))return 'interactions';
+  return title;
+ };
+ const memoVariantCounter={id:'variant-dire-comptoir',title:'💬 À DIRE AU COMPTOIR',type:'text',content:'',enabled:true};
+ function memoOrganizeVariantSections(child){
+  if(!child||!Array.isArray(child.sections))return;
+  const sections=child.sections;
+  const metadata=sections.filter(sec=>sec.id==='variant-meta');
+  const sources=sections.filter(sec=>variantIsSource(sec)&&sec.id!=='variant-meta');
+  const ordinary=sections.filter(sec=>sec.id!=='variant-meta'&&!variantIsSource(sec));
+  const seen=new Map(),unique=[];
+  for(const sec of ordinary){
+   const key=memoVariantKey(sec);
+   const existing=seen.get(key);
+   // Une table et un texte sont deux présentations différentes : ne pas
+   // détruire leur mise en forme en tentant de les fusionner.
+   const format=sec.type==='table'?'table':'text';
+   const typedKey=key+'|'+format;
+   if(!existing && !seen.has(typedKey)){
+    seen.set(typedKey,sec);if(!seen.has(key))seen.set(key,sec);
+    unique.push(sec);continue;
+   }
+   const target=seen.get(typedKey);
+   if(!target){seen.set(typedKey,sec);unique.push(sec);continue;}
+   const a=String(target.content||'').trim(),b=String(sec.content||'').trim();
+   if(b&&b!==a&&!a.includes(b))target.content=a?a+'\n\n'+b:b;
+   if(sec.enabled!==false)target.enabled=true;
+  }
+  let counter=unique.find(sec=>memoVariantKey(sec)==='dire-comptoir'&&sec.type!=='table');
+  if(!counter){counter={...memoVariantCounter};unique.unshift(counter)}
+  counter.title=memoVariantCounter.title;
+  const ordered=[counter,...unique.filter(sec=>sec!==counter)];
+  child.sections=[...metadata,...ordered,...sources];
+ }
  const variantLabel=child=>[m.name,child.dosage,child.form||child.sections?.[0]?.dciForm].filter(Boolean).join(' — ');
  // Même composant HTML que dans « Informations générales » : sectionEditor.
  const variantSectionHTML=(sec,i,total)=>{
@@ -6200,6 +6243,7 @@ function renderEditor(id){
  }
  function variantReadAll(){variantReadCard()}
  function variantRender(){
+  for(const draft of variantDrafts.values())memoOrganizeVariantSections(draft);
   const items=[...variantDrafts.values()];
   if(!variantDrafts.has(variantActiveId))variantActiveId=String(items[0]?.id||'');
   const child=variantDrafts.get(variantActiveId);
@@ -6259,7 +6303,7 @@ function renderEditor(id){
   wireTextFormatting();
  }
  const initialVariants=Array.isArray(m._variantDrafts)?m._variantDrafts:meds.filter(x=>!isGroup(x)&&moleculeParentId(x)===String(m.id));
- initialVariants.forEach(x=>variantDrafts.set(String(x.id),clone(x)));
+ initialVariants.forEach(x=>{const draft=clone(x);memoOrganizeVariantSections(draft);variantDrafts.set(String(x.id),draft)});
  if(m._variantUi){variantActiveId=m._variantUi.activeId||null;variantSubtab=m._variantUi.subtab||'particularites';variantCommercialIndex=m._variantUi.commercialIndex||0;}
  window.memoCaptureVariantDraft=target=>{
   if(String(target.id)!==String(m.id))return;
@@ -6271,7 +6315,7 @@ function renderEditor(id){
  // Les variantes restent de type « dci » en mémoire ; Supabase stocke « variant ».
  function variantAddNew(){
   variantReadAll();const child={id:crypto.randomUUID(),name:m.name,entry_type:'variant',dosage:'',dci:'',parent_dci:'',form:'',category:m.category,presentations:[],status:'à vérifier',updated:'',published:false,sections:[{id:'variant-meta',title:'Métadonnées',type:'text',content:'',enabled:false,moleculeParentId:String(m.id)},...variantSectionCatalog()]};
-  variantDrafts.set(String(child.id),child);variantActiveId=String(child.id);variantOpenSection=null;variantCommercialIndex=0;variantRender();
+  memoOrganizeVariantSections(child);variantDrafts.set(String(child.id),child);variantActiveId=String(child.id);variantOpenSection=null;variantCommercialIndex=0;variantRender();
   variantRoot.querySelector('[data-variant-form]')?.focus();
  };
  const doseUnit=$("f-dosage-unit");
