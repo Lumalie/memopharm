@@ -1312,7 +1312,14 @@ header .header-action-stack .header-actions > #logoutBtn:not(.hidden){
 #sourcesAdmin{flex:none}
 #sourcesAdmin button{white-space:nowrap;width:auto}
 </style>
-</head>
+<style>
+#memoTrashView .memo-doc-item{align-items:center}
+#memoTrashView .memo-doc-actions{margin-left:auto}
+#memoTrashView .memo-doc-actions .danger{color:#a44c43;border:1px solid #e1bbb8;background:#fff}
+#memoTrashView .memo-doc-actions .primary{background:#e2f0e6;border:1px solid #a9cdb6;color:#245f40}
+#memoTrashView #memoTrashExport{white-space:nowrap}
+@media(max-width:600px){#memoTrashView .memo-docs-tools{flex-wrap:wrap}#memoTrashView #memoTrashExport{width:100%}}
+</style></head>
 <body>
 <header><div class="wrap">
   <div class="topline">
@@ -1325,7 +1332,7 @@ header .header-action-stack .header-actions > #logoutBtn:not(.hidden){
   </div>
 </a>
     <div id="headerSearchSlot" class="header-search-slot"></div>
-    <div class="header-action-stack"><div class="header-actions"><button id="excNav" type="button" title="Comparer les excipients des spécialités de même dosage et forme">Excipients</button><button type="button" id="memoGlossNav">Glossaire</button><button type="button" id="memoDocsNav">Documents</button><button id="equivNav" type="button" title="Rechercher une correspondance entre un nom commercial et une DCI">Équivalences</button><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="loginBtn" type="button" class="admin-lock" title="Administration (Ctrl + Alt + A)" aria-label="Connexion administrateur" aria-keyshortcuts="Control+Alt+A"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="10" width="17" height="11.5" rx="2.5"/><path d="M7.5 10V7a4.5 4.5 0 0 1 9 0v3"/><path d="M12 15.1v2.9"/><circle cx="12" cy="14.8" r="1" fill="currentColor" stroke="none"/></svg></button><button id="logoutBtn" type="button" class="header-logout hidden">Déconnexion</button></div><div class="header-admin-actions hidden" id="headerAdminActions"><details class="header-json-menu hidden" id="headerJsonMenu"><summary>JSON <span aria-hidden="true">⌄</span></summary><div class="header-json-items"><button id="exportBtn" type="button">Exporter JSON</button><button id="importBtn" type="button">Importer JSON</button></div></details><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
+    <div class="header-action-stack"><div class="header-actions"><button id="excNav" type="button" title="Comparer les excipients des spécialités de même dosage et forme">Excipients</button><button type="button" id="memoGlossNav">Glossaire</button><button type="button" id="memoDocsNav">Documents</button><button id="equivNav" type="button" title="Rechercher une correspondance entre un nom commercial et une DCI">Équivalences</button><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="loginBtn" type="button" class="admin-lock" title="Administration (Ctrl + Alt + A)" aria-label="Connexion administrateur" aria-keyshortcuts="Control+Alt+A"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="10" width="17" height="11.5" rx="2.5"/><path d="M7.5 10V7a4.5 4.5 0 0 1 9 0v3"/><path d="M12 15.1v2.9"/><circle cx="12" cy="14.8" r="1" fill="currentColor" stroke="none"/></svg></button><button id="logoutBtn" type="button" class="header-logout hidden">Déconnexion</button></div><div class="header-admin-actions hidden" id="headerAdminActions"><details class="header-json-menu" id="headerJsonMenu"><summary>Sauvegardes <span aria-hidden="true">⌄</span></summary><div class="header-json-items"><button id="exportBtn" type="button">Exporter JSON</button><button id="memoTrashNav" type="button">Corbeille</button><button id="importBtn" type="button">Importer JSON</button></div></details><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
   </div>
   <p>Une base de repères pour retrouver rapidement les informations utiles sur les médicaments, leurs modalités de prise et les points de vigilance.</p>
 </div></header>
@@ -1421,6 +1428,7 @@ header .header-action-stack .header-actions > #logoutBtn:not(.hidden){
 <div class="memo-docs-page"><div class="explore-heading"><h2>Documents</h2><p>Bibliothèque de documents pratiques à avoir sous la main au comptoir.</p></div>
 <div class="memo-docs-tools"><input id="memoDocsSearch" type="search" placeholder="Rechercher un document, un thème…" aria-label="Rechercher un document"><button type="button" id="memoDocsAdd" class="primary" hidden>+ Ajouter un document</button></div>
 <div id="memoDocsList" class="memo-docs-list"></div><p id="memoDocsStatus" class="hint"></p></div></section>
+<section id="memoTrashView" class="hidden" aria-label="Corbeille des fiches"><div class="memo-docs-page"><div class="explore-heading"><h2>Corbeille</h2><p>Retrouve et restaure les fiches supprimées, avec leurs variantes.</p></div><div class="memo-docs-tools"><input id="memoTrashSearch" type="search" placeholder="Rechercher une fiche supprimée…" aria-label="Rechercher dans la corbeille"><button type="button" id="memoTrashExport" class="primary">Exporter une sauvegarde JSON</button></div><div id="memoTrashList" class="memo-docs-list"></div><p id="memoTrashStatus" class="hint"></p></div></section>
 <section id="excView" class="hidden" aria-label="Comparateur d’excipients">
  <div class="memo-equiv-page">
   <div class="explore-heading"><h2>Comparateur d’excipients</h2><p>Comparer les compositions des médicaments commerciaux pour un même dosage et une même forme.</p></div>
@@ -1532,6 +1540,7 @@ const starter = [
  {id:"demo-3",name:"Lévothyroxine",dci:"Lévothyroxine",category:"Endocrinologie",form:"Selon spécialité",aliases:"thyroïde",status:"À vérifier",updated:"",source:"",sections:clone(DEFAULT_SECTIONS)}
 ];
 function clone(x){return JSON.parse(JSON.stringify(x))}
+let memoTrashEntries=[];
 let meds=[], selectedId=null, activeCategory="Toutes", admin=false, currentUser=null;
 async function checkAdminAccess(user){
  if(!user)return false;
@@ -1640,14 +1649,16 @@ function memoUpgradeMoleculeSections(sections,entryType,force=false){
  });
  return updated;
 }
-function rowToMed(row){return {parent_dci:row.parent_dci||"",presentations:Array.isArray(row.presentations)?row.presentations:[],id:row.id,name:row.name||"",dosage:row.dosage||"",dci:row.dci||"",category:row.category||"Autres",form:row.form||"",aliases:Array.isArray(row.aliases)?row.aliases.join(", "):(row.aliases||""),entry_type:row.entry_type||"specialite",status:row.review_status||"À vérifier",updated:row.verified_at||"",modifiedAt:row.updated_at||"",source:row.source_url||"",sections:memoUpgradeMoleculeSections(Array.isArray(row.sections)?row.sections:clone(DEFAULT_SECTIONS),row.entry_type||"specialite"),published:row.status==="published"}}
-function medToRow(m){return {parent_dci:isDciFamilyType(m)?null:(m.parent_dci||null),presentations:m.presentations||[],id:m.id,name:m.name,dosage:m.dosage||null,dci:isDciFamilyType(m)?null:(m.dci||null),entry_type:m.entry_type||"specialite",category:m.category||"Autres",form:m.form||null,aliases:String(m.aliases||"").split(",").map(x=>x.trim()).filter(Boolean),review_status:m.status||"À vérifier",verified_at:m.updated||null,source_url:m.source||null,sections:(m.sections||[]).map(({imageData,...section})=>section),status:m.published?"published":"draft"}}
+function rowToMed(row){return {deletedAt:row.deleted_at||null,parent_dci:row.parent_dci||"",presentations:Array.isArray(row.presentations)?row.presentations:[],id:row.id,name:row.name||"",dosage:row.dosage||"",dci:row.dci||"",category:row.category||"Autres",form:row.form||"",aliases:Array.isArray(row.aliases)?row.aliases.join(", "):(row.aliases||""),entry_type:row.entry_type||"specialite",status:row.review_status||"À vérifier",updated:row.verified_at||"",modifiedAt:row.updated_at||"",source:row.source_url||"",sections:memoUpgradeMoleculeSections(Array.isArray(row.sections)?row.sections:clone(DEFAULT_SECTIONS),row.entry_type||"specialite"),published:row.status==="published"}}
+function medToRow(m){return {deleted_at:m.deletedAt||null,parent_dci:isDciFamilyType(m)?null:(m.parent_dci||null),presentations:m.presentations||[],id:m.id,name:m.name,dosage:m.dosage||null,dci:isDciFamilyType(m)?null:(m.dci||null),entry_type:m.entry_type||"specialite",category:m.category||"Autres",form:m.form||null,aliases:String(m.aliases||"").split(",").map(x=>x.trim()).filter(Boolean),review_status:m.status||"À vérifier",verified_at:m.updated||null,source_url:m.source||null,sections:(m.sections||[]).map(({imageData,...section})=>section),status:m.published?"published":"draft"}}
 async function loadCloudMeds(){
  const {data,error}=await supabaseClient.from("medications").select("*").order("name");
  if(error){console.error(error);toast("Impossible de charger les fiches : vérifie la configuration SQL");return}
  const wasEditing=admin&&editorId&&!$("editor").classList.contains("hidden");
  if(wasEditing)saveLocalDraft();
- meds=(data||[]).map(rowToMed);
+ memoTrashEntries=(data||[]).filter(row=>row.deleted_at).map(rowToMed);
+ meds=(data||[]).filter(row=>!row.deleted_at).map(rowToMed);
+ memoTrashRefreshCount();
  renderSources();
  // Explorer peut déjà être affiché lors d'un rafraîchissement sur #explorer.
  // Sa première génération a lieu avant la réponse asynchrone de Supabase :
@@ -1800,6 +1811,8 @@ function showView(view){
  $("excView").classList.toggle("hidden",view!=="exc");
  $("glossView").classList.toggle("hidden",view!=="gloss");
  $("memoDocsView").classList.toggle("hidden",view!=="docs");
+ $("memoTrashView").classList.toggle("hidden",view!=="trash"||!admin);
+ if(view==="trash"&&admin)memoTrashRender();
  if(view==="docs")memoDocsRender();
  if(view==="gloss")memoGlossRender();
  $("memoGlossNav").setAttribute("aria-current",view==="gloss"?"page":"false");
@@ -2040,7 +2053,7 @@ function publicMeds(){
  // on exclut les anciens dosages autonomes, mais pas les variantes rattachées.
  const publishedMoleculeIds=new Set(meds.filter(m=>isMolecule(m)&&m.published).map(m=>String(m.id)));
  return meds.filter(m=>{
-  if(isSourcesRecord(m))return false;
+  if(isSourcesRecord(m)||m.deletedAt)return false;
   const dosageRecord=isDosageRecord(m);
   const parentId=dosageRecord?String(moleculeParentId(m)):'';
   if(dosageRecord&&!parentId)return false;
@@ -2909,7 +2922,7 @@ function navigateToView(view){
  url.searchParams.delete("edition");
  url.searchParams.delete("presentation");
  url.searchParams.delete("rubrique");
- url.hash=view==="explore"?"explorer":view==="sources"?"sources":view==="equiv"?"equivalences":view==="exc"?"excipients":view==="gloss"?"glossaire":view==="docs"?"documents":"";
+ url.hash=view==="explore"?"explorer":view==="sources"?"sources":view==="equiv"?"equivalences":view==="exc"?"excipients":view==="gloss"?"glossaire":view==="docs"?"documents":view==="trash"?"corbeille":"";
  history.pushState({view},"",url);rememberNavigation();
  editorId=null;
  openedSearchFiche=false;
@@ -5284,7 +5297,7 @@ function showLogin(){
  $("confirmLogin").onclick=async()=>{const email=$("loginEmail").value.trim(),password=$("loginPassword").value;if(!email||!password){toast("Renseigne ton adresse e-mail et ton mot de passe");return}
  const {error}=await supabaseClient.auth.signInWithPassword({email,password});if(error){toast("Connexion impossible : vérifie l'adresse et le mot de passe");console.error(error);return}$("modalRoot").innerHTML="";};
 }
-async function logout(){clearLocalDraft();editorId=null;const {error}=await supabaseClient.auth.signOut();if(error){toast("Déconnexion impossible");return}currentUser=null;admin=false;setAdmin(false);await loadCloudMeds();toast("Déconnexion effectuée")}
+async function logout(){if(currentView==="trash")navigateToView("home");clearLocalDraft();editorId=null;const {error}=await supabaseClient.auth.signOut();if(error){toast("Déconnexion impossible");return}currentUser=null;admin=false;setAdmin(false);await loadCloudMeds();toast("Déconnexion effectuée")}
 function scrollToNewEditor(){
  requestAnimationFrame(()=>requestAnimationFrame(()=>{
   const editor=$("editor");
@@ -6477,9 +6490,9 @@ async function saveEditor(id){if(!requireAdmin())return;
    // Supprimer les variantes abandonnées uniquement APRÈS les enregistrements
    // réussis, pour limiter les risques de perte de données en cas d'échec.
    for(const childId of removedVariantIds){
-    const {data,error}=await supabaseClient.from('medications').delete().eq('id',childId).select('id');
-    if(error)throw new Error('Suppression de variante refusée par Supabase : '+error.message);
-    if(!data?.some(row=>String(row.id)===childId))throw new Error('Suppression de variante non confirmée dans Supabase.');
+    const {data,error}=await supabaseClient.from('medications').update({deleted_at:new Date().toISOString()}).eq('id',childId).select('id');
+    if(error)throw new Error('Archivage de variante refusé par Supabase : '+error.message);
+    if(!data?.some(row=>String(row.id)===childId))throw new Error('Archivage de variante non confirmé dans Supabase.');
     meds=meds.filter(item=>String(item.id)!==childId);
     pendingPresentationPhotos.delete(childId);
     pendingTabletPhotos.delete(childId);
@@ -6681,37 +6694,90 @@ document.addEventListener("keydown",event=>{
  if(!event.repeat)saveEditor(editorId);
 });
 function duplicateMed(id){if(!requireAdmin())return;const m=meds.find(x=>x.id===id);if(!m)return;const copy=clone(m);copy.id=crypto.randomUUID();copy.name=m.name+" (copie)";copy.status="À vérifier";copy.updated="";copy.published=false;meds.unshift(copy);selectedId=copy.id;renderFilters();renderResults();renderEditor(copy.id);saveLocalDraft();toast("Copie créée : enregistre-la pour la synchroniser")}
+function memoTrashRefreshCount(){
+ const btn=$('memoTrashNav');if(btn)btn.textContent=`Corbeille${memoTrashEntries.length?` (${memoTrashEntries.length})`:''}`;
+}
+function memoTrashRender(){
+ const host=$('memoTrashList');if(!host)return;
+ const q=norm($('memoTrashSearch')?.value||'');
+ const entries=memoTrashEntries.filter(m=>!isVariantFiche(m)&&!isSourcesRecord(m)&&norm(m.name+' '+m.dci).includes(q))
+  .sort((a,b)=>String(b.deletedAt).localeCompare(String(a.deletedAt)));
+ host.replaceChildren();
+ for(const m of entries){
+  const children=memoTrashEntries.filter(v=>isVariantFiche(v)&&String(moleculeParentId(v))===String(m.id));
+  const article=document.createElement('article');article.className='memo-doc-item';
+  const icon=document.createElement('span');icon.className='memo-doc-symbol';icon.textContent='🗑️';
+  const body=document.createElement('div');body.className='memo-doc-body';
+  const title=document.createElement('strong');title.className='memo-doc-title';title.textContent=m.name;
+  const desc=document.createElement('p');desc.className='memo-doc-desc';
+  desc.textContent=`Supprimée le ${new Date(m.deletedAt).toLocaleString('fr-FR')}${children.length?' · '+children.length+' variante(s) liée(s)':''}`;
+  body.append(title,desc);
+  const actions=document.createElement('div');actions.className='memo-doc-actions';
+  const restore=document.createElement('button');restore.type='button';restore.textContent='Restaurer';restore.className='primary';restore.onclick=()=>memoTrashRestore(m);
+  const remove=document.createElement('button');remove.type='button';remove.textContent='Supprimer définitivement';remove.className='danger';remove.onclick=()=>memoTrashDestroy(m);
+  actions.append(restore,remove);article.append(icon,body,actions);host.append(article);
+ }
+ $('memoTrashStatus').textContent=entries.length?'':q?'Aucune fiche supprimée ne correspond à cette recherche.':'La corbeille est vide.';
+}
+async function memoTrashRestore(m){
+ if(!requireAdmin())return;
+ const children=memoTrashEntries.filter(v=>isVariantFiche(v)&&String(moleculeParentId(v))===String(m.id));
+ const ids=[m.id,...children.map(v=>v.id)];
+ if(!confirm(`Restaurer « ${m.name} » et ${children.length} variante(s) ?`))return;
+ const {data,error}=await supabaseClient.from('medications').update({deleted_at:null}).in('id',ids).select('id');
+ if(error||data?.length!==ids.length){console.error(error);toast('Restauration non confirmée : actualisation des fiches.');await loadCloudMeds();memoTrashRender();return}
+ await loadCloudMeds();memoTrashRender();toast('Fiche restaurée avec ses présentations.');
+}
+async function memoTrashDestroy(m){
+ if(!requireAdmin())return;
+ const children=memoTrashEntries.filter(v=>isVariantFiche(v)&&String(moleculeParentId(v))===String(m.id));
+ if(!confirm(`ATTENTION : supprimer définitivement « ${m.name} » et ses ${children.length} variante(s) ? Cette action est irréversible.`))return;
+ const typed=prompt('Pour confirmer la suppression définitive, écris SUPPRIMER :');
+ if(typed!=='SUPPRIMER')return;
+ const ids=[m.id,...children.map(v=>v.id)];
+ // Suppression des variantes en premier pour respecter les éventuelles contraintes de référence.
+ if(children.length){const {error}=await supabaseClient.from('medications').delete().in('id',children.map(v=>v.id));if(error){toast('Suppression définitive refusée : '+error.message);await loadCloudMeds();return}}
+ const {error}=await supabaseClient.from('medications').delete().eq('id',m.id);
+ if(error){toast('Suppression définitive partielle : '+error.message);await loadCloudMeds();return}
+ await loadCloudMeds();memoTrashRender();toast('Suppression définitive effectuée.');
+}
+async function memoExportBackup(){
+ if(!requireAdmin())return;
+ const btn=$('memoTrashExport');if(btn)btn.disabled=true;
+ try{
+  // Pagination pour ne pas tronquer les sauvegardes lorsque la base dépasse 1000 lignes.
+  const rows=[];const pageSize=500;
+  for(let start=0;;start+=pageSize){
+   const {data,error}=await supabaseClient.from('medications').select('*').order('id').range(start,start+pageSize-1);
+   if(error)throw error;
+   rows.push(...(data||[]));if((data||[]).length<pageSize)break;
+  }
+  const payload={format:'memopharm-backup-v1',exported_at:new Date().toISOString(),medications:rows};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const link=document.createElement('a');link.href=URL.createObjectURL(blob);
+  link.download=`memopharm-sauvegarde-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(link.href),1500);
+  toast(`Sauvegarde téléchargée : ${rows.length} enregistrement(s), corbeille comprise.`);
+ }catch(e){console.error(e);toast('Export impossible : '+(e.message||'erreur Supabase'))}
+ finally{if(btn)btn.disabled=false}
+}
 async function deleteMed(id){
  if(!requireAdmin())return;
- const target=meds.find(m=>m.id===id);
- if(!target)return;
+ const target=meds.find(m=>m.id===id);if(!target)return;
  if(isGroup(target)&&meds.some(m=>!isSourcesRecord(m)&&parentGroupId(m)===id)){
   toast("Détache d’abord les fiches médicaments de ce groupe avant de le supprimer.");return;
  }
  const linked=isMolecule(target)?meds.filter(m=>isVariantFiche(m)&&String(moleculeParentId(m))===String(id)):[];
- const question=linked.length
-  ?`Supprimer définitivement « ${target.name} » et ses ${linked.length} variante(s) de présentation liée(s) de Supabase ? Cette opération est irréversible.`
-  :"Supprimer définitivement cette fiche de la base en ligne ?";
- if(!confirm(question))return;
- const ids=[...linked.map(m=>m.id),id];
- // Supabase ne fournit pas de transaction multi-requêtes côté navigateur.
- // Suppression enfants d'abord, puis parent. En cas d'erreur, arrêter immédiatement.
- if(linked.length){
-  const {error:childError}=await supabaseClient.from("medications").delete().in("id",linked.map(m=>m.id));
-  if(childError){console.error(childError);toast("Suppression interrompue : impossible de supprimer les variantes liées.");return;}
+ if(!confirm(`Placer « ${target.name} »${linked.length?` et ses ${linked.length} variante(s)`:''} dans la corbeille ?\nTu pourras restaurer la fiche et ses présentations.`))return;
+ const ids=[id,...linked.map(m=>m.id)];
+ const {data,error}=await supabaseClient.from('medications').update({deleted_at:new Date().toISOString()}).in('id',ids).select('id');
+ if(error||data?.length!==ids.length){
+  console.error(error);toast('Mise à la corbeille non confirmée : rechargement des données.');await loadCloudMeds();return;
  }
- const {error}=await supabaseClient.from("medications").delete().eq("id",id);
- if(error){
-  console.error(error);
-  toast(linked.length?"Les variantes ont été supprimées, mais la fiche molécule n’a pas pu être supprimée. Recharge les données avant de réessayer.":"Suppression refusée par Supabase");
-  return;
- }
- clearLocalDraft();
- ids.forEach(key=>{pendingPresentationPhotos.delete(key);pendingTabletPhotos.delete(key);});
- editorId=null;meds=meds.filter(m=>!ids.includes(m.id));selectedId=null;openedSearchFiche=false;
- $("editor").classList.add("hidden");$("detail").classList.remove("hidden");
- renderFilters();renderResults();navigateToView("explore");
- toast(linked.length?`Fiche et ${linked.length} variante(s) supprimées de la base en ligne`:"Fiche supprimée de la base en ligne");
+ clearLocalDraft();ids.forEach(key=>{pendingPresentationPhotos.delete(key);pendingTabletPhotos.delete(key)});
+ editorId=null;selectedId=null;openedSearchFiche=false;
+ $('editor').classList.add('hidden');$('detail').classList.remove('hidden');
+ await loadCloudMeds();navigateToView('explore');toast('Fiche déplacée dans la corbeille — restauration possible.');
 }
 
 // Les références communes sont stockées dans un enregistrement dédié de la table existante.
@@ -6892,7 +6958,10 @@ $("loginBtn").onclick=showLogin;$("logoutBtn").onclick=logout;$("addMedBtn").onc
   });
  }
 });$("clearSearch").onclick=()=>{$("search").value="";renderResults()};
-$("exportBtn").onclick=()=>{$("headerJsonMenu").open=false;const blob=new Blob([JSON.stringify(meds,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="memopharm-sauvegarde-cloud.json";a.click();URL.revokeObjectURL(a.href)};
+$("memoTrashNav").onclick=()=>{$("headerJsonMenu").open=false;navigateToView("trash")};
+$("memoTrashExport").onclick=()=>memoExportBackup();
+$("memoTrashSearch").addEventListener("input",memoTrashRender);
+$("exportBtn").onclick=()=>{$("headerJsonMenu").open=false;memoExportBackup()};
 $("importBtn").onclick=()=>{$("headerJsonMenu").open=false;toast("Import JSON désactivé temporairement : nous le relierons à la base avec validation.");};$("importFile").onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const parsed=JSON.parse(await file.text());if(!Array.isArray(parsed)||!parsed.every(m=>m.name&&Array.isArray(m.sections)))throw new Error("Format");if(!confirm("Remplacer les fiches locales par ce fichier ?"))return;toast("Import JSON non disponible dans cette version connectée : aucune donnée modifiée")}catch(err){toast("Fichier JSON non reconnu")}e.target.value=""};
 document.addEventListener("visibilitychange",()=>{
  if(document.visibilityState==="hidden"){
@@ -6925,7 +6994,7 @@ if(!location.search&&!location.hash){
   }
  }catch(e){}
 }
-openedSearchFiche=!!new URLSearchParams(location.search).get("fiche");renderFilters();renderResults();if(location.hash==="#explorer")showView("explore");else if(location.hash==="#sources")showView("sources");else if(location.hash==="#excipients")showView("exc");else if(location.hash==="#glossaire")showView("gloss");else if(location.hash==="#documents")showView("docs");else if(location.hash==="#equivalences")showView("equiv");else if(location.hash==="#a-propos"||location.hash==="#contact")navigateInfoPage(location.hash.slice(1),false);
+openedSearchFiche=!!new URLSearchParams(location.search).get("fiche");renderFilters();renderResults();if(location.hash==="#explorer")showView("explore");else if(location.hash==="#sources")showView("sources");else if(location.hash==="#excipients")showView("exc");else if(location.hash==="#glossaire")showView("gloss");else if(location.hash==="#documents")showView("docs");else if(location.hash==="#corbeille"&&admin)showView("trash");else if(location.hash==="#equivalences")showView("equiv");else if(location.hash==="#a-propos"||location.hash==="#contact")navigateInfoPage(location.hash.slice(1),false);
 if(location.hash==="#explorer"&&history.state?.memopharmExplorerFilter)memoApplyExplorerFilter(history.state.memopharmExplorerFilter);
 if(currentView==="explore"&&!meds.length)$("exploreCards").innerHTML='<div class="empty">Chargement des fiches…</div>';
 initCloud();
