@@ -1129,6 +1129,10 @@ body.header-search-active header #headerSearchSlot .searchcard{width:100%!import
 
 /* Glossaire : présentation sans encadrement superflu */
 .memo-gloss-page{max-width:1050px;margin:0 auto;width:100%}.memo-gloss-top{display:flex;gap:12px;margin:18px 0 20px}.memo-gloss-top input{flex:1}.memo-gloss-top button{white-space:nowrap}.memo-gloss-entry{padding:14px 2px;border-bottom:1px solid #dbe7df;display:flex;justify-content:space-between;gap:18px;align-items:flex-start}.memo-gloss-entry strong{color:#245d4b}.memo-gloss-entry p{margin:5px 0 0;white-space:pre-wrap}.memo-gloss-actions{display:flex;gap:6px}.memo-gloss-actions button{font-size:.78rem;padding:5px 9px}.memo-gloss-term{text-decoration-line:underline;text-decoration-style:dotted;text-decoration-color:#367a59;text-underline-offset:4px;text-decoration-thickness:2px;cursor:help}.memo-gloss-term:focus{outline:2px solid #7ba58b;outline-offset:3px;border-radius:2px}#memoGlossTooltip{position:fixed;z-index:99999;pointer-events:none;max-width:min(330px,calc(100vw - 16px));padding:12px 15px;background:#f8fcf9;color:#203b2d;border:1px solid #b8d5c2;box-shadow:0 8px 25px #193f3425;border-radius:11px;font-size:.85rem;line-height:1.45}#memoGlossTooltip[hidden]{display:none}#memoGlossTooltip p{margin:5px 0 0;white-space:pre-wrap}#memoGlossTooltip strong{color:#245d4b}
+ .memo-presentation-rcp-link{margin-top:12px;padding-top:12px;border-top:1px solid var(--border,#dce5dc);font-size:.9rem}
+ .memo-presentation-rcp-link a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+ .memo-presentation-rcp-link a:hover{color:var(--accent,#23634f)}
+ .memo-presentation-rcp input[type="url"]{width:100%}
 </style>
 
 <style>
@@ -4398,10 +4402,12 @@ function presentationInfo(p,m=null, specialtyBoxesHtml=""){
  const imageTile=(url,label)=>`<figure class="memo-v52-photo-tile"><button type="button" class="presentation-v37-zoom" data-presentation-zoom="${esc(url)}" aria-label="Agrandir la photo : ${label}" title="Cliquer pour agrandir"><img src="${esc(url)}" alt="${label} de la présentation" loading="lazy"><span class="presentation-v37-zoom-icon" aria-hidden="true">⤢</span></button></figure>`;
  const tiles=[p.showPhoto===true&&img?imageTile(img,"Boîte"):"",p.showTabletPhoto===true&&tabletImg?imageTile(tabletImg,"Comprimé / gélule"):""].filter(Boolean);
  const photo=tiles.length?`<div class="presentation-v33-photo memo-v52-gallery">${tiles.join("")}</div>`:"";
+ const rcpUrl=safeHttp(p.sourceUrl||"");
+ const rcpLink=rcpUrl?`<div class="memo-presentation-rcp-link"><a href="${esc(rcpUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Consulter le RCP de cette spécialité (nouvel onglet)">📄 Consulter le RCP <span aria-hidden="true">↗</span></a></div>`:"";
  const badges=m&&isSpecialiteFiche(m)?"":m?practicalBadges(m,{...p,regulatoryList:"",coldStorage:false,afterOpening:false}):"";
- if(!rows.length&&!photo&&!badges&&!p.name)return '<p class="muted">Aucun critère de présentation affiché pour le moment.</p>';
+ if(!rows.length&&!photo&&!badges&&!p.name&&!rcpLink)return '<p class="muted">Aucun critère de présentation affiché pour le moment.</p>';
  const title="";
- return `<div class="presentation-v33-content">${title}${m&&!isSpecialiteFiche(m)?"":badges}<div class="presentation-v33-layout${photo?' has-photo':''}"><div class="presentation-v33-fields${memoCompact?' memo-v125-compact-fields':''}">${m&&!isSpecialiteFiche(m)?`<div class="memo-v101-cip-block">${badges}<div class="memo-v101-cip-line">${memoMoleculeCipAndPack(p)}</div></div>`:""}${specialtyBoxesHtml?`<div class="memo-v97-cip-area">${specialtyBoxesHtml}</div>`:""}${memoCompact?compactRows.join(''):rows.join('')}</div>${photo}</div><p class="hint presentation-v33-warning">L’aspect seul ne permet pas d’identifier avec certitude un médicament. Vérifier la concordance avec la présentation exacte.</p></div>`;
+ return `<div class="presentation-v33-content">${title}${m&&!isSpecialiteFiche(m)?"":badges}<div class="presentation-v33-layout${photo?' has-photo':''}"><div class="presentation-v33-fields${memoCompact?' memo-v125-compact-fields':''}">${m&&!isSpecialiteFiche(m)?`<div class="memo-v101-cip-block">${badges}<div class="memo-v101-cip-line">${memoMoleculeCipAndPack(p)}</div></div>`:""}${specialtyBoxesHtml?`<div class="memo-v97-cip-area">${specialtyBoxesHtml}</div>`:""}${memoCompact?compactRows.join(''):rows.join('')}</div>${photo}</div><p class="hint presentation-v33-warning">L’aspect seul ne permet pas d’identifier avec certitude un médicament. Vérifier la concordance avec la présentation exacte.</p>${rcpLink}</div>`;
 }
 function presentationLabel(p,m,i){
  const name=(p.name||m.name||"").trim();
@@ -4636,7 +4642,7 @@ function memoExcipientComparator(child){
    </table>
   </div>
   <div class="memo-exc-matrix-head memo-exc-second-head"><strong>Tableau comparatif des excipients</strong><span>${products.length} spécialité(s)</span></div>
-  <div class="memo-een-controls"><label class="memo-een-toggle"><input type="checkbox" data-memo-een-only> Afficher les EEN potentiels uniquement</label><span class="memo-een-help">Repérage indicatif · vérifier le RCP exact et les seuils applicables</span></div>
+  <div class="memo-een-controls"><label class="memo-een-toggle"><input type="checkbox" data-memo-een-only> Afficher les EEN uniquement</label><span class="memo-een-help">Repérage indicatif · vérifier le RCP exact et les seuils applicables</span></div>
   <div class="memo-exc-matrix-scroll" role="region" tabindex="0" aria-label="Tableau comparatif des excipients, défilement horizontal possible">
    <table class="memo-exc-matrix-table memo-exc-shared-columns">
     <colgroup><col class="memo-exc-first-col">${products.map(()=>'<col class="memo-exc-product-col">').join("")}</colgroup>
@@ -4657,6 +4663,9 @@ function memoWireExcipientComparator(panel,child){
  const tbody=root.querySelector('[data-memo-exc-matrix-body]');
  const filter=root.querySelector("[data-memo-exc-filter]");
  const eenOnly=root.querySelector("[data-memo-een-only]");
+ // Garder la préférence entre les onglets, les fenêtres et les rechargements.
+ const eenPreferenceKey="memopharm-excipients-een-only-v1";
+ try{if(eenOnly)eenOnly.checked=localStorage.getItem(eenPreferenceKey)==="true"}catch(_){/* stockage facultatif */}
  function applyExcFilters(){
   const q=memoExcipientNormalize(filter?.value||"");
   let shown=0;
@@ -4669,7 +4678,10 @@ function memoWireExcipientComparator(panel,child){
   if(empty)empty.hidden=shown!==0;
  }
  filter?.addEventListener("input",applyExcFilters);
- eenOnly?.addEventListener("change",applyExcFilters);
+ eenOnly?.addEventListener("change",()=>{
+  try{localStorage.setItem(eenPreferenceKey,eenOnly.checked?"true":"false")}catch(_){/* stockage facultatif */}
+  applyExcFilters();
+ });
  root.addEventListener("click",event=>{
   const link=event.target.closest("[data-memo-exc-open]");
   if(!link)return;
@@ -4713,7 +4725,7 @@ function memoWireExcipientComparator(panel,child){
    const icon=state==="yes"?'<svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-check-big preview-icon"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg>':state==="no"?'<svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x preview-icon"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>':'?';
    return `<td class="memo-exc-cell memo-exc-cell-${state}" aria-label="${esc(txt)}"><span class="memo-exc-icon memo-exc-${state}" title="${esc(txt)}" aria-hidden="true">${icon}</span><span class="memo-exc-sr-only">${esc(txt)}</span></td>`;
   }).join("");
-  return `<tr data-memo-exc-row="${esc(label)}" data-memo-een="${memoEenCandidate(label)}"><th scope="row" class="memo-exc-sticky">${esc(label)}${memoEenCandidate(label)?'<span class="memo-een-chip" title="Excipient à effet notoire potentiel : vérifier le RCP, la voie et la quantité">EEN ?</span>':""}</th>${cells}</tr>`;
+  return `<tr data-memo-exc-row="${esc(label)}" data-memo-een="${memoEenCandidate(label)}"><th scope="row" class="memo-exc-sticky">${esc(label)}${memoEenCandidate(label)?'<span class="memo-een-chip" title="Excipient à effet notoire potentiel : vérifier le RCP, la voie et la quantité">EEN</span>':""}</th>${cells}</tr>`;
  }).join("")+`<tr data-memo-exc-no-results hidden><td colspan="${products.length+1}" class="memo-exc-empty">Aucun excipient correspondant.</td></tr>`;
 }
 function renderPresentations(m,targetPresentationIndex=null,selectedPack=null){
@@ -4854,12 +4866,14 @@ function presentationEditor(p,i){
  <div class="full presentation-edit-row">${check("showOpen","Ouverture de la gélule")}<div class="presentation-status-row"><label class="presentation-verified"><input type="checkbox" data-can-open ${p.canOpen===true&&!p.cannotOpen?"checked":""}>Possible</label><label class="presentation-verified"><input type="checkbox" data-cannot-open ${p.cannotOpen===true?"checked":""}>Impossible</label><input type="text" data-pfield="openReason" value="${esc(p.openReason||"")}" placeholder="Pourquoi ? (facultatif)" data-reason-for="open"></div></div>
 </div></div>
  <div class="memo-presentation-divider" aria-hidden="true"></div>
- <div class="memo-presentation-group"> <div class="full presentation-edit-row memo-excipients-editor">${check("showExcipients","Excipients de la formule")}<div class="memo-exc-rich" data-memo-exc-rich><div class="memo-exc-rich-toolbar" role="toolbar" aria-label="Mise en forme des excipients"><button type="button" data-exc-format="bold" title="Gras"><strong>G</strong></button><button type="button" data-exc-een title="Mettre l’excipient sélectionné en gras (EEN)" aria-label="Marquer la sélection comme excipient à effet notoire"><strong>⚠ EEN</strong></button><button type="button" data-exc-format="italic" title="Italique"><em>I</em></button><button type="button" data-exc-format="underline" title="Souligné"><u>S</u></button><button type="button" data-exc-format="removeFormat" title="Effacer la mise en forme">T̸</button><label>Couleur <select data-exc-color aria-label="Couleur du texte"><option value="default">Par défaut (couleur normale)</option><option value="#b24a38">Rouge</option><option value="#b57520">Orange</option><option value="#25714c">Vert</option><option value="#285f9a">Bleu</option></select></label></div><div class="memo-exc-rich-area" data-exc-edit contenteditable="true" role="textbox" aria-label="Excipients de la formule" aria-multiline="true"></div><textarea data-pfield="excipients" rows="3" hidden>${esc(p.excipients||"")}</textarea></div></div>
+ <div class="memo-presentation-group"> <div class="full presentation-edit-row memo-excipients-editor">${check("showExcipients","Excipients de la formule")}<div class="memo-exc-rich" data-memo-exc-rich><div class="memo-exc-rich-toolbar" role="toolbar" aria-label="Mise en forme des excipients"><button type="button" data-exc-format="bold" title="Gras"><strong>G</strong></button><button type="button" data-exc-een title="Mettre l’excipient sélectionné en gras (EEN)" aria-label="Marquer la sélection comme excipient à effet notoire"><strong>⚠ EEN</strong></button><button type="button" data-exc-format="italic" title="Italique"><em>I</em></button><button type="button" data-exc-format="underline" title="Souligné"><u>S</u></button><button type="button" data-exc-format="removeFormat" title="Effacer la mise en forme">T̸</button><label>Couleur <select data-exc-color aria-label="Couleur du texte"><option value="default">Par défaut</option><option value="#b24a38">Rouge</option><option value="#b57520">Orange</option><option value="#25714c">Vert</option><option value="#285f9a">Bleu</option></select></label></div><div class="memo-exc-rich-area" data-exc-edit contenteditable="true" role="textbox" aria-label="Excipients de la formule" aria-multiline="true"></div><textarea data-pfield="excipients" rows="3" hidden>${esc(p.excipients||"")}</textarea></div></div>
 </div>
  <div class="memo-presentation-divider" aria-hidden="true"></div>
  <div class="memo-presentation-group memo-presentation-photos"> <div class="full presentation-edit-row">${check("showPhoto","Photo de la boîte")}<input type="file" accept="image/jpeg,image/png,image/webp" data-photo-file="${i}"><div class="hint" data-photo-hint="${i}">${pending?"Photo sélectionnée : "+esc(pending.name):currentPhoto?"Photo enregistrée : visible ci-dessous":"JPG, PNG ou WebP · maximum 2 Mo. Envoyée lors de l’enregistrement de la fiche."}</div>${currentPhoto?`<img class="image-preview" src="${esc(currentPhoto)}" alt="Photo enregistrée de la présentation">`:""}</div>
  <div class="full presentation-edit-row">${check("showTabletPhoto","Photo du comprimé / de la gélule")}<input type="file" accept="image/jpeg,image/png,image/webp" data-tablet-photo-file="${i}"><div class="hint" data-tablet-photo-hint="${i}">${tabletPending?"Photo sélectionnée : "+esc(tabletPending.name):tabletPhoto?"Photo enregistrée : visible ci-dessous":"JPG, PNG ou WebP · maximum 2 Mo. Envoyée lors de l’enregistrement de la fiche."}</div>${tabletPhoto?`<img class="image-preview" src="${esc(tabletPhoto)}" alt="Photo enregistrée du comprimé ou de la gélule">`:""}</div>
 </div>
+ <div class="memo-presentation-divider" aria-hidden="true"></div>
+ <div class="memo-presentation-group memo-presentation-rcp"><div class="full presentation-edit-row"><label for="memo-rcp-${editorId}-${i}">📄 Lien vers le RCP du produit</label><input id="memo-rcp-${editorId}-${i}" type="url" data-pfield="sourceUrl" value="${esc(p.sourceUrl||"")}" placeholder="https://base-donnees-publique.medicaments.gouv.fr/…" autocomplete="url"><div class="hint">Facultatif · Le lien « Consulter le RCP » apparaîtra sur la fiche de cette spécialité.</div></div></div>
  <div class="memo-presentation-divider" aria-hidden="true"></div>
  <div class="memo-presentation-group memo-presentation-regulation"> <div class="memo-v43-regulation"><label for="memo-v43-reg-${i}">Classement réglementaire</label><select id="memo-v43-reg-${i}" data-regulation><option value="" ${!p.regulatoryList?"selected":""}>Non renseigné</option><option value="I" ${p.regulatoryList==="I"?"selected":""}>Liste I</option><option value="II" ${p.regulatoryList==="II"?"selected":""}>Liste II</option><option value="none" ${p.regulatoryList==="none"?"selected":""}>Non listé</option></select></div>
  ${specialty?"":` <div class="memo-practical-editor">
@@ -4872,7 +4886,7 @@ function presentationEditor(p,i){
 `}
 </div>
  ${isSpecialiteFiche(meds.find(x=>x.id===editorId)||{})?`<div class="full memo-v86-fields"><h4>Formulation et informations spécifiques</h4><p class="muted">Chaque présentation peut avoir sa propre forme, son dosage et ses informations médicales. Renseigne les valeurs vérifiées ; laisse vide ce qui n'est pas documenté.</p><div class="memo-v86-grid"><div><label>Forme pharmaceutique</label><input data-pfield="form" data-memo-kind="form" list="memo-forms" value="${esc(p.form||"")}" placeholder="Comprimé, gélule…"></div><div><label>Dosage de cette présentation</label><input data-pfield="dosage" value="${esc(p.dosage||"")}" placeholder="Ex. : 80 mg"></div>${MEMO_V86_FIELDS.map(([key,label])=>`<div><label>${esc(label)}</label><textarea data-v86-clinical="${key}" placeholder="À renseigner selon les sources de cette présentation">${esc(memoV86Clinical(p)[key]||"")}</textarea></div>`).join("")}</div></div>`:`<input type="hidden" data-pfield="dosage" value="${esc(p.dosage||"")}"><input type="hidden" data-pfield="form" value="${esc(p.form||"")}">`}
- ${["cis","sourceUrl"].map(key=>`<input type="hidden" data-pfield="${key}" value="${esc(p[key]||"")}">`).join("")}
+ ${["cis"].map(key=>`<input type="hidden" data-pfield="${key}" value="${esc(p[key]||"")}">`).join("")}
  
  </div></div>`;
 }
