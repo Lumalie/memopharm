@@ -1133,6 +1133,16 @@ body.header-search-active header #headerSearchSlot .searchcard{width:100%!import
  .memo-presentation-rcp-link a{color:#7b8580;text-decoration:underline;text-underline-offset:3px;font-weight:400}
  .memo-presentation-rcp-link a:hover{color:var(--accent,#23634f)}
  .memo-presentation-rcp input[type="url"]{width:100%}
+
+/* Informations spécifiques de reconstitution, sans impact sur les rubriques variantes. */
+#editor .memo-reconstitution-editor h4{font-size:.94rem;color:#2c624f;margin:0 0 5px}
+#editor .memo-reconstitution-editor textarea{display:block;width:100%;min-height:88px;box-sizing:border-box;resize:vertical;margin-top:6px;line-height:1.5}
+#editor .memo-reconstitution-editor .presentation-edit-row{margin-top:13px}
+#detail .memo-reconstitution-public{margin:16px 0 12px;padding:12px 0 2px;border-top:1px solid #e3ebe6}
+#detail .memo-reconstitution-public h4{margin:0 0 10px;color:#2d624f;font-size:.94rem}
+#detail .memo-reconstitution-item{margin:0 0 12px;font-size:.91rem}
+#detail .memo-reconstitution-item strong{display:block;margin-bottom:4px}
+#detail .memo-reconstitution-item>div{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.55}
 </style>
 
 <style>
@@ -4402,12 +4412,18 @@ function presentationInfo(p,m=null, specialtyBoxesHtml=""){
  const imageTile=(url,label)=>`<figure class="memo-v52-photo-tile"><button type="button" class="presentation-v37-zoom" data-presentation-zoom="${esc(url)}" aria-label="Agrandir la photo : ${label}" title="Cliquer pour agrandir"><img src="${esc(url)}" alt="${label} de la présentation" loading="lazy"><span class="presentation-v37-zoom-icon" aria-hidden="true">⤢</span></button></figure>`;
  const tiles=[p.showPhoto===true&&img?imageTile(img,"Boîte"):"",p.showTabletPhoto===true&&tabletImg?imageTile(tabletImg,"Comprimé / gélule"):""].filter(Boolean);
  const photo=tiles.length?`<div class="presentation-v33-photo memo-v52-gallery">${tiles.join("")}</div>`:"";
+ // Informations propres à chaque spécialité commerciale, sans héritage de la variante.
+ const prepItems=[
+  ["💧 Reconstitution",p.reconstitution],
+  ["🌡️ Conservation après reconstitution",p.conservationAfterReconstitution]
+ ].filter(([,value])=>String(value||"").trim());
+ const preparationHtml=prepItems.length?`<section class="memo-reconstitution-public" aria-label="Préparation et conservation"><h4>Préparation et conservation</h4>${prepItems.map(([label,value])=>`<div class="memo-reconstitution-item"><strong>${label}</strong><div>${esc(String(value).trim())}</div></div>`).join("")}</section>`:"";
  const rcpUrl=safeHttp(p.sourceUrl||"");
  const rcpLink=rcpUrl?`<div class="memo-presentation-rcp-link"><a href="${esc(rcpUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Consulter le RCP de cette spécialité (nouvel onglet)">📄 Consulter le RCP <span aria-hidden="true">↗</span></a></div>`:"";
  const badges=m&&isSpecialiteFiche(m)?"":m?practicalBadges(m,{...p,regulatoryList:"",coldStorage:false,afterOpening:false}):"";
- if(!rows.length&&!photo&&!badges&&!p.name&&!rcpLink)return '<p class="muted">Aucun critère de présentation affiché pour le moment.</p>';
+ if(!rows.length&&!photo&&!badges&&!p.name&&!rcpLink&&!preparationHtml)return '<p class="muted">Aucun critère de présentation affiché pour le moment.</p>';
  const title="";
- return `<div class="presentation-v33-content">${title}${m&&!isSpecialiteFiche(m)?"":badges}<div class="presentation-v33-layout${photo?' has-photo':''}"><div class="presentation-v33-fields${memoCompact?' memo-v125-compact-fields':''}">${m&&!isSpecialiteFiche(m)?`<div class="memo-v101-cip-block">${badges}<div class="memo-v101-cip-line">${memoMoleculeCipAndPack(p)}</div></div>`:""}${specialtyBoxesHtml?`<div class="memo-v97-cip-area">${specialtyBoxesHtml}</div>`:""}${memoCompact?compactRows.join(''):rows.join('')}</div>${photo}</div>${rcpLink}</div>`;
+ return `<div class="presentation-v33-content">${title}${m&&!isSpecialiteFiche(m)?"":badges}<div class="presentation-v33-layout${photo?' has-photo':''}"><div class="presentation-v33-fields${memoCompact?' memo-v125-compact-fields':''}">${m&&!isSpecialiteFiche(m)?`<div class="memo-v101-cip-block">${badges}<div class="memo-v101-cip-line">${memoMoleculeCipAndPack(p)}</div></div>`:""}${specialtyBoxesHtml?`<div class="memo-v97-cip-area">${specialtyBoxesHtml}</div>`:""}${memoCompact?compactRows.join(''):rows.join('')}</div>${photo}</div>${preparationHtml}${rcpLink}</div>`;
 }
 function presentationLabel(p,m,i){
  const name=(p.name||m.name||"").trim();
@@ -4872,6 +4888,8 @@ function presentationEditor(p,i){
  <div class="memo-presentation-group memo-presentation-photos"> <div class="full presentation-edit-row">${check("showPhoto","Photo de la boîte")}<input type="file" accept="image/jpeg,image/png,image/webp" data-photo-file="${i}"><div class="hint" data-photo-hint="${i}">${pending?"Photo sélectionnée : "+esc(pending.name):currentPhoto?"Photo enregistrée : visible ci-dessous":"JPG, PNG ou WebP · maximum 2 Mo. Envoyée lors de l’enregistrement de la fiche."}</div>${currentPhoto?`<img class="image-preview" src="${esc(currentPhoto)}" alt="Photo enregistrée de la présentation">`:""}</div>
  <div class="full presentation-edit-row">${check("showTabletPhoto","Photo du comprimé / de la gélule")}<input type="file" accept="image/jpeg,image/png,image/webp" data-tablet-photo-file="${i}"><div class="hint" data-tablet-photo-hint="${i}">${tabletPending?"Photo sélectionnée : "+esc(tabletPending.name):tabletPhoto?"Photo enregistrée : visible ci-dessous":"JPG, PNG ou WebP · maximum 2 Mo. Envoyée lors de l’enregistrement de la fiche."}</div>${tabletPhoto?`<img class="image-preview" src="${esc(tabletPhoto)}" alt="Photo enregistrée du comprimé ou de la gélule">`:""}</div>
 </div>
+ <div class="memo-presentation-divider" aria-hidden="true"></div>
+ <div class="memo-presentation-group memo-reconstitution-editor"><h4>💧 Préparation et conservation</h4><p class="hint">Facultatif · Informations propres à cette spécialité commerciale. Vérifier la notice ou le RCP de la présentation exacte.</p><div class="full presentation-edit-row"><label for="memo-reconst-${editorId}-${i}">Reconstitution</label><textarea id="memo-reconst-${editorId}-${i}" data-pfield="reconstitution" rows="4" placeholder="Volume d’eau, étapes de préparation, agitation…">${esc(p.reconstitution||"")}</textarea></div><div class="full presentation-edit-row"><label for="memo-conserv-reconst-${editorId}-${i}">Conservation après reconstitution</label><textarea id="memo-conserv-reconst-${editorId}-${i}" data-pfield="conservationAfterReconstitution" rows="4" placeholder="Durée, température, précautions…">${esc(p.conservationAfterReconstitution||"")}</textarea></div></div>
  <div class="memo-presentation-divider" aria-hidden="true"></div>
  <div class="memo-presentation-group memo-presentation-rcp"><div class="full presentation-edit-row"><label for="memo-rcp-${editorId}-${i}">📄 Lien vers le RCP du produit</label><input id="memo-rcp-${editorId}-${i}" type="url" data-pfield="sourceUrl" value="${esc(p.sourceUrl||"")}" placeholder="https://base-donnees-publique.medicaments.gouv.fr/…" autocomplete="url"><div class="hint">Facultatif · Le lien « Consulter le RCP » apparaîtra sur la fiche de cette spécialité.</div></div></div>
  <div class="memo-presentation-divider" aria-hidden="true"></div>
