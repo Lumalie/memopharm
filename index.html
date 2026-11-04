@@ -1970,8 +1970,23 @@ function memoUpgradeMoleculeSections(sections,entryType,force=false){
 function rowToMed(row){return {deletedAt:row.deleted_at||null,parent_dci:row.parent_dci||"",presentations:Array.isArray(row.presentations)?row.presentations:[],id:row.id,name:row.name||"",dosage:row.dosage||"",dci:row.dci||"",category:row.category||"Autres",form:row.form||"",aliases:Array.isArray(row.aliases)?row.aliases.join(", "):(row.aliases||""),entry_type:row.entry_type||"specialite",status:row.review_status||"À vérifier",updated:row.verified_at||"",modifiedAt:row.updated_at||"",source:row.source_url||"",sections:memoUpgradeMoleculeSections(Array.isArray(row.sections)?row.sections:clone(DEFAULT_SECTIONS),row.entry_type||"specialite"),published:row.status==="published"}}
 function medToRow(m){return {deleted_at:m.deletedAt||null,parent_dci:isDciFamilyType(m)?null:(m.parent_dci||null),presentations:m.presentations||[],id:m.id,name:m.name,dosage:m.dosage||null,dci:isDciFamilyType(m)?null:(m.dci||null),entry_type:m.entry_type||"specialite",category:m.category||"Autres",form:m.form||null,aliases:String(m.aliases||"").split(",").map(x=>x.trim()).filter(Boolean),review_status:m.status||"À vérifier",verified_at:m.updated||null,source_url:m.source||null,sections:(m.sections||[]).map(({imageData,...section})=>section),status:m.published?"published":"draft"}}
 async function loadCloudMeds(){
- const {data,error}=await supabaseClient.from("medications").select("*").order("name");
- if(error){console.error(error);toast("Impossible de charger les fiches : vérifie la configuration SQL");return}
+ // Charger toutes les pages : Supabase limite souvent les requêtes à 1000 lignes.
+ // Un tri stable par ID évite les omissions entre pages lorsque des noms sont identiques.
+ const data=[];const pageSize=500;
+ try{
+  for(let start=0;;start+=pageSize){
+   const {data:page,error}=await supabaseClient.from("medications")
+    .select("*").order("id").range(start,start+pageSize-1);
+   if(error)throw error;
+   data.push(...(page||[]));
+   if((page||[]).length<pageSize)break;
+  }
+  data.sort((a,b)=>String(a.name||"").localeCompare(String(b.name||""),"fr"));
+ }catch(error){
+  console.error(error);
+  toast("Impossible de charger toutes les fiches : "+(error.message||"erreur Supabase"));
+  return;
+ }
  const wasEditing=admin&&editorId&&!$("editor").classList.contains("hidden");
  if(wasEditing)saveLocalDraft();
  memoTrashEntries=(data||[]).filter(row=>row.deleted_at).map(rowToMed);
