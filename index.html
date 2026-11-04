@@ -1542,6 +1542,61 @@ header .header-action-stack .header-actions > #headerAdminActions:not(.hidden){
  body.header-search-active header .header-action-stack{grid-column:1!important;grid-row:3!important;min-width:0!important;width:100%!important}
 }
 </style>
+
+<style>
+/* V117.46 : la bannière utilise la largeur disponible de l'écran.
+   Le contenu des pages conserve sa largeur habituelle. */
+header > .wrap{
+  width:100%!important;
+  max-width:1560px!important;
+  box-sizing:border-box!important;
+  margin-inline:auto!important;
+}
+@media (min-width:1360px){
+ body.header-search-active header .topline{
+   display:grid!important;
+   grid-template-columns:minmax(260px,310px) minmax(340px,1fr) max-content!important;
+   grid-template-rows:auto!important;
+   align-items:center!important;
+   column-gap:22px!important;
+ }
+ body.header-search-active header .topline>.brand{
+   grid-column:1!important;grid-row:1!important;
+   min-width:0!important;max-width:100%!important;
+ }
+ body.header-search-active header #headerSearchSlot{
+   grid-column:2!important;grid-row:1!important;
+   width:100%!important;min-width:0!important;
+   max-width:none!important;justify-self:stretch!important;
+ }
+ body.header-search-active header .header-action-stack{
+   grid-column:3!important;grid-row:1!important;
+   width:max-content!important;min-width:0!important;
+   justify-self:end!important;
+ }
+}
+/* Sur les écrans plus étroits, on privilégie deux lignes sans superposition. */
+@media (min-width:781px) and (max-width:1359px){
+ body.header-search-active header .topline{
+   display:grid!important;
+   grid-template-columns:minmax(260px,1fr) minmax(340px,1.2fr)!important;
+   grid-template-rows:auto auto!important;
+   gap:16px 22px!important;
+ }
+ body.header-search-active header .topline>.brand{grid-column:1!important;grid-row:1!important}
+ body.header-search-active header #headerSearchSlot{
+   grid-column:2!important;grid-row:1!important;
+   min-width:0!important;width:100%!important;max-width:none!important;
+ }
+ body.header-search-active header .header-action-stack{
+   grid-column:1/-1!important;grid-row:2!important;
+   width:100%!important;justify-self:end!important;
+ }
+ body.header-search-active header .header-action-stack .header-actions{
+   margin-left:auto!important;
+ }
+}
+</style>
 </head>
 <body>
 <header><div class="wrap">
