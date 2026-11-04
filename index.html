@@ -1632,6 +1632,11 @@ header #headerAdminActions .memo-backup-chevron{
 }
 header #headerAdminActions .header-json-menu[open] .memo-backup-chevron{transform:rotate(180deg)}
 </style>
+<style>
+.memo-equiv-composition-note{font-size:.78rem;color:#6c7d71;margin:5px 0 9px}
+.memo-equiv-pack-variant{margin:9px 0;padding:8px 10px;border-left:2px solid #b9d5c3;background:#f7faf8;border-radius:0 8px 8px 0}
+.memo-equiv-pack-variant>.memo-equiv-open-fiche{font-size:.83rem;color:#30694d;text-align:left}
+</style>
 </head>
 <body>
 <header><div class="wrap">
@@ -3044,6 +3049,17 @@ function memoEquivRecords(){
  const add=(name,root,commercial,source,label,presentation=null,ingredientDose='')=>{
   name=String(name||'').trim();commercial=String(commercial||'').trim();
   if(!name||!commercial)return;
+  // Une spécialité générique peut posséder plusieurs variantes de composition
+  // selon le conditionnement : regrouper leur affichage par DCI + laboratoire.
+  const kind=String(presentation?.presentationKind||'').trim().toLowerCase();
+  const lab=String(presentation?.lab||presentation?.laboratory||presentation?.laboratoire||'').trim();
+  const rootKey=norm(name).trim(),commercialKey=norm(commercial).trim();
+  const labKey=norm(lab).trim();
+  const isLabGeneric=kind==='generic'&&labKey&&(
+    commercialKey.startsWith(rootKey+' ')&&commercialKey.includes(labKey)||
+    commercialKey===labKey
+  );
+  if(isLabGeneric)commercial=name+' '+lab;
   const g=groupFor(name,root),key=norm(commercial);
   if(!g.names.has(key))g.names.set(key,{name:commercial,items:[]});
   const item={source,detail:label,presentation,ingredientDose};
@@ -3128,9 +3144,26 @@ function memoEquivPresentationDetails(items){
  });
  return [...groups.values()].map(group=>{
   const source=group.items.find(x=>isVariantFiche(x.source))?.source||group.items[0].source;
+  const distinctSources=new Map();
+  group.items.forEach(item=>{
+   const key=String(item.source.id);
+   if(!distinctSources.has(key))distinctSources.set(key,[]);
+   distinctSources.get(key).push(item);
+  });
+  // Plusieurs fiches distinctes peuvent partager forme et dosage mais avoir
+  // des compositions différentes selon le conditionnement.
+  const multiple=distinctSources.size>1;
   return `<div class="memo-equiv-presentation">
-   <button type="button" class="memo-equiv-open-fiche memo-equiv-dci-variant" data-equiv-open="${esc(source.id)}" title="Ouvrir la fiche correspondante">${esc(group.label)}</button>
-   ${memoEquivCipRows(group.items)}
+   ${multiple?`<span class="memo-equiv-dci-variant">${esc(group.label)}</span>`:
+   `<button type="button" class="memo-equiv-open-fiche memo-equiv-dci-variant" data-equiv-open="${esc(source.id)}" title="Ouvrir la fiche correspondante">${esc(group.label)}</button>`}
+   ${multiple?`<p class="memo-equiv-related memo-equiv-composition-note">Présentations distinctes : vérifier la composition selon le conditionnement.</p>`:''}
+   ${multiple?[...distinctSources.values()].map(items=>{
+     const src=items[0].source;
+     return `<div class="memo-equiv-pack-variant">
+      <button type="button" class="memo-equiv-open-fiche" data-equiv-open="${esc(src.id)}" title="Ouvrir cette fiche de présentation">${esc(displayMedName(src))} ↗</button>
+      ${memoEquivCipRows(items)}
+     </div>`;
+   }).join(''):memoEquivCipRows(group.items)}
   </div>`;
  }).join('');
 }
