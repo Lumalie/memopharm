@@ -1206,7 +1206,49 @@ header .header-action-stack .header-actions > #logoutBtn{width:auto!important}
 .memo-doc-form .memo-doc-footer button{width:auto;min-width:105px}
 @media(max-width:550px){.memo-doc-dialog{padding:18px}.memo-doc-mode{grid-template-columns:1fr}}
 html[data-memo-theme=dark] .memo-doc-drop{background:#253d30;color:#d7e8da}
-</style></head>
+</style>
+<style>
+/* V117.35 : cadenas à droite, alignement des pages et sources unifiées. */
+header .header-action-stack .header-actions{
+ grid-template-columns:repeat(3,minmax(104px,1fr)) 44px!important;
+ grid-template-rows:repeat(2,42px)!important;
+ align-items:center!important;column-gap:8px!important;row-gap:8px!important;
+}
+header .header-action-stack .header-actions > :is(#loginBtn,#logoutBtn){
+ grid-column:4!important;grid-row:1 / 3!important;
+ align-self:center!important;justify-self:center!important;
+ margin:0!important;position:static!important;
+}
+header .header-action-stack .header-actions > #loginBtn{
+ display:inline-flex;align-items:center;justify-content:center;
+ width:42px!important;height:42px!important;min-width:42px!important;
+ background:transparent!important;border:0!important;color:#e2eee6!important;
+}
+header .header-action-stack .header-actions > #loginBtn:hover{background:#ffffff18!important}
+header .header-action-stack .header-actions > :is(#loginBtn,#logoutBtn).hidden{display:none!important}
+header .header-action-stack .header-actions > #logoutBtn{width:auto!important;min-width:0!important;font-size:.76rem!important;white-space:normal!important}
+#memoDocsView .memo-docs-page,#sourcesView .memo-docs-page{max-width:none;width:100%;padding:0 0 30px;margin:0}
+#memoDocsView .explore-heading,#sourcesView .explore-heading{margin:0;padding:32px 0 14px}
+#memoDocsView .explore-heading h2,#sourcesView .explore-heading h2{margin-top:0}
+#memoDocsView .memo-docs-tools{margin-top:18px}
+#sourcesView .memo-docs-list{margin-top:18px}
+#sourcesView .memo-source-extra-links{display:flex;gap:8px 16px;flex-wrap:wrap;margin-top:10px;font-size:.84rem}
+#sourcesView .memo-source-extra-links a{color:#326f51;text-decoration:underline;text-underline-offset:2px}
+@media(max-width:780px){
+ header .header-action-stack .header-actions{grid-template-columns:repeat(3,minmax(0,1fr)) 42px!important;width:100%!important}
+}
+@media(max-width:420px){
+ header .header-action-stack .header-actions{grid-template-columns:repeat(2,minmax(0,1fr)) 42px!important;grid-template-rows:repeat(3,42px)!important}
+ header .header-action-stack .header-actions > #exploreNav{grid-column:1!important;grid-row:1!important}
+ header .header-action-stack .header-actions > #equivNav{grid-column:2!important;grid-row:1!important}
+ header .header-action-stack .header-actions > #excNav{grid-column:1!important;grid-row:2!important}
+ header .header-action-stack .header-actions > #sourcesNav{grid-column:2!important;grid-row:2!important}
+ header .header-action-stack .header-actions > #memoGlossNav{grid-column:1!important;grid-row:3!important}
+ header .header-action-stack .header-actions > #memoDocsNav{grid-column:2!important;grid-row:3!important}
+ header .header-action-stack .header-actions > :is(#loginBtn,#logoutBtn){grid-column:3!important;grid-row:1 / 4!important}
+}
+</style>
+</head>
 <body>
 <header><div class="wrap">
   <div class="topline">
@@ -1312,7 +1354,7 @@ html[data-memo-theme=dark] .memo-doc-drop{background:#253d30;color:#d7e8da}
   </div>
  </div>
  </section><section id="glossView" class="hidden" aria-label="Glossaire"><div class="memo-gloss-page"><div class="explore-heading"><h2>Glossaire</h2><p>Définitions associées manuellement aux mots des fiches.</p></div><div class="memo-gloss-top"><input id="memoGlossSearch" type="search" placeholder="Rechercher un terme…" aria-label="Rechercher dans le glossaire"><button id="memoGlossAdd" type="button" class="primary">+ Définition</button></div><div id="memoGlossList"></div><p id="memoGlossStatus" class="hint"></p></div></section><section id="memoDocsView" class="hidden" aria-label="Documents utiles">
-<div class="memo-docs-page"><div class="explore-heading"><h2>Documents</h2><p>Bibliothèque de documents utiles, consultables depuis tous les postes.</p></div>
+<div class="memo-docs-page"><div class="explore-heading"><h2>Documents</h2><p>Bibliothèque de documents pratiques à avoir sous la main au comptoir.</p></div>
 <div class="memo-docs-tools"><input id="memoDocsSearch" type="search" placeholder="Rechercher un document, un thème…" aria-label="Rechercher un document"><button type="button" id="memoDocsAdd" class="primary" hidden>+ Ajouter un document</button></div>
 <div id="memoDocsList" class="memo-docs-list"></div><p id="memoDocsStatus" class="hint"></p></div></section>
 <section id="excView" class="hidden" aria-label="Comparateur d’excipients">
@@ -1327,7 +1369,7 @@ html[data-memo-theme=dark] .memo-doc-drop{background:#253d30;color:#d7e8da}
   </div>
   <div id="memoExcPageContent" aria-live="polite"><p class="memo-equiv-empty">Sélectionne une présentation pour comparer les formules référencées.</p></div>
  </div>
- </section><section id="exploreView" class="hidden"><div class="explore-heading"><h2>Explorer les fiches</h2><p>Parcourez les fiches communes et leurs spécialités associées.</p></div><div class="explore-search"><label for="exploreSearch">Rechercher dans les fiches</label><div class="explore-search-row"><input id="exploreSearch" type="search" autocomplete="off" placeholder="Ex. : amoxicilline, oubli de prise, CIP, conservation…"><button id="clearExploreSearch" type="button">Effacer</button></div><p id="exploreSearchCount" class="muted" aria-live="polite"></p></div><div class="explore-controls"><label>Classe thérapeutique<select id="exploreClass"></select></label><label>Indication thérapeutique<select id="exploreIndication"></select></label><label>Forme pharmaceutique<select id="exploreForm"></select></label><label>Badge pharmaceutique<select id="exploreBadge"><option value="">Tous les badges</option><option value="mte">⚠ MTE</option><option value="photo">☀ Photosensibilisant</option><option value="exception">EXC · Médicament d’exception</option><option value="stup">STUP · Stupéfiant</option><option value="cold">❄ Conservation au froid</option><option value="after">◷ Conservation après ouverture</option><option value="listI">Liste I</option><option value="listII">Liste II</option></select></label><button id="resetExplore" type="button">Effacer les filtres</button></div> <div id="memoThemeIntro" class="memo-theme-intro hidden" aria-live="polite"></div><div class="memo-explorer-split"><aside class="memo-explorer-sidebar" aria-label="Arborescence des fiches"><h3>Arborescence</h3><div id="exploreSidebarTree"></div></aside><div class="memo-explorer-results"><h3>Résultats par type de fiche</h3><div id="exploreCards" class="explore-cards"></div></div></div></section><section id="sourcesView" class="hidden"><div class="explore-heading"><h2>Sources documentaires</h2><p>Références communes utilisées pour construire et vérifier les fiches de Mémopharm.</p></div><div id="sourcesList" class="sources-list"></div><div id="sourcesAdmin" class="panel hidden" style="padding:18px;margin-top:18px"></div></section><div class="memo-v43-footer"><strong>📖 Une ressource pratique pour les professionnels de santé</strong><p>Mémopharm est une base documentaire indépendante conçue pour faciliter l’accès aux informations essentielles sur les médicaments et accompagner la pratique quotidienne des professionnels de santé.</p><p>Les fiches sont enrichies progressivement à partir de sources de référence. Les dates de mise à jour et de vérification permettent d’en apprécier l’actualité. Pour toute décision de prise en charge, les informations doivent être confrontées aux référentiels officiels en vigueur et aux données de la spécialité concernée.</p></div>
+ </section><section id="exploreView" class="hidden"><div class="explore-heading"><h2>Explorer les fiches</h2><p>Parcourez les fiches communes et leurs spécialités associées.</p></div><div class="explore-search"><label for="exploreSearch">Rechercher dans les fiches</label><div class="explore-search-row"><input id="exploreSearch" type="search" autocomplete="off" placeholder="Ex. : amoxicilline, oubli de prise, CIP, conservation…"><button id="clearExploreSearch" type="button">Effacer</button></div><p id="exploreSearchCount" class="muted" aria-live="polite"></p></div><div class="explore-controls"><label>Classe thérapeutique<select id="exploreClass"></select></label><label>Indication thérapeutique<select id="exploreIndication"></select></label><label>Forme pharmaceutique<select id="exploreForm"></select></label><label>Badge pharmaceutique<select id="exploreBadge"><option value="">Tous les badges</option><option value="mte">⚠ MTE</option><option value="photo">☀ Photosensibilisant</option><option value="exception">EXC · Médicament d’exception</option><option value="stup">STUP · Stupéfiant</option><option value="cold">❄ Conservation au froid</option><option value="after">◷ Conservation après ouverture</option><option value="listI">Liste I</option><option value="listII">Liste II</option></select></label><button id="resetExplore" type="button">Effacer les filtres</button></div> <div id="memoThemeIntro" class="memo-theme-intro hidden" aria-live="polite"></div><div class="memo-explorer-split"><aside class="memo-explorer-sidebar" aria-label="Arborescence des fiches"><h3>Arborescence</h3><div id="exploreSidebarTree"></div></aside><div class="memo-explorer-results"><h3>Résultats par type de fiche</h3><div id="exploreCards" class="explore-cards"></div></div></div></section><section id="sourcesView" class="hidden"><div class="memo-docs-page memo-sources-page"><div class="explore-heading"><h2>Sources</h2><p>Références utilisées pour construire et vérifier les fiches de Mémopharm.</p></div><div id="sourcesList" class="memo-docs-list sources-list"></div><div id="sourcesAdmin" class="panel hidden" style="padding:18px;margin-top:18px"></div></div></section><div class="memo-v43-footer"><strong>📖 Une ressource pratique pour les professionnels de santé</strong><p>Mémopharm est une base documentaire indépendante conçue pour faciliter l’accès aux informations essentielles sur les médicaments et accompagner la pratique quotidienne des professionnels de santé.</p><p>Les fiches sont enrichies progressivement à partir de sources de référence. Les dates de mise à jour et de vérification permettent d’en apprécier l’actualité. Pour toute décision de prise en charge, les informations doivent être confrontées aux référentiels officiels en vigueur et aux données de la spécialité concernée.</p></div>
 <div id="dashMobileToolbar" role="toolbar" aria-label="Outils de modification de la liste">
 <button type="button" data-dash-mobile="outdent" aria-label="Retirer un niveau">← Retrait</button>
 <button type="button" data-dash-mobile="indent" aria-label="Ajouter un niveau">→ Tabulation</button>
@@ -6575,7 +6617,9 @@ function renderSources(){
  const items=sourceItems();
  $("sourcesList").innerHTML=items.length?items.map(item=>{
   const urls=[item.url,...String(item.extraUrls||"").split(/\r?\n/)].map(safeSourceUrl).filter(Boolean);
-  return `<article class="source-card"><h3>${esc(item.title||"Ressource sans titre")}</h3>${item.organization?`<div class="muted">${esc(item.organization)}</div>`:""}${item.description?`<p>${esc(item.description)}</p>`:""}${urls.map((url,i)=>`<div><a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${i===0?"Consulter la source":"Lien complémentaire "+i} ↗</a></div>`).join("")}</article>`;
+  const title=esc(item.title||"Ressource sans titre");
+  const mainTitle=urls.length?`<a class="memo-doc-title" href="${esc(urls[0])}" target="_blank" rel="noopener noreferrer">${title}</a>`:`<span class="memo-doc-title">${title}</span>`;
+  return `<article class="memo-doc-item memo-source-item"><span class="memo-doc-symbol" aria-hidden="true">📚</span><div class="memo-doc-body">${mainTitle}${item.description?`<p class="memo-doc-desc">${esc(item.description)}</p>`:""}${item.organization?`<div class="memo-doc-meta">${esc(item.organization)}</div>`:""}${urls.length>1?`<div class="memo-source-extra-links">${urls.slice(1).map((url,i)=>`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">Lien complémentaire ${i+1} ↗</a>`).join("")}</div>`:""}</div></article>`;
  }).join(""):'<div class="source-empty">Aucune source commune publiée pour le moment.</div>';
  $("sourcesAdmin").classList.toggle("hidden",!admin);
  if(admin)renderSourcesEditor();
