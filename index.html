@@ -894,6 +894,7 @@ html[data-memo-theme="dark"] #excView .memo-exc-matrix,html[data-memo-theme="dar
 #editor .memo-exc-rich{width:100%;min-width:0}
 #editor .memo-exc-rich-toolbar{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin:6px 0 0;padding:5px;background:#f4f8f5;border:1px solid #dbe6dd;border-radius:9px 9px 0 0}
 #editor .memo-exc-rich-toolbar button{min-width:31px;height:30px;padding:4px 8px;border:1px solid #d3dfd5;border-radius:6px;background:#fff;color:#245540;cursor:pointer}
+#editor .memo-exc-rich-toolbar [data-exc-een]{background:#fff7e5;border-color:#d5b66b;color:#694c13;white-space:nowrap}
 #editor .memo-exc-rich-toolbar label{display:flex;align-items:center;gap:5px;font-size:.8rem;margin-left:5px}
 #editor .memo-exc-rich-toolbar select{width:auto;min-width:90px;padding:4px;font-size:.8rem}
 #editor .memo-exc-rich-area{min-height:92px;max-height:350px;overflow-y:auto;padding:11px 12px;border:1px solid #dbe6dd;border-top:0;border-radius:0 0 9px 9px;background:#fff;line-height:1.55;white-space:pre-wrap;outline:none}
@@ -4778,6 +4779,20 @@ function memoWirePresentationExcipientRich(root){
    btn.addEventListener('mousedown',e=>e.preventDefault());
    btn.addEventListener('click',()=>{area.focus();document.execCommand(btn.dataset.excFormat,false,null);sync();requestAnimationFrame(positionToolbar)});
   });
+  // Le marquage EEN est une mise en gras dans le champ existant : aucune
+  // deuxième saisie, aucun nouveau champ Supabase et aucun texte ajouté à la fiche.
+  // Un deuxième clic retire le gras lorsque la sélection est déjà en gras.
+  const eenButton=wrap.querySelector('[data-exc-een]');
+  eenButton?.addEventListener('mousedown',e=>e.preventDefault());
+  eenButton?.addEventListener('click',()=>{
+   const selection=window.getSelection();
+   const saved=wrap._range;
+   if(saved&&selection){selection.removeAllRanges();selection.addRange(saved)}
+   if(!selection||selection.isCollapsed||!area.contains(selection.anchorNode)||!area.contains(selection.focusNode))return;
+   area.focus();
+   document.execCommand('bold',false,null);
+   sync();requestAnimationFrame(positionToolbar);
+  });
   const color=wrap.querySelector('[data-exc-color]');
   color.addEventListener('mousedown',()=>{const sel=window.getSelection();if(sel&&sel.rangeCount&&area.contains(sel.anchorNode))wrap._range=sel.getRangeAt(0).cloneRange()});
   color.addEventListener('change',()=>{
@@ -4813,7 +4828,7 @@ function presentationEditor(p,i){
  <div class="full presentation-edit-row">${check("showOpen","Ouverture de la gélule")}<div class="presentation-status-row"><label class="presentation-verified"><input type="checkbox" data-can-open ${p.canOpen===true&&!p.cannotOpen?"checked":""}>Possible</label><label class="presentation-verified"><input type="checkbox" data-cannot-open ${p.cannotOpen===true?"checked":""}>Impossible</label><input type="text" data-pfield="openReason" value="${esc(p.openReason||"")}" placeholder="Pourquoi ? (facultatif)" data-reason-for="open"></div></div>
 </div></div>
  <div class="memo-presentation-divider" aria-hidden="true"></div>
- <div class="memo-presentation-group"> <div class="full presentation-edit-row memo-excipients-editor">${check("showExcipients","Excipients de la formule")}<div class="memo-exc-rich" data-memo-exc-rich><div class="memo-exc-rich-toolbar" role="toolbar" aria-label="Mise en forme des excipients"><button type="button" data-exc-format="bold" title="Gras"><strong>G</strong></button><button type="button" data-exc-format="italic" title="Italique"><em>I</em></button><button type="button" data-exc-format="underline" title="Souligné"><u>S</u></button><button type="button" data-exc-format="removeFormat" title="Effacer la mise en forme">T̸</button><label>Couleur <select data-exc-color aria-label="Couleur du texte"><option value="">Par défaut</option><option value="#b24a38">Rouge</option><option value="#b57520">Orange</option><option value="#25714c">Vert</option><option value="#285f9a">Bleu</option></select></label></div><div class="memo-exc-rich-area" data-exc-edit contenteditable="true" role="textbox" aria-label="Excipients de la formule" aria-multiline="true"></div><textarea data-pfield="excipients" rows="3" hidden>${esc(p.excipients||"")}</textarea></div></div>
+ <div class="memo-presentation-group"> <div class="full presentation-edit-row memo-excipients-editor">${check("showExcipients","Excipients de la formule")}<div class="memo-exc-rich" data-memo-exc-rich><div class="memo-exc-rich-toolbar" role="toolbar" aria-label="Mise en forme des excipients"><button type="button" data-exc-format="bold" title="Gras"><strong>G</strong></button><button type="button" data-exc-een title="Mettre l’excipient sélectionné en gras (EEN)" aria-label="Marquer la sélection comme excipient à effet notoire"><strong>⚠ EEN</strong></button><button type="button" data-exc-format="italic" title="Italique"><em>I</em></button><button type="button" data-exc-format="underline" title="Souligné"><u>S</u></button><button type="button" data-exc-format="removeFormat" title="Effacer la mise en forme">T̸</button><label>Couleur <select data-exc-color aria-label="Couleur du texte"><option value="">Par défaut</option><option value="#b24a38">Rouge</option><option value="#b57520">Orange</option><option value="#25714c">Vert</option><option value="#285f9a">Bleu</option></select></label></div><div class="memo-exc-rich-area" data-exc-edit contenteditable="true" role="textbox" aria-label="Excipients de la formule" aria-multiline="true"></div><textarea data-pfield="excipients" rows="3" hidden>${esc(p.excipients||"")}</textarea></div></div>
 </div>
  <div class="memo-presentation-divider" aria-hidden="true"></div>
  <div class="memo-presentation-group memo-presentation-photos"> <div class="full presentation-edit-row">${check("showPhoto","Photo de la boîte")}<input type="file" accept="image/jpeg,image/png,image/webp" data-photo-file="${i}"><div class="hint" data-photo-hint="${i}">${pending?"Photo sélectionnée : "+esc(pending.name):currentPhoto?"Photo enregistrée : visible ci-dessous":"JPG, PNG ou WebP · maximum 2 Mo. Envoyée lors de l’enregistrement de la fiche."}</div>${currentPhoto?`<img class="image-preview" src="${esc(currentPhoto)}" alt="Photo enregistrée de la présentation">`:""}</div>
