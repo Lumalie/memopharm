@@ -1129,8 +1129,8 @@ body.header-search-active header #headerSearchSlot .searchcard{width:100%!import
 
 /* Glossaire : présentation sans encadrement superflu */
 .memo-gloss-page{max-width:1050px;margin:0 auto;width:100%}.memo-gloss-top{display:flex;gap:12px;margin:18px 0 20px}.memo-gloss-top input{flex:1}.memo-gloss-top button{white-space:nowrap}.memo-gloss-entry{padding:14px 2px;border-bottom:1px solid #dbe7df;display:flex;justify-content:space-between;gap:18px;align-items:flex-start}.memo-gloss-entry strong{color:#245d4b}.memo-gloss-entry p{margin:5px 0 0;white-space:pre-wrap}.memo-gloss-actions{display:flex;gap:6px}.memo-gloss-actions button{font-size:.78rem;padding:5px 9px}.memo-gloss-term{text-decoration-line:underline;text-decoration-style:dotted;text-decoration-color:#367a59;text-underline-offset:4px;text-decoration-thickness:2px;cursor:help}.memo-gloss-term:focus{outline:2px solid #7ba58b;outline-offset:3px;border-radius:2px}#memoGlossTooltip{position:fixed;z-index:99999;pointer-events:none;max-width:min(330px,calc(100vw - 16px));padding:12px 15px;background:#f8fcf9;color:#203b2d;border:1px solid #b8d5c2;box-shadow:0 8px 25px #193f3425;border-radius:11px;font-size:.85rem;line-height:1.45}#memoGlossTooltip[hidden]{display:none}#memoGlossTooltip p{margin:5px 0 0;white-space:pre-wrap}#memoGlossTooltip strong{color:#245d4b}
- .memo-presentation-rcp-link{margin-top:12px;padding-top:12px;border-top:1px solid var(--border,#dce5dc);font-size:.9rem}
- .memo-presentation-rcp-link a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+ .memo-presentation-rcp-link{margin-top:12px;padding-top:12px;border-top:1px solid var(--border,#dce5dc);font-size:.78rem;color:#7b8580}
+ .memo-presentation-rcp-link a{color:#7b8580;text-decoration:underline;text-underline-offset:3px;font-weight:400}
  .memo-presentation-rcp-link a:hover{color:var(--accent,#23634f)}
  .memo-presentation-rcp input[type="url"]{width:100%}
 </style>
@@ -2171,14 +2171,14 @@ function showView(view){
  if(view==="home"&&editorId)restoreEditorFocus();
 }
 function hierarchyMeta(m){return (m.sections||[]).find(s=>s.memofficineKind||s.memofficineParentGroup)||(m.sections||[]).find(s=>s.id==="indications")||(m.sections||[])[0]||{}}
-function isMolecule(m){return !isGroup(m)&&!!m.sections?.[0]?.moleculeRoot}
+function isMolecule(m){return !isGroup(m)&&!!(m.sections||[]).find(sec=>sec?.moleculeRoot)}
 function isSpecialiteFiche(m){return !isGroup(m)&&!isMolecule(m)&&hierarchyMeta(m).memofficineKind!=="conseil"&&m.entry_type==="specialite"}
 // Les variantes sont désormais un type autonome dans Supabase et en mémoire.
 function isDosageRecord(m){return !isGroup(m)&&!isMolecule(m)&&hierarchyMeta(m).memofficineKind!=="conseil"&&m.entry_type==="variant"}
 function isVariantFiche(m){return isDosageRecord(m)&&!!moleculeParentId(m)}
 function isDciFamilyType(m){return m.entry_type==="dci"||m.entry_type==="variant"}
 function isContentFicheType(m){return isDciFamilyType(m)||m.entry_type==="specialite"}
-function moleculeParentId(m){return m.sections?.[0]?.moleculeParentId||""}
+function moleculeParentId(m){return (m.sections||[]).find(sec=>sec?.moleculeParentId)?.moleculeParentId||""}
 function moleculeChildren(m){return publicMeds().filter(x=>!isGroup(x)&&moleculeParentId(x)===String(m.id)).sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),'fr'))}
 function moleculeDosageColumns(children){
  const byForm=new Map();
@@ -4407,7 +4407,7 @@ function presentationInfo(p,m=null, specialtyBoxesHtml=""){
  const badges=m&&isSpecialiteFiche(m)?"":m?practicalBadges(m,{...p,regulatoryList:"",coldStorage:false,afterOpening:false}):"";
  if(!rows.length&&!photo&&!badges&&!p.name&&!rcpLink)return '<p class="muted">Aucun critère de présentation affiché pour le moment.</p>';
  const title="";
- return `<div class="presentation-v33-content">${title}${m&&!isSpecialiteFiche(m)?"":badges}<div class="presentation-v33-layout${photo?' has-photo':''}"><div class="presentation-v33-fields${memoCompact?' memo-v125-compact-fields':''}">${m&&!isSpecialiteFiche(m)?`<div class="memo-v101-cip-block">${badges}<div class="memo-v101-cip-line">${memoMoleculeCipAndPack(p)}</div></div>`:""}${specialtyBoxesHtml?`<div class="memo-v97-cip-area">${specialtyBoxesHtml}</div>`:""}${memoCompact?compactRows.join(''):rows.join('')}</div>${photo}</div><p class="hint presentation-v33-warning">L’aspect seul ne permet pas d’identifier avec certitude un médicament. Vérifier la concordance avec la présentation exacte.</p>${rcpLink}</div>`;
+ return `<div class="presentation-v33-content">${title}${m&&!isSpecialiteFiche(m)?"":badges}<div class="presentation-v33-layout${photo?' has-photo':''}"><div class="presentation-v33-fields${memoCompact?' memo-v125-compact-fields':''}">${m&&!isSpecialiteFiche(m)?`<div class="memo-v101-cip-block">${badges}<div class="memo-v101-cip-line">${memoMoleculeCipAndPack(p)}</div></div>`:""}${specialtyBoxesHtml?`<div class="memo-v97-cip-area">${specialtyBoxesHtml}</div>`:""}${memoCompact?compactRows.join(''):rows.join('')}</div>${photo}</div>${rcpLink}</div>`;
 }
 function presentationLabel(p,m,i){
  const name=(p.name||m.name||"").trim();
@@ -6338,13 +6338,20 @@ function renderEditor(id){
   const byIndex=new Map(cards.map((el,k)=>[Number(el.dataset.variantSection),updated[k]]));
   child.sections=old.map((sec,i)=>byIndex.get(i)||sec);
   if(!child.sections.length)child.sections=[{id:'variant-meta',title:'Métadonnées',type:'text',content:'',enabled:false}];
-  child.sections[0].moleculeParentId=String(m.id);
-  child.sections[0].dciForm=child.form;
+  // Conserver la liaison parent dans une section de métadonnées stable, même
+  // lorsqu'une rubrique a été masquée ou déplacée par l'éditeur.
+  let meta=child.sections.find(sec=>sec.id==='variant-meta');
+  if(!meta){
+   meta={id:'variant-meta',title:'Métadonnées',type:'text',content:'',enabled:false};
+   child.sections.unshift(meta);
+  }
+  meta.moleculeParentId=String(m.id);
+  meta.dciForm=child.form;
   const badgeInputs=card.querySelectorAll('[data-v29-badge]');
   if(badgeInputs.length){
-   const flags={...(child.sections[0].practicalFlags||{})};
+   const flags={...(meta.practicalFlags||{})};
    badgeInputs.forEach(el=>{flags[el.dataset.v29Badge]=el.value==='yes'?true:el.value==='no'?false:null});
-   child.sections[0].practicalFlags=flags;
+   meta.practicalFlags=flags;
   }
  }
  function variantReadAll(){variantReadCard()}
