@@ -2721,8 +2721,9 @@ function memoEquivRecords(){
   const g=groupFor(name,root),key=norm(commercial);
   if(!g.names.has(key))g.names.set(key,{name:commercial,items:[]});
   const item={source,detail:label,presentation,ingredientDose};
-  if(presentation?.presentationKind==='princeps')g.names.get(key).kind='princeps';
-  else if(presentation?.presentationKind==='generic' && g.names.get(key).kind!=='princeps')g.names.get(key).kind='generic';
+  const status=String(presentation?.presentationKind||'').trim().toLowerCase();
+  if(status==='princeps')g.names.get(key).kind='princeps';
+  else if(status==='generic' && g.names.get(key).kind!=='princeps')g.names.get(key).kind='generic';
   g.names.get(key).items.push(item);
   const fkey=norm(label);
   if(!g.formulations.has(fkey))g.formulations.set(fkey,{label,source,items:[]});
@@ -2731,9 +2732,22 @@ function memoEquivRecords(){
  variants.forEach(v=>{
   const root=byId.get(String(moleculeParentId(v)));
   if(!root)return;
-  (v.presentations||[]).forEach(p=>add(root.name,root,p.name||p.specialtyName||p.specialite||'',v,displayMedName(v),p));
+  (v.presentations||[]).forEach(p=>{
+   // Les génériques sont souvent identifiés par le laboratoire dans l'éditeur.
+   // Ne pas les ignorer lorsque le champ « Nom » est laissé vide.
+   const kind=String(p.presentationKind||'').trim().toLowerCase();
+   const explicit=String(p.name||p.specialtyName||p.specialite||'').trim();
+   const lab=String(p.lab||p.laboratory||p.laboratoire||'').trim();
+   const commercial=explicit||(kind==='generic'&&lab?`${root.name} ${lab}`:lab);
+   add(root.name,root,commercial,v,displayMedName(v),p);
+  });
  });
- roots.forEach(root=>(root.presentations||[]).forEach(p=>add(root.name,root,p.name||p.specialtyName||'',root,displayMedName(root),p)));
+ roots.forEach(root=>(root.presentations||[]).forEach(p=>{
+  const kind=String(p.presentationKind||'').trim().toLowerCase();
+  const explicit=String(p.name||p.specialtyName||p.specialite||'').trim();
+  const lab=String(p.lab||p.laboratory||p.laboratoire||'').trim();
+  add(root.name,root,explicit||(kind==='generic'&&lab?`${root.name} ${lab}`:lab),root,displayMedName(root),p);
+ }));
  // Les noms de princeps renseignés sur la fiche molécule restent trouvables,
  // même si aucune présentation commerciale actuelle n'est enregistrée.
  roots.forEach(root=>(root.sections?.[0]?.princepsNames||[]).forEach(name=>{
