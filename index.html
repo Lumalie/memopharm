@@ -4441,10 +4441,18 @@ function memoV102SyncStorage(section,p){
  if(badges)badges.outerHTML=memoV102CommercialStorageBadges(p);
 }
 
+function memoExcipientWithoutHeadings(raw){
+ // Underlined headings describe parts of a formula, not substances.
+ return String(raw||"")
+  .replace(/__([\s\S]*?)__/g, "")
+  .replace(/<u\b[^>]*>[\s\S]*?<\/u>/gi, "")
+  .replace(/<span\b[^>]*style=["'][^"']*text-decoration\s*:\s*underline[^"']*["'][^>]*>[\s\S]*?<\/span>/gi, "")
+  .replace(/(?:^|\n)\s*(?:noyau|pelliculage|enrobage|composition de l[’']ar[oô]me|composition des? ar[oô]mes?)\s*(?:du comprim[eé])?\s*:/gim,"\n");
+}
 function memoExcipientTokens(raw){
  // Supprimer uniquement la mise en forme, puis séparer les éléments au niveau
  // principal : les virgules situées dans les parenthèses restent intactes.
- const text=String(raw||"")
+ const text=memoExcipientWithoutHeadings(raw)
   .replace(/\[\[(?:[^|\]]+)\|([^\]]+)\]\]/g,"$1")
   .replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g,"$1")
   .replace(/<\/\s*(?:p|div|li|br)\s*>/gi,"\n")
@@ -4498,7 +4506,7 @@ function memoExcipientCanonical(v){
   .replace(/^(?:noyau du comprim[eé]|pelliculage du comprim[eé]|enrobage|composition)\s*:\s*/i,"")
   .replace(/^(?:du|de la|de l[’']|des)\s+/i,"")
   .replace(/[.;:]+\s*$/g,"").replace(/\s+/g," ").trim();
- if(!label||/^[\d\s]/.test(label)||/\b(?:et|dont)\s*$/i.test(label))return null;
+ if(!label||/^(?:noyau|pelliculage|enrobage|composition de l[’']ar[oô]me|composition des? ar[oô]mes?)\b/i.test(label)||/^[\d\s]/.test(label)||/\b(?:et|dont)\s*$/i.test(label))return null;
  if((label.match(/\(/g)||[]).length!==(label.match(/\)/g)||[]).length)return null;
  const normalized=memoExcipientNormalize(label);
  const match=MEMO_EXC_SYNONYMS.find(([,rx])=>rx.test(normalized));
@@ -4590,20 +4598,20 @@ function memoExcChooseVariant(id){
 // Liste de repérage indicative : la qualification EEN dépend du RCP exact,
 // de la voie, de la quantité et des seuils réglementaires applicables.
 const MEMO_EEN_CANDIDATES=[
- ["aspartam",/\\baspartam\\b|\\be951\\b/i],
- ["sorbitol",/\\bsorbitol\\b|\\be420\\b/i],
- ["dioxyde de soufre",/\\bdioxyde de soufre\\b|\\be220\\b|\\bsulfites?\\b/i],
- ["alcool benzylique",/\\balcool benzylique\\b/i],
- ["benzoate de benzyle",/\\bbenzoate de benzyle\\b/i],
- ["propylène glycol",/\\bpropylene glycol\\b|\\bpropyl[eè]ne glycol\\b|\\be1520\\b/i],
- ["lactose",/\\blactose\\b/i],
- ["saccharose",/\\bsaccharose\\b/i],
- ["glucose",/\\bglucose\\b/i],
- ["éthanol",/\\bethanol\\b|\\béthanol\\b|\\balcool ethylique\\b/i],
- ["sodium",/\\bsodium\\b/i],
- ["huile d'arachide",/\\barachide\\b/i],
- ["huile de soja",/\\bsoja\\b/i],
- ["mannitol",/\\bmannitol\\b|\\be421\\b/i]
+ ["aspartam",/\baspartam\b|\be951\b/i],
+ ["sorbitol",/\bsorbitol\b|\be420\b/i],
+ ["dioxyde de soufre",/\bdioxyde de soufre\b|\be220\b|\bsulfites?\b/i],
+ ["alcool benzylique",/\balcool benzylique\b/i],
+ ["benzoate de benzyle",/\bbenzoate de benzyle\b/i],
+ ["propylène glycol",/\bpropylene glycol\b|\bpropyl[eè]ne glycol\b|\be1520\b/i],
+ ["lactose",/\blactose\b/i],
+ ["saccharose",/\bsaccharose\b/i],
+ ["glucose",/\bglucose\b/i],
+ ["éthanol",/\bethanol\b|\béthanol\b|\balcool ethylique\b/i],
+ ["sodium",/^sodium(?:\s*\([^)]*\))?$/i],
+ ["huile d'arachide",/\barachide\b/i],
+ ["huile de soja",/\bsoja\b/i],
+ ["mannitol",/\bmannitol\b|\be421\b/i]
 ];
 function memoEenCandidate(label){
  const norm=memoExcipientNormalize(label);
@@ -4777,7 +4785,25 @@ function memoWirePresentationExcipientRich(root){
   area.addEventListener('input',sync);
   wrap.querySelectorAll('[data-exc-format]').forEach(btn=>{
    btn.addEventListener('mousedown',e=>e.preventDefault());
-   btn.addEventListener('click',()=>{area.focus();document.execCommand(btn.dataset.excFormat,false,null);sync();requestAnimationFrame(positionToolbar)});
+   btn.addEventListener('click',()=>{
+    const selection=window.getSelection();
+    if(wrap._range&&selection){selection.removeAllRanges();selection.addRange(wrap._range)}
+    if(!selection||selection.isCollapsed||!area.contains(selection.anchorNode)||!area.contains(selection.focusNode))return;
+    area.focus();
+    if(btn.dataset.excFormat==='removeFormat'){
+     const range=selection.getRangeAt(0);
+     const plain=range.toString();
+     // A plain-text replacement removes formatting across pasted paragraphs.
+     range.deleteContents();
+     const parts=plain.split('\n');
+     const frag=document.createDocumentFragment();
+     parts.forEach((part,i)=>{if(i)frag.appendChild(document.createElement('br'));frag.appendChild(document.createTextNode(part))});
+     const last=frag.lastChild;
+     range.insertNode(frag);
+     if(last){range.setStartAfter(last);range.collapse(true);selection.removeAllRanges();selection.addRange(range)}
+    }else document.execCommand(btn.dataset.excFormat,false,null);
+    sync();requestAnimationFrame(positionToolbar);
+   });
   });
   // Le marquage EEN est une mise en gras dans le champ existant : aucune
   // deuxième saisie, aucun nouveau champ Supabase et aucun texte ajouté à la fiche.
@@ -4798,7 +4824,7 @@ function memoWirePresentationExcipientRich(root){
   color.addEventListener('change',()=>{
    if(!color.value)return;
    area.focus();const sel=window.getSelection();if(wrap._range&&sel){sel.removeAllRanges();sel.addRange(wrap._range)}
-   document.execCommand('foreColor',false,color.value);sync();color.value='';requestAnimationFrame(positionToolbar);
+   document.execCommand('foreColor',false,color.value==='default'?TEXT_COLORS.default:color.value);sync();color.value='default';requestAnimationFrame(positionToolbar);
   });
  });
 }
@@ -4828,7 +4854,7 @@ function presentationEditor(p,i){
  <div class="full presentation-edit-row">${check("showOpen","Ouverture de la gélule")}<div class="presentation-status-row"><label class="presentation-verified"><input type="checkbox" data-can-open ${p.canOpen===true&&!p.cannotOpen?"checked":""}>Possible</label><label class="presentation-verified"><input type="checkbox" data-cannot-open ${p.cannotOpen===true?"checked":""}>Impossible</label><input type="text" data-pfield="openReason" value="${esc(p.openReason||"")}" placeholder="Pourquoi ? (facultatif)" data-reason-for="open"></div></div>
 </div></div>
  <div class="memo-presentation-divider" aria-hidden="true"></div>
- <div class="memo-presentation-group"> <div class="full presentation-edit-row memo-excipients-editor">${check("showExcipients","Excipients de la formule")}<div class="memo-exc-rich" data-memo-exc-rich><div class="memo-exc-rich-toolbar" role="toolbar" aria-label="Mise en forme des excipients"><button type="button" data-exc-format="bold" title="Gras"><strong>G</strong></button><button type="button" data-exc-een title="Mettre l’excipient sélectionné en gras (EEN)" aria-label="Marquer la sélection comme excipient à effet notoire"><strong>⚠ EEN</strong></button><button type="button" data-exc-format="italic" title="Italique"><em>I</em></button><button type="button" data-exc-format="underline" title="Souligné"><u>S</u></button><button type="button" data-exc-format="removeFormat" title="Effacer la mise en forme">T̸</button><label>Couleur <select data-exc-color aria-label="Couleur du texte"><option value="">Par défaut</option><option value="#b24a38">Rouge</option><option value="#b57520">Orange</option><option value="#25714c">Vert</option><option value="#285f9a">Bleu</option></select></label></div><div class="memo-exc-rich-area" data-exc-edit contenteditable="true" role="textbox" aria-label="Excipients de la formule" aria-multiline="true"></div><textarea data-pfield="excipients" rows="3" hidden>${esc(p.excipients||"")}</textarea></div></div>
+ <div class="memo-presentation-group"> <div class="full presentation-edit-row memo-excipients-editor">${check("showExcipients","Excipients de la formule")}<div class="memo-exc-rich" data-memo-exc-rich><div class="memo-exc-rich-toolbar" role="toolbar" aria-label="Mise en forme des excipients"><button type="button" data-exc-format="bold" title="Gras"><strong>G</strong></button><button type="button" data-exc-een title="Mettre l’excipient sélectionné en gras (EEN)" aria-label="Marquer la sélection comme excipient à effet notoire"><strong>⚠ EEN</strong></button><button type="button" data-exc-format="italic" title="Italique"><em>I</em></button><button type="button" data-exc-format="underline" title="Souligné"><u>S</u></button><button type="button" data-exc-format="removeFormat" title="Effacer la mise en forme">T̸</button><label>Couleur <select data-exc-color aria-label="Couleur du texte"><option value="default">Par défaut (couleur normale)</option><option value="#b24a38">Rouge</option><option value="#b57520">Orange</option><option value="#25714c">Vert</option><option value="#285f9a">Bleu</option></select></label></div><div class="memo-exc-rich-area" data-exc-edit contenteditable="true" role="textbox" aria-label="Excipients de la formule" aria-multiline="true"></div><textarea data-pfield="excipients" rows="3" hidden>${esc(p.excipients||"")}</textarea></div></div>
 </div>
  <div class="memo-presentation-divider" aria-hidden="true"></div>
  <div class="memo-presentation-group memo-presentation-photos"> <div class="full presentation-edit-row">${check("showPhoto","Photo de la boîte")}<input type="file" accept="image/jpeg,image/png,image/webp" data-photo-file="${i}"><div class="hint" data-photo-hint="${i}">${pending?"Photo sélectionnée : "+esc(pending.name):currentPhoto?"Photo enregistrée : visible ci-dessous":"JPG, PNG ou WebP · maximum 2 Mo. Envoyée lors de l’enregistrement de la fiche."}</div>${currentPhoto?`<img class="image-preview" src="${esc(currentPhoto)}" alt="Photo enregistrée de la présentation">`:""}</div>
