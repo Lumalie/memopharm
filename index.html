@@ -6027,8 +6027,25 @@ function renderEditor(id){
  const variantIsVisible=sec=>sec.enabled!==false&&(sec.content||sec.title);
  function memoOrganizeVariantSections(child){
   if(!child||!Array.isArray(child.sections))return;
+  // Préserver les champs de liaison et les métadonnées de la première section historique.
+  // Certaines anciennes variantes ne possèdent pas encore de section variant-meta.
   const metadata=child.sections.filter(sec=>sec.id==='variant-meta');
-  if(!metadata.length)metadata.push({id:'variant-meta',title:'Métadonnées',type:'text',content:'',enabled:false});
+  if(!metadata.length){
+   const original=child.sections[0]||{};
+   const meta={id:'variant-meta',title:'Métadonnées',type:'text',content:'',enabled:false};
+   for(const [key,value] of Object.entries(original)){
+    if(!['id','title','type','content','enabled','imageUrl','imageCaption','imageData'].includes(key))meta[key]=value;
+   }
+   metadata.push(meta);
+  }
+  // Le lien parent est essentiel pour que la présentation apparaisse sous sa molécule.
+  const linked=child.sections.find(sec=>sec?.moleculeParentId);
+  if(!metadata[0].moleculeParentId&&linked?.moleculeParentId)metadata[0].moleculeParentId=linked.moleculeParentId;
+  const hierarchy=child.sections.find(sec=>sec?.memofficineParentGroup||sec?.memofficineKind);
+  if(hierarchy){
+   if(!metadata[0].memofficineParentGroup&&hierarchy.memofficineParentGroup)metadata[0].memofficineParentGroup=hierarchy.memofficineParentGroup;
+   if(!metadata[0].memofficineKind&&hierarchy.memofficineKind)metadata[0].memofficineKind=hierarchy.memofficineKind;
+  }
   const sources=child.sections.filter(sec=>variantIsSource(sec)&&sec.id!=='variant-meta');
   const ordinary=child.sections.filter(sec=>sec.id!=='variant-meta'&&!variantIsSource(sec));
   // Sauvegarde non destructive des rubriques hors sélection dans les métadonnées.
