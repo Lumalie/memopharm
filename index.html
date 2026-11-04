@@ -2174,7 +2174,7 @@ function hierarchyMeta(m){return (m.sections||[]).find(s=>s.memofficineKind||s.m
 function isMolecule(m){return !isGroup(m)&&!!(m.sections||[]).find(sec=>sec?.moleculeRoot)}
 function isSpecialiteFiche(m){return !isGroup(m)&&!isMolecule(m)&&hierarchyMeta(m).memofficineKind!=="conseil"&&m.entry_type==="specialite"}
 // Les variantes sont désormais un type autonome dans Supabase et en mémoire.
-function isDosageRecord(m){return !isGroup(m)&&!isMolecule(m)&&hierarchyMeta(m).memofficineKind!=="conseil"&&m.entry_type==="variant"}
+function isDosageRecord(m){return m.entry_type==="variant"}
 function isVariantFiche(m){return isDosageRecord(m)&&!!moleculeParentId(m)}
 function isDciFamilyType(m){return m.entry_type==="dci"||m.entry_type==="variant"}
 function isContentFicheType(m){return isDciFamilyType(m)||m.entry_type==="specialite"}
@@ -2208,7 +2208,7 @@ function resolveSharedSection(m,s,visited=new Set()){
  const resolved=resolveSharedSection(source,sourceSection,visited);
  return {...resolved,id:s.id,title:s.title||resolved.title,enabled:s.enabled,sharedSourceName:displayMedName(source),sharedError:resolved.sharedError};
 }
-function isGroup(m){return hierarchyMeta(m).memofficineKind==="groupe"}
+function isGroup(m){return m.entry_type!=="variant"&&hierarchyMeta(m).memofficineKind==="groupe"}
 function parentGroupId(m){return hierarchyMeta(m).memofficineParentGroup||""}
 function splitDci(value){return String(value||"").split(/\s+\+\s+/).map(x=>x.trim()).filter(Boolean)}
 function setHierarchy(m,kind,parent){
@@ -6114,8 +6114,13 @@ function renderEditor(id){
   const hierarchy=child.sections.find(sec=>sec?.memofficineParentGroup||sec?.memofficineKind);
   if(hierarchy){
    if(!metadata[0].memofficineParentGroup&&hierarchy.memofficineParentGroup)metadata[0].memofficineParentGroup=hierarchy.memofficineParentGroup;
-   if(!metadata[0].memofficineKind&&hierarchy.memofficineKind)metadata[0].memofficineKind=hierarchy.memofficineKind;
+   // Ne jamais propager le marqueur de groupe vers une présentation.
+   if(hierarchy.memofficineKind==='conseil')delete metadata[0].memofficineKind;
   }
+  // Une variante ne doit jamais être identifiée comme un groupe, même après une migration ancienne.
+  for(const sec of child.sections){if(sec.memofficineKind==='groupe')delete sec.memofficineKind;delete sec.moleculeRoot;}
+  delete metadata[0].memofficineKind;
+  metadata[0].enabled=false;
   const sources=child.sections.filter(sec=>variantIsSource(sec)&&sec.id!=='variant-meta');
   const ordinary=child.sections.filter(sec=>sec.id!=='variant-meta'&&!variantIsSource(sec));
   // Sauvegarde non destructive des rubriques hors sélection dans les métadonnées.
@@ -6347,6 +6352,8 @@ function renderEditor(id){
   }
   meta.moleculeParentId=String(m.id);
   meta.dciForm=child.form;
+  meta.enabled=false;
+  for(const sec of child.sections){delete sec.moleculeRoot;if(sec.memofficineKind==='groupe')delete sec.memofficineKind;}
   const badgeInputs=card.querySelectorAll('[data-v29-badge]');
   if(badgeInputs.length){
    const flags={...(meta.practicalFlags||{})};
@@ -6976,7 +6983,7 @@ function sectionAction(action,index,id){const m=meds.find(x=>x.id===id);if(!m)re
   saveLocalDraft();
   return;
  }
- if(action==="remove"){if(!confirm("Retirer cette rubrique de la fiche ?"))return;ss.splice(index,1)}
+ if(action==="remove"){if(ss[index]?.id==="variant-meta")return toast("Les métadonnées techniques ne peuvent pas être supprimées.");if(!confirm("Retirer cette rubrique de la fiche ?"))return;ss.splice(index,1)}
  memoEditorActiveTab="general";memoEditorOpenSection=null;renderEditor(id);saveLocalDraft()}
 function addSection(id,type){const m=meds.find(x=>x.id===id);if(!m)return;captureEditorFields(m);m.sections.push({id:"custom-"+crypto.randomUUID(),title:"Nouvelle rubrique",type,content:type==="table"?"Colonne 1 | Colonne 2\nÀ renseigner | À renseigner":"À compléter à partir d’une source vérifiée.",enabled:true,imageData:"",imageUrl:"",imageCaption:""});memoEditorActiveTab="general";memoEditorOpenSection=m.sections.length-1;renderEditor(id);saveLocalDraft()}
 // V113 étape 7 : les formes/dosages sont préparés comme composants de la molécule.
@@ -6991,8 +6998,18 @@ function prepareMoleculeVariants(m){
   }
   child.sections=Array.isArray(child.sections)?child.sections:[];
   if(!child.sections.length)child.sections=[{id:'variant-meta',title:'Métadonnées',type:'text',content:'',enabled:false}];
-  child.sections[0].moleculeParentId=String(m.id);
-  child.sections[0].dciForm=child.form;
+  // Le lien technique doit rester dans variant-meta, jamais dans une rubrique utilisateur.
+  let meta=child.sections.find(sec=>sec.id==='variant-meta');
+  if(!meta){meta={id:'variant-meta',title:'Métadonnées',type:'text',content:'',enabled:false};child.sections.unshift(meta)}
+  meta.moleculeParentId=String(m.id);
+  meta.dciForm=child.form;
+  meta.enabled=false;
+  for(const sec of child.sections){
+   if(sec!==meta)delete sec.moleculeParentId;
+   delete sec.moleculeRoot;
+   if(sec.memofficineKind==='groupe'||sec.memofficineKind==='conseil')delete sec.memofficineKind;
+  }
+  delete meta.memofficineKind;
   child.entry_type='variant'; // Type unique en mémoire et dans Supabase.
   child.name=m.name+' '+child.dosage;
   child.category=m.category;
@@ -7009,6 +7026,7 @@ async function saveEditor(id){if(!requireAdmin())return;
  if(button){button.disabled=true;button.textContent="Enregistrement…"}
  try{
   captureEditorFields(m);
+  if(m.entry_type==='variant')throw new Error('Une présentation doit être modifiée depuis sa fiche molécule, dans Formes et dosages.');
   const variants=prepareMoleculeVariants(m);
   // Les variantes sont des lignes Supabase distinctes : les retirer de l'interface
   // ne les efface pas à lui seul. Identifier uniquement les anciennes variantes
