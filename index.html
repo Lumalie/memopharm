@@ -1299,6 +1299,19 @@ header .header-action-stack .header-actions > #logoutBtn:not(.hidden){
 .memo-doc-category-items{display:grid;gap:10px}
 .memo-doc-category .memo-doc-item{margin:0}
 </style>
+<style>
+/* V117.38 — catégories repliables, chevrons fournis par l'utilisatrice */
+.memo-doc-category-title{padding:0;border:0}
+.memo-doc-category-toggle{display:flex!important;align-items:center;justify-content:space-between;gap:12px;width:100%!important;padding:0 0 11px!important;margin:0!important;background:transparent!important;border:0!important;border-bottom:2px solid #39775b!important;border-radius:0!important;color:inherit!important;font:inherit!important;text-align:left!important;cursor:pointer}
+.memo-doc-category-toggle:hover{color:#22573c!important}
+.memo-doc-category-toggle:focus-visible{outline:2px solid #39775b;outline-offset:3px}
+.memo-doc-category-chevron{display:inline-flex;width:24px;height:24px;flex:none;align-items:center;justify-content:center}
+.memo-doc-category-chevron::before{content:"";width:24px;height:24px;background-color:currentColor;mask:url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Cpath d="m18 15-6-6-6 6" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/%3E%3C/svg%3E') center/contain no-repeat}
+.memo-doc-category-toggle[aria-expanded="false"] .memo-doc-category-chevron::before{mask-image:url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Cpath d="m6 9 6 6 6-6" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/%3E%3C/svg%3E')}
+.memo-doc-category-items[hidden]{display:none!important}
+#sourcesAdmin{flex:none}
+#sourcesAdmin button{white-space:nowrap;width:auto}
+</style>
 </head>
 <body>
 <header><div class="wrap">
@@ -1420,7 +1433,7 @@ header .header-action-stack .header-actions > #logoutBtn:not(.hidden){
   </div>
   <div id="memoExcPageContent" aria-live="polite"><p class="memo-equiv-empty">Sélectionne une présentation pour comparer les formules référencées.</p></div>
  </div>
- </section><section id="exploreView" class="hidden"><div class="explore-heading"><h2>Explorer les fiches</h2><p>Parcourez les fiches communes et leurs spécialités associées.</p></div><div class="explore-search"><label for="exploreSearch">Rechercher dans les fiches</label><div class="explore-search-row"><input id="exploreSearch" type="search" autocomplete="off" placeholder="Ex. : amoxicilline, oubli de prise, CIP, conservation…"><button id="clearExploreSearch" type="button">Effacer</button></div><p id="exploreSearchCount" class="muted" aria-live="polite"></p></div><div class="explore-controls"><label>Classe thérapeutique<select id="exploreClass"></select></label><label>Indication thérapeutique<select id="exploreIndication"></select></label><label>Forme pharmaceutique<select id="exploreForm"></select></label><label>Badge pharmaceutique<select id="exploreBadge"><option value="">Tous les badges</option><option value="mte">⚠ MTE</option><option value="photo">☀ Photosensibilisant</option><option value="exception">EXC · Médicament d’exception</option><option value="stup">STUP · Stupéfiant</option><option value="cold">❄ Conservation au froid</option><option value="after">◷ Conservation après ouverture</option><option value="listI">Liste I</option><option value="listII">Liste II</option></select></label><button id="resetExplore" type="button">Effacer les filtres</button></div> <div id="memoThemeIntro" class="memo-theme-intro hidden" aria-live="polite"></div><div class="memo-explorer-split"><aside class="memo-explorer-sidebar" aria-label="Arborescence des fiches"><h3>Arborescence</h3><div id="exploreSidebarTree"></div></aside><div class="memo-explorer-results"><h3>Résultats par type de fiche</h3><div id="exploreCards" class="explore-cards"></div></div></div></section><section id="sourcesView" class="hidden"><div class="memo-docs-page memo-sources-page"><div class="explore-heading"><h2>Sources</h2><p>Références utilisées pour construire et vérifier les fiches de Mémopharm.</p></div><div class="memo-docs-tools"><input id="memoSourcesSearch" type="search" placeholder="Rechercher une source, un organisme…" aria-label="Rechercher une source"></div><div id="sourcesList" class="memo-docs-list sources-list"></div><div id="sourcesAdmin" class="panel hidden" style="padding:18px;margin-top:18px"></div></div></section><div class="memo-v43-footer"><strong>📖 Une ressource pratique pour les professionnels de santé</strong><p>Mémopharm est une base documentaire indépendante conçue pour faciliter l’accès aux informations essentielles sur les médicaments et accompagner la pratique quotidienne des professionnels de santé.</p><p>Les fiches sont enrichies progressivement à partir de sources de référence. Les dates de mise à jour et de vérification permettent d’en apprécier l’actualité. Pour toute décision de prise en charge, les informations doivent être confrontées aux référentiels officiels en vigueur et aux données de la spécialité concernée.</p></div>
+ </section><section id="exploreView" class="hidden"><div class="explore-heading"><h2>Explorer les fiches</h2><p>Parcourez les fiches communes et leurs spécialités associées.</p></div><div class="explore-search"><label for="exploreSearch">Rechercher dans les fiches</label><div class="explore-search-row"><input id="exploreSearch" type="search" autocomplete="off" placeholder="Ex. : amoxicilline, oubli de prise, CIP, conservation…"><button id="clearExploreSearch" type="button">Effacer</button></div><p id="exploreSearchCount" class="muted" aria-live="polite"></p></div><div class="explore-controls"><label>Classe thérapeutique<select id="exploreClass"></select></label><label>Indication thérapeutique<select id="exploreIndication"></select></label><label>Forme pharmaceutique<select id="exploreForm"></select></label><label>Badge pharmaceutique<select id="exploreBadge"><option value="">Tous les badges</option><option value="mte">⚠ MTE</option><option value="photo">☀ Photosensibilisant</option><option value="exception">EXC · Médicament d’exception</option><option value="stup">STUP · Stupéfiant</option><option value="cold">❄ Conservation au froid</option><option value="after">◷ Conservation après ouverture</option><option value="listI">Liste I</option><option value="listII">Liste II</option></select></label><button id="resetExplore" type="button">Effacer les filtres</button></div> <div id="memoThemeIntro" class="memo-theme-intro hidden" aria-live="polite"></div><div class="memo-explorer-split"><aside class="memo-explorer-sidebar" aria-label="Arborescence des fiches"><h3>Arborescence</h3><div id="exploreSidebarTree"></div></aside><div class="memo-explorer-results"><h3>Résultats par type de fiche</h3><div id="exploreCards" class="explore-cards"></div></div></div></section><section id="sourcesView" class="hidden"><div class="memo-docs-page memo-sources-page"><div class="explore-heading"><h2>Sources</h2><p>Références utilisées pour construire et vérifier les fiches de Mémopharm.</p></div><div class="memo-docs-tools"><input id="memoSourcesSearch" type="search" placeholder="Rechercher une source, un organisme…" aria-label="Rechercher une source"><div id="sourcesAdmin" class="hidden"></div></div><div id="sourcesList" class="memo-docs-list sources-list"></div></div></section><div class="memo-v43-footer"><strong>📖 Une ressource pratique pour les professionnels de santé</strong><p>Mémopharm est une base documentaire indépendante conçue pour faciliter l’accès aux informations essentielles sur les médicaments et accompagner la pratique quotidienne des professionnels de santé.</p><p>Les fiches sont enrichies progressivement à partir de sources de référence. Les dates de mise à jour et de vérification permettent d’en apprécier l’actualité. Pour toute décision de prise en charge, les informations doivent être confrontées aux référentiels officiels en vigueur et aux données de la spécialité concernée.</p></div>
 <div id="dashMobileToolbar" role="toolbar" aria-label="Outils de modification de la liste">
 <button type="button" data-dash-mobile="outdent" aria-label="Retirer un niveau">← Retrait</button>
 <button type="button" data-dash-mobile="indent" aria-label="Ajouter un niveau">→ Tabulation</button>
@@ -5004,6 +5017,7 @@ function renderPrioritySection(s,targetSectionId=null){
 
 // Bibliothèque documentaire partagée : métadonnées Supabase et fichiers dans Storage.
 let memoDocsEntries=[],memoDocsReady=false,memoDocsError='';
+const memoDocsCollapsed=new Set();
 async function memoDocsLoad(){
  const {data,error}=await supabaseClient.from('memo_documents').select('id,title,description,category,url,storage_path,created_at').order('title');
  if(error){memoDocsReady=false;memoDocsError='La bibliothèque nécessite le script SQL Documents dans Supabase.';memoDocsRender();return}
@@ -5027,9 +5041,21 @@ function memoDocsRender(){
  );
  for(const group of sortedGroups){
   const section=document.createElement('section');section.className='memo-doc-category';
-  const heading=document.createElement('h3');heading.className='memo-doc-category-title';heading.textContent=group.name;
+  const heading=document.createElement('h3');heading.className='memo-doc-category-title';
+  const toggle=document.createElement('button');toggle.type='button';toggle.className='memo-doc-category-toggle';
+  const title=document.createElement('span');title.textContent=group.name;
+  const arrow=document.createElement('span');arrow.className='memo-doc-category-chevron';arrow.setAttribute('aria-hidden','true');
   const documents=document.createElement('div');documents.className='memo-doc-category-items';
-  section.append(heading,documents);
+  const sectionId='memo-doc-category-'+[...groups.keys()].indexOf(norm(group.name));
+  documents.id=sectionId;toggle.setAttribute('aria-controls',sectionId);
+  const expanded=q?true:!memoDocsCollapsed.has(norm(group.name));
+  toggle.setAttribute('aria-expanded',String(expanded));documents.hidden=!expanded;
+  toggle.addEventListener('click',()=>{
+   const willExpand=toggle.getAttribute('aria-expanded')!=='true';
+   toggle.setAttribute('aria-expanded',String(willExpand));documents.hidden=!willExpand;
+   if(willExpand)memoDocsCollapsed.delete(norm(group.name));else memoDocsCollapsed.add(norm(group.name));
+  });
+  toggle.append(title,arrow);heading.append(toggle);section.append(heading,documents);
   list.append(section);
   for(const d of group.documents){
   const item=document.createElement('article');item.className='memo-doc-item';
@@ -6689,37 +6715,84 @@ function renderSources(){
   const urls=[item.url,...String(item.extraUrls||"").split(/\r?\n/)].map(safeSourceUrl).filter(Boolean);
   const title=esc(item.title||"Ressource sans titre");
   const mainTitle=urls.length?`<a class="memo-doc-title" href="${esc(urls[0])}" target="_blank" rel="noopener noreferrer">${title}</a>`:`<span class="memo-doc-title">${title}</span>`;
-  return `<article class="memo-doc-item memo-source-item"><span class="memo-doc-symbol" aria-hidden="true">📚</span><div class="memo-doc-body">${mainTitle}${item.description?`<p class="memo-doc-desc">${esc(item.description)}</p>`:""}${item.organization?`<div class="memo-doc-meta">${esc(item.organization)}</div>`:""}${urls.length>1?`<div class="memo-source-extra-links">${urls.slice(1).map((url,i)=>`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">Lien complémentaire ${i+1} ↗</a>`).join("")}</div>`:""}</div></article>`;
+  return `<article class="memo-doc-item memo-source-item"><span class="memo-doc-symbol" aria-hidden="true">📚</span><div class="memo-doc-body">${mainTitle}${item.description?`<p class="memo-doc-desc">${esc(item.description)}</p>`:""}${item.organization?`<div class="memo-doc-meta">${esc(item.organization)}</div>`:""}${urls.length>1?`<div class="memo-source-extra-links">${urls.slice(1).map((url,i)=>`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">Lien complémentaire ${i+1} ↗</a>`).join("")}</div>`:""}</div>${admin?`<div class="memo-doc-actions"><button type="button" data-source-edit="${sourceItems().indexOf(item)}">Modifier</button><button type="button" data-source-delete="${sourceItems().indexOf(item)}">Supprimer</button></div>`:""}</article>`;
  }).join(""):`<div class="source-empty">${query?'Aucune source ne correspond à cette recherche.':'Aucune source commune publiée pour le moment.'}</div>`;
  $("sourcesAdmin").classList.toggle("hidden",!admin);
  if(admin)renderSourcesEditor();
 }
 let pendingSources=null;
-function sourceField(item,i,key,label){return `<label>${label}<input data-source-index="${i}" data-source-key="${key}" value="${esc(item[key]||"")}" placeholder="${label}"></label>`}
 function renderSourcesEditor(){
+ if(!admin)return;
+ const adminBox=$('sourcesAdmin');
+ adminBox.classList.remove('panel');adminBox.removeAttribute('style');
+ adminBox.innerHTML='<button type="button" id="addCommonSource" class="primary">+ Ajouter une source</button>';
+ $('addCommonSource').onclick=()=>memoSourceDialog();
+}
+function memoSourceCloseDialog(){
+ const overlay=$('memoSourceOverlay');if(overlay)overlay.remove();
+ document.removeEventListener('keydown',memoSourceEscape);
+}
+function memoSourceEscape(event){if(event.key==='Escape'&&!$('memoSourceSaveButton')?.disabled)memoSourceCloseDialog()}
+function memoSourceDialog(index=null){
  if(!requireAdmin())return;
- if(!admin)return;
- const items=pendingSources===null?clone(sourceItems()):pendingSources;
- $("sourcesAdmin").innerHTML=`<h3 style="margin-top:0">Gérer les sources communes</h3><p class="muted">Ajoute des ressources vérifiables. Utilise les flèches ↑ et ↓ pour choisir leur ordre d’affichage sur la page Sources, puis enregistre. Les modifications sont publiques après enregistrement.</p><div id="sourcesEntries">${items.map((item,i)=>`<div class="source-entry"><div class="sources-toolbar"><strong>Source ${i+1}</strong><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><button type="button" data-move-source="up" data-source-position="${i}" ${i===0?"disabled":""} title="Monter cette source" aria-label="Monter la source ${i+1}">↑</button><button type="button" data-move-source="down" data-source-position="${i}" ${i===items.length-1?"disabled":""} title="Descendre cette source" aria-label="Descendre la source ${i+1}">↓</button><button type="button" data-remove-source="${i}" class="danger">Supprimer</button></div></div><div class="admin-grid">${sourceField(item,i,"title","Titre de la ressource")}${sourceField(item,i,"organization","Organisme / éditeur")}${sourceField(item,i,"url","Adresse URL principale")}${sourceField(item,i,"description","Description (facultative)")}<label class="full">Liens supplémentaires (un lien par ligne)<textarea data-source-index="${i}" data-source-key="extraUrls" rows="3" placeholder="https://…">${esc(item.extraUrls||"")}</textarea></label></div></div>`).join("")}</div><div class="sources-toolbar"><button type="button" id="addCommonSource" class="soft">+ Ajouter une source</button><button type="button" id="saveCommonSources" class="primary">Enregistrer les sources</button></div>`;
- $("sourcesAdmin").querySelectorAll("[data-source-key]").forEach(input=>input.addEventListener("input",()=>{items[Number(input.dataset.sourceIndex)][input.dataset.sourceKey]=input.value;pendingSources=items}));
- $("sourcesAdmin").querySelectorAll("[data-move-source]").forEach(btn=>btn.onclick=()=>{const i=Number(btn.dataset.sourcePosition),j=i+(btn.dataset.moveSource==="up"?-1:1);if(j<0||j>=items.length)return;[items[i],items[j]]=[items[j],items[i]];pendingSources=items;renderSourcesEditor()});
- $("sourcesAdmin").querySelectorAll("[data-remove-source]").forEach(btn=>btn.onclick=()=>{items.splice(Number(btn.dataset.removeSource),1);pendingSources=items;renderSourcesEditor()});
- $("addCommonSource").onclick=()=>{items.push({title:"",organization:"",url:"",description:"",extraUrls:""});pendingSources=items;renderSourcesEditor();const fields=$("sourcesEntries").querySelectorAll('[data-source-key="title"]');fields[fields.length-1]?.focus()};
- $("saveCommonSources").onclick=saveCommonSources;
+ memoSourceCloseDialog();
+ const existing=index===null?null:sourceItems()[index];if(index!==null&&!existing)return;
+ const overlay=document.createElement('div');overlay.id='memoSourceOverlay';overlay.className='memo-doc-overlay';
+ overlay.innerHTML=`<section class="memo-doc-dialog" role="dialog" aria-modal="true" aria-labelledby="memoSourceDialogTitle">
+ <div class="memo-doc-dialog-head"><h2 id="memoSourceDialogTitle">${existing?'Modifier la source':'Ajouter une source'}</h2><button type="button" class="memo-doc-close" aria-label="Fermer">×</button></div>
+ <form class="memo-doc-form" id="memoSourceForm">
+ <label class="memo-doc-field">Titre de la ressource *<input name="title" maxlength="250" required placeholder="Ex. : ANSM — Informations médicaments"></label>
+ <label class="memo-doc-field">Organisme / éditeur<input name="organization" placeholder="Ex. : ANSM, HAS, Assurance maladie…"></label>
+ <label class="memo-doc-field">Description<textarea name="description" rows="3" placeholder="Quelques mots pour retrouver cette source…"></textarea></label>
+ <label class="memo-doc-field">Adresse URL principale *<input name="url" type="url" required placeholder="https://…" inputmode="url"></label>
+ <label class="memo-doc-field">Liens supplémentaires (facultatifs, un par ligne)<textarea name="extraUrls" rows="3" placeholder="https://…"></textarea></label>
+ <div class="memo-doc-error" id="memoSourceError" role="alert" aria-live="polite"></div>
+ <div class="memo-doc-footer"><button type="button" id="memoSourceCancel">Annuler</button><button type="submit" class="primary" id="memoSourceSaveButton">Enregistrer</button></div>
+ </form></section>`;
+ document.body.append(overlay);
+ const form=overlay.querySelector('form'),save=overlay.querySelector('#memoSourceSaveButton'),errorBox=overlay.querySelector('#memoSourceError');
+ for(const key of ['title','organization','description','url','extraUrls'])form.elements[key].value=existing?.[key]||'';
+ overlay.querySelector('.memo-doc-close').onclick=memoSourceCloseDialog;
+ overlay.querySelector('#memoSourceCancel').onclick=memoSourceCloseDialog;
+ overlay.addEventListener('click',event=>{if(event.target===overlay&&!save.disabled)memoSourceCloseDialog()});
+ document.addEventListener('keydown',memoSourceEscape);
+ form.addEventListener('submit',async event=>{
+  event.preventDefault();if(save.disabled)return;
+  const item={};for(const key of ['title','organization','description','url','extraUrls'])item[key]=form.elements[key].value.trim();
+  if(!item.title){errorBox.textContent='Indique un titre.';return}
+  if(!safeSourceUrl(item.url)){errorBox.textContent='Saisis une adresse URL valide (https://…).';return}
+  const extra=item.extraUrls.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+  if(extra.some(x=>!safeSourceUrl(x))){errorBox.textContent='Vérifie les liens supplémentaires.';return}
+  item.extraUrls=extra.join('\n');
+  const items=clone(sourceItems());if(index===null)items.push(item);else items[index]=item;
+  save.disabled=true;save.textContent='Enregistrement…';errorBox.textContent='';
+  try{await memoSourcePersist(items);memoSourceCloseDialog()}
+  catch(err){errorBox.textContent='Enregistrement impossible : '+(err?.message||String(err))}
+  finally{save.disabled=false;save.textContent='Enregistrer'}
+ });
+ form.elements.title.focus();
 }
-async function saveCommonSources(){
- if(!admin)return;
- const items=(pendingSources===null?sourceItems():pendingSources).map(item=>({title:String(item.title||"").trim(),organization:String(item.organization||"").trim(),url:String(item.url||"").trim(),description:String(item.description||"").trim(),extraUrls:String(item.extraUrls||"").trim()}));
- if(items.some(item=>!item.title)){toast("Chaque source doit avoir un titre.");return}
- if(items.some(item=>[item.url,...item.extraUrls.split(/\r?\n/)].filter(Boolean).some(url=>!safeSourceUrl(url.trim())))){toast("Utilise des liens http:// ou https:// valides.");return}
+async function memoSourcePersist(items){
  const existing=sourcesRecord();
- const record=existing?clone(existing):{id:SOURCES_RECORD_ID,name:"Sources communes Mémopharm",dci:"",dosage:"",category:"Documentation",form:"",aliases:"",entry_type:"specialite",status:"À vérifier",updated:"",source:"",presentations:[],sections:[],published:true};
- record.sections=[{id:"sources-communes",title:"Sources communes",type:"text",content:"",enabled:true,memofficineKind:"sources_communes",items}];record.published=true;
- const {data,error}=await supabaseClient.from("medications").upsert(medToRow(record)).select().single();
- if(error){console.error(error);toast("Impossible d'enregistrer les sources : vérifie les permissions Supabase.");return}
- const saved=rowToMed(data),idx=meds.findIndex(isSourcesRecord);if(idx>=0)meds[idx]=saved;else meds.push(saved);
- pendingSources=null;renderSources();toast("Sources communes enregistrées !");
+ const record=existing?clone(existing):{id:SOURCES_RECORD_ID,name:'Sources communes Mémopharm',dci:'',dosage:'',category:'Documentation',form:'',aliases:'',entry_type:'specialite',status:'À vérifier',updated:'',source:'',presentations:[],sections:[],published:true};
+ record.sections=[{id:'sources-communes',title:'Sources communes',type:'text',content:'',enabled:true,memofficineKind:'sources_communes',items}];record.published=true;
+ const {data,error}=await supabaseClient.from('medications').upsert(medToRow(record)).select().single();
+ if(error)throw error;
+ const saved=rowToMed(data),idx=meds.findIndex(isSourcesRecord);
+ if(idx>=0)meds[idx]=saved;else meds.push(saved);
+ renderSources();toast('Sources communes enregistrées !');
 }
+$('sourcesList').addEventListener('click',async event=>{
+ const edit=event.target.closest('[data-source-edit]'),del=event.target.closest('[data-source-delete]');
+ if(edit){memoSourceDialog(Number(edit.dataset.sourceEdit));return}
+ if(del){
+  if(!requireAdmin())return;
+  const index=Number(del.dataset.sourceDelete),item=sourceItems()[index];if(!item)return;
+  if(!confirm('Supprimer « '+item.title+' » de la page Sources ?'))return;
+  try{const items=clone(sourceItems());items.splice(index,1);await memoSourcePersist(items)}
+  catch(err){alert('Suppression impossible : '+(err?.message||String(err)))}
+ }
+});
 
 $("excNav").onclick=()=>navigateToView("exc");
 $("memoExcVariantSearch").addEventListener("input",()=>{
