@@ -1285,6 +1285,20 @@ header .header-action-stack .header-actions > #logoutBtn:not(.hidden){
  }
 }
 </style>
+
+<style>
+/* V117.37 : sections de documents regroupées par catégorie */
+#memoDocsList.memo-docs-list{display:block}
+.memo-doc-category{margin:0 0 34px}
+.memo-doc-category + .memo-doc-category{margin-top:34px}
+.memo-doc-category-title{
+ color:#39775b;font-size:1.18rem;font-weight:750;line-height:1.4;
+ text-align:left;margin:0 0 15px;padding:0 0 11px;
+ border-bottom:2px solid #39775b;letter-spacing:.005em
+}
+.memo-doc-category-items{display:grid;gap:10px}
+.memo-doc-category .memo-doc-item{margin:0}
+</style>
 </head>
 <body>
 <header><div class="wrap">
@@ -4237,7 +4251,7 @@ function memoWireExcipientComparator(panel,child){
   const q=memoExcipientNormalize(filter?.value||"");
   let shown=0;
   tbody.querySelectorAll("tr[data-memo-exc-row]").forEach(row=>{
-   const matches=(!q||memoExcipientNormalize(row.dataset.memoExcRow).includes(q))&&(!eenOnly?.checked||row.dataset.memoEen==="true");
+   const matches=(!q||norm(row.dataset.memoExcRow).includes(q))&&(!eenOnly?.checked||row.dataset.memoEen==="true");
    row.hidden=!matches;
    if(matches)shown++;
   });
@@ -4998,10 +5012,26 @@ async function memoDocsLoad(){
 function memoDocsRender(){
  const list=$('memoDocsList');if(!list)return;
  $('memoDocsAdd').hidden=!admin;
- const q=($('memoDocsSearch').value||'').trim().toLocaleLowerCase('fr');
- const entries=memoDocsEntries.filter(d=>([d.title,d.description,d.category].join(' ')).toLocaleLowerCase('fr').includes(q));
+ const q=norm(($('memoDocsSearch').value||'').trim());
+ const entries=memoDocsEntries.filter(d=>norm([d.title,d.description,d.category].join(' ')).includes(q));
  list.replaceChildren();
+ const groups=new Map();
  for(const d of entries){
+  const category=String(d.category||'').trim()||'Sans catégorie';
+  const key=norm(category);
+  if(!groups.has(key))groups.set(key,{name:category,documents:[]});
+  groups.get(key).documents.push(d);
+ }
+ const sortedGroups=[...groups.values()].sort((a,b)=>
+  (a.name==='Sans catégorie')-(b.name==='Sans catégorie')||a.name.localeCompare(b.name,'fr',{sensitivity:'base'})
+ );
+ for(const group of sortedGroups){
+  const section=document.createElement('section');section.className='memo-doc-category';
+  const heading=document.createElement('h3');heading.className='memo-doc-category-title';heading.textContent=group.name;
+  const documents=document.createElement('div');documents.className='memo-doc-category-items';
+  section.append(heading,documents);
+  list.append(section);
+  for(const d of group.documents){
   const item=document.createElement('article');item.className='memo-doc-item';
   const icon=document.createElement('span');icon.className='memo-doc-symbol';icon.textContent='📄';
   const body=document.createElement('div');body.className='memo-doc-body';
@@ -5019,7 +5049,8 @@ function memoDocsRender(){
    const del=document.createElement('button');del.type='button';del.textContent='Supprimer';del.onclick=()=>memoDocsDelete(d);
    actions.append(edit,del);item.append(actions);
   }
-  list.append(item);
+  documents.append(item);
+  }
  }
  $('memoDocsStatus').textContent=memoDocsError||(!memoDocsReady?'Chargement des documents…':entries.length?'':'Aucun document pour le moment.');
 }
@@ -5129,8 +5160,8 @@ async function memoGlossLoad(){
 }
 function memoGlossRender(){
  const host=$('memoGlossList');if(!host)return;
- const q=($('memoGlossSearch')?.value||'').toLocaleLowerCase('fr');
- const entries=memoGlossEntries.filter(x=>(x.term+' '+x.definition).toLocaleLowerCase('fr').includes(q));
+ const q=norm($('memoGlossSearch')?.value||'');
+ const entries=memoGlossEntries.filter(x=>norm(x.term+' '+x.definition).includes(q));
  host.innerHTML=entries.length?entries.map(x=>`<div class="memo-gloss-entry"><div><strong>${memoGlossEscape(x.term)}</strong><p>${memoGlossEscape(x.definition)}</p></div>${admin?`<div class="memo-gloss-actions"><button type="button" data-gloss-edit="${x.id}">Modifier</button><button type="button" data-gloss-delete="${x.id}">Supprimer</button></div>`:''}</div>`).join(''):'<p class="hint">Aucune définition correspondante.</p>';
  $('memoGlossAdd').hidden=!admin;
  $('memoGlossStatus').textContent=memoGlossError||(!memoGlossReady?'Chargement du glossaire…':'Les mots sont associés uniquement lorsque tu les sélectionnes dans l’éditeur.');
@@ -5907,9 +5938,9 @@ function renderEditor(id){
   const parts=()=>input.value.split(",").map(v=>v.trim()).filter(Boolean);
   const currentToken=()=>input.value.split(",").at(-1).trim();
   const render=()=>{
-   const selected=new Set(parts().map(v=>v.toLocaleLowerCase("fr")));
-   const needle=showAll?"":currentToken().toLocaleLowerCase("fr");
-   const matches=catalog.filter(v=>!selected.has(v.toLocaleLowerCase("fr"))&&(!needle||v.toLocaleLowerCase("fr").includes(needle))).slice(0,60);
+   const selected=new Set(parts().map(v=>norm(v)));
+   const needle=showAll?"":norm(currentToken());
+   const matches=catalog.filter(v=>!selected.has(norm(v))&&(!needle||norm(v).includes(needle))).slice(0,60);
    popup.replaceChildren();
    if(!matches.length){const empty=document.createElement("div");empty.className="memo-catalog-empty";empty.textContent=catalog.length?"Aucune autre suggestion — tu peux saisir une nouvelle valeur.":"Catalogue vide — saisis une première valeur.";popup.append(empty);return}
    matches.forEach(value=>{
@@ -6652,8 +6683,8 @@ function sourceItems(){const section=(sourcesRecord()?.sections||[]).find(s=>s.m
 function safeSourceUrl(raw){try{const u=new URL(raw);return ["https:","http:"].includes(u.protocol)?u.href:""}catch{return ""}}
 document.getElementById("memoSourcesSearch")?.addEventListener("input",()=>renderSources());
 function renderSources(){
- const query=($("memoSourcesSearch")?.value||"").trim().toLocaleLowerCase("fr");
- const items=sourceItems().filter(item=>[item.title,item.organization,item.description,item.url,item.extraUrls].join(" ").toLocaleLowerCase("fr").includes(query));
+ const query=norm(($("memoSourcesSearch")?.value||"").trim());
+ const items=sourceItems().filter(item=>norm([item.title,item.organization,item.description,item.url,item.extraUrls].join(" ")).includes(query));
  $("sourcesList").innerHTML=items.length?items.map(item=>{
   const urls=[item.url,...String(item.extraUrls||"").split(/\r?\n/)].map(safeSourceUrl).filter(Boolean);
   const title=esc(item.title||"Ressource sans titre");
