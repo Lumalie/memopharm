@@ -1375,6 +1375,49 @@ header #headerAdminActions .header-json-items{
  }
 }
 </style>
+
+<style>
+/* V117.42 — La liste de résultats doit passer devant le fil d'Ariane. */
+body.header-search-active > header{
+ position:relative!important;z-index:2147480000!important;
+ isolation:isolate!important;overflow:visible!important;
+}
+body.header-search-active > main{position:relative!important;z-index:0!important}
+body.header-search-active #headerSearchSlot,
+body.header-search-active #mainSearchCard{isolation:auto!important;overflow:visible!important}
+body.header-search-active #searchSuggestions:not(.hidden){
+ position:absolute!important;z-index:2147480001!important;
+ background:#fff!important;opacity:1!important;
+ border:1px solid #cbdccf!important;box-shadow:0 15px 30px rgba(0,0,0,.2)!important;
+}
+body.header-search-active #searchSuggestions:not(.hidden) .results,
+body.header-search-active #searchSuggestions:not(.hidden) .result{
+ background-color:#fff!important;
+}
+body.header-search-active #searchSuggestions:not(.hidden) .result:hover,
+body.header-search-active #searchSuggestions:not(.hidden) .result[aria-selected="true"]{
+ background-color:#edf5ee!important;
+}
+/* Réserver une seconde ligne à Sauvegardes, sous Déconnexion. */
+body.admin-header-mode > header{padding-bottom:64px!important}
+header .header-action-stack #headerAdminActions:not(.hidden){
+ position:absolute!important;top:calc(100% + 7px)!important;right:0!important;
+ margin:0!important;display:flex!important;justify-content:flex-end!important;
+ width:max-content!important;max-width:none!important;
+}
+header #headerAdminActions .header-json-menu>summary{
+ min-width:110px!important;min-height:42px!important;
+ font-size:.8rem!important;font-weight:650!important;
+ background:#f7faf8!important;border:1px solid #d3e5d7!important;
+ color:#234e3d!important;border-radius:11px!important;
+}
+@media(max-width:1050px){
+ header .header-action-stack #headerAdminActions:not(.hidden){
+  position:absolute!important;top:calc(100% + 7px)!important;right:0!important;
+  margin:0!important;
+ }
+}
+</style>
 </head>
 <body>
 <header><div class="wrap">
