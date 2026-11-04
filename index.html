@@ -5989,59 +5989,78 @@ function renderEditor(id){
  variantSources.className='memo-variant-sources';
  const trackingPanel=document.getElementById('memo-panel-tracking');
  if(trackingPanel){const heading=document.createElement('h3');heading.textContent='Sources de la présentation sélectionnée';heading.id='memo-variant-sources-heading';trackingPanel.append(heading,variantSources)}
+ // Les 12 rubriques demandées, dans leur ordre fixe.
+ const MEMO_VARIANT_RUBRICS=[
+  ['dire-comptoir','💬 À DIRE AU COMPTOIR'],
+  ['alerte-delivrance','🚨 Alerte à la délivrance'],
+  ['coup-oeil','👀 En un coup d’œil'],
+  ['indications','📍 Indications'],
+  ['posologie','🔢 Posologie'],
+  ['effets','🌀 Effets indésirables'],
+  ['securite','⚠️ Sécurité & interactions'],
+  ['interactions','⚠️ Interactions médicamenteuses'],
+  ['age','🧒 Âge minimum'],
+  ['manipulation','💉 Manipulation / reconstitution'],
+  ['conservation','❄️ Modalités de conservation'],
+  ['oubli','🗓️ En cas d’oubli de prise']
+ ];
+ const MEMO_VARIANT_SAFETY='**⛔ Contre-indications**\n\n**🟡 Précautions d’emploi**';
+ const variantSectionCatalog=()=>MEMO_VARIANT_RUBRICS.map(([key,title])=>({id:'variant-'+key,title,type:'text',content:key==='securite'?MEMO_VARIANT_SAFETY:'',enabled:true}));
+ const memoVariantKey=sec=>{
+  const t=String(sec.title||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+  const id=String(sec.id||'').toLowerCase();
+  if(/a dire au comptoir|conseils? au comptoir/.test(t)||id==='variant-dire-comptoir')return 'dire-comptoir';
+  if(/alerte a la delivrance/.test(t)||id==='alerte-delivrance')return 'alerte-delivrance';
+  if(/en un coup d oeil/.test(t)||id==='coup-oeil')return 'coup-oeil';
+  if(/indications?/.test(t)||id==='indications')return 'indications';
+  if(/posologie/.test(t)||id==='posologie')return 'posologie';
+  if(/effets indesirables/.test(t)||id==='effets')return 'effets';
+  if(/securite.*interactions|contre indications|precautions d emploi|points de vigilance/.test(t))return 'securite';
+  if(/interactions? (medicamenteuses?|importantes?)/.test(t)||id==='interactions')return 'interactions';
+  if(/age minimum/.test(t)||id==='age')return 'age';
+  if(/manipulation|reconstitution/.test(t)||id==='manipulation')return 'manipulation';
+  if(/conservation/.test(t)||id==='conservation')return 'conservation';
+  if(/oubli de prise/.test(t)||id==='oubli')return 'oubli';
+  return null;
+ };
  const variantIsSource=sec=>sec.id==='sources'||/sources(?:\s+et\s+mise\s+[àa]\s+jour)?/i.test(sec.title||'');
  const variantIsVisible=sec=>sec.enabled!==false&&(sec.content||sec.title);
- const variantSectionCatalog=()=>{
-  const map=new Map();
-  [...(m.sections||[]),...meds.flatMap(med=>med.sections||[]),...DEFAULT_SECTIONS].forEach(sec=>{
-   if(!sec||variantIsSource(sec)||sec.id==='variant-meta'||!sec.title)return;
-   const key=String(sec.title).trim().toLocaleLowerCase('fr');
-   if(!map.has(key))map.set(key,{id:sec.id||'variant-'+crypto.randomUUID(),title:sec.title,type:sec.type==='table'?'table':'text',content:'',enabled:true});
-  });
-  const presentationTopics=new Set(['modalites-prise','posologie','age minimum','en cas d oubli de prise','manipulation reconstitution','modalites de conservation','precautions specifiques','composition substances actives et quantites']);
-  return [...map.values()].filter(sec=>presentationTopics.has(memoVariantKey(sec))).map(sec=>({...sec,id:'variant-'+crypto.randomUUID()}));
- };
- // Organisation des rubriques de présentation : un seul intitulé par sujet,
- // et le conseil immédiatement utile au comptoir en première position.
- // Les contenus distincts sont conservés ; aucune migration Supabase nécessaire.
- const memoVariantKey=sec=>{
-  const title=String(sec.title||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
-  if(/\ba dire au comptoir\b|\bconseils? au comptoir\b/.test(title))return 'dire-comptoir';
-  if(/\bmodalites? de prise\b/.test(title))return 'modalites-prise';
-  if(/\bgrossesse et allaitement\b/.test(title))return 'grossesse-allaitement';
-  if(/\binteractions? (medicamenteuses?|importantes?)\b/.test(title))return 'interactions';
-  return title;
- };
- const memoVariantCounter={id:'variant-dire-comptoir',title:'💬 À DIRE AU COMPTOIR',type:'text',content:'',enabled:true};
  function memoOrganizeVariantSections(child){
   if(!child||!Array.isArray(child.sections))return;
-  const sections=child.sections;
-  const metadata=sections.filter(sec=>sec.id==='variant-meta');
-  const sources=sections.filter(sec=>variantIsSource(sec)&&sec.id!=='variant-meta');
-  const ordinary=sections.filter(sec=>sec.id!=='variant-meta'&&!variantIsSource(sec));
-  const seen=new Map(),unique=[];
+  const metadata=child.sections.filter(sec=>sec.id==='variant-meta');
+  if(!metadata.length)metadata.push({id:'variant-meta',title:'Métadonnées',type:'text',content:'',enabled:false});
+  const sources=child.sections.filter(sec=>variantIsSource(sec)&&sec.id!=='variant-meta');
+  const ordinary=child.sections.filter(sec=>sec.id!=='variant-meta'&&!variantIsSource(sec));
+  // Sauvegarde non destructive des rubriques hors sélection dans les métadonnées.
+  const archived=Array.isArray(metadata[0].archivedVariantSections)?metadata[0].archivedVariantSections:[];
+  const buckets=new Map();
   for(const sec of ordinary){
    const key=memoVariantKey(sec);
-   const existing=seen.get(key);
-   // Une table et un texte sont deux présentations différentes : ne pas
-   // détruire leur mise en forme en tentant de les fusionner.
-   const format=sec.type==='table'?'table':'text';
-   const typedKey=key+'|'+format;
-   if(!existing && !seen.has(typedKey)){
-    seen.set(typedKey,sec);if(!seen.has(key))seen.set(key,sec);
-    unique.push(sec);continue;
-   }
-   const target=seen.get(typedKey);
-   if(!target){seen.set(typedKey,sec);unique.push(sec);continue;}
-   const a=String(target.content||'').trim(),b=String(sec.content||'').trim();
-   if(b&&b!==a&&!a.includes(b))target.content=a?a+'\n\n'+b:b;
-   if(sec.enabled!==false)target.enabled=true;
+   if(!key){if(!archived.some(x=>x.id===sec.id&&x.title===sec.title))archived.push({...sec});continue;}
+   if(!buckets.has(key))buckets.set(key,[]);
+   buckets.get(key).push(sec);
   }
-  let counter=unique.find(sec=>memoVariantKey(sec)==='dire-comptoir'&&sec.type!=='table');
-  if(!counter){counter={...memoVariantCounter};unique.unshift(counter)}
-  counter.title=memoVariantCounter.title;
-  const ordered=[counter,...unique.filter(sec=>sec!==counter)];
-  child.sections=[...metadata,...ordered,...sources];
+  metadata[0].archivedVariantSections=archived;
+  const rubrics=MEMO_VARIANT_RUBRICS.map(([key,title])=>{
+   const entries=buckets.get(key)||[];
+   const base=entries[0]||{id:'variant-'+key,type:'text',content:'',enabled:true};
+   const parts=[];
+   for(const sec of entries){
+    const content=String(sec.content||'').trim();
+    if(content&&!parts.some(p=>p===content||p.includes(content)))parts.push(content);
+   }
+   let content=parts.join('\n\n');
+   if(key==='securite'){
+    if(!content)content=MEMO_VARIANT_SAFETY;
+    else{
+     if(!/contre.indications/i.test(content))content='**⛔ Contre-indications**\n\n'+content;
+     if(!/precautions d.emploi/i.test(content.normalize('NFD').replace(/[\u0300-\u036f]/g,'')))content+='\n\n**🟡 Précautions d’emploi**';
+    }
+   }
+   // Une rubrique peut avoir été masquée volontairement ; respecter ce choix.
+   return {...base,id:base.id||'variant-'+key,title,type:'text',content,enabled:entries.length?entries.some(x=>x.enabled!==false):true};
+  });
+  child.sections=[...metadata,...rubrics,...sources];
  }
  const variantLabel=child=>[m.name,child.dosage,child.form||child.sections?.[0]?.dciForm].filter(Boolean).join(' — ');
  // Même composant HTML que dans « Informations générales » : sectionEditor.
