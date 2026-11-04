@@ -1248,6 +1248,43 @@ header .header-action-stack .header-actions > #logoutBtn{width:auto!important;mi
  header .header-action-stack .header-actions > :is(#loginBtn,#logoutBtn){grid-column:3!important;grid-row:1 / 4!important}
 }
 </style>
+
+<style>
+/* V117.36 — Déconnexion hors des boutons de navigation, sans modifier le cadenas. */
+header .header-action-stack .header-actions:has(> #logoutBtn:not(.hidden)){
+  grid-template-columns:repeat(3,minmax(104px,1fr)) minmax(112px,max-content)!important;
+  column-gap:10px!important;
+}
+header .header-action-stack .header-actions > #logoutBtn:not(.hidden){
+  grid-column:4!important;grid-row:1 / 3!important;
+  justify-self:start!important;align-self:center!important;
+  margin-left:18px!important;position:relative!important;
+  width:max-content!important;min-width:110px!important;max-width:none!important;
+  padding:10px 14px!important;white-space:nowrap!important;
+  z-index:1!important;
+}
+#sourcesView .memo-docs-tools{margin:18px 0 0}
+#sourcesView .memo-docs-tools input{
+  flex:1;min-width:0;width:100%;
+}
+#sourcesView .memo-docs-list{margin-top:10px}
+@media(max-width:780px){
+ header .header-action-stack .header-actions:has(> #logoutBtn:not(.hidden)){
+   grid-template-columns:repeat(3,minmax(0,1fr)) max-content!important;
+ }
+ header .header-action-stack .header-actions > #logoutBtn:not(.hidden){margin-left:8px!important}
+}
+@media(max-width:420px){
+ header .header-action-stack .header-actions:has(> #logoutBtn:not(.hidden)){
+   grid-template-columns:repeat(2,minmax(0,1fr)) max-content!important;
+ }
+ header .header-action-stack .header-actions > #logoutBtn:not(.hidden){
+   grid-column:3!important;grid-row:1 / 4!important;
+   min-width:0!important;padding:8px 9px!important;font-size:.7rem!important;
+   margin-left:4px!important;
+ }
+}
+</style>
 </head>
 <body>
 <header><div class="wrap">
@@ -1369,7 +1406,7 @@ header .header-action-stack .header-actions > #logoutBtn{width:auto!important;mi
   </div>
   <div id="memoExcPageContent" aria-live="polite"><p class="memo-equiv-empty">Sélectionne une présentation pour comparer les formules référencées.</p></div>
  </div>
- </section><section id="exploreView" class="hidden"><div class="explore-heading"><h2>Explorer les fiches</h2><p>Parcourez les fiches communes et leurs spécialités associées.</p></div><div class="explore-search"><label for="exploreSearch">Rechercher dans les fiches</label><div class="explore-search-row"><input id="exploreSearch" type="search" autocomplete="off" placeholder="Ex. : amoxicilline, oubli de prise, CIP, conservation…"><button id="clearExploreSearch" type="button">Effacer</button></div><p id="exploreSearchCount" class="muted" aria-live="polite"></p></div><div class="explore-controls"><label>Classe thérapeutique<select id="exploreClass"></select></label><label>Indication thérapeutique<select id="exploreIndication"></select></label><label>Forme pharmaceutique<select id="exploreForm"></select></label><label>Badge pharmaceutique<select id="exploreBadge"><option value="">Tous les badges</option><option value="mte">⚠ MTE</option><option value="photo">☀ Photosensibilisant</option><option value="exception">EXC · Médicament d’exception</option><option value="stup">STUP · Stupéfiant</option><option value="cold">❄ Conservation au froid</option><option value="after">◷ Conservation après ouverture</option><option value="listI">Liste I</option><option value="listII">Liste II</option></select></label><button id="resetExplore" type="button">Effacer les filtres</button></div> <div id="memoThemeIntro" class="memo-theme-intro hidden" aria-live="polite"></div><div class="memo-explorer-split"><aside class="memo-explorer-sidebar" aria-label="Arborescence des fiches"><h3>Arborescence</h3><div id="exploreSidebarTree"></div></aside><div class="memo-explorer-results"><h3>Résultats par type de fiche</h3><div id="exploreCards" class="explore-cards"></div></div></div></section><section id="sourcesView" class="hidden"><div class="memo-docs-page memo-sources-page"><div class="explore-heading"><h2>Sources</h2><p>Références utilisées pour construire et vérifier les fiches de Mémopharm.</p></div><div id="sourcesList" class="memo-docs-list sources-list"></div><div id="sourcesAdmin" class="panel hidden" style="padding:18px;margin-top:18px"></div></div></section><div class="memo-v43-footer"><strong>📖 Une ressource pratique pour les professionnels de santé</strong><p>Mémopharm est une base documentaire indépendante conçue pour faciliter l’accès aux informations essentielles sur les médicaments et accompagner la pratique quotidienne des professionnels de santé.</p><p>Les fiches sont enrichies progressivement à partir de sources de référence. Les dates de mise à jour et de vérification permettent d’en apprécier l’actualité. Pour toute décision de prise en charge, les informations doivent être confrontées aux référentiels officiels en vigueur et aux données de la spécialité concernée.</p></div>
+ </section><section id="exploreView" class="hidden"><div class="explore-heading"><h2>Explorer les fiches</h2><p>Parcourez les fiches communes et leurs spécialités associées.</p></div><div class="explore-search"><label for="exploreSearch">Rechercher dans les fiches</label><div class="explore-search-row"><input id="exploreSearch" type="search" autocomplete="off" placeholder="Ex. : amoxicilline, oubli de prise, CIP, conservation…"><button id="clearExploreSearch" type="button">Effacer</button></div><p id="exploreSearchCount" class="muted" aria-live="polite"></p></div><div class="explore-controls"><label>Classe thérapeutique<select id="exploreClass"></select></label><label>Indication thérapeutique<select id="exploreIndication"></select></label><label>Forme pharmaceutique<select id="exploreForm"></select></label><label>Badge pharmaceutique<select id="exploreBadge"><option value="">Tous les badges</option><option value="mte">⚠ MTE</option><option value="photo">☀ Photosensibilisant</option><option value="exception">EXC · Médicament d’exception</option><option value="stup">STUP · Stupéfiant</option><option value="cold">❄ Conservation au froid</option><option value="after">◷ Conservation après ouverture</option><option value="listI">Liste I</option><option value="listII">Liste II</option></select></label><button id="resetExplore" type="button">Effacer les filtres</button></div> <div id="memoThemeIntro" class="memo-theme-intro hidden" aria-live="polite"></div><div class="memo-explorer-split"><aside class="memo-explorer-sidebar" aria-label="Arborescence des fiches"><h3>Arborescence</h3><div id="exploreSidebarTree"></div></aside><div class="memo-explorer-results"><h3>Résultats par type de fiche</h3><div id="exploreCards" class="explore-cards"></div></div></div></section><section id="sourcesView" class="hidden"><div class="memo-docs-page memo-sources-page"><div class="explore-heading"><h2>Sources</h2><p>Références utilisées pour construire et vérifier les fiches de Mémopharm.</p></div><div class="memo-docs-tools"><input id="memoSourcesSearch" type="search" placeholder="Rechercher une source, un organisme…" aria-label="Rechercher une source"></div><div id="sourcesList" class="memo-docs-list sources-list"></div><div id="sourcesAdmin" class="panel hidden" style="padding:18px;margin-top:18px"></div></div></section><div class="memo-v43-footer"><strong>📖 Une ressource pratique pour les professionnels de santé</strong><p>Mémopharm est une base documentaire indépendante conçue pour faciliter l’accès aux informations essentielles sur les médicaments et accompagner la pratique quotidienne des professionnels de santé.</p><p>Les fiches sont enrichies progressivement à partir de sources de référence. Les dates de mise à jour et de vérification permettent d’en apprécier l’actualité. Pour toute décision de prise en charge, les informations doivent être confrontées aux référentiels officiels en vigueur et aux données de la spécialité concernée.</p></div>
 <div id="dashMobileToolbar" role="toolbar" aria-label="Outils de modification de la liste">
 <button type="button" data-dash-mobile="outdent" aria-label="Retirer un niveau">← Retrait</button>
 <button type="button" data-dash-mobile="indent" aria-label="Ajouter un niveau">→ Tabulation</button>
@@ -3039,7 +3076,7 @@ function searchSectionPreview(sec){
 let openedSearchFiche=false;
 function updateSearchPlacement(){
  const detailMode=currentView==="home"&&openedSearchFiche&&!editorId;
- const compactMode=detailMode||currentView==="sources"||(admin&&currentView==="home"&&!editorId);
+ const compactMode=detailMode||(currentView!=="home"&&currentView!=="explore")||(admin&&currentView==="home"&&!editorId);
  document.body.classList.toggle("fiche-open",detailMode);
  document.body.classList.toggle("header-search-active",compactMode);
  const card=$("mainSearchCard");
@@ -5171,7 +5208,7 @@ function renderSection(s,targetSectionId=null){
 }
 function setAdmin(value){admin=!!value;dashSetUser();document.body.classList.toggle("admin-header-mode",admin);$("headerAdminActions").classList.toggle("hidden",!admin);$("loginBtn").classList.toggle("hidden",admin);renderResults();if(selectedId&&!editorId&&!$("detail").classList.contains("hidden"))renderDetail()}
 function showLogin(){
- $("modalRoot").innerHTML=`<div class="modalback"><div class="modal"><h2>Connexion administrateur</h2><p>Connecte-toi avec le compte créé dans Supabase Authentication. Les inscriptions publiques doivent rester désactivées.</p><label class="label" for="loginEmail">Adresse e-mail</label><input id="loginEmail" type="email" autocomplete="username" placeholder="Ton adresse e-mail"><label class="label" for="loginPassword" style="margin-top:10px">Mot de passe</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Mot de passe"><div class="actions"><button id="cancelLogin">Annuler</button><button class="primary" id="confirmLogin">Se connecter</button></div></div></div>`;
+ $("modalRoot").innerHTML=`<div class="modalback"><div class="modal"><h2>Connexion administrateur</h2><label class="label" for="loginEmail">Adresse e-mail</label><input id="loginEmail" type="email" autocomplete="username" placeholder="Ton adresse e-mail"><label class="label" for="loginPassword" style="margin-top:10px">Mot de passe</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Mot de passe"><div class="actions"><button id="cancelLogin">Annuler</button><button class="primary" id="confirmLogin">Se connecter</button></div></div></div>`;
  $("cancelLogin").onclick=()=>$("modalRoot").innerHTML="";
  $("confirmLogin").onclick=async()=>{const email=$("loginEmail").value.trim(),password=$("loginPassword").value;if(!email||!password){toast("Renseigne ton adresse e-mail et ton mot de passe");return}
  const {error}=await supabaseClient.auth.signInWithPassword({email,password});if(error){toast("Connexion impossible : vérifie l'adresse et le mot de passe");console.error(error);return}$("modalRoot").innerHTML="";};
@@ -6613,14 +6650,16 @@ function isSourcesRecord(m){return m.id===SOURCES_RECORD_ID||(m.sections||[]).so
 function sourcesRecord(){return meds.find(isSourcesRecord)}
 function sourceItems(){const section=(sourcesRecord()?.sections||[]).find(s=>s.memofficineKind==="sources_communes");return Array.isArray(section?.items)?section.items:[]}
 function safeSourceUrl(raw){try{const u=new URL(raw);return ["https:","http:"].includes(u.protocol)?u.href:""}catch{return ""}}
+document.getElementById("memoSourcesSearch")?.addEventListener("input",()=>renderSources());
 function renderSources(){
- const items=sourceItems();
+ const query=($("memoSourcesSearch")?.value||"").trim().toLocaleLowerCase("fr");
+ const items=sourceItems().filter(item=>[item.title,item.organization,item.description,item.url,item.extraUrls].join(" ").toLocaleLowerCase("fr").includes(query));
  $("sourcesList").innerHTML=items.length?items.map(item=>{
   const urls=[item.url,...String(item.extraUrls||"").split(/\r?\n/)].map(safeSourceUrl).filter(Boolean);
   const title=esc(item.title||"Ressource sans titre");
   const mainTitle=urls.length?`<a class="memo-doc-title" href="${esc(urls[0])}" target="_blank" rel="noopener noreferrer">${title}</a>`:`<span class="memo-doc-title">${title}</span>`;
   return `<article class="memo-doc-item memo-source-item"><span class="memo-doc-symbol" aria-hidden="true">📚</span><div class="memo-doc-body">${mainTitle}${item.description?`<p class="memo-doc-desc">${esc(item.description)}</p>`:""}${item.organization?`<div class="memo-doc-meta">${esc(item.organization)}</div>`:""}${urls.length>1?`<div class="memo-source-extra-links">${urls.slice(1).map((url,i)=>`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">Lien complémentaire ${i+1} ↗</a>`).join("")}</div>`:""}</div></article>`;
- }).join(""):'<div class="source-empty">Aucune source commune publiée pour le moment.</div>';
+ }).join(""):`<div class="source-empty">${query?'Aucune source ne correspond à cette recherche.':'Aucune source commune publiée pour le moment.'}</div>`;
  $("sourcesAdmin").classList.toggle("hidden",!admin);
  if(admin)renderSourcesEditor();
 }
