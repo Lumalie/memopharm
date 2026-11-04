@@ -1470,6 +1470,46 @@ header #headerAdminActions .header-json-items{right:0!important;left:auto!import
  header #headerAdminActions .header-json-menu > summary{min-width:96px!important}
 }
 </style>
+
+<style>
+/* V117.44 : réserver une largeur réelle à la recherche ; ne jamais superposer la navigation. */
+body.header-search-active header .topline{grid-template-columns:minmax(255px,auto) minmax(330px,1fr) auto!important;gap:16px!important}
+body.header-search-active header #headerSearchSlot{min-width:300px!important;max-width:none!important}
+header .header-action-stack .header-actions:has(> #logoutBtn:not(.hidden)){
+ grid-template-columns:repeat(3,108px) 122px!important;width:max-content!important;max-width:none!important;
+}
+header .header-action-stack .header-actions > #headerAdminActions:not(.hidden){
+ position:static!important;grid-column:4!important;grid-row:2!important;
+}
+/* Les écrans où les trois blocs ne tiennent pas : navigation sur sa propre ligne. */
+@media(max-width:1550px){
+ body.header-search-active header .topline{
+  grid-template-columns:minmax(250px,auto) minmax(330px,1fr)!important;
+  grid-template-rows:auto auto!important;align-items:center!important;
+ }
+ body.header-search-active header .topline .brand{grid-column:1!important;grid-row:1!important}
+ body.header-search-active header #headerSearchSlot{grid-column:2!important;grid-row:1!important;width:100%!important}
+ body.header-search-active header .header-action-stack{
+  grid-column:1 / -1!important;grid-row:2!important;justify-self:end!important;width:max-content!important;
+ }
+}
+@media(max-width:760px){
+ body.header-search-active header .topline{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto auto auto!important}
+ body.header-search-active header .topline .brand{grid-column:1!important;grid-row:1!important}
+ body.header-search-active header #headerSearchSlot{grid-column:1!important;grid-row:2!important;min-width:0!important}
+ body.header-search-active header .header-action-stack{grid-column:1!important;grid-row:3!important;justify-self:stretch!important;width:100%!important}
+ header .header-action-stack .header-actions:has(> #logoutBtn:not(.hidden)){
+  grid-template-columns:repeat(3,minmax(0,1fr)) minmax(96px,auto)!important;width:100%!important;
+ }
+}
+@media(max-width:480px){
+ header .header-action-stack .header-actions:has(> #logoutBtn:not(.hidden)){
+  grid-template-columns:repeat(2,minmax(0,1fr)) minmax(96px,auto)!important;
+ }
+ header .header-action-stack .header-actions > #logoutBtn:not(.hidden){grid-column:3!important;grid-row:1!important}
+ header .header-action-stack .header-actions > #headerAdminActions:not(.hidden){grid-column:3!important;grid-row:2!important}
+}
+</style>
 </head>
 <body>
 <header><div class="wrap">
