@@ -1597,6 +1597,41 @@ header > .wrap{
  }
 }
 </style>
+<style>
+/* V117.47 : Sauvegardes utilise exactement les dimensions, le fond et la
+   typographie des boutons de navigation ; seule la flèche est un SVG. */
+header .header-action-stack .header-actions > #headerAdminActions .header-json-menu > summary{
+  box-sizing:border-box!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:6px!important;
+  width:100%!important;
+  min-height:42px!important;
+  height:42px!important;
+  padding:9px 12px!important;
+  background:#f7faf8!important;
+  color:#234e3d!important;
+  border:1px solid #d3e5d7!important;
+  border-radius:11px!important;
+  font-size:.9rem!important;
+  font-weight:500!important;
+  line-height:1.25!important;
+  letter-spacing:normal!important;
+  box-shadow:none!important;
+  cursor:pointer!important;
+}
+header .header-action-stack .header-actions > #headerAdminActions .header-json-menu > summary:hover{
+  background:#e1efe5!important;
+  border-color:#a8ccb3!important;
+}
+header #headerAdminActions .memo-backup-chevron{
+  display:block;flex:0 0 auto;width:15px;height:15px;
+  stroke:currentColor;stroke-width:2;
+  transition:transform .15s ease;
+}
+header #headerAdminActions .header-json-menu[open] .memo-backup-chevron{transform:rotate(180deg)}
+</style>
 </head>
 <body>
 <header><div class="wrap">
@@ -1610,9 +1645,9 @@ header > .wrap{
   </div>
 </a>
     <div id="headerSearchSlot" class="header-search-slot"></div>
-    <div class="header-action-stack"><div class="header-actions"><button id="excNav" type="button" title="Comparer les excipients des spécialités de même dosage et forme">Excipients</button><button type="button" id="memoGlossNav">Glossaire</button><button type="button" id="memoDocsNav">Documents</button><button id="equivNav" type="button" title="Rechercher une correspondance entre un nom commercial et une DCI">Équivalences</button><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="loginBtn" type="button" class="admin-lock" title="Administration (Ctrl + Alt + A)" aria-label="Connexion administrateur" aria-keyshortcuts="Control+Alt+A"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="10" width="17" height="11.5" rx="2.5"/><path d="M7.5 10V7a4.5 4.5 0 0 1 9 0v3"/><path d="M12 15.1v2.9"/><circle cx="12" cy="14.8" r="1" fill="currentColor" stroke="none"/></svg></button><button id="logoutBtn" type="button" class="header-logout hidden">Déconnexion</button><div class="header-admin-actions hidden" id="headerAdminActions"><details class="header-json-menu" id="headerJsonMenu"><summary>Sauvegardes <span aria-hidden="true">⌄</span></summary><div class="header-json-items"><button id="exportBtn" type="button">Exporter JSON</button><button id="memoTrashNav" type="button">Corbeille</button><button id="importBtn" type="button">Importer JSON</button></div></details><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
+    <div class="header-action-stack"><div class="header-actions"><button id="excNav" type="button" title="Comparer les excipients des spécialités de même dosage et forme">Excipients</button><button type="button" id="memoGlossNav">Glossaire</button><button type="button" id="memoDocsNav">Documents</button><button id="equivNav" type="button" title="Rechercher une correspondance entre un nom commercial et une DCI">Équivalences</button><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="loginBtn" type="button" class="admin-lock" title="Administration (Ctrl + Alt + A)" aria-label="Connexion administrateur" aria-keyshortcuts="Control+Alt+A"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="10" width="17" height="11.5" rx="2.5"/><path d="M7.5 10V7a4.5 4.5 0 0 1 9 0v3"/><path d="M12 15.1v2.9"/><circle cx="12" cy="14.8" r="1" fill="currentColor" stroke="none"/></svg></button><button id="logoutBtn" type="button" class="header-logout hidden">Déconnexion</button><div class="header-admin-actions hidden" id="headerAdminActions"><details class="header-json-menu" id="headerJsonMenu"><summary>Sauvegardes <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="memo-backup-chevron" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></summary><div class="header-json-items"><button id="exportBtn" type="button">Exporter JSON</button><button id="memoTrashNav" type="button">Corbeille</button><button id="importBtn" type="button">Importer JSON</button></div></details><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
   </div>
-  <p>Une base de repères pour retrouver rapidement les informations utiles sur les médicaments, leurs modalités de prise et les points de vigilance.</p>
+
 </div></header>
 <main>
 
