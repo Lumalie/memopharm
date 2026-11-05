@@ -1688,6 +1688,51 @@ header #headerAdminActions .header-json-menu[open] .memo-backup-chevron{transfor
 #detail .memo-v105-molecule-presentations #presentations-details .memo-v101-cip-block{padding-bottom:4px!important;margin-bottom:0!important}
 #detail .memo-v105-molecule-presentations #presentations-details .presentation-v33-fields{row-gap:9px!important}
 </style>
+<style>
+/* V119 — règles ciblées sur la structure réellement rendue. */
+#detail #presentations-details .memo-v125-compact-fields .memo-v125-field-label,
+#detail #presentations-details .memo-reconstitution-public .memo-preparation-title,
+#detail #presentations-details .memo-reconstitution-public .memo-preparation-subtitle{
+ font-size:1rem!important;line-height:1.4!important;font-weight:700!important;
+ color:#28674f!important;
+}
+#detail #presentations-details .memo-v125-compact-fields .memo-v125-field-label,
+#detail #presentations-details .memo-reconstitution-public :is(.memo-preparation-title,.memo-preparation-subtitle){
+ display:flex!important;align-items:center!important;gap:9px!important;
+}
+#detail #presentations-details .memo-v125-compact-fields .memo-v125-field-icon,
+#detail #presentations-details .memo-reconstitution-public :is(.memo-preparation-title,.memo-preparation-subtitle) svg{
+ width:19px!important;height:19px!important;flex:0 0 19px!important;
+}
+#detail #presentations-details .memo-v125-compact-fields .memo-v125-field-value,
+#detail #presentations-details .memo-reconstitution-public .memo-reconstitution-item>div{
+ padding-left:28px!important;margin-left:0!important;font-size:.93rem!important;
+ line-height:1.55!important;
+}
+#detail #presentations-details .memo-v125-compact-fields .memo-v125-field{
+ margin-top:12px!important;
+}
+#detail #presentations-details .memo-v125-compact-fields .memo-v101-cip-block + .memo-v125-field{
+ margin-top:0!important;
+}
+#detail #presentations-details .memo-v125-compact-fields .memo-v101-cip-block{
+ margin-bottom:0!important;padding-bottom:0!important;
+}
+#detail #presentations-details .memo-reconstitution-public{
+ margin-top:16px!important;padding-top:12px!important;
+}
+#detail #presentations-details .memo-reconstitution-public .memo-preparation-title{
+ margin-bottom:12px!important;
+}
+#detail #presentations-details .memo-reconstitution-public .memo-reconstitution-item{
+ margin-bottom:14px!important;
+}
+@media(max-width:600px){
+ #detail #presentations-details .memo-reconstitution-public .memo-reconstitution-item>div{
+  padding-left:28px!important;
+ }
+}
+</style>
 </head>
 <body>
 <header><div class="wrap">
@@ -4146,8 +4191,16 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDo
    const match=title.match(/(\d+(?:[.,]\d+)?\s*(?:µg|mcg|mg|g|UI|mL|ml)(?:\/\s*(?:µg|mcg|mg|g|UI|mL|ml))?)\b/i);
    return match?match[1]:title;
   };
+  const memoCommercialSelections=new Map();
   const renderChild=(child,selectedPack=null)=>{
    if(!child||!panel)return;
+   const previousSelect=panel.querySelector('#presentation-choice[data-presentation-select]');
+   const previousDose=panel.dataset.memoActiveCommercialDose;
+   if(previousSelect&&previousDose){
+    memoCommercialSelections.set(previousDose,previousSelect.value);
+    memoSetViewChoice(previousDose,{presentation:previousSelect.value});
+   }
+   panel.dataset.memoActiveCommercialDose=String(child.id);
    memoV67Refresh(child,memoV116CommercialChosen(child)?.p||null);
    const childSections=(child.sections||[]).filter(x=>x.enabled!==false&&!isDocumentationSection(x)&&String(x.content||" ").trim()).map(x=>resolveSharedSection(child,x));
    // Toutes les rubriques actives propres à la présentation sont visibles,
@@ -4155,6 +4208,8 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDo
    const priorityIds=new Set(["alerte-delivrance","coup-oeil","conseils-comptoir"]);
    const prioritySections=childSections.filter(x=>priorityIds.has(x.id));
    const specificSections=childSections.filter(x=>!priorityIds.has(x.id)&&x.id!=="sources");
+   const cachedPresentation=memoCommercialSelections.get(String(child.id));
+   if(cachedPresentation!==undefined)memoSetViewChoice(child.id,{presentation:cachedPresentation});
    const presentationHtml=(child.presentations||[]).length?renderPresentations(child,null,null):"";
    const priorityHtml=prioritySections.map(x=>{
     const cls=x.id==="alerte-delivrance"?"memo-priority-alert":x.id==="coup-oeil"?"memo-priority-glance":"memo-priority-advice";
@@ -4183,7 +4238,9 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDo
    memoV44Banner(panel,child,selectedTitle);
    panel.querySelector('[data-memo-edit-selected]')?.addEventListener('click',()=>memoEditSelectedCommercial(m,child));
    // Réapplique explicitement la spécialité mémorisée après chaque changement d'onglet.
-   const rememberedChoice=memoV116CommercialChosen(child);
+   const cachedKey=memoCommercialSelections.get(String(child.id));
+   const availableOptions=memoV116CommercialOptions(child);
+   const rememberedChoice=availableOptions.find(x=>x.key===cachedKey)||memoV116CommercialChosen(child);
    const commercialSelect=panel.querySelector('[data-presentation-select]');
    if(commercialSelect&&rememberedChoice){
     commercialSelect.value=rememberedChoice.key;
@@ -4192,7 +4249,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDo
     memoV48Sync(panel.querySelector('#presentations-details'),rememberedChoice.p);
     memoV102SyncStorage(panel.querySelector('#presentations-details'),rememberedChoice.p);
    }
-   panel.querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=panel.querySelector("#presentation-info");memoSetViewChoice(child.id,{presentation:sel.value});const choice=memoV116CommercialChosen(child);if(target)target.innerHTML=choice?presentationInfo(choice.p,child):"";memoV48Sync(sel.closest("#presentations-details"),choice?.p);memoV102SyncStorage(sel.closest("#presentations-details"),choice?.p);memoWireBadgeClicks(target);memoV44Banner(panel,child,selectedTitle);memoV67Refresh(child,choice?.p||null)});
+   panel.querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=panel.querySelector("#presentation-info");memoCommercialSelections.set(String(child.id),sel.value);memoSetViewChoice(child.id,{presentation:sel.value});const choice=memoV116CommercialChosen(child);if(target)target.innerHTML=choice?presentationInfo(choice.p,child):"";memoV48Sync(sel.closest("#presentations-details"),choice?.p);memoV102SyncStorage(sel.closest("#presentations-details"),choice?.p);memoWireBadgeClicks(target);memoV44Banner(panel,child,selectedTitle);memoV67Refresh(child,choice?.p||null)});
   };
   // Le boîtage n'est plus un niveau d'onglet : chaque conditionnement
   // reste consultable dans la présentation commerciale via son CIP.
