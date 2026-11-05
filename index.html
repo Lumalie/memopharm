@@ -1769,6 +1769,41 @@ header #headerAdminActions .header-json-menu[open] .memo-backup-chevron{transfor
  margin-bottom:0!important;
 }
 </style>
+
+<style id="memo-v121-hierarchie-visuelle">
+/* Titres principaux : même gabarit pour Aspect, Excipients et Préparation. */
+#detail .memo-v125-compact-fields .memo-v125-field-label,
+#detail .memo-reconstitution-public .memo-preparation-title {
+  font-size:1.15rem!important;
+  line-height:1.45!important;
+  font-weight:700!important;
+  letter-spacing:0!important;
+}
+/* Les sous-titres forment un alinéa uniforme sous le titre principal. */
+#detail .memo-reconstitution-public .memo-reconstitution-item .memo-preparation-subtitle {
+  margin-left:28px!important;
+  margin-right:0!important;
+  padding-left:0!important;
+  font-size:1rem!important;
+  line-height:1.45!important;
+  font-weight:700!important;
+}
+/* Le texte suit son sous-titre avec le même retrait que le texte des rubriques principales. */
+#detail .memo-reconstitution-public .memo-reconstitution-item > div {
+  margin-left:56px!important;
+  padding-left:0!important;
+  line-height:1.55!important;
+}
+/* Les listes conservent leurs puces à l'intérieur du bloc de texte. */
+#detail .memo-reconstitution-public .memo-reconstitution-item > div :is(ul,ol) {
+  padding-left:22px!important;
+}
+/* Aspect et Excipients : texte aligné sous l'intitulé, sans double retrait. */
+#detail .memo-v125-compact-fields .memo-v125-field-value {
+  margin-left:28px!important;
+  padding-left:0!important;
+}
+</style>
 </head>
 <body>
 <header><div class="wrap">
