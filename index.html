@@ -1850,6 +1850,52 @@ header #headerAdminActions .header-json-menu[open] .memo-backup-chevron{transfor
   margin-top:7px!important;
 }
 </style>
+<style id="memo-v124-layout">
+/* Séparateur CIP : même respiration au-dessus et au-dessous. */
+#detail #presentations-details .memo-v125-compact-fields .memo-v101-cip-block {
+  border-top:1px solid #dce6df!important;
+  padding-top:15px!important;
+  margin-top:13px!important;
+  padding-bottom:10px!important;
+  margin-bottom:8px!important;
+}
+#detail #presentations-details .memo-v125-compact-fields .memo-v101-cip-block + .memo-v125-field {
+  margin-top:10px!important;
+}
+/* Excipients : même retrait et même typographie que les sous-rubriques de préparation. */
+#detail #presentations-details .memo-v125-compact-fields .memo-v125-excipients > .memo-v125-field-label {
+  margin-left:28px!important;
+  padding-left:0!important;
+  font-size:1rem!important;
+  line-height:1.45!important;
+  font-weight:700!important;
+}
+#detail #presentations-details .memo-v125-compact-fields .memo-v125-excipients > .memo-v125-field-value {
+  margin-left:56px!important;
+  padding-left:0!important;
+  font-size:.99rem!important;
+  line-height:1.55!important;
+}
+#detail #presentations-details .memo-v125-compact-fields .memo-v125-excipients .memo-exc-formatted {
+  margin:0!important;padding:0!important;
+}
+/* Manipulations : deux colonnes uniquement si les deux critères sont affichés. */
+#detail #presentations-details .memo-v125-compact-fields .memo-v124-manip-pair.memo-v124-two {
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+  gap:12px 24px!important;
+  align-items:start!important;
+}
+#detail #presentations-details .memo-v125-compact-fields .memo-v124-manip-pair > .memo-v125-field {
+  min-width:0!important;
+  margin-top:12px!important;
+}
+@media(max-width:650px){
+ #detail #presentations-details .memo-v125-compact-fields .memo-v124-manip-pair.memo-v124-two {
+   grid-template-columns:minmax(0,1fr)!important;
+ }
+}
+</style>
 </head>
 <body>
 <header><div class="wrap">
@@ -4647,8 +4693,7 @@ function presentationInfo(p,m=null, specialtyBoxesHtml=""){
  const compactRows=[
   p.showAspect===true?memoField("Aspect",esc(p.description||"Non documenté"),memoIcon(memoSvgPill)):"",
   p.showExcipients===true?memoField("Excipients",`<div class="memo-exc-formatted">${memoCompositionHtml()}</div>`,memoIcon(memoSvgFlask),"memo-v125-excipients"):"",
-  p.showSplit===true?`<div class="memo-v125-field memo-v126-split"><div class="memo-v126-split-top">${memoLabel("Fractionnement")}${memoManipStatus(p.canSplit,p.cannotSplit)}</div>${p.canSplit===true&&p.cannotSplit!==true&&typeof p.equalDoses==="boolean"?`<div class="memo-v126-split-detail">Doses égales : ${memoManipStatus(p.equalDoses,!p.equalDoses)}</div>`:""}${p.splitReason?`<div class="memo-manip-reason">${esc(p.splitReason)}</div>`:""}</div>`:"",
-  p.showCrush===true?memoField("Écrasement",`${memoManipStatus(p.canCrush,p.cannotCrush)}${p.crushReason?` <span class="memo-manip-reason">— ${esc(p.crushReason)}</span>`:""}`):"",
+  (p.showSplit===true||p.showCrush===true)?`<div class="memo-v124-manip-pair${p.showSplit===true&&p.showCrush===true?' memo-v124-two':''}">${p.showSplit===true?`<div class="memo-v125-field memo-v126-split"><div class="memo-v126-split-top">${memoLabel("Fractionnement")}${memoManipStatus(p.canSplit,p.cannotSplit)}</div>${p.canSplit===true&&p.cannotSplit!==true&&typeof p.equalDoses==="boolean"?`<div class="memo-v126-split-detail">Doses égales : ${memoManipStatus(p.equalDoses,!p.equalDoses)}</div>`:""}${p.splitReason?`<div class="memo-manip-reason">${esc(p.splitReason)}</div>`:""}</div>`:""}${p.showCrush===true?memoField("Écrasement",`${memoManipStatus(p.canCrush,p.cannotCrush)}${p.crushReason?` <span class="memo-manip-reason">— ${esc(p.crushReason)}</span>`:""}`):""}</div>`:"",
   p.showOpen===true?memoField("Ouverture de la gélule",`${memoManipStatus(p.canOpen,p.cannotOpen)}${p.openReason?` <span class="memo-manip-reason">— ${esc(p.openReason)}</span>`:""}`):""
  ].filter(Boolean);
  const tabletImg=safeHttp(p.tabletImageUrl||"");
