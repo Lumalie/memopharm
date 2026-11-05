@@ -1933,6 +1933,29 @@ header #headerAdminActions .header-json-menu[open] .memo-backup-chevron{transfor
  #detail #presentations-details .memo-after-panel-badges{flex-wrap:wrap!important}
 }
 </style>
+<style id="memo-search-preview-v134">
+/* L'aperçu réutilise des composants dont les SVG étaient dimensionnés uniquement sous #detail. */
+#searchPreview .memo-v125-field-icon,
+#searchPreview .memo-v125-field-icon svg,
+#searchPreview .memo-manip-icon svg,
+#searchPreview .memo-after-icon svg,
+#searchPreview .memo-preparation-title svg,
+#searchPreview .memo-preparation-subtitle svg {
+ width:20px!important;height:20px!important;max-width:20px!important;
+ max-height:20px!important;flex:0 0 20px!important;
+ display:inline-block!important;vertical-align:middle!important;
+}
+#searchPreview .memo-v125-field-icon{display:inline-flex!important;align-items:center!important;justify-content:center!important}
+#searchPreview .memo-v125-field-label{display:flex!important;align-items:center!important;gap:9px!important}
+#searchPreview .memo-v125-field-value{margin-left:29px!important}
+#searchPreview .memo-v109-choice{align-items:flex-start!important}
+#searchPreview .memo-after-panel{max-width:100%!important}
+#searchPreview .memo-after-panel-badges{display:flex!important;gap:6px!important;justify-content:flex-end!important;flex-wrap:wrap!important}
+#searchPreview .memo-after-badge{flex-shrink:0!important}
+#searchPreview .memo-after-badge-time{min-width:0!important;white-space:nowrap!important}
+#searchPreview .memo-after-duration{white-space:nowrap!important}
+#searchPreview .memo-repro-tooltip{z-index:30!important}
+</style>
 </head>
 <body>
 <header><div class="wrap">
@@ -3731,6 +3754,20 @@ function getSearchMatches(queryOverride=null){
    else found.push({med:m,section:null,presentation});
   }
  });
+ // Les variantes publiées doivent apparaître individuellement dans les résultats.
+ // Un résultat de la molécule mère ne suffit pas : il ne pointe que sur un dosage.
+ const publicList=publicMeds();
+ for(const variant of publicList.filter(isVariantFiche)){
+  const parent=publicList.find(m=>isMolecule(m)&&String(m.id)===String(moleculeParentId(variant)));
+  if(!parent)continue;
+  const searchable=norm([displayMedName(parent),parent.name,variant.name,variant.dosage,
+   variant.form,ingredientTitleDose(variant),...medicationForms(variant),
+   ...specialtyItems(variant).map(x=>[x.name,x.p.cip,x.p.lab,x.p.form].join(" "))]
+   .join(" "));
+  if(tokens.length&&tokens.every(t=>memoSearchTokenMatch(searchable,t))){
+   found.push({med:variant,section:null,presentation:null});
+  }
+ }
  // V106 : une seule carte par fiche spécialité, même lorsque le nom et
  // ses présentations commerciales correspondent simultanément à la recherche.
  // Les CIP restent visibles dans la carte regroupée.
@@ -3997,7 +4034,8 @@ function renderResults(){
   const isPresentation=!!p;
   const group=isGroup(m);
   const kind=matchingVariant?"dose":isPresentation?"presentation":group?"group":isMolecule(m)?"molecule":isSpecialiteFiche(m)?"specialite":"fiche";
-  const name=matchingVariant?(()=>{
+  const variantParent=isVariantFiche(m)?publicMeds().find(x=>isMolecule(x)&&String(x.id)===String(moleculeParentId(m))):null;
+  const name=isVariantFiche(m)?[displayMedName(variantParent||m),m.dosage].filter(Boolean).join(" ")+(m.form?" — "+m.form:""):matchingVariant?(()=>{
    const dose=String(matchingVariant.dosage||ingredientTitleDose(matchingVariant)||'').trim();
    const form=String(matchingVariant.form||medicationForms(matchingVariant)[0]||'').trim();
    return [displayMedName(m),dose].filter(Boolean).join(' ')+(form?' — '+form:'');
