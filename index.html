@@ -1791,6 +1791,56 @@ header #headerAdminActions .header-json-menu[open] .memo-backup-chevron{transfor
   }
 }
 </style>
+<style id="memo-v126-storage-spacing">
+/* Espace équilibré entre sélecteur et CIP, sans déplacer le contenu médical. */
+#detail #presentations-details.presentation-fixed .memo-v48-identity{margin-bottom:12px!important;padding-bottom:0!important}
+#detail .memo-v105-molecule-presentations #presentations-details .memo-v101-cip-block{margin-top:0!important}
+#detail #presentations-details.presentation-fixed #presentation-info .memo-v101-cip-block{padding-top:12px!important;margin-top:0!important}
+#detail #presentations-details[data-variant-commercial="true"] .memo-v48-identity .memo-v48-cip{margin-top:12px!important;padding-top:12px!important}
+/* Badges indépendants, adaptés aux formulations longues. */
+#detail .memo-v126-storage-badge{height:auto!important;min-height:42px!important;max-width:100%!important;width:auto!important;white-space:normal!important;gap:8px!important;padding:8px 11px!important}
+#detail .memo-v126-storage-badge .memo-v103-duration{white-space:normal!important;overflow-wrap:anywhere!important;max-width:220px!important}
+#detail .memo-v102-commercial-storage{flex-wrap:wrap!important;max-width:min(65%,520px)!important}
+#detail .memo-v93-storage-row{flex-wrap:wrap!important}
+#editor .memo-practical-editor label{display:block;margin:8px 0}
+#editor .memo-practical-editor label input[type="text"]{display:block;width:100%;margin-top:5px}
+@media(max-width:650px){#detail .memo-v102-commercial-storage{max-width:100%!important}}
+</style>
+<style id="memo-v127-after-reconstitution">
+/* Le sélecteur et les CIP ne sont plus séparés par un trait. */
+#detail #presentations-details .memo-v48-cip,
+#detail #presentations-details .memo-v101-cip-block,
+#detail #presentations-details .memo-v101-cip-line,
+#detail #presentations-details .memo-v48-identity .memo-v48-cip{
+ border-top:0!important;
+}
+#detail #presentations-details .memo-v48-identity .memo-v48-cip{margin-top:13px!important;padding-top:0!important}
+#detail #presentations-details .memo-v101-cip-block{padding-top:0!important}
+/* Encadré compact à droite du sélecteur, badges inspirés des indicateurs de vigilance. */
+#detail #presentations-details.presentation-fixed .memo-v102-commercial-storage.memo-after-panel{
+ position:absolute!important;top:14px!important;right:18px!important;
+ display:flex!important;flex-direction:column!important;align-items:flex-start!important;
+ width:auto!important;max-width:min(58%,520px)!important;
+ border:1px solid #dce5df!important;border-radius:12px!important;
+ background:#fff!important;padding:9px 12px!important;gap:7px!important;
+ box-sizing:border-box!important;z-index:8!important;
+}
+#detail #presentations-details .memo-v102-commercial-storage[hidden]{display:none!important}
+#detail #presentations-details .memo-after-panel-title{font-size:.82rem;font-weight:700;color:#466458;line-height:1.3}
+#detail #presentations-details .memo-after-panel-badges{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#detail #presentations-details .memo-after-badge{display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:5px 9px;border-radius:9px;border:1px solid transparent;font-size:.82rem;font-weight:650;line-height:1.25;max-width:100%;white-space:normal}
+#detail #presentations-details .memo-after-badge svg{width:19px;height:19px;flex:0 0 19px}
+#detail #presentations-details .memo-after-badge-ambient{background:#fff1de;border-color:#f2d3a8;color:#9b5b12}
+#detail #presentations-details .memo-after-badge-fridge{background:#e8f3fd;border-color:#bedcf3;color:#24638c}
+#detail #presentations-details .memo-after-badge-time{background:#edf0f2;border-color:#dce2e6;color:#53616e}
+#editor .memo-practical-editor select{display:block;width:100%;margin-top:5px}
+@media(max-width:700px){
+ #detail #presentations-details.presentation-fixed .memo-v102-commercial-storage.memo-after-panel{
+ position:static!important;margin:12px 0 8px!important;max-width:100%!important;width:100%!important;
+ }
+ #detail #presentations-details.presentation-fixed .memo-v48-selector{width:100%!important;max-width:100%!important}
+}
+</style>
 </head>
 <body>
 <header><div class="wrap">
@@ -4079,12 +4129,8 @@ function memoV103DurationLabel(value){
  return v?`<span class="memo-v103-duration">${esc(v)}</span>`:"";
 }
 function memoV93StorageBadges(m){
- if(!isSpecialiteFiche(m))return "";
- const st=m?.sections?.[0]?.specialtyStorage||{};
- const snow=`<svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10 20-1.25-2.5L6 18"/><path d="M10 4 8.75 6.5 6 6"/><path d="m14 20 1.25-2.5L18 18"/><path d="m14 4 1.25 2.5L18 6"/><path d="m17 21-3-6h-4"/><path d="m17 3-3 6 1.5 3"/><path d="M2 12h6.5L10 9"/><path d="m20 10-1.5 2 1.5 2"/><path d="M22 12h-6.5L14 15"/><path d="m4 10 1.5 2L4 14"/><path d="m7 21 3-6-1.5-3"/><path d="m7 3 3 6h4"/></svg>`;
- const clock=`<svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`;
- const tip=(title,note)=>`<span class="memo-repro-tooltip" role="tooltip"><span class="memo-repro-tip-title">${title}</span><span class="memo-repro-tip-note">${note}</span></span>`;
- return `<div class="memo-v93-storage-row" aria-label="Conservation de la spécialité">${st.coldStorage===true?`<span class="memo-v93-storage-badge memo-v93-cold" tabindex="0" aria-label="Conservation au froid">${snow}${tip("Conservation au froid","Vérifier les conditions exactes dans le RCP.")}</span>`:""}${st.afterOpening===true?`<span class="memo-v93-storage-badge memo-v93-after" tabindex="0" aria-label="Durée après ouverture${st.afterOpeningDuration?` : ${esc(st.afterOpeningDuration)}`:""}">${clock}${memoV103DurationLabel(st.afterOpeningDuration)}${tip("Durée après ouverture",st.afterOpeningDuration?esc(st.afterOpeningDuration):"Durée non précisée — vérifier le RCP.")}</span>`:""}</div>`;
+ if(!isSpecialiteFiche(m))return '';
+ return `<div class="memo-v93-storage-row" aria-label="Conservation de la spécialité">${memoStorageBadgeItems(m?.sections?.[0]?.specialtyStorage||{})}</div>`;
 }
 function memoV67Refresh(m,p=null){const slot=document.getElementById('memo-v67-practical');if(!slot)return;slot.innerHTML=memoV67Alerts(m,p);memoWireBadgeClicks(slot)}
 function memoReproEditor(m){
@@ -4666,12 +4712,23 @@ function memoV90SpecialtyPresentations(m){
  }).join("");
  return `<details class="molecule-general memo-v92-specialty-presentations" id="presentations-details"><summary>Présentations</summary><div class="molecule-general-inner">${entries||'<p class="muted">Aucune présentation renseignée.</p>'}</div></details>`;
 }
+const MEMO_STORAGE_SUN="<svg width=\"19\" height=\"19\" aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-thermometer-sun preview-icon\"><path d=\"M12 2v2\"/><path d=\"M12 8a4 4 0 0 0-1.645 7.647\"/><path d=\"M2 12h2\"/><path d=\"M20 14.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0z\"/><path d=\"m4.93 4.93 1.41 1.41\"/><path d=\"m6.34 17.66-1.41 1.41\"/></svg>";
+const MEMO_STORAGE_SNOW="<svg width=\"19\" height=\"19\" aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-thermometer-snowflake preview-icon\"><path d=\"m10 20-1.25-2.5L6 18\"/><path d=\"M10 4 8.75 6.5 6 6\"/><path d=\"M10.585 15H10\"/><path d=\"M2 12h6.5L10 9\"/><path d=\"M20 14.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0z\"/><path d=\"m4 10 1.5 2L4 14\"/><path d=\"m7 21 3-6-1.5-3\"/><path d=\"m7 3 3 6h2\"/></svg>";
+const MEMO_STORAGE_CLOCK="<svg width=\"19\" height=\"19\" aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-clock preview-icon\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 6v6l4 2\"/></svg>";
+function memoStorageBadgeItems(st){
+ if(!st)return '';
+ const mode=String(st.afterReconstitutionTemperature||'').trim();
+ const duration=String(st.storageDuration||st.afterOpeningDuration||'').trim();
+ // Ne pas afficher les informations générales avant ouverture comme après reconstitution.
+ const isReconstitution=/reconstitu|prépar/i.test(duration);
+ if(!mode&&!isReconstitution)return '';
+ const temperature=mode==='ambient'?{css:'ambient',label:'Température ambiante',tip:'À conserver à température ambiante',svg:MEMO_STORAGE_SUN}:mode==='fridge'?{css:'fridge',label:'2–8 °C',tip:'À conserver au réfrigérateur — entre 2 °C et 8 °C',svg:MEMO_STORAGE_SNOW}:null;
+ const tempBadge=temperature?`<span class="memo-after-badge memo-after-badge-${temperature.css}" tabindex="0" title="${esc(temperature.tip)}" aria-label="${esc(temperature.tip)}">${temperature.svg}<span>${esc(temperature.label)}</span></span>`:'';
+ const timeBadge=duration?`<span class="memo-after-badge memo-after-badge-time" tabindex="0" title="${esc('Durée de conservation après reconstitution : '+duration)}" aria-label="${esc('Durée de conservation après reconstitution : '+duration)}">${MEMO_STORAGE_CLOCK}<span>${esc(duration)}</span></span>`:'';
+ return tempBadge+timeBadge;
+}
 function memoV102CommercialStorageBadges(p){
- if(!p)return "";
- const snow=`<svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10 20-1.25-2.5L6 18"/><path d="M10 4 8.75 6.5 6 6"/><path d="m14 20 1.25-2.5L18 18"/><path d="m14 4 1.25 2.5L18 6"/><path d="m17 21-3-6h-4"/><path d="m17 3-3 6 1.5 3"/><path d="M2 12h6.5L10 9"/><path d="m20 10-1.5 2 1.5 2"/><path d="M22 12h-6.5L14 15"/><path d="m4 10 1.5 2L4 14"/><path d="m7 21 3-6-1.5-3"/><path d="m7 3 3 6h4"/></svg>`;
- const clock=`<svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`;
- const tip=(title,note)=>`<span class="memo-repro-tooltip" role="tooltip"><span class="memo-repro-tip-title">${title}</span><span class="memo-repro-tip-note">${note}</span></span>`;
- return `<div class="memo-v102-commercial-storage memo-v93-storage-row">${p.coldStorage===true?`<span class="memo-v93-storage-badge memo-v93-cold" tabindex="0" aria-label="Conservation au froid">${snow}${tip("Conservation au froid","Vérifier les conditions exactes dans le RCP.")}</span>`:""}${p.afterOpening===true?`<span class="memo-v93-storage-badge memo-v93-after" tabindex="0" aria-label="Durée après ouverture${p.afterOpeningDuration?` : ${esc(p.afterOpeningDuration)}`:""}">${clock}${memoV103DurationLabel(p.afterOpeningDuration)}${tip("Durée après ouverture",p.afterOpeningDuration?esc(p.afterOpeningDuration):"Durée non précisée — vérifier le RCP.")}</span>`:""}</div>`;
+ return memoStorageBadgeItems(p)?`<div class="memo-v102-commercial-storage memo-after-panel"><div class="memo-after-panel-title">Après reconstitution :</div><div class="memo-after-panel-badges">${memoStorageBadgeItems(p)}</div></div>`:`<div class="memo-v102-commercial-storage" hidden></div>`;
 }
 function memoV102SyncStorage(section,p){
  const badges=section?.querySelector(".memo-v102-commercial-storage");
@@ -5110,9 +5167,10 @@ function presentationEditor(p,i){
  <div class="memo-presentation-divider" aria-hidden="true"></div>
  <div class="memo-presentation-group memo-presentation-regulation"> <div class="memo-v43-regulation"><label for="memo-v43-reg-${i}">Classement réglementaire</label><select id="memo-v43-reg-${i}" data-regulation><option value="" ${!p.regulatoryList?"selected":""}>Non renseigné</option><option value="I" ${p.regulatoryList==="I"?"selected":""}>Liste I</option><option value="II" ${p.regulatoryList==="II"?"selected":""}>Liste II</option><option value="none" ${p.regulatoryList==="none"?"selected":""}>Non listé</option></select></div>
  ${specialty?"":` <div class="memo-practical-editor">
- <label><input type="checkbox" data-practical-cold ${p.coldStorage===true?"checked":""}> ❄ Conservation au froid</label>
- <label><input type="checkbox" data-practical-after ${p.afterOpening===true?"checked":""}> ◷ Durée après ouverture</label>
- <input type="text" data-practical-duration value="${esc(p.afterOpeningDuration||"")}" placeholder="Ex. : 4 semaines" aria-label="Durée après ouverture, texte court" maxlength="45">
+ <label>🌡️ Conditions de conservation<input type="text" data-practical-conditions value="${esc(p.storageConditions??(p.coldStorage===true?'Conservation au froid':''))}" placeholder="Ex. : Entre 2 et 8 °C / Ne pas dépasser 25 °C" maxlength="110"></label>
+ <label>🌡️ Température après reconstitution<select data-practical-after-temperature><option value="" ${!p.afterReconstitutionTemperature?'selected':''}>Non renseignée</option><option value="ambient" ${p.afterReconstitutionTemperature==='ambient'?'selected':''}>Température ambiante</option><option value="fridge" ${p.afterReconstitutionTemperature==='fridge'?'selected':''}>Réfrigérateur (2–8 °C)</option></select></label>
+ <label>◷ Durée de conservation après ouverture ou préparation<input type="text" data-practical-storage-duration value="${esc(p.storageDuration??p.afterOpeningDuration??'')}" placeholder="Ex. : 14 jours après reconstitution" maxlength="110"></label>
+ <p class="hint">Deux badges indépendants, propres à cette spécialité. Utiliser les formulations exactes du RCP.</p>
  
  </div>
  
@@ -6132,7 +6190,7 @@ function renderEditor(id){
   const after=stored.afterOpening??first.afterOpening??false;
   const duration=stored.afterOpeningDuration??first.afterOpeningDuration??"";
   const area=document.createElement("div");area.id="memo-v90-storage";area.className="memo-storage-flags-row";
-  area.innerHTML=`<label><input type="checkbox" id="f-v90-cold" ${cold?"checked":""}> ❄ Conservation au froid</label><label><input type="checkbox" id="f-v90-after" ${after?"checked":""}> ◷ Durée après ouverture</label><input id="f-v90-duration" type="text" maxlength="45" placeholder="Ex. : 4 semaines" aria-label="Durée après ouverture" value="${esc(duration)}">`;
+  area.innerHTML=`<label>🌡️ Conditions de conservation<input id="f-v90-conditions" type="text" maxlength="110" placeholder="Ex. : Entre 2 et 8 °C" value="${esc(stored.storageConditions??first.storageConditions??(cold?'Conservation au froid':''))}"></label><label>🌡️ Température après reconstitution<select id="f-v90-after-temperature"><option value="" ${!(stored.afterReconstitutionTemperature??first.afterReconstitutionTemperature)?'selected':''}>Non renseignée</option><option value="ambient" ${(stored.afterReconstitutionTemperature??first.afterReconstitutionTemperature)==='ambient'?'selected':''}>Température ambiante</option><option value="fridge" ${(stored.afterReconstitutionTemperature??first.afterReconstitutionTemperature)==='fridge'?'selected':''}>Réfrigérateur (2–8 °C)</option></select></label><label>◷ Durée après ouverture ou préparation<input id="f-v90-storage-duration" type="text" maxlength="110" placeholder="Ex. : 14 jours après reconstitution" value="${esc(stored.storageDuration??first.storageDuration??duration)}"></label>`;
   // Conservation regroupée dans le même encart que les badges, sans modifier
   // les identifiants de champs utilisés par l’enregistrement des spécialités.
   const badgePanel=identityGrid.querySelector("#memo-badge-links-editor");
@@ -6423,9 +6481,8 @@ function renderEditor(id){
     cannotSplit:!!card.querySelector('[data-cannot-split]')?.checked,
     cannotCrush:!!card.querySelector('[data-cannot-crush]')?.checked,
     cannotOpen:!!card.querySelector('[data-cannot-open]')?.checked,
-    coldStorage:!!card.querySelector('[data-practical-cold]')?.checked,
-    afterOpening:!!card.querySelector('[data-practical-after]')?.checked,
-    afterOpeningDuration:card.querySelector('[data-practical-duration]')?.value.trim()||'',regulatoryList:card.querySelector('[data-regulation]')?.value||''};
+    storageConditions:card.querySelector('[data-practical-conditions]')?.value.trim()||'',
+    storageDuration:card.querySelector('[data-practical-storage-duration]')?.value.trim()||'',afterReconstitutionTemperature:card.querySelector('[data-practical-after-temperature]')?.value||'',regulatoryList:card.querySelector('[data-regulation]')?.value||''};
    const photo=card.querySelector('[data-practical-photo]')?.value;
    const mte=card.querySelector('[data-practical-mte]')?.value;
    if(photo!==undefined)p.photosensitizingOverride=photo==='yes'?true:photo==='no'?false:null;
@@ -6817,11 +6874,11 @@ function renderEditor(id){
 }
 function readPresentationEditors(m){
  if(isSpecialiteFiche(m)){
-  const storage={coldStorage:!!document.getElementById("f-v90-cold")?.checked,afterOpening:!!document.getElementById("f-v90-after")?.checked,afterOpeningDuration:document.getElementById("f-v90-duration")?.value.trim()||""};
+  const storage={storageConditions:document.getElementById("f-v90-conditions")?.value.trim()||"",storageDuration:document.getElementById("f-v90-storage-duration")?.value.trim()||"",afterReconstitutionTemperature:document.getElementById("f-v90-after-temperature")?.value||""};
   if(!m.sections?.length)m.sections=[{id:"notes",title:"Notes",type:"text",content:""}];
   m.sections[0].specialtyStorage=storage;
  }
- const cards=[...$("presentationEditors").querySelectorAll("[data-presentation]")];m.presentations=cards.map((card,i)=>{const p={imageUrl:m.presentations?.[i]?.imageUrl||"",tabletImageUrl:m.presentations?.[i]?.tabletImageUrl||"",presentationKind:card.querySelector("[data-pkind]:checked")?.dataset.pkind||"",canSplit:card.querySelector("[data-can-split]")?.checked===true,equalDoses:card.querySelector("[data-can-split]")?.checked===true?(card.querySelector("[data-equal-dose]:checked")?.value==="yes"?true:card.querySelector("[data-equal-dose]:checked")?.value==="no"?false:null):null,canCrush:card.querySelector("[data-can-crush]")?.checked===true,canOpen:card.querySelector("[data-can-open]")?.checked===true,cannotSplit:card.querySelector("[data-cannot-split]")?.checked===true,cannotCrush:card.querySelector("[data-cannot-crush]")?.checked===true,cannotOpen:card.querySelector("[data-cannot-open]")?.checked===true};if(isSpecialiteFiche(m)){const st=m.sections?.[0]?.specialtyStorage||{};p.coldStorage=!!st.coldStorage;p.afterOpening=!!st.afterOpening;p.afterOpeningDuration=st.afterOpeningDuration||"";}else{p.coldStorage=!!card.querySelector("[data-practical-cold]")?.checked;p.afterOpening=!!card.querySelector("[data-practical-after]")?.checked;p.afterOpeningDuration=card.querySelector("[data-practical-duration]")?.value.trim()||"";}p.regulatoryList=card.querySelector("[data-regulation]")?.value||"";const photoSetting=card.querySelector("[data-practical-photo]")?.value;p.photosensitizingOverride=photoSetting==="yes"?true:photoSetting==="no"?false:null;const mteSetting=card.querySelector("[data-practical-mte]")?.value;p.mteOverride=mteSetting==="yes"?true:mteSetting==="no"?false:null;card.querySelectorAll("[data-show-field]").forEach(input=>p[input.dataset.showField]=input.checked);card.querySelectorAll("[data-pfield]").forEach(input=>p[input.dataset.pfield]=input.value.trim());
+ const cards=[...$("presentationEditors").querySelectorAll("[data-presentation]")];m.presentations=cards.map((card,i)=>{const p={imageUrl:m.presentations?.[i]?.imageUrl||"",tabletImageUrl:m.presentations?.[i]?.tabletImageUrl||"",presentationKind:card.querySelector("[data-pkind]:checked")?.dataset.pkind||"",canSplit:card.querySelector("[data-can-split]")?.checked===true,equalDoses:card.querySelector("[data-can-split]")?.checked===true?(card.querySelector("[data-equal-dose]:checked")?.value==="yes"?true:card.querySelector("[data-equal-dose]:checked")?.value==="no"?false:null):null,canCrush:card.querySelector("[data-can-crush]")?.checked===true,canOpen:card.querySelector("[data-can-open]")?.checked===true,cannotSplit:card.querySelector("[data-cannot-split]")?.checked===true,cannotCrush:card.querySelector("[data-cannot-crush]")?.checked===true,cannotOpen:card.querySelector("[data-cannot-open]")?.checked===true};if(isSpecialiteFiche(m)){const st=m.sections?.[0]?.specialtyStorage||{};p.storageConditions=st.storageConditions??(st.coldStorage?'Conservation au froid':'');p.storageDuration=st.storageDuration??st.afterOpeningDuration??'';p.afterReconstitutionTemperature=st.afterReconstitutionTemperature||'';}else{p.storageConditions=card.querySelector("[data-practical-conditions]")?.value.trim()||"";p.storageDuration=card.querySelector("[data-practical-storage-duration]")?.value.trim()||"";p.afterReconstitutionTemperature=card.querySelector("[data-practical-after-temperature]")?.value||"";}p.regulatoryList=card.querySelector("[data-regulation]")?.value||"";const photoSetting=card.querySelector("[data-practical-photo]")?.value;p.photosensitizingOverride=photoSetting==="yes"?true:photoSetting==="no"?false:null;const mteSetting=card.querySelector("[data-practical-mte]")?.value;p.mteOverride=mteSetting==="yes"?true:mteSetting==="no"?false:null;card.querySelectorAll("[data-show-field]").forEach(input=>p[input.dataset.showField]=input.checked);card.querySelectorAll("[data-pfield]").forEach(input=>p[input.dataset.pfield]=input.value.trim());
  const previous=m.presentations?.[i]||{};
  p.clinicalSpecific={...memoV86Clinical(previous)};
  card.querySelectorAll("[data-v86-clinical]").forEach(input=>{p.clinicalSpecific[input.dataset.v86Clinical]=input.value.trim()});
