@@ -2742,15 +2742,9 @@ function showView(view){
  leaveInfoPage();
  if(currentView==="home"&&view!=="home"&&editorId){rememberEditorFocus();saveLocalDraft();}
  const changing=currentView!==view;
- // À chaque nouvelle visite d'Explorer, repartir d'une arborescence entièrement repliée.
- if(changing&&view==="explore"){
-  exploreExpandedGroups.clear();
-  $("exploreSearch").value="";
-  $("exploreClass").value="";
-  $("exploreIndication").value="";
-  $("exploreForm").value="";
-  explorerVisibleLimit=20;
- }
+ // Conserver l'état d'Explorer lors d'un aller-retour vers une fiche.
+ // Les branches ouvertes, la recherche et les filtres restent dans le DOM
+ // et sont réutilisés au retour (y compris via l'historique du navigateur).
  if(changing&&!restoringViewScroll)viewScrollPositions[currentView]=window.scrollY;
  currentView=view;
  document.querySelector("main")?.classList.toggle("memo-exc-wide-main",view==="exc");
@@ -3071,9 +3065,8 @@ function openExplorerResult(event,button,presentationIndex=null,sectionId=null){
   window.open(url.href,"_blank","noopener");
   return;
  }
- if(currentView==="explore"){
-  $("exploreSearch").value="";explorerVisibleLimit=20;
- }
+ // Ne pas réinitialiser Explorer : le bouton Retour doit retrouver les
+ // branches et les filtres exactement dans l'état précédant l'ouverture.
  openMedication(variantTarget?.id||id,presentationIndex,sectionId);
 }
 function medicationForms(m){
