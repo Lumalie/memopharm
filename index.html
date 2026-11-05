@@ -1652,248 +1652,143 @@ header #headerAdminActions .header-json-menu[open] .memo-backup-chevron{transfor
 .memo-equiv-pack-variant{margin:9px 0;padding:8px 10px;border-left:2px solid #b9d5c3;background:#f7faf8;border-radius:0 8px 8px 0}
 .memo-equiv-pack-variant>.memo-equiv-open-fiche{font-size:.83rem;color:#30694d;text-align:left}
 </style>
-<style>
-/* Mémopharm : hiérarchie visuelle des informations propres à la spécialité. */
-#detail .memo-reconstitution-public{margin:19px 0 13px;padding:17px 0 1px;border-top:1px solid #dce7df}
-#detail .memo-reconstitution-public .memo-preparation-title{display:flex;align-items:center;gap:9px;margin:0 0 17px;color:#28674f;font-size:1.04rem;font-weight:700;line-height:1.4}
-#detail .memo-preparation-title svg{width:20px;height:20px;flex:none;color:#357b61}
-#detail .memo-reconstitution-item{margin:0 0 18px;font-size:.93rem}
-#detail .memo-reconstitution-item .memo-preparation-subtitle{display:flex;align-items:center;gap:9px;margin:0 0 7px;color:#326c55;font-size:.95rem;font-weight:700;line-height:1.4}
-#detail .memo-preparation-subtitle svg{width:19px;height:19px;flex:none;color:#397f66}
-#detail .memo-reconstitution-item>div{padding-left:28px;line-height:1.55}
-#detail .memo-reconstitution-item>div p:last-child{margin-bottom:0}
-@media(max-width:600px){#detail .memo-reconstitution-item>div{padding-left:0}}
-</style>
+<style id="memo-presentation-components">
+/* Présentations commerciales — styles communs et niveaux de lecture.
+   Variables centralisées pour ajuster tous les retraits et titres ensemble. */
+#detail #presentations-details {
+  --memo-pres-indent: 28px;
+  --memo-pres-indent-sub: 56px;
+  --memo-pres-main-size: 1.14rem;
+  --memo-pres-sub-size: 1rem;
+  --memo-pres-copy-size: .99rem;
+  --memo-pres-green: #28674f;
+}
 
-<style>
-/* V118 — alignement typographique et espacement des spécialités commerciales */
-#detail .memo-reconstitution-public .memo-preparation-title,
-#detail .memo-reconstitution-public .memo-preparation-subtitle{
- font-size:1rem!important;line-height:1.45!important;font-weight:700!important;
- color:#28674f!important;display:flex!important;align-items:center!important;gap:9px!important;
+/* Préparation / conservation : présentation de base (tous les contextes). */
+#detail .memo-reconstitution-public {
+  margin:19px 0 13px;
+  padding:17px 0 1px;
+  border-top:1px solid #dce7df;
 }
-#detail .memo-reconstitution-public .memo-preparation-title{margin:0 0 15px!important}
-#detail .memo-reconstitution-public .memo-preparation-subtitle{margin:0 0 7px!important}
-#detail .memo-reconstitution-public :is(.memo-preparation-title,.memo-preparation-subtitle) svg{
- width:19px!important;height:19px!important;flex:0 0 19px!important;
+#detail .memo-reconstitution-public .memo-preparation-title {
+  display:flex;align-items:center;gap:9px;
+  margin:0 0 17px;color:#28674f;
+  font-size:1.04rem;font-weight:700;line-height:1.4;
 }
-#detail .memo-reconstitution-public .memo-reconstitution-item{margin:0 0 17px!important}
-#detail .memo-reconstitution-public .memo-reconstitution-item>div{
- padding-left:28px!important;font-size:.93rem!important;line-height:1.55!important;
+#detail .memo-preparation-title svg {
+  width:20px;height:20px;flex:none;color:#357b61;
 }
-#detail .memo-reconstitution-public .memo-reconstitution-item>div :is(ul,ol){margin:3px 0 0!important;padding-left:21px!important}
-#detail .memo-reconstitution-public .memo-reconstitution-item>div li{margin:0!important}
-/* Rapprocher le premier titre de la ligne CIP, sans écraser les séparateurs. */
-#detail .memo-v105-molecule-presentations #presentations-details #presentation-info{margin-top:0!important}
-#detail .memo-v105-molecule-presentations #presentations-details .memo-v101-cip-block{padding-bottom:4px!important;margin-bottom:0!important}
-#detail .memo-v105-molecule-presentations #presentations-details .presentation-v33-fields{row-gap:9px!important}
-</style>
-<style>
-/* V119 — règles ciblées sur la structure réellement rendue. */
+#detail .memo-reconstitution-item {margin:0 0 18px;font-size:.93rem;}
+#detail .memo-reconstitution-item .memo-preparation-subtitle {
+  display:flex;align-items:center;gap:9px;
+  margin:0 0 7px;color:#326c55;
+  font-size:.95rem;font-weight:700;line-height:1.4;
+}
+#detail .memo-preparation-subtitle svg {
+  width:19px;height:19px;flex:none;color:#397f66;
+}
+#detail .memo-reconstitution-item>div {padding-left:28px;line-height:1.55;}
+#detail .memo-reconstitution-item>div p:last-child {margin-bottom:0;}
+@media(max-width:600px){
+  #detail .memo-reconstitution-item>div {padding-left:0;}
+}
+
+/* Hiérarchie typographique partagée entre Aspect et Préparation. */
 #detail #presentations-details .memo-v125-compact-fields .memo-v125-field-label,
-#detail #presentations-details .memo-reconstitution-public .memo-preparation-title,
-#detail #presentations-details .memo-reconstitution-public .memo-preparation-subtitle{
- font-size:1rem!important;line-height:1.4!important;font-weight:700!important;
- color:#28674f!important;
-}
-#detail #presentations-details .memo-v125-compact-fields .memo-v125-field-label,
-#detail #presentations-details .memo-reconstitution-public :is(.memo-preparation-title,.memo-preparation-subtitle){
- display:flex!important;align-items:center!important;gap:9px!important;
+#detail #presentations-details .memo-reconstitution-public .memo-preparation-title {
+  display:flex!important;align-items:center!important;gap:9px!important;
+  font-size:var(--memo-pres-main-size)!important;
+  line-height:1.45!important;font-weight:700!important;
+  color:var(--memo-pres-green)!important;letter-spacing:0!important;
 }
 #detail #presentations-details .memo-v125-compact-fields .memo-v125-field-icon,
-#detail #presentations-details .memo-reconstitution-public :is(.memo-preparation-title,.memo-preparation-subtitle) svg{
- width:19px!important;height:19px!important;flex:0 0 19px!important;
+#detail #presentations-details .memo-v125-compact-fields .memo-v125-field-icon svg,
+#detail #presentations-details .memo-reconstitution-public .memo-preparation-title svg,
+#detail #presentations-details .memo-reconstitution-public .memo-preparation-subtitle svg {
+  width:19px!important;height:19px!important;flex:0 0 19px!important;
 }
-#detail #presentations-details .memo-v125-compact-fields .memo-v125-field-value,
-#detail #presentations-details .memo-reconstitution-public .memo-reconstitution-item>div{
- padding-left:28px!important;margin-left:0!important;font-size:.93rem!important;
- line-height:1.55!important;
-}
-#detail #presentations-details .memo-v125-compact-fields .memo-v125-field{
- margin-top:12px!important;
-}
-#detail #presentations-details .memo-v125-compact-fields .memo-v101-cip-block + .memo-v125-field{
- margin-top:0!important;
-}
-#detail #presentations-details .memo-v125-compact-fields .memo-v101-cip-block{
- margin-bottom:0!important;padding-bottom:0!important;
-}
-#detail #presentations-details .memo-reconstitution-public{
- margin-top:16px!important;padding-top:12px!important;
-}
-#detail #presentations-details .memo-reconstitution-public .memo-preparation-title{
- margin-bottom:12px!important;
-}
-#detail #presentations-details .memo-reconstitution-public .memo-reconstitution-item{
- margin-bottom:14px!important;
-}
-@media(max-width:600px){
- #detail #presentations-details .memo-reconstitution-public .memo-reconstitution-item>div{
-  padding-left:28px!important;
- }
-}
-</style>
-<style id="memo-v120-real-layout">
-/* Harmonisation sur les vrais éléments du DOM : sections publiques et sous-rubriques. */
-#detail #presentations-details .memo-v125-compact-fields .memo-v125-field-label,
-#detail #presentations-details .memo-reconstitution-public .memo-preparation-title,
-#detail #presentations-details .memo-reconstitution-public .memo-preparation-subtitle {
- font-size:1rem!important;line-height:1.45!important;font-weight:700!important;
- color:#28674f!important;letter-spacing:0!important;
-}
-#detail #presentations-details .memo-v125-compact-fields .memo-v125-field-value,
-#detail #presentations-details .memo-reconstitution-public .memo-reconstitution-item>div {
- margin-left:28px!important;padding-left:0!important;
- font-size:.99rem!important;line-height:1.55!important;
-}
-#detail #presentations-details .memo-reconstitution-public .memo-reconstitution-item>div ul,
-#detail #presentations-details .memo-reconstitution-public .memo-reconstitution-item>div ol {
- margin-top:3px!important;margin-bottom:0!important;padding-left:22px!important;
-}
-#detail #presentations-details .memo-reconstitution-public .memo-reconstitution-item {
- margin:0 0 15px!important;
-}
-#detail #presentations-details .memo-reconstitution-public .memo-preparation-title {
- margin:0 0 13px!important;
-}
-#detail #presentations-details .memo-v125-compact-fields .memo-v125-field {
- margin-top:12px!important;
-}
-#detail #presentations-details .memo-v125-compact-fields .memo-v125-field:first-child {
- margin-top:0!important;
-}
-#detail #presentations-details #presentation-info {
- margin-top:0!important;
-}
-#detail #presentations-details .memo-v48-identity {
- margin-bottom:0!important;
-}
-</style>
 
-<style id="memo-v121-hierarchie-visuelle">
-/* Titres principaux : même gabarit pour Aspect, Excipients et Préparation. */
-#detail .memo-v125-compact-fields .memo-v125-field-label,
-#detail .memo-reconstitution-public .memo-preparation-title {
-  font-size:1.15rem!important;
-  line-height:1.45!important;
-  font-weight:700!important;
+/* Sous-rubriques : même titre, même alinéa, même texte. */
+#detail #presentations-details .memo-reconstitution-public .memo-preparation-subtitle,
+#detail #presentations-details .memo-v125-compact-fields .memo-v125-excipients>.memo-v125-field-label {
+  display:flex!important;align-items:center!important;gap:9px!important;
+  margin-left:var(--memo-pres-indent)!important;padding-left:0!important;
+  font-size:var(--memo-pres-sub-size)!important;line-height:1.45!important;
+  font-weight:700!important;color:var(--memo-pres-green)!important;
   letter-spacing:0!important;
 }
-/* Les sous-titres forment un alinéa uniforme sous le titre principal. */
-#detail .memo-reconstitution-public .memo-reconstitution-item .memo-preparation-subtitle {
-  margin-left:28px!important;
-  margin-right:0!important;
-  padding-left:0!important;
-  font-size:1rem!important;
-  line-height:1.45!important;
-  font-weight:700!important;
+#detail #presentations-details .memo-v125-compact-fields .memo-v125-field-value {
+  margin-left:var(--memo-pres-indent)!important;padding-left:0!important;
+  font-size:var(--memo-pres-copy-size)!important;line-height:1.55!important;
+  text-indent:0!important;
 }
-/* Le texte suit son sous-titre avec le même retrait que le texte des rubriques principales. */
-#detail .memo-reconstitution-public .memo-reconstitution-item > div {
-  margin-left:56px!important;
-  padding-left:0!important;
-  line-height:1.55!important;
-}
-/* Les listes conservent leurs puces à l'intérieur du bloc de texte. */
-#detail .memo-reconstitution-public .memo-reconstitution-item > div :is(ul,ol) {
-  padding-left:22px!important;
-}
-/* Aspect et Excipients : texte aligné sous l'intitulé, sans double retrait. */
-#detail .memo-v125-compact-fields .memo-v125-field-value {
-  margin-left:28px!important;
-  padding-left:0!important;
-}
-</style>
-
-<style id="memo-v123-finitions-presentations">
-/* V123 : une seule grille de retraits pour les informations commerciales.
-   Les styles précédents laissaient 16 px supplémentaires sur les excipients. */
 #detail #presentations-details .memo-v125-compact-fields .memo-v125-excipients {
   margin-left:0!important;padding-left:0!important;
 }
-#detail #presentations-details .memo-v125-compact-fields .memo-v125-field-label,
-#detail #presentations-details .memo-reconstitution-public .memo-preparation-title {
-  font-size:1.14rem!important;line-height:1.45!important;font-weight:700!important;
-  letter-spacing:0!important;
-}
-#detail #presentations-details .memo-v125-compact-fields .memo-v125-field-icon svg,
-#detail #presentations-details .memo-reconstitution-public .memo-preparation-title svg {
-  width:19px!important;height:19px!important;flex:0 0 19px!important;
-}
-/* Les textes de niveau principal partent tous 28 px après le bord du titre. */
-#detail #presentations-details .memo-v125-compact-fields .memo-v125-field-value {
-  margin-left:28px!important;padding-left:0!important;text-indent:0!important;
+#detail #presentations-details .memo-v125-compact-fields .memo-v125-excipients>.memo-v125-field-value {
+  margin-left:var(--memo-pres-indent-sub)!important;
+  padding-left:0!important;font-size:var(--memo-pres-copy-size)!important;line-height:1.55!important;
 }
 #detail #presentations-details .memo-v125-compact-fields .memo-v125-field-value .memo-exc-formatted,
 #detail #presentations-details .memo-v125-compact-fields .memo-v125-field-value .memo-exc-formatted p {
   margin-left:0!important;padding-left:0!important;text-indent:0!important;
 }
-/* Les deux sous-niveaux commencent à 28 px ; leur contenu à 56 px. */
-#detail #presentations-details .memo-reconstitution-public .memo-reconstitution-item .memo-preparation-subtitle {
-  margin-left:28px!important;padding-left:0!important;font-size:1rem!important;
-  line-height:1.45!important;font-weight:700!important;
-}
-#detail #presentations-details .memo-reconstitution-public .memo-reconstitution-item > div {
-  margin-left:56px!important;padding-left:0!important;text-indent:0!important;
-}
-#detail #presentations-details .memo-reconstitution-public .memo-reconstitution-item > div :is(ul,ol) {
-  padding-left:22px!important;margin-left:0!important;
-}
-/* Resserrer seulement l'espace entre le bandeau CIP et Aspect. */
-#detail #presentations-details #presentation-info .presentation-v33-content {
-  margin-top:0!important;
-}
-#detail #presentations-details .memo-v125-compact-fields {
-  padding-top:0!important;margin-top:0!important;
-}
-#detail #presentations-details .memo-v125-compact-fields .memo-v125-field:first-child {
-  margin-top:7px!important;
-}
-</style>
-<style id="memo-v124-layout">
-/* Séparateur CIP : même respiration au-dessus et au-dessous. */
-#detail #presentations-details .memo-v125-compact-fields .memo-v101-cip-block {
-  border-top:1px solid #dce6df!important;
-  padding-top:15px!important;
-  margin-top:13px!important;
-  padding-bottom:10px!important;
-  margin-bottom:8px!important;
-}
-#detail #presentations-details .memo-v125-compact-fields .memo-v101-cip-block + .memo-v125-field {
-  margin-top:10px!important;
-}
-/* Excipients : même retrait et même typographie que les sous-rubriques de préparation. */
-#detail #presentations-details .memo-v125-compact-fields .memo-v125-excipients > .memo-v125-field-label {
-  margin-left:28px!important;
-  padding-left:0!important;
-  font-size:1rem!important;
-  line-height:1.45!important;
-  font-weight:700!important;
-}
-#detail #presentations-details .memo-v125-compact-fields .memo-v125-excipients > .memo-v125-field-value {
-  margin-left:56px!important;
-  padding-left:0!important;
-  font-size:.99rem!important;
-  line-height:1.55!important;
-}
 #detail #presentations-details .memo-v125-compact-fields .memo-v125-excipients .memo-exc-formatted {
   margin:0!important;padding:0!important;
 }
-/* Manipulations : deux colonnes uniquement si les deux critères sont affichés. */
+
+/* Préparation : deux sous-sections avec contenus alignés à 56px. */
+#detail #presentations-details .memo-reconstitution-public {
+  margin-top:16px!important;padding-top:12px!important;
+}
+#detail #presentations-details .memo-reconstitution-public .memo-preparation-title {margin:0 0 13px!important;}
+#detail #presentations-details .memo-reconstitution-public .memo-preparation-subtitle {margin-bottom:7px!important;}
+#detail #presentations-details .memo-reconstitution-public .memo-reconstitution-item {
+  margin:0 0 15px!important;
+}
+#detail #presentations-details .memo-reconstitution-public .memo-reconstitution-item>div {
+  margin-left:var(--memo-pres-indent-sub)!important;padding-left:0!important;
+  font-size:var(--memo-pres-copy-size)!important;line-height:1.55!important;
+  text-indent:0!important;
+}
+#detail #presentations-details .memo-reconstitution-public .memo-reconstitution-item>div :is(ul,ol) {
+  margin:3px 0 0!important;padding-left:22px!important;
+}
+#detail #presentations-details .memo-reconstitution-public .memo-reconstitution-item>div li {margin:0!important;}
+
+/* Rythme vertical, sélecteur et bandeau CIP. */
+#detail .memo-v105-molecule-presentations #presentations-details #presentation-info {margin-top:0!important;}
+#detail .memo-v105-molecule-presentations #presentations-details .memo-v101-cip-block {
+  padding-bottom:4px!important;margin-bottom:0!important;
+}
+#detail .memo-v105-molecule-presentations #presentations-details .presentation-v33-fields {row-gap:9px!important;}
+#detail #presentations-details #presentation-info {margin-top:0!important;}
+#detail #presentations-details #presentation-info .presentation-v33-content {margin-top:0!important;}
+#detail #presentations-details .memo-v48-identity {margin-bottom:0!important;}
+#detail #presentations-details .memo-v125-compact-fields {margin-top:0!important;padding-top:0!important;}
+#detail #presentations-details .memo-v125-compact-fields .memo-v125-field {margin-top:12px!important;}
+#detail #presentations-details .memo-v125-compact-fields .memo-v125-field:first-child {margin-top:7px!important;}
+#detail #presentations-details .memo-v125-compact-fields .memo-v101-cip-block {
+  border-top:1px solid #dce6df!important;
+  padding-top:15px!important;margin-top:13px!important;
+  padding-bottom:10px!important;margin-bottom:8px!important;
+}
+#detail #presentations-details .memo-v125-compact-fields .memo-v101-cip-block+.memo-v125-field {
+  margin-top:10px!important;
+}
+
+/* Manipulations : fractionnement / écrasement juxtaposés lorsque les deux sont affichés. */
 #detail #presentations-details .memo-v125-compact-fields .memo-v124-manip-pair.memo-v124-two {
-  display:grid!important;
-  grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
-  gap:12px 24px!important;
-  align-items:start!important;
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:12px 24px!important;align-items:start!important;
 }
-#detail #presentations-details .memo-v125-compact-fields .memo-v124-manip-pair > .memo-v125-field {
-  min-width:0!important;
-  margin-top:12px!important;
+#detail #presentations-details .memo-v125-compact-fields .memo-v124-manip-pair>.memo-v125-field {
+  min-width:0!important;margin-top:12px!important;
 }
-@media(max-width:650px){
- #detail #presentations-details .memo-v125-compact-fields .memo-v124-manip-pair.memo-v124-two {
-   grid-template-columns:minmax(0,1fr)!important;
- }
+@media(max-width:650px) {
+  #detail #presentations-details .memo-v125-compact-fields .memo-v124-manip-pair.memo-v124-two {
+    grid-template-columns:minmax(0,1fr)!important;
+  }
 }
 </style>
 </head>
@@ -4359,13 +4254,11 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDo
    const match=title.match(/(\d+(?:[.,]\d+)?\s*(?:µg|mcg|mg|g|UI|mL|ml)(?:\/\s*(?:µg|mcg|mg|g|UI|mL|ml))?)\b/i);
    return match?match[1]:title;
   };
-  const memoCommercialSelections=new Map();
   const renderChild=(child,selectedPack=null)=>{
    if(!child||!panel)return;
    const previousSelect=panel.querySelector('#presentation-choice[data-presentation-select]');
    const previousDose=panel.dataset.memoActiveCommercialDose;
    if(previousSelect&&previousDose){
-    memoCommercialSelections.set(previousDose,previousSelect.value);
     memoSetViewChoice(previousDose,{presentation:previousSelect.value});
    }
    panel.dataset.memoActiveCommercialDose=String(child.id);
@@ -4376,8 +4269,6 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDo
    const priorityIds=new Set(["alerte-delivrance","coup-oeil","conseils-comptoir"]);
    const prioritySections=childSections.filter(x=>priorityIds.has(x.id));
    const specificSections=childSections.filter(x=>!priorityIds.has(x.id)&&x.id!=="sources");
-   const cachedPresentation=memoCommercialSelections.get(String(child.id));
-   if(cachedPresentation!==undefined)memoSetViewChoice(child.id,{presentation:cachedPresentation});
    const presentationHtml=(child.presentations||[]).length?renderPresentations(child,null,null):"";
    const priorityHtml=prioritySections.map(x=>{
     const cls=x.id==="alerte-delivrance"?"memo-priority-alert":x.id==="coup-oeil"?"memo-priority-glance":"memo-priority-advice";
@@ -4405,10 +4296,8 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDo
    panel.querySelectorAll("[data-group-open]").forEach(b=>b.onclick=()=>openMedication(b.dataset.groupOpen));
    memoV44Banner(panel,child,selectedTitle);
    panel.querySelector('[data-memo-edit-selected]')?.addEventListener('click',()=>memoEditSelectedCommercial(m,child));
-   // Réapplique explicitement la spécialité mémorisée après chaque changement d'onglet.
-   const cachedKey=memoCommercialSelections.get(String(child.id));
-   const availableOptions=memoV116CommercialOptions(child);
-   const rememberedChoice=availableOptions.find(x=>x.key===cachedKey)||memoV116CommercialChosen(child);
+   // Actualise les badges de la spécialité qui a été sélectionnée pour ce dosage.
+   const rememberedChoice=memoV116CommercialChosen(child);
    const commercialSelect=panel.querySelector('[data-presentation-select]');
    if(commercialSelect&&rememberedChoice){
     commercialSelect.value=rememberedChoice.key;
@@ -4417,7 +4306,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDo
     memoV48Sync(panel.querySelector('#presentations-details'),rememberedChoice.p);
     memoV102SyncStorage(panel.querySelector('#presentations-details'),rememberedChoice.p);
    }
-   panel.querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=panel.querySelector("#presentation-info");memoCommercialSelections.set(String(child.id),sel.value);memoSetViewChoice(child.id,{presentation:sel.value});const choice=memoV116CommercialChosen(child);if(target)target.innerHTML=choice?presentationInfo(choice.p,child):"";memoV48Sync(sel.closest("#presentations-details"),choice?.p);memoV102SyncStorage(sel.closest("#presentations-details"),choice?.p);memoWireBadgeClicks(target);memoV44Banner(panel,child,selectedTitle);memoV67Refresh(child,choice?.p||null)});
+   panel.querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=panel.querySelector("#presentation-info");memoSetViewChoice(child.id,{presentation:sel.value});const choice=memoV116CommercialChosen(child);if(target)target.innerHTML=choice?presentationInfo(choice.p,child):"";memoV48Sync(sel.closest("#presentations-details"),choice?.p);memoV102SyncStorage(sel.closest("#presentations-details"),choice?.p);memoWireBadgeClicks(target);memoV44Banner(panel,child,selectedTitle);memoV67Refresh(child,choice?.p||null)});
   };
   // Le boîtage n'est plus un niveau d'onglet : chaque conditionnement
   // reste consultable dans la présentation commerciale via son CIP.
@@ -4432,23 +4321,10 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDo
     [...doseStrip.querySelectorAll("[data-molecule-dose]")].forEach(b=>{const active=b.dataset.moleculeDose===String(id);b.setAttribute("aria-selected",String(active));b.tabIndex=active?0:-1});
     const child=group.items.find(x=>String(x.id)===String(id));
     if(child){
-     // Sauvegarder le choix commercial du dosage sortant AVANT de remplacer le DOM.
-     const leaving=panel.querySelector('#presentation-choice[data-presentation-select]');
-     const leavingId=panel.dataset.memoActiveCommercialDose;
-     if(leaving&&leavingId){
-      memoCommercialSelections.set(String(leavingId),leaving.value);
-      memoSetViewChoice(leavingId,{presentation:leaving.value});
-     }
+     // V122 : mémorise la variante active ; renderChild conserve le choix commercial.
      memoRememberActiveVariant(m.id,id);
      memoSetViewChoice(m.id,{form:group.form,doseId:String(id)});
-     const restored=memoCommercialSelections.get(String(child.id))??memoGetViewChoice(child.id).presentation;
-     if(restored!==undefined)memoSetViewChoice(child.id,{presentation:restored});
      setupPacks(child);
-     const select=panel.querySelector('#presentation-choice[data-presentation-select]');
-     if(select&&restored!==undefined&&[...select.options].some(o=>o.value===String(restored))){
-      select.value=String(restored);
-      select.dispatchEvent(new Event('change',{bubbles:true}));
-     }
     }
    };
    doseStrip.querySelectorAll("[data-molecule-dose]").forEach(b=>b.onclick=()=>chooseDose(b.dataset.moleculeDose));
@@ -4781,14 +4657,6 @@ function memoSetViewChoice(id,patch){
   try{store.setItem(MEMO_VIEW_CHOICE_KEY,JSON.stringify(safe))}catch(_){}
  }
 }
-// Capture la sélection AVANT tout changement d'onglet ou reconstruction du panneau.
-// L'option est identifiée par sa clé stable (index de spécialité + index de boîtage).
-document.addEventListener("change",event=>{
- const select=event.target?.closest?.('#molecule-tab-content [data-presentation-select]');
- if(!select)return;
- const activeDose=document.querySelector('.molecule-dose-strip [data-molecule-dose][aria-selected="true"]');
- if(activeDose?.dataset.moleculeDose)memoSetViewChoice(activeDose.dataset.moleculeDose,{presentation:select.value});
-},true);
 function memoV90SpecialtyPresentations(m){
  const pres=m.presentations||[];
  const entries=pres.map((p,i)=>{
