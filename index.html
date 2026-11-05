@@ -4199,7 +4199,12 @@ function previewSearchResult(item){
  // immediately. As the user types a partial dose (e.g. "amox 5"), prefer the
  // closest variant rather than waiting for the complete dosage.
  const defaultChild=!rubricTokens.length&&doseChildren.length?doseChildren.slice().sort((a,b)=>String(a.dosage||'').localeCompare(String(b.dosage||''),'fr',{numeric:true}))[0]:null;
- const selectedChild=forcedChild||(matchingChildren[0]?.child||defaultChild||null);
+ // Une recherche portant uniquement sur la molécule ne doit pas choisir
+ // automatiquement le premier dosage dans le volet d'aperçu.
+ // Les résultats de variante explicites et les recherches avec dosage gardent
+ // leur présentation commerciale habituelle.
+ const moleculeOnlyPreview=isMolecule(m)&&!forcedChild&&!dosageTokens.length&&!rubricTokens.length&&!sec;
+ const selectedChild=moleculeOnlyPreview?null:(forcedChild||(matchingChildren[0]?.child||defaultChild||null));
  const childSections=selectedChild?(selectedChild.sections||[]).filter(x=>x.enabled!==false&&!isDocumentationSection(x)).map(x=>resolveSharedSection(selectedChild,x)).filter(x=>String(x.content||'').trim()):[];
  const childMatch=rubricTokens.length?childSections.find(x=>rubricTokens.every(t=>{const label=norm(x.id+' '+x.title);return label.includes(t)||Object.entries(sectionAliases).some(([key,arr])=>arr.includes(t)&&label.includes(key))})):null;
  const targeted=!!rubricTokens.length;
