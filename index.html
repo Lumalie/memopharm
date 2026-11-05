@@ -4829,12 +4829,30 @@ function memoV102SyncStorage(section,p){
 }
 
 function memoExcipientWithoutHeadings(raw){
- // Underlined headings describe parts of a formula, not substances.
- return String(raw||"")
-  .replace(/__([\s\S]*?)__/g, "")
-  .replace(/<u\b[^>]*>[\s\S]*?<\/u>/gi, "")
-  .replace(/<span\b[^>]*style=["'][^"']*text-decoration\s*:\s*underline[^"']*["'][^>]*>[\s\S]*?<\/span>/gi, "")
+ // Exclure les annotations typographiques (italique/souligné) de la composition.
+ // Exception : un EEN explicitement en gras à l'intérieur reste un ingrédient.
+ let source=String(raw||"");
+ source=source.replace(/__([\s\S]*?)__/g,"")
+  .replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g,"")
   .replace(/(?:^|\n)\s*(?:noyau|pelliculage|enrobage|composition de l[’']ar[oô]me|composition des? ar[oô]mes?)\s*(?:du comprim[eé])?\s*:/gim,"\n");
+ // Les fiches peuvent contenir du HTML enrichi : parser sans perdre les balises strong.
+ const doc=new DOMParser().parseFromString("<div>"+source+"</div>","text/html");
+ const root=doc.body.firstElementChild;
+ if(!root)return source;
+ const formatted=[...root.querySelectorAll("i,em,u,span[style]")];
+ for(const el of formatted.reverse()){
+  if(!el.isConnected)continue;
+  const style=(el.getAttribute("style")||"").toLowerCase();
+  const exclude=el.matches("i,em,u")||/font-style\s*:\s*italic|text-decoration(?:-line)?\s*:[^;]*underline/.test(style);
+  if(!exclude)continue;
+  const strong=[...el.querySelectorAll("strong,b")].map(x=>x.textContent.trim()).filter(Boolean);
+  el.replaceWith(doc.createTextNode(strong.join(", ")));
+ }
+ // Retirer les notes quantitatives, qui ne sont pas de nouveaux excipients.
+ root.querySelectorAll("p,div,li").forEach(el=>{
+  if(el.children.length===0&&/^\s*(?:contient|teneur en|apport en)\s+\d/i.test(el.textContent||""))el.remove();
+ });
+ return root.innerHTML;
 }
 function memoExcipientTokens(raw){
  // Supprimer uniquement la mise en forme, puis séparer les éléments au niveau
@@ -4903,6 +4921,7 @@ function memoExcipientCanonical(v){
 function memoExcipientParsed(raw){
  const items=[];let uncertain=false;
  for(const token of memoExcipientTokens(raw)){
+  if(/^(?:contient|teneur en|apport en)\s+\d/i.test(token))continue;
   const x=memoExcipientCanonical(token);
   if(x){
    items.push(x);
