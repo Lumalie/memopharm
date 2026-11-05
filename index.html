@@ -1733,6 +1733,42 @@ header #headerAdminActions .header-json-menu[open] .memo-backup-chevron{transfor
  }
 }
 </style>
+<style id="memo-v120-real-layout">
+/* Harmonisation sur les vrais éléments du DOM : sections publiques et sous-rubriques. */
+#detail #presentations-details .memo-v125-compact-fields .memo-v125-field-label,
+#detail #presentations-details .memo-reconstitution-public .memo-preparation-title,
+#detail #presentations-details .memo-reconstitution-public .memo-preparation-subtitle {
+ font-size:1rem!important;line-height:1.45!important;font-weight:700!important;
+ color:#28674f!important;letter-spacing:0!important;
+}
+#detail #presentations-details .memo-v125-compact-fields .memo-v125-field-value,
+#detail #presentations-details .memo-reconstitution-public .memo-reconstitution-item>div {
+ margin-left:28px!important;padding-left:0!important;
+ font-size:.99rem!important;line-height:1.55!important;
+}
+#detail #presentations-details .memo-reconstitution-public .memo-reconstitution-item>div ul,
+#detail #presentations-details .memo-reconstitution-public .memo-reconstitution-item>div ol {
+ margin-top:3px!important;margin-bottom:0!important;padding-left:22px!important;
+}
+#detail #presentations-details .memo-reconstitution-public .memo-reconstitution-item {
+ margin:0 0 15px!important;
+}
+#detail #presentations-details .memo-reconstitution-public .memo-preparation-title {
+ margin:0 0 13px!important;
+}
+#detail #presentations-details .memo-v125-compact-fields .memo-v125-field {
+ margin-top:12px!important;
+}
+#detail #presentations-details .memo-v125-compact-fields .memo-v125-field:first-child {
+ margin-top:0!important;
+}
+#detail #presentations-details #presentation-info {
+ margin-top:0!important;
+}
+#detail #presentations-details .memo-v48-identity {
+ margin-bottom:0!important;
+}
+</style>
 </head>
 <body>
 <header><div class="wrap">
@@ -4263,7 +4299,24 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDo
    const chooseDose=id=>{
     [...doseStrip.querySelectorAll("[data-molecule-dose]")].forEach(b=>{const active=b.dataset.moleculeDose===String(id);b.setAttribute("aria-selected",String(active));b.tabIndex=active?0:-1});
     const child=group.items.find(x=>String(x.id)===String(id));
-    if(child){memoSetViewChoice(m.id,{form:group.form,doseId:String(id)});setupPacks(child)}
+    if(child){
+     // Sauvegarder le choix commercial du dosage sortant AVANT de remplacer le DOM.
+     const leaving=panel.querySelector('#presentation-choice[data-presentation-select]');
+     const leavingId=panel.dataset.memoActiveCommercialDose;
+     if(leaving&&leavingId){
+      memoCommercialSelections.set(String(leavingId),leaving.value);
+      memoSetViewChoice(leavingId,{presentation:leaving.value});
+     }
+     memoSetViewChoice(m.id,{form:group.form,doseId:String(id)});
+     const restored=memoCommercialSelections.get(String(child.id))??memoGetViewChoice(child.id).presentation;
+     if(restored!==undefined)memoSetViewChoice(child.id,{presentation:restored});
+     setupPacks(child);
+     const select=panel.querySelector('#presentation-choice[data-presentation-select]');
+     if(select&&restored!==undefined&&[...select.options].some(o=>o.value===String(restored))){
+      select.value=String(restored);
+      select.dispatchEvent(new Event('change',{bubbles:true}));
+     }
+    }
    };
    doseStrip.querySelectorAll("[data-molecule-dose]").forEach(b=>b.onclick=()=>chooseDose(b.dataset.moleculeDose));
    const restoredId=preferredId||memoGetViewChoice(m.id).doseId;
