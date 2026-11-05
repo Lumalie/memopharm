@@ -4963,12 +4963,33 @@ function memoExcipientVariantLabel(m){
  return [parent?.name||m.name,m.dosage,m.form].map(x=>String(x||"").trim()).filter(Boolean).join(" · ");
 }
 let memoExcSelectedVariantId=(()=>{try{return sessionStorage.getItem("memo-exc-selected-variant")||""}catch{return ""}})();
+// Suggestions : molécule → forme pharmaceutique → dosage croissant.
+const memoExcFrenchCollator=new Intl.Collator("fr",{sensitivity:"base",numeric:true});
+function memoExcDoseSortValue(value){
+ const text=String(value||"").replace(/,/g,".").replace(/\\s/g," ").toLowerCase();
+ const match=text.match(/(\\d+(?:\\.\\d+)?)\\s*(µg|mcg|mg|g|kg)?\\b/);
+ if(!match)return Number.POSITIVE_INFINITY;
+ const factor=({µg:.001,mcg:.001,mg:1,g:1000,kg:1000000})[match[2]]??1;
+ return Number(match[1])*factor;
+}
+function memoExcipientVariantSort(a,b){
+ const pa=meds.find(x=>String(x.id)===String(moleculeParentId(a)));
+ const pb=meds.find(x=>String(x.id)===String(moleculeParentId(b)));
+ const molecule=memoExcFrenchCollator.compare(String(pa?.name||a.name||""),String(pb?.name||b.name||""));
+ if(molecule)return molecule;
+ const form=memoExcFrenchCollator.compare(String(a.form||""),String(b.form||""));
+ if(form)return form;
+ const da=memoExcDoseSortValue(a.dosage),db=memoExcDoseSortValue(b.dosage);
+ if(da!==db)return da-db;
+ return memoExcFrenchCollator.compare(String(a.dosage||""),String(b.dosage||""))||
+  memoExcFrenchCollator.compare(memoExcipientVariantLabel(a),memoExcipientVariantLabel(b));
+}
 function memoExcSearchVariants(q){
  const terms=memoExcipientNormalize(q).split(/\s+/).filter(Boolean);
  return memoExcipientVariants().filter(m=>{
   const label=memoExcipientNormalize(memoExcipientVariantLabel(m));
   return terms.every(t=>label.includes(t));
- }).sort((a,b)=>memoExcipientVariantLabel(a).localeCompare(memoExcipientVariantLabel(b),"fr"));
+ }).sort(memoExcipientVariantSort);
 }
 function memoRenderExcipientPage(){
  const input=$("memoExcVariantSearch"),host=$("memoExcPageContent");
