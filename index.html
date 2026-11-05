@@ -4195,10 +4195,15 @@ document.addEventListener("toggle",event=>{
  memoV96SaveDetails(selectedId,root);
 },true);
 function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDosageId=null){
+ // Capture uniquement la variante de la fiche actuellement visible.
+ const currentDoseButton=document.querySelector('#detail .molecule-dose-strip [data-molecule-dose][aria-selected="true"]');
+ const currentMoleculeId=document.querySelector('#detail')?.dataset.memoRenderedMoleculeId;
+ if(currentDoseButton&&currentMoleculeId)memoRememberActiveVariant(currentMoleculeId,currentDoseButton.dataset.moleculeDose);
  editorId=null;
  const m=meds.find(x=>x.id===selectedId);
  $("detail").classList.remove("hidden");$("editor").classList.add("hidden");
  if(!m){$("detail").innerHTML='<div class="empty">Aucune fiche ne correspond à cette recherche.</div>';return}
+ $("detail").dataset.memoRenderedMoleculeId=String(m.id);
  memoSetupDetailCips();
  
  const displayModel={sections:clone(m.sections||[])};
@@ -4342,6 +4347,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDo
       memoCommercialSelections.set(String(leavingId),leaving.value);
       memoSetViewChoice(leavingId,{presentation:leaving.value});
      }
+     memoRememberActiveVariant(m.id,id);
      memoSetViewChoice(m.id,{form:group.form,doseId:String(id)});
      const restored=memoCommercialSelections.get(String(child.id))??memoGetViewChoice(child.id).presentation;
      if(restored!==undefined)memoSetViewChoice(child.id,{presentation:restored});
@@ -4354,14 +4360,14 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDo
     }
    };
    doseStrip.querySelectorAll("[data-molecule-dose]").forEach(b=>b.onclick=()=>chooseDose(b.dataset.moleculeDose));
-   const restoredId=preferredId||memoGetViewChoice(m.id).doseId;
+   const restoredId=memoRecallActiveVariant(m.id)||preferredId||memoGetViewChoice(m.id).doseId;
    chooseDose(group.items.some(x=>String(x.id)===String(restoredId))?restoredId:group.items[0].id);
   };
   formStrip.style.setProperty("--memo-tabs-count",groups.length);
   formStrip.innerHTML=groups.map(g=>`<button type="button" role="tab" class="molecule-tab" data-molecule-form="${esc(g.form)}" aria-selected="false" tabindex="-1">${esc(g.form)}</button>`).join("");
   formStrip.querySelectorAll("[data-molecule-form]").forEach(b=>b.onclick=()=>chooseForm(groups.find(g=>g.form===b.dataset.moleculeForm)));
   if(groups.length){
-   const requestedId=targetDosageId||new URL(location.href).searchParams.get("dosage");
+   const requestedId=memoRecallActiveVariant(m.id)||targetDosageId||new URL(location.href).searchParams.get("dosage");
    const requestedGroup=requestedId?groups.find(g=>g.items.some(c=>String(c.id)===String(requestedId))):null;
    const saved=memoGetViewChoice(m.id);
    chooseForm(requestedGroup||groups.find(g=>g.form===saved.form)||groups[0],requestedGroup?requestedId:null);
@@ -4624,6 +4630,43 @@ function presentationLabel(p,m,i){
  const dosage=(p.dosage||m.dosage||"").trim();
  return [name,showLab&&lab?lab:""].filter(Boolean).join(" · ")||"Présentation "+(i+1);
 }
+// V122 — Sélection de la variante active lors du passage à un autre onglet du navigateur.
+const MEMO_ACTIVE_VARIANT_KEY="memopharm-active-variant-v122";
+const memoActiveVariantCache=Object.create(null);
+function memoRememberActiveVariant(moleculeId,doseId){
+ if(!moleculeId||!doseId)return;
+ const key=String(moleculeId),value=String(doseId);
+ memoActiveVariantCache[key]=value;
+ memoSetViewChoice(key,{doseId:value});
+ try{sessionStorage.setItem(MEMO_ACTIVE_VARIANT_KEY+":"+key,value)}catch(_){ }
+}
+function memoRecallActiveVariant(moleculeId){
+ const key=String(moleculeId);
+ if(memoActiveVariantCache[key])return memoActiveVariantCache[key];
+ try{const value=sessionStorage.getItem(MEMO_ACTIVE_VARIANT_KEY+":"+key);if(value)return value}catch(_){ }
+ return memoGetViewChoice(key).doseId||null;
+}
+function memoCaptureActiveVariant(){
+ const dose=document.querySelector('#detail .molecule-dose-strip [data-molecule-dose][aria-selected="true"]');
+ if(dose&&selectedId)memoRememberActiveVariant(selectedId,dose.dataset.moleculeDose);
+}
+// Ne modifie pas l'onglet au retour : on ne le reconstruit que si un autre mécanisme l'a changé.
+function memoRestoreActiveVariant(){
+ if(document.hidden||!selectedId||document.getElementById('detail')?.classList.contains('hidden'))return;
+ const saved=memoRecallActiveVariant(selectedId);
+ if(!saved)return;
+ const active=document.querySelector('#detail .molecule-dose-strip [data-molecule-dose][aria-selected="true"]');
+ if(active?.dataset.moleculeDose===saved)return;
+ const target=[...document.querySelectorAll('#detail .molecule-dose-strip [data-molecule-dose]')].find(b=>b.dataset.moleculeDose===saved);
+ if(target)target.click();
+}
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden)memoCaptureActiveVariant();
+ else memoRestoreActiveVariant();
+},true);
+window.addEventListener('blur',memoCaptureActiveVariant,true);
+window.addEventListener('focus',memoRestoreActiveVariant,true);
+window.addEventListener('pageshow',memoRestoreActiveVariant,true);
 // V34 — choix de consultation conservés par fiche et par navigateur.
 const MEMO_VIEW_CHOICE_KEY="memopharm-consultation-choices-v34";
 // Cache de navigation : reste disponible même si le stockage navigateur est refusé.
