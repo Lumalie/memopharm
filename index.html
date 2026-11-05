@@ -1880,6 +1880,59 @@ header #headerAdminActions .header-json-menu[open] .memo-backup-chevron{transfor
  opacity:1!important;visibility:visible!important;transform:translateY(0)!important;
 }
 </style>
+<style id="memo-v129-after-reconstitution-polish">
+/* Encadré sans contour, aligné à droite avec le sélecteur commercial. */
+#detail #presentations-details.presentation-fixed .memo-v102-commercial-storage.memo-after-panel{
+ border:0!important;box-shadow:none!important;background:transparent!important;
+ padding:0!important;right:18px!important;top:17px!important;
+ align-items:flex-end!important;gap:7px!important;
+}
+#detail #presentations-details .memo-after-panel-title{text-align:right!important}
+#detail #presentations-details .memo-after-panel-badges{justify-content:flex-end!important;flex-wrap:nowrap!important}
+/* Le badge durée conserve la même esthétique que les badges grossesse/allaitement,
+   mais sa largeur s'adapte au texte réellement saisi. */
+#detail #presentations-details .memo-after-panel-badges .memo-after-badge-time.memo-repro{
+ width:auto!important;min-width:39px!important;max-width:min(260px,48vw)!important;
+ flex:0 1 auto!important;padding:0 11px!important;gap:7px!important;
+ white-space:nowrap!important;
+}
+#detail #presentations-details .memo-after-duration{
+ display:inline-block!important;font-size:.84rem!important;font-weight:700!important;
+ line-height:1.2!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+/* Infobulles structurées, compactes, lisibles, alignées au bord droit. */
+#detail #presentations-details .memo-after-badge .memo-repro-tooltip.memo-after-tooltip{
+ width:max-content!important;min-width:190px!important;max-width:min(320px,85vw)!important;
+ padding:12px 15px!important;box-sizing:border-box!important;
+ text-align:left!important;white-space:normal!important;line-height:1.45!important;
+ border-radius:12px!important;right:0!important;left:auto!important;
+}
+#detail #presentations-details .memo-after-tooltip-heading{
+ display:block!important;font-size:.76rem!important;font-weight:700!important;
+ color:#296b52!important;margin:0 0 5px!important;line-height:1.35!important;
+}
+#detail #presentations-details .memo-after-tooltip-detail{
+ display:block!important;font-size:.88rem!important;font-weight:500!important;
+ color:#344a40!important;line-height:1.45!important;overflow-wrap:anywhere!important;
+}
+/* Rapprocher légèrement les CIP du sélecteur sans réintroduire de séparateur. */
+#detail #presentations-details.presentation-fixed .memo-v48-identity{
+ margin-bottom:6px!important;padding-bottom:0!important;
+}
+#detail #presentations-details.presentation-fixed #presentation-info .memo-v101-cip-block{
+ margin-top:0!important;padding-top:0!important;
+}
+#detail #presentations-details .memo-v48-identity .memo-v48-cip{
+ margin-top:7px!important;padding-top:0!important;
+}
+@media(max-width:700px){
+ #detail #presentations-details.presentation-fixed .memo-v102-commercial-storage.memo-after-panel{
+  align-items:flex-end!important;width:auto!important;max-width:100%!important;
+  margin:10px 0 6px auto!important;
+ }
+ #detail #presentations-details .memo-after-panel-badges{flex-wrap:wrap!important}
+}
+</style>
 </head>
 <body>
 <header><div class="wrap">
@@ -4763,8 +4816,8 @@ function memoStorageBadgeItems(st){
  if(!mode&&!isReconstitution)return '';
  const temperature=mode==='ambient'?{css:'ambient',label:'Température ambiante',tip:'À conserver à température ambiante',svg:MEMO_STORAGE_SUN}:mode==='fridge'?{css:'fridge',label:'2–8 °C',tip:'À conserver au réfrigérateur — entre 2 °C et 8 °C',svg:MEMO_STORAGE_SNOW}:null;
  // Même structure que les badges grossesse/allaitement : icône seule et infobulle.
- const tempBadge=temperature?`<span class="memo-repro memo-after-badge memo-after-badge-${temperature.css}" tabindex="0" role="img" aria-label="${esc(temperature.tip)}"><span class="memo-after-icon" aria-hidden="true">${temperature.svg}</span><span class="memo-repro-tooltip" role="tooltip"><span class="memo-repro-tip-title">${esc(temperature.tip)}</span></span></span>`:'';
- const timeBadge=duration?`<span class="memo-repro memo-after-badge memo-after-badge-time" tabindex="0" role="img" aria-label="${esc('Durée de conservation après reconstitution : '+duration)}"><span class="memo-after-icon" aria-hidden="true">${MEMO_STORAGE_CLOCK}</span><span class="memo-repro-tooltip" role="tooltip"><span class="memo-repro-tip-title">${esc('Durée de conservation après reconstitution : '+duration)}</span></span></span>`:'';
+ const tempBadge=temperature?`<span class="memo-repro memo-after-badge memo-after-badge-${temperature.css}" tabindex="0" role="img" aria-label="${esc(temperature.tip)}"><span class="memo-after-icon" aria-hidden="true">${temperature.svg}</span><span class="memo-repro-tooltip memo-after-tooltip" role="tooltip"><span class="memo-after-tooltip-heading">Conservation après reconstitution</span><span class="memo-after-tooltip-detail">${esc(temperature.tip)}</span></span></span>`:'';
+ const timeBadge=duration?`<span class="memo-repro memo-after-badge memo-after-badge-time" tabindex="0" role="group" aria-label="${esc('Durée de conservation après reconstitution : '+duration)}"><span class="memo-after-icon" aria-hidden="true">${MEMO_STORAGE_CLOCK}</span><span class="memo-after-duration">${esc(duration)}</span><span class="memo-repro-tooltip memo-after-tooltip" role="tooltip"><span class="memo-after-tooltip-heading">Durée après reconstitution</span><span class="memo-after-tooltip-detail">${esc(duration)}</span></span></span>`:'';
  return timeBadge+tempBadge;
 }
 function memoV102CommercialStorageBadges(p){
