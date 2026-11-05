@@ -1664,6 +1664,30 @@ header #headerAdminActions .header-json-menu[open] .memo-backup-chevron{transfor
 #detail .memo-reconstitution-item>div p:last-child{margin-bottom:0}
 @media(max-width:600px){#detail .memo-reconstitution-item>div{padding-left:0}}
 </style>
+
+<style>
+/* V118 — alignement typographique et espacement des spécialités commerciales */
+#detail .memo-reconstitution-public .memo-preparation-title,
+#detail .memo-reconstitution-public .memo-preparation-subtitle{
+ font-size:1rem!important;line-height:1.45!important;font-weight:700!important;
+ color:#28674f!important;display:flex!important;align-items:center!important;gap:9px!important;
+}
+#detail .memo-reconstitution-public .memo-preparation-title{margin:0 0 15px!important}
+#detail .memo-reconstitution-public .memo-preparation-subtitle{margin:0 0 7px!important}
+#detail .memo-reconstitution-public :is(.memo-preparation-title,.memo-preparation-subtitle) svg{
+ width:19px!important;height:19px!important;flex:0 0 19px!important;
+}
+#detail .memo-reconstitution-public .memo-reconstitution-item{margin:0 0 17px!important}
+#detail .memo-reconstitution-public .memo-reconstitution-item>div{
+ padding-left:28px!important;font-size:.93rem!important;line-height:1.55!important;
+}
+#detail .memo-reconstitution-public .memo-reconstitution-item>div :is(ul,ol){margin:3px 0 0!important;padding-left:21px!important}
+#detail .memo-reconstitution-public .memo-reconstitution-item>div li{margin:0!important}
+/* Rapprocher le premier titre de la ligne CIP, sans écraser les séparateurs. */
+#detail .memo-v105-molecule-presentations #presentations-details #presentation-info{margin-top:0!important}
+#detail .memo-v105-molecule-presentations #presentations-details .memo-v101-cip-block{padding-bottom:4px!important;margin-bottom:0!important}
+#detail .memo-v105-molecule-presentations #presentations-details .presentation-v33-fields{row-gap:9px!important}
+</style>
 </head>
 <body>
 <header><div class="wrap">
@@ -4158,6 +4182,16 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDo
    panel.querySelectorAll("[data-group-open]").forEach(b=>b.onclick=()=>openMedication(b.dataset.groupOpen));
    memoV44Banner(panel,child,selectedTitle);
    panel.querySelector('[data-memo-edit-selected]')?.addEventListener('click',()=>memoEditSelectedCommercial(m,child));
+   // Réapplique explicitement la spécialité mémorisée après chaque changement d'onglet.
+   const rememberedChoice=memoV116CommercialChosen(child);
+   const commercialSelect=panel.querySelector('[data-presentation-select]');
+   if(commercialSelect&&rememberedChoice){
+    commercialSelect.value=rememberedChoice.key;
+    const info=panel.querySelector('#presentation-info');
+    if(info)info.innerHTML=presentationInfo(rememberedChoice.p,child);
+    memoV48Sync(panel.querySelector('#presentations-details'),rememberedChoice.p);
+    memoV102SyncStorage(panel.querySelector('#presentations-details'),rememberedChoice.p);
+   }
    panel.querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=panel.querySelector("#presentation-info");memoSetViewChoice(child.id,{presentation:sel.value});const choice=memoV116CommercialChosen(child);if(target)target.innerHTML=choice?presentationInfo(choice.p,child):"";memoV48Sync(sel.closest("#presentations-details"),choice?.p);memoV102SyncStorage(sel.closest("#presentations-details"),choice?.p);memoWireBadgeClicks(target);memoV44Banner(panel,child,selectedTitle);memoV67Refresh(child,choice?.p||null)});
   };
   // Le boîtage n'est plus un niveau d'onglet : chaque conditionnement
@@ -4447,13 +4481,35 @@ function presentationLabel(p,m,i){
 }
 // V34 — choix de consultation conservés par fiche et par navigateur.
 const MEMO_VIEW_CHOICE_KEY="memopharm-consultation-choices-v34";
+// Cache de navigation : reste disponible même si le stockage navigateur est refusé.
+const memoViewChoiceCache=Object.create(null);
+function memoReadViewChoices(){
+ for(const store of [localStorage,sessionStorage]){
+  try{const value=JSON.parse(store.getItem(MEMO_VIEW_CHOICE_KEY)||"{}");if(value&&typeof value==="object")return value}catch(_){}
+ }
+ return {};
+}
 function memoGetViewChoice(id){
- try{const all=JSON.parse(localStorage.getItem(MEMO_VIEW_CHOICE_KEY)||"{}");return all&&typeof all==="object"?all[String(id)]||{}:{}}catch(_){return {}}
+ const key=String(id),persisted=memoReadViewChoices()[key]||{};
+ return {...persisted,...(memoViewChoiceCache[key]||{})};
 }
 function memoSetViewChoice(id,patch){
  if(!id)return;
- try{const all=JSON.parse(localStorage.getItem(MEMO_VIEW_CHOICE_KEY)||"{}");const safe=all&&typeof all==="object"?all:{};safe[String(id)]={...(safe[String(id)]||{}),...patch};localStorage.setItem(MEMO_VIEW_CHOICE_KEY,JSON.stringify(safe))}catch(_){/* Navigation possible sans stockage local. */}
+ const key=String(id);
+ memoViewChoiceCache[key]={...memoGetViewChoice(key),...patch};
+ const safe={...memoReadViewChoices(),[key]:memoViewChoiceCache[key]};
+ for(const store of [localStorage,sessionStorage]){
+  try{store.setItem(MEMO_VIEW_CHOICE_KEY,JSON.stringify(safe))}catch(_){}
+ }
 }
+// Capture la sélection AVANT tout changement d'onglet ou reconstruction du panneau.
+// L'option est identifiée par sa clé stable (index de spécialité + index de boîtage).
+document.addEventListener("change",event=>{
+ const select=event.target?.closest?.('#molecule-tab-content [data-presentation-select]');
+ if(!select)return;
+ const activeDose=document.querySelector('.molecule-dose-strip [data-molecule-dose][aria-selected="true"]');
+ if(activeDose?.dataset.moleculeDose)memoSetViewChoice(activeDose.dataset.moleculeDose,{presentation:select.value});
+},true);
 function memoV90SpecialtyPresentations(m){
  const pres=m.presentations||[];
  const entries=pres.map((p,i)=>{
