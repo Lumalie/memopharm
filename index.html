@@ -1804,6 +1804,52 @@ header #headerAdminActions .header-json-menu[open] .memo-backup-chevron{transfor
   padding-left:0!important;
 }
 </style>
+
+<style id="memo-v123-finitions-presentations">
+/* V123 : une seule grille de retraits pour les informations commerciales.
+   Les styles précédents laissaient 16 px supplémentaires sur les excipients. */
+#detail #presentations-details .memo-v125-compact-fields .memo-v125-excipients {
+  margin-left:0!important;padding-left:0!important;
+}
+#detail #presentations-details .memo-v125-compact-fields .memo-v125-field-label,
+#detail #presentations-details .memo-reconstitution-public .memo-preparation-title {
+  font-size:1.14rem!important;line-height:1.45!important;font-weight:700!important;
+  letter-spacing:0!important;
+}
+#detail #presentations-details .memo-v125-compact-fields .memo-v125-field-icon svg,
+#detail #presentations-details .memo-reconstitution-public .memo-preparation-title svg {
+  width:19px!important;height:19px!important;flex:0 0 19px!important;
+}
+/* Les textes de niveau principal partent tous 28 px après le bord du titre. */
+#detail #presentations-details .memo-v125-compact-fields .memo-v125-field-value {
+  margin-left:28px!important;padding-left:0!important;text-indent:0!important;
+}
+#detail #presentations-details .memo-v125-compact-fields .memo-v125-field-value .memo-exc-formatted,
+#detail #presentations-details .memo-v125-compact-fields .memo-v125-field-value .memo-exc-formatted p {
+  margin-left:0!important;padding-left:0!important;text-indent:0!important;
+}
+/* Les deux sous-niveaux commencent à 28 px ; leur contenu à 56 px. */
+#detail #presentations-details .memo-reconstitution-public .memo-reconstitution-item .memo-preparation-subtitle {
+  margin-left:28px!important;padding-left:0!important;font-size:1rem!important;
+  line-height:1.45!important;font-weight:700!important;
+}
+#detail #presentations-details .memo-reconstitution-public .memo-reconstitution-item > div {
+  margin-left:56px!important;padding-left:0!important;text-indent:0!important;
+}
+#detail #presentations-details .memo-reconstitution-public .memo-reconstitution-item > div :is(ul,ol) {
+  padding-left:22px!important;margin-left:0!important;
+}
+/* Resserrer seulement l'espace entre le bandeau CIP et Aspect. */
+#detail #presentations-details #presentation-info .presentation-v33-content {
+  margin-top:0!important;
+}
+#detail #presentations-details .memo-v125-compact-fields {
+  padding-top:0!important;margin-top:0!important;
+}
+#detail #presentations-details .memo-v125-compact-fields .memo-v125-field:first-child {
+  margin-top:7px!important;
+}
+</style>
 </head>
 <body>
 <header><div class="wrap">
