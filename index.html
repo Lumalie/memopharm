@@ -4832,6 +4832,7 @@ function memoExcipientWithoutHeadings(raw){
  // Exclure les annotations typographiques (italique/souligné) de la composition.
  // Exception : un EEN explicitement en gras à l'intérieur reste un ingrédient.
  let source=String(raw||"");
+ source=source.replace(/\[\[een\|([^\]\n]+)\]\]/g,"$1");
  source=source.replace(/__([\s\S]*?)__/g,"")
   .replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g,"")
   .replace(/(?:^|\n)\s*(?:noyau|pelliculage|enrobage|composition de l[’']ar[oô]me|composition des? ar[oô]mes?)\s*(?:du comprim[eé])?\s*:/gim,"\n");
@@ -4918,6 +4919,17 @@ function memoExcipientCanonical(v){
  if(match)return {key:memoExcipientNormalize(match[0]),label:match[0]};
  return {key:normalized,label};
 }
+function memoExcipientBoldEEN(raw){
+ const names=new Set();
+ const text=String(raw||"");
+ for(const match of text.matchAll(/\[\[een\|([^\]\n]+)\]\]/g)){
+  for(const fragment of match[1].split(/[,;()]/)){
+   const item=memoExcipientCanonical(fragment);
+   if(item)names.add(item.key);
+  }
+ }
+ return names;
+}
 function memoExcipientParsed(raw){
  const items=[];let uncertain=false;
  for(const token of memoExcipientTokens(raw)){
@@ -4925,8 +4937,6 @@ function memoExcipientParsed(raw){
   const x=memoExcipientCanonical(token);
   if(x){
    items.push(x);
-   // Les composants explicitement mentionnés dans la parenthèse d'un arôme
-   // restent consultables dans le tableau principal.
    if(memoExcipientAroma(x)){
     const opening=token.indexOf("(");
     if(opening>=0){
@@ -4935,14 +4945,15 @@ function memoExcipientParsed(raw){
       for(const ingredient of memoExcipientTokens(detail)){
        const component=memoExcipientCanonical(ingredient.replace(/^(?:contient(?:\s+de|\s+du|\s+des|\s+de l[’'])?|agent)\s+/i,""));
        if(component)items.push(component);
-       else uncertain=true;
       }
      }
     }
    }
-  }else uncertain=true;
+  }
+  // Les fragments de rubrique/annotation non interprétables sont ignorés :
+  // ils ne rendent pas toute la composition incertaine.
  }
- return {items,uncertain};
+ return {items,uncertain:items.length===0,boldEEN:memoExcipientBoldEEN(raw)};
 }
 function memoExcipientVariants(){
  return publicMeds().filter(m=>isVariantFiche(m)&&Array.isArray(m.presentations)&&m.presentations.length);
@@ -5042,7 +5053,7 @@ function memoExcipientComparator(child){
    </table>
   </div>
   <div class="memo-exc-matrix-head memo-exc-second-head"><strong>Tableau comparatif des excipients</strong><span>${products.length} spécialité(s)</span></div>
-  <div class="memo-een-controls"><label class="memo-een-toggle"><input type="checkbox" data-memo-een-only> Afficher les EEN uniquement</label><span class="memo-een-help">Repérage indicatif · vérifier le RCP exact et les seuils applicables</span></div>
+  <div class="memo-een-controls"><label class="memo-een-toggle"><input type="checkbox" data-memo-een-only> Afficher les EEN uniquement</label><span class="memo-een-help">Marquage EEN explicite · vérifier le RCP exact et les seuils applicables</span></div>
   <div class="memo-exc-matrix-scroll" role="region" tabindex="0" aria-label="Tableau comparatif des excipients, défilement horizontal possible">
    <table class="memo-exc-matrix-table memo-exc-shared-columns">
     <colgroup><col class="memo-exc-first-col">${products.map(()=>'<col class="memo-exc-product-col">').join("")}</colgroup>
@@ -5108,6 +5119,7 @@ function memoWireExcipientComparator(panel,child){
  products.forEach(({parsed,notable})=>[...parsed.items,...notable.items].forEach(item=>{
   if(item.key&&!memoExcipientAroma(item)&&!all.has(item.key))all.set(item.key,item.label);
  }));
+ const explicitlyBold=new Set(products.flatMap(({parsed})=>[...parsed.boldEEN]));
  const excipients=[...all.entries()].sort((a,b)=>a[1].localeCompare(b[1],"fr"));
  if(!excipients.length){
   tbody.innerHTML=`<tr><td colspan="${products.length+1}" class="memo-exc-empty">Aucun excipient renseigné pour cette présentation.</td></tr>`;
@@ -5125,7 +5137,7 @@ function memoWireExcipientComparator(panel,child){
    const icon=state==="yes"?'<svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-check-big preview-icon"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg>':state==="no"?'<svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x preview-icon"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>':'?';
    return `<td class="memo-exc-cell memo-exc-cell-${state}" aria-label="${esc(txt)}"><span class="memo-exc-icon memo-exc-${state}" title="${esc(txt)}" aria-hidden="true">${icon}</span><span class="memo-exc-sr-only">${esc(txt)}</span></td>`;
   }).join("");
-  return `<tr data-memo-exc-row="${esc(label)}" data-memo-een="${memoEenCandidate(label)}"><th scope="row" class="memo-exc-sticky">${esc(label)}${memoEenCandidate(label)?'<span class="memo-een-chip" title="Excipient à effet notoire potentiel : vérifier le RCP, la voie et la quantité">EEN</span>':""}</th>${cells}</tr>`;
+  return `<tr data-memo-exc-row="${esc(label)}" data-memo-een="${explicitlyBold.has(key)}"><th scope="row" class="memo-exc-sticky">${esc(label)}${(explicitlyBold.has(key))?'<span class="memo-een-chip" title="Marqué EEN dans au moins une spécialité · vérifier le RCP, la voie et la quantité">EEN</span>':""}</th>${cells}</tr>`;
  }).join("")+`<tr data-memo-exc-no-results hidden><td colspan="${products.length+1}" class="memo-exc-empty">Aucun excipient correspondant.</td></tr>`;
 }
 function renderPresentations(m,targetPresentationIndex=null,selectedPack=null){
@@ -5217,18 +5229,29 @@ function memoWirePresentationExcipientRich(root){
     sync();requestAnimationFrame(positionToolbar);
    });
   });
-  // Le marquage EEN est une mise en gras dans le champ existant : aucune
-  // deuxième saisie, aucun nouveau champ Supabase et aucun texte ajouté à la fiche.
-  // Un deuxième clic retire le gras lorsque la sélection est déjà en gras.
+  // EEN est un marqueur sémantique, distinct du gras de présentation.
+  // Le token [[een|...]] est stocké dans le champ existant, sans migration Supabase.
   const eenButton=wrap.querySelector('[data-exc-een]');
   eenButton?.addEventListener('mousedown',e=>e.preventDefault());
   eenButton?.addEventListener('click',()=>{
    const selection=window.getSelection();
-   const saved=wrap._range;
-   if(saved&&selection){selection.removeAllRanges();selection.addRange(saved)}
+   if(wrap._range&&selection){selection.removeAllRanges();selection.addRange(wrap._range)}
    if(!selection||selection.isCollapsed||!area.contains(selection.anchorNode)||!area.contains(selection.focusNode))return;
-   area.focus();
-   document.execCommand('bold',false,null);
+   const range=selection.getRangeAt(0);
+   const marked=range.commonAncestorContainer.nodeType===1
+    ?range.commonAncestorContainer.closest?.('[data-memo-een="true"]')
+    :range.commonAncestorContainer.parentElement?.closest('[data-memo-een="true"]');
+   if(marked&&range.toString().trim()===marked.textContent.trim()){
+    const text=document.createTextNode(marked.textContent);
+    marked.replaceWith(text);
+   }else{
+    const text=range.toString();
+    range.deleteContents();
+    const marker=document.createElement('strong');
+    marker.dataset.memoEen='true';
+    marker.textContent=text;
+    range.insertNode(marker);
+   }
    sync();requestAnimationFrame(positionToolbar);
   });
   const color=wrap.querySelector('[data-exc-color]');
@@ -5361,6 +5384,7 @@ function richInline(raw){
  });
  html=html.replace(/\[\[align:(left|center|right|justify)\|([^\]\n]+)\]\]/g,(_m,a,t)=>`<span style="display:block;text-align:${a}">${t}</span>`);
  html=html.replace(/\[\[size:(12|14|16|18|20|24|28)\|([^\]\n]+)\]\]/g,(_m,z,t)=>`<span style="font-size:${z}px">${t}</span>`);
+ html=html.replace(/\[\[een\|([^\]\n]+)\]\]/g,(_m,t)=>`<strong data-memo-een="true">${t}</strong>`);
  html=html.replace(/\*\*([^*\n]+)\*\*/g,'<strong>$1</strong>');
  html=html.replace(/__([^_\n]+)__/g,'<u>$1</u>');
  html=html.replace(/\*([^*\n]+)\*/g,'<em>$1</em>');
@@ -5446,6 +5470,7 @@ function memoRichSerialize(root,inlineOnly=false){
   if(tag==='br')return '\n';
   const value=[...node.childNodes].map(inline).join('');
   if(!value)return '';
+  if((tag==='b'||tag==='strong')&&node.dataset.memoEen==='true')return `[[een|${value}]]`;
   if(tag==='b'||tag==='strong')return `**${value}**`;
   if(tag==='i'||tag==='em')return `*${value}*`;
   if(tag==='u')return `__${value}__`;
