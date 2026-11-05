@@ -2244,6 +2244,16 @@ header #headerAdminActions .header-json-menu[open] .memo-backup-chevron{transfor
  padding-bottom:0!important;
 }
 </style>
+<style id="memo-molecule-preview-priority-v139">
+/* Les cartes prioritaires utilisent les mêmes classes que la fiche publique. */
+#searchPreview .search-preview-sheet>.priority-card,
+#searchPreview .search-preview-sheet>.group-glance,
+#searchPreview .search-preview-sheet>.callout{margin-top:18px;margin-bottom:20px}
+#searchPreview .priority-alert .priority-free-text p{margin:0;text-align:center;font-weight:750;color:#b4443e}
+#searchPreview .molecule-general.memo-v109-plain{margin-top:18px}
+#searchPreview .molecule-general.memo-v109-plain>summary{font-size:1.3rem;font-weight:750;color:#17604d;background:transparent;border-bottom:1px solid #d7e5dc;padding:12px 0}
+#searchPreview .molecule-general.memo-v109-plain>.molecule-general-inner{padding-top:15px}
+</style>
 </head>
 <body>
 <header><div class="wrap">
@@ -4171,7 +4181,15 @@ function previewSearchResult(item){
  const queryTokens=queryNorm.split(/\s+/).filter(Boolean);
  const names=norm([m.name,m.dosage,m.form,m.aliases||''].join(' ')).split(/\s+/).filter(Boolean);
  const sectionAliases={posologie:['poso','posologie','dose'],prise:['prise','repas'],interactions:['interaction','interactions'],oubli:['oubli'],indications:['indication','indications'],conservation:['conservation'],effets:['effet','effets'],age:['age'],grossesse:['grossesse'],allaitement:['allaitement']};
- const validSections=(m.sections||[]).filter(x=>x.enabled!==false&&!isDocumentationSection(x)&&String(x.content||'').trim());
+ // Même préparation des cartes prioritaires que dans la fiche complète.
+ const previewDisplayModel={sections:clone(m.sections||[])};
+ ensurePriorityCards(previewDisplayModel);
+ const previewSections=previewDisplayModel.sections.filter(x=>x.enabled!==false);
+ const previewAlert=previewSections.find(x=>x.id==="alerte-delivrance");
+ const previewGlance=previewSections.find(x=>x.id==="coup-oeil");
+ const previewAdvice=previewSections.find(x=>x.id==="conseils-comptoir");
+ const priorityIds=new Set(["alerte-delivrance","coup-oeil","conseils-comptoir"]);
+ const validSections=previewSections.filter(x=>!priorityIds.has(x.id)&&!isDocumentationSection(x)&&String(x.content||'').trim());
  const doseChildren=isMolecule(m)?moleculeChildren(m):[];
  const childSectionTitles=doseChildren.flatMap(c=>(c.sections||[]).filter(x=>x.enabled!==false).map(x=>norm(x.id+' '+x.title)));
  const sectionToken=t=>[...validSections.map(x=>norm(x.id+' '+x.title)),...childSectionTitles].some(label=>label.includes(t)||Object.entries(sectionAliases).some(([key,arr])=>arr.includes(t)&&label.includes(key)));
@@ -4212,7 +4230,12 @@ function previewSearchResult(item){
  const rubric=(x,owner,child=null)=>`<details class="memo-v74-rubric memo-v111-targeted" open data-v109-rubric="${esc(x.id)}" data-v109-owner="${esc(owner.id)}" ${child?`data-v109-child="${esc(child.id)}"`:""}><summary title="Replier ou déplier la rubrique"><span class="memo-v74-chevron" aria-hidden="true"></span>${esc(x.title||"Information")}</summary><div class="memo-v74-rubric-content" title="Ouvrir cette rubrique dans la fiche complète">${safeSection(x)}</div></details>`;
  const sectionList=(items,owner,child=null)=>items.map(x=>targeted?rubric(x,owner,child):`<details class="memo-v74-rubric memo-v111-targeted" open data-v109-rubric="${esc(x.id)}" data-v109-owner="${esc(owner.id)}" ${child?`data-v109-child="${esc(child.id)}"`:""}><summary title="Replier ou déplier la rubrique"><span class="memo-v74-chevron" aria-hidden="true"></span>${esc(x.title||'Information')}</summary><div class="memo-v74-rubric-content" title="Ouvrir cette rubrique dans la fiche complète">${safeSection(x)}</div></details>`).join('');
  const generalSections=targeted?(targetSection?[targetSection]:[]):validSections;
- const previewGeneralHtml=generalSections.length?`<details class="molecule-general memo-v102-general memo-v109-plain" open><summary><span class="memo-v112-chevron" aria-hidden="true"></span>📖 Informations générales</summary><div class="molecule-general-inner memo-v85-specialty-rubrics">${sectionList(generalSections,m)}</div></details>`:'';
+ const previewPriorityHtml=!targeted&&isMolecule(m)?
+  `${previewAlert&&String(previewAlert.content||"").trim()?`<div class="priority-card priority-alert">${renderPrioritySection(previewAlert)}</div>`:""}
+   ${previewGlance&&String(previewGlance.content||"").trim()?`<div class="group-glance">${renderPrioritySection(previewGlance)}</div>`:""}
+   ${previewAdvice&&String(previewAdvice.content||"").trim()?`<div class="priority-card priority-advice">${renderPrioritySection(previewAdvice)}</div>`:""}
+   ${(m.sections?.[0]?.princepsNames||[]).length?`<div class="callout"><strong>Princeps :</strong> ${m.sections[0].princepsNames.map(n=>memoPrincepsDisplay(m,n)).join(", ")}</div>`:""}`:"";
+ const previewGeneralHtml=generalSections.length?`<details class="molecule-general memo-v102-general memo-v109-plain" open><summary>Informations générales</summary><div class="molecule-general-inner memo-v85-specialty-rubrics">${sectionList(generalSections,m)}</div></details>`:'';
  const previewSpecialtyHtml=isSpecialiteFiche(m)&&!targeted?memoV90SpecialtyPresentations(m).replace('id="presentations-details"','id="preview-presentations-details"').replace('class="molecule-general memo-v92-specialty-presentations"','class="molecule-general memo-v92-specialty-presentations memo-v108-preview-presentations memo-v109-plain" open'):'';
  const childPreviewHtml=selectedChild?(()=>{
   const form=String(selectedChild.form||medicationForms(selectedChild)[0]||'').trim();
@@ -4227,7 +4250,7 @@ function previewSearchResult(item){
   const contentOwner=targeted&&!childMatch&&targetSection?m:selectedChild;
   return `${banner}${presentation}${content.length?`<div class="memo-v109-dose-rubrics">${sectionList(content,m,contentOwner===m?null:selectedChild)}</div>`:''}`;
  })():'';
- const previewBodyHtml=isSpecialiteFiche(m)?`${previewGeneralHtml}${previewSpecialtyHtml}`:isMolecule(m)?selectedChild?childPreviewHtml:previewGeneralHtml:validSections.map(x=>rubric(x,m)).join('');
+ const previewBodyHtml=isSpecialiteFiche(m)?`${previewGeneralHtml}${previewSpecialtyHtml}`:isMolecule(m)?selectedChild?childPreviewHtml:`${previewPriorityHtml}${previewGeneralHtml}`:validSections.map(x=>rubric(x,m)).join('');
 
  const foundFooter=""; // V79 : supprimer le renvoi redondant et son encadré.
  $('searchPreview').innerHTML=`<div class="search-preview-sheet"><div class="search-preview-header">${headerHtml}</div>${previewBodyHtml}${foundFooter}</div>`;
