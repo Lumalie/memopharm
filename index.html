@@ -2636,8 +2636,21 @@ async function loadCloudMeds(){
 }
 async function syncMedication(m){
  if(!requireAdmin())throw new Error("Accès administrateur requis");
- const {data,error}=await supabaseClient.from("medications").upsert(medToRow(m)).select().single();
+ const payload=medToRow(m);
+ if(m.entry_type==='variant'){
+  payload.entry_type='variant';
+  const meta=payload.sections.find(x=>x.id==='variant-meta');
+  if(!meta?.moleculeParentId)throw new Error('Enregistrement interrompu : variante sans molécule parente.');
+  for(const section of payload.sections){
+   delete section.moleculeRoot;
+   delete section.memofficineKind;
+  }
+ }
+ const {data,error}=await supabaseClient.from("medications").upsert(payload).select().single();
  if(error){console.error(error);toast("Enregistrement refusé par Supabase : vérifie les permissions et la structure SQL");throw error}
+ if(m.entry_type==='variant'&&data.entry_type!=='variant'){
+  throw new Error('Supabase a renvoyé le type '+data.entry_type+' au lieu de variant. Vérifier un éventuel trigger SQL sur medications.');
+ }
  const updated=rowToMed(data);const index=meds.findIndex(x=>x.id===updated.id);if(index>=0)meds[index]=updated;else meds.unshift(updated);selectedId=updated.id;renderFilters();renderResults();return updated;
 }
 function updateAdminHeader(){
@@ -7805,8 +7818,12 @@ function captureEditorFields(m){
  m.status=(get("f-status")||"à vérifier").toLocaleLowerCase("fr");m.published=get("f-published")==="true";
  m.updated=get("f-updated"); // Source principale historique conservée.
  readPresentationEditors(m);
- const cards=[...$("editor").querySelectorAll(".section-editor")];
- cards.forEach(card=>{const i=Number(card.dataset.section);if(!m.sections[i])return;
+ // CRITIQUE : les éditeurs de variantes réutilisent .section-editor mais
+ // portent data-variant-section (et non data-section). Les inclure ici
+ // écrasait les rubriques de la MOLÉCULE avec les champs d'une VARIANTE,
+ // pouvant déplacer/supprimer moleculeRoot et la hiérarchie.
+ const cards=[...$("editor").querySelectorAll('.section-editor[data-section]:not([data-variant-section])')];
+ cards.forEach(card=>{const i=Number(card.dataset.section);if(!Number.isInteger(i)||i<0||!m.sections[i])return;
    for(const field of ["title","type","content"]){
      const el=card.querySelector(`[data-field="${field}"]`);
      if(el)m.sections[i][field]=el.value;
@@ -7874,7 +7891,13 @@ async function saveEditor(id){if(!requireAdmin())return;
  const button=$("saveMed");
  if(button){button.disabled=true;button.textContent="Enregistrement…"}
  try{
+  const wasMolecule=isMolecule(m);
+  const originalMoleculeParent=m.sections?.find(x=>x.moleculeRoot);
   captureEditorFields(m);
+  if(wasMolecule&&!isMolecule(m)){
+   if(originalMoleculeParent)originalMoleculeParent.moleculeRoot=true;
+   throw new Error('Enregistrement bloqué : les métadonnées de la fiche molécule ont été altérées.');
+  }
   if(m.entry_type==='variant')throw new Error('Une présentation doit être modifiée depuis sa fiche molécule, dans Formes et dosages.');
   const variants=prepareMoleculeVariants(m);
   // Les variantes sont des lignes Supabase distinctes : les retirer de l'interface
