@@ -2254,7 +2254,9 @@ header #headerAdminActions .header-json-menu[open] .memo-backup-chevron{transfor
 #searchPreview .molecule-general.memo-v109-plain>summary{font-size:1.3rem;font-weight:750;color:#17604d;background:transparent;border-bottom:1px solid #d7e5dc;padding:12px 0}
 #searchPreview .molecule-general.memo-v109-plain>.molecule-general-inner{padding-top:15px}
 </style>
-</head>
+<style id="memo-v142-search-rubric">
+.memo-search-target-rubric{scroll-margin-top:12px}
+</style></head>
 <body>
 <header><div class="wrap">
   <div class="topline">
@@ -4057,10 +4059,16 @@ function getSearchMatches(queryOverride=null){
   if(!parent)continue;
   const searchable=norm([displayMedName(parent),parent.name,variant.name,variant.dosage,
    variant.form,ingredientTitleDose(variant),...medicationForms(variant),
-   ...specialtyItems(variant).map(x=>[x.name,x.p.cip,x.p.lab,x.p.form].join(" "))]
+   ...(variant.sections||[]).filter(x=>x.enabled!==false).map(x=>[x.id,x.title,x.content].join(" ")),
+   ...specialtyItems(variant).map(x=>[x.name,x.p.cip,x.p.lab,x.p.form,
+     x.p.description,x.p.excipients,x.p.reconstitution,x.p.conservationAfterReconstitution,
+     "aspect excipients préparation conservation"].join(" "))]
    .join(" "));
   if(tokens.length&&tokens.every(t=>memoSearchTokenMatch(searchable,t))){
-   found.push({med:variant,section:null,presentation:null});
+   const rubricWords=tokens.filter(t=>["aspect","excipients","reconstitution","conservation","fractionnement","ecrasement","écrasement"].some(label=>norm(label).includes(t)));
+   const section=(variant.sections||[]).filter(x=>x.enabled!==false)
+     .find(x=>rubricWords.some(t=>memoSearchTokenMatch(x.id+" "+x.title,t)))||null;
+   found.push({med:variant,section,presentation:null});
   }
  }
  // V106 : une seule carte par fiche spécialité, même lorsque le nom et
@@ -4258,6 +4266,30 @@ function previewSearchResult(item){
  $('searchPreview').querySelectorAll('[data-filter-class]').forEach(b=>b.onclick=e=>{e.stopPropagation();memoNavigateExplorerFilter('class',b.dataset.filterClass)});
  $('searchPreview').querySelectorAll('[data-filter-ind]').forEach(b=>b.onclick=e=>{e.stopPropagation();memoNavigateExplorerFilter('indication',b.dataset.filterInd)});
  memoLinkifyCips($('searchPreview'));
+ // Les requêtes « molécule + dosage + rubrique » ciblent la rubrique de
+ // présentation correspondante, sans déplacer le défilement de la page.
+ const requestedField=queryTokens.find(t=>["aspect","excipients","reconstitution","conservation","fractionnement","ecrasement"].includes(t));
+ if(requestedField&&selectedChild){
+  const preview=$('searchPreview');
+  const selectors={
+   aspect:".memo-v125-field-aspect, .presentation-v33-aspect",
+   excipients:".memo-v125-excipients, .presentation-v33-excipients",
+   reconstitution:".memo-reconstitution-public",
+   conservation:".memo-reconstitution-public",
+   fractionnement:".memo-v125-fractionnement",
+   ecrasement:".memo-v125-ecrasement"
+  };
+  const field=preview.querySelector(selectors[requestedField]||"");
+  if(field){
+   field.classList.add("memo-search-target-rubric");
+   requestAnimationFrame(()=>{
+    const scrollArea=preview.closest(".search-preview-scroll")||preview;
+    if(scrollArea.scrollHeight>scrollArea.clientHeight){
+     scrollArea.scrollTop=Math.max(0,field.getBoundingClientRect().top-scrollArea.getBoundingClientRect().top+scrollArea.scrollTop-12);
+    }
+   });
+  }
+ }
  $('searchPreview').querySelector('[data-preview-open-title]')?.addEventListener('click',()=>openMedication(m.id,pres,sec?.id||null));
  $('searchPreview').querySelector('[data-open-selected-dosage]')?.addEventListener('click',e=>openMedication(e.currentTarget.dataset.openSelectedDosage));
  $('searchPreview').querySelectorAll('[data-preview-section]').forEach(b=>b.onclick=()=>{const target=(m.sections||[]).find(x=>String(x.id)===String(b.dataset.previewSection));navigatePreview({med:m,section:target||null,presentation:pres});});
@@ -5818,7 +5850,7 @@ function memoInlineRefresh(wrapper,model){
  wrapper.innerHTML=memoInlineHtml(model,true).replace(/^<div[^>]*>|<\/div>$/g,"");
 }
 function memoInlineNew(){
- return {rows:3,cols:3,cells:Array.from({length:9},(_,i)=>({r:Math.floor(i/3),c:i%3,rs:1,cs:1,text:i===1?"Adulte":i===2?"Enfant":""}))};
+ return {rows:3,cols:3,cells:Array.from({length:9},(_,i)=>({r:Math.floor(i/3),c:i%3,rs:1,cs:1,text:""}))};
 }
 function richText(raw){
  const lines=String(raw||'').split('\n');let html='',list=null;
@@ -5906,7 +5938,20 @@ function wireTextFormatting(){
    const p=document.createElement('p');p.innerHTML='<br>';editor.append(p);
   }
   const sync=()=>{storage.value=memoRichSerialize(editor);storage.dispatchEvent(new Event('input',{bubbles:true}))};
-  const tableTools=card.querySelector(".memo-inline-table-toolbar") || (()=>{const el=document.createElement("div");el.hidden=true;card.append(el);return el})();
+  // Chaque zone riche dispose de sa propre barre de tableau, y compris
+  // Reconstitution et Conservation après reconstitution.
+  const wrapper=editor.closest(".text-edit-wrap");
+  const tableTools=wrapper.querySelector(".memo-inline-table-toolbar") || (()=>{
+   const reference=document.querySelector("#editor .section-editor .memo-inline-table-toolbar");
+   const el=reference?reference.cloneNode(true):document.createElement("div");
+   el.classList.add("memo-inline-table-toolbar");
+   el.hidden=true;
+   wrapper.insertBefore(el,bubble);
+   return el;
+  })();
+  // Un tableau existant est sélectionnable immédiatement après l'ouverture de l'éditeur.
+  const initialTable=editor.querySelector(".memo-inline-table");
+  if(initialTable){tableTools.hidden=false;}
   let activeTable=null,dragStart=null,dragEnd=null,dragging=false;
   const selectionCells=()=>{
    if(!activeTable||!dragStart||!dragEnd)return [];
@@ -5922,6 +5967,7 @@ function wireTextFormatting(){
    for(const cell of selected)activeTable?.querySelector(`td[data-r="${cell.r}"][data-c="${cell.c}"]`)?.classList.add("memo-cell-selected");
   };
   const activate=table=>{activeTable=table;tableTools.hidden=false};
+  if(initialTable)activate(initialTable);
   editor.addEventListener("focusin",e=>{
    const td=e.target.closest?.(".memo-inline-table td");
    if(td){card.dataset.memoLastCellR=td.dataset.r;card.dataset.memoLastCellC=td.dataset.c;}
@@ -6019,7 +6065,8 @@ function wireTextFormatting(){
    }else memoTableResize(model,action);
    const wrapper=activeTable.closest(".memo-inline-table-wrap");
    memoInlineRefresh(wrapper,model);
-   activeTable=null;dragStart=null;dragEnd=null;tableTools.hidden=true;sync();
+   activeTable=wrapper.querySelector(".memo-inline-table");
+   dragStart=null;dragEnd=null;tableTools.hidden=!activeTable;sync();
   });
   // Sélection rectangulaire de cellules : copie et collage en conservant les positions.
   // Les cellules sélectionnées sont signalées par la surbrillance existante.
