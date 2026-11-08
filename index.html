@@ -5792,17 +5792,42 @@ async function uploadPresentationPhotos(m){
 // Format léger et sécurisé : seules les marques créées par la barre d'outils sont interprétées.
 const TEXT_COLORS={default:"#23352e",green:'#245d4b',red:'#a44c43',orange:'#a76a20',blue:'#326a9b',gray:'#87949c',pink:'#a34e7e',ficheGroup:'#2f684b',ficheMolecule:'#793f8f',ficheVariant:'#98553f',ficheSpecialite:'#1e7169',fichePresentation:'#315b87'};
 function richInline(raw){
- let html=esc(raw);
- html=html.replace(/\[\[gloss:([a-zA-Z0-9_-]{1,80})\|([^\]\n]+)\]\]/g,(_m,id,label)=>`<span class="memo-gloss-term" tabindex="0" data-gloss-id="${id}">${label}</span>`);
- html=html.replace(/\[\[(default|green|red|orange|blue|gray|pink|ficheGroup|ficheMolecule|ficheVariant|ficheSpecialite|fichePresentation)\|([^\]\n]+)\]\]/g,(_m,c,t)=>`<span style="color:${TEXT_COLORS[c]}">${t}</span>`);
- // Liens Markdown : seules les adresses HTTP(S) sont autorisées.
+ // Parser récursif : les anciennes balises peuvent contenir d'autres balises.
+ // Les traiter par regex indépendantes laissait apparaître [[gray|...]] à l'écran.
+ const source=String(raw??'');
+ const render=(text)=>{
+  let out='',i=0;
+  while(i<text.length){
+   if(text.startsWith('[[',i)){
+    const head=text.slice(i).match(/^\[\[(default|green|red|orange|blue|gray|pink|ficheGroup|ficheMolecule|ficheVariant|ficheSpecialite|fichePresentation|size:(?:12|14|16|18|20|24|28)|align:(?:left|center|right|justify)|een|gloss:[a-zA-Z0-9_-]{1,80})\|/);
+    if(head){
+     const start=i+head[0].length;let depth=1,j=start;
+     while(j<text.length&&depth){
+      if(text.startsWith('[[',j)&&/^\[\[[a-zA-Z][a-zA-Z0-9:_-]*\|/.test(text.slice(j))){depth++;j+=2;continue}
+      if(text.startsWith(']]',j)){depth--;if(!depth)break;j+=2;continue}
+      j++;
+     }
+     if(!depth){
+      const inside=render(text.slice(start,j));const kind=head[1];
+      if(kind in TEXT_COLORS)out+=`<span style="color:${TEXT_COLORS[kind]}">${inside}</span>`;
+      else if(kind.startsWith('size:'))out+=`<span style="font-size:${kind.slice(5)}px">${inside}</span>`;
+      else if(kind.startsWith('align:'))out+=`<span style="display:block;text-align:${kind.slice(6)}">${inside}</span>`;
+      else if(kind==='een')out+=`<strong data-memo-een="true">${inside}</strong>`;
+      else if(kind.startsWith('gloss:'))out+=`<span class="memo-gloss-term" tabindex="0" data-gloss-id="${kind.slice(6)}">${inside}</span>`;
+      i=j+2;continue;
+     }
+    }
+   }
+   out+=esc(text[i]);i++;
+  }
+  return out;
+ };
+ let html=render(source);
+ // Compatibilité avec le balisage historique et les liens HTTPS.
  html=html.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s<>\)]+)\)/gi,(_match,label,url)=>{
-  const safe=validSourceLink(url.replace(/&amp;/g,"&"));
+  const safe=validSourceLink(url.replace(/&amp;/g,'&'));
   return safe?`<a href="${esc(safe)}" target="_blank" rel="noopener noreferrer">${label}</a>`:_match;
  });
- html=html.replace(/\[\[align:(left|center|right|justify)\|([^\]\n]+)\]\]/g,(_m,a,t)=>`<span style="display:block;text-align:${a}">${t}</span>`);
- html=html.replace(/\[\[size:(12|14|16|18|20|24|28)\|([^\]\n]+)\]\]/g,(_m,z,t)=>`<span style="font-size:${z}px">${t}</span>`);
- html=html.replace(/\[\[een\|([^\]\n]+)\]\]/g,(_m,t)=>`<strong data-memo-een="true">${t}</strong>`);
  html=html.replace(/\*\*([^*\n]+)\*\*/g,'<strong>$1</strong>');
  html=html.replace(/__([^_\n]+)__/g,'<u>$1</u>');
  html=html.replace(/\*([^*\n]+)\*/g,'<em>$1</em>');
@@ -5906,9 +5931,13 @@ function memoRichSerialize(root,inlineOnly=false){
     const hex='#'+rgb.slice(0,3).map(v=>Number(v).toString(16).padStart(2,'0')).join('');
     named=Object.keys(TEXT_COLORS).find(k=>TEXT_COLORS[k]===hex)||'';
    }else named=Object.keys(TEXT_COLORS).find(k=>TEXT_COLORS[k]===color)||'';
-   if(named&&named!=='default')return `[[${named}|${value}]]`;
    const size=parseInt(node.style.fontSize||node.getAttribute('size')||'',10);
-   if([12,14,16,18,20,24,28].includes(size))return `[[size:${size}|${value}]]`;
+   // Conserver simultanément la couleur ET la taille d'un même élément.
+   // La forme imbriquée est prise en charge par richInline.
+   let formatted=value;
+   if([12,14,16,18,20,24,28].includes(size))formatted=`[[size:${size}|${formatted}]]`;
+   if(named&&named!=='default')formatted=`[[${named}|${formatted}]]`;
+   if(formatted!==value)return formatted;
   }
   return value;
  };
@@ -7283,8 +7312,21 @@ function renderEditor(id){
   // Réutiliser les outils de mise en forme des Informations générales.
   wireTextFormatting();
  }
- const initialVariants=Array.isArray(m._variantDrafts)?m._variantDrafts:meds.filter(x=>!isGroup(x)&&moleculeParentId(x)===String(m.id));
- initialVariants.forEach(x=>{const draft=clone(x);memoOrganizeVariantSections(draft);variantDrafts.set(String(x.id),draft)});
+ // Inclure les anciennes variantes encore marquées comme « groupe » / « dci ».
+ // La liaison explicite à cette molécule fait foi, pas le type hérité.
+ const initialVariants=Array.isArray(m._variantDrafts)?m._variantDrafts:meds.filter(x=>
+  String(x.id)!==String(m.id)&&
+  String(moleculeParentId(x))===String(m.id)&&
+  (x.entry_type==='variant'||x.entry_type==='dci')
+ );
+ initialVariants.forEach(x=>{
+  const draft=clone(x);
+  // Normaliser seulement la copie de travail ; aucune écriture SQL avant Enregistrer.
+  draft.entry_type='variant';
+  draft.sections=Array.isArray(draft.sections)?draft.sections:[];
+  memoOrganizeVariantSections(draft);
+  variantDrafts.set(String(x.id),draft);
+ });
  if(m._variantUi){variantActiveId=m._variantUi.activeId||null;variantSubtab=m._variantUi.subtab||'particularites';variantCommercialIndex=m._variantUi.commercialIndex||0;}
  try{const remembered=sessionStorage.getItem(memoVariantSelectionKey);if(remembered&&variantDrafts.has(remembered))variantActiveId=remembered}catch{}
  window.memoCaptureVariantDraft=target=>{
