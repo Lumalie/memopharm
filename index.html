@@ -5792,48 +5792,62 @@ async function uploadPresentationPhotos(m){
 // Format léger et sécurisé : seules les marques créées par la barre d'outils sont interprétées.
 const TEXT_COLORS={default:"#23352e",green:'#245d4b',red:'#a44c43',orange:'#a76a20',blue:'#326a9b',gray:'#87949c',pink:'#a34e7e',ficheGroup:'#2f684b',ficheMolecule:'#793f8f',ficheVariant:'#98553f',ficheSpecialite:'#1e7169',fichePresentation:'#315b87'};
 function richInline(raw){
- // Parser récursif : les anciennes balises peuvent contenir d'autres balises.
- // Les traiter par regex indépendantes laissait apparaître [[gray|...]] à l'écran.
+ // V146 : parser imbriqué, sans expressions régulières appliquées au HTML généré.
+ // Les formats [[...|...]] peuvent s'imbriquer, y compris à l'intérieur d'un lien.
  const source=String(raw??'');
- const render=(text)=>{
-  let out='',i=0;
-  while(i<text.length){
-   if(text.startsWith('[[',i)){
-    const head=text.slice(i).match(/^\[\[(default|green|red|orange|blue|gray|pink|ficheGroup|ficheMolecule|ficheVariant|ficheSpecialite|fichePresentation|size:(?:12|14|16|18|20|24|28)|align:(?:left|center|right|justify)|een|gloss:[a-zA-Z0-9_-]{1,80})\|/);
-    if(head){
-     const start=i+head[0].length;let depth=1,j=start;
-     while(j<text.length&&depth){
-      if(text.startsWith('[[',j)&&/^\[\[[a-zA-Z][a-zA-Z0-9:_-]*\|/.test(text.slice(j))){depth++;j+=2;continue}
-      if(text.startsWith(']]',j)){depth--;if(!depth)break;j+=2;continue}
-      j++;
-     }
-     if(!depth){
-      const inside=render(text.slice(start,j));const kind=head[1];
-      if(kind in TEXT_COLORS)out+=`<span style="color:${TEXT_COLORS[kind]}">${inside}</span>`;
-      else if(kind.startsWith('size:'))out+=`<span style="font-size:${kind.slice(5)}px">${inside}</span>`;
-      else if(kind.startsWith('align:'))out+=`<span style="display:block;text-align:${kind.slice(6)}">${inside}</span>`;
-      else if(kind==='een')out+=`<strong data-memo-een="true">${inside}</strong>`;
-      else if(kind.startsWith('gloss:'))out+=`<span class="memo-gloss-term" tabindex="0" data-gloss-id="${kind.slice(6)}">${inside}</span>`;
-      i=j+2;continue;
+ const supported=k=>Object.prototype.hasOwnProperty.call(TEXT_COLORS,k)||
+  /^(?:size:(?:12|14|16|18|20|24|28)|align:(?:left|center|right|justify)|een|bold|italic|underline|gloss:[a-zA-Z0-9_-]{1,80}|link:[A-Za-z0-9%._~!$&'()*+,;=:@\/-]+)$/.test(k);
+ const plain=t=>{
+  // Anciennes fiches : liens et markdown simples restent compatibles.
+  let out='',at=0;
+  const re=/\[([^\]\n]+)\]\((https?:\/\/[^\s<>\)]+)\)|\*\*([^*\n]+)\*\*|__([^_\n]+)__|\*([^*\n]+)\*/g;
+  for(const m of t.matchAll(re)){
+   out+=esc(t.slice(at,m.index));
+   if(m[1]!==undefined){const safe=validSourceLink(m[2]);out+=safe?`<a href="${esc(safe)}" target="_blank" rel="noopener noreferrer">${esc(m[1])}</a>`:esc(m[0])}
+   else if(m[3]!==undefined)out+=`<strong>${esc(m[3])}</strong>`;
+   else if(m[4]!==undefined)out+=`<u>${esc(m[4])}</u>`;
+   else out+=`<em>${esc(m[5])}</em>`;
+   at=m.index+m[0].length;
+  }
+  return out+esc(t.slice(at));
+ };
+ const wrap=(k,inside)=>{
+  if(Object.prototype.hasOwnProperty.call(TEXT_COLORS,k))return `<span style="color:${TEXT_COLORS[k]}">${inside}</span>`;
+  if(k.startsWith('size:'))return `<span style="font-size:${k.slice(5)}px">${inside}</span>`;
+  if(k.startsWith('align:'))return `<span style="display:block;text-align:${k.slice(6)}">${inside}</span>`;
+  if(k==='een')return `<strong data-memo-een="true">${inside}</strong>`;
+  if(k==='bold')return `<strong>${inside}</strong>`;
+  if(k==='italic')return `<em>${inside}</em>`;
+  if(k==='underline')return `<u>${inside}</u>`;
+  if(k.startsWith('gloss:'))return `<span class="memo-gloss-term" tabindex="0" data-gloss-id="${k.slice(6)}">${inside}</span>`;
+  if(k.startsWith('link:')){
+   let url='';try{url=decodeURIComponent(k.slice(5))}catch{}
+   const safe=validSourceLink(url);
+   return safe?`<a href="${esc(safe)}" target="_blank" rel="noopener noreferrer">${inside}</a>`:inside;
+  }
+  return inside;
+ };
+ const parse=(start,inside=false)=>{
+  let out='',buffer='',i=start;
+  const flush=()=>{if(buffer){out+=plain(buffer);buffer=''}};
+  while(i<source.length){
+   if(inside&&source.startsWith(']]',i)){flush();return {html:out,end:i+2,closed:true}}
+   if(source.startsWith('[[',i)){
+    const pipe=source.indexOf('|',i+2);
+    if(pipe>i&&pipe-i<400){
+     const kind=source.slice(i+2,pipe);
+     if(supported(kind)){
+      const child=parse(pipe+1,true);
+      if(child.closed){flush();out+=wrap(kind,child.html);i=child.end;continue}
      }
     }
    }
-   out+=esc(text[i]);i++;
+   buffer+=source[i++];
   }
-  return out;
+  flush();return {html:out,end:i,closed:!inside};
  };
- let html=render(source);
- // Compatibilité avec le balisage historique et les liens HTTPS.
- html=html.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s<>\)]+)\)/gi,(_match,label,url)=>{
-  const safe=validSourceLink(url.replace(/&amp;/g,'&'));
-  return safe?`<a href="${esc(safe)}" target="_blank" rel="noopener noreferrer">${label}</a>`:_match;
- });
- html=html.replace(/\*\*([^*\n]+)\*\*/g,'<strong>$1</strong>');
- html=html.replace(/__([^_\n]+)__/g,'<u>$1</u>');
- html=html.replace(/\*([^*\n]+)\*/g,'<em>$1</em>');
- return html;
+ return parse(0).html;
 }
-
 
 const MEMO_INTERACTION_BG={
  ci:"#f8e2e1",deconseillee:"#fff0d8",precaution:"#fff8db",prendre:"#e7f1f8"
@@ -5914,12 +5928,12 @@ function memoRichSerialize(root,inlineOnly=false){
   const value=[...node.childNodes].map(inline).join('');
   if(!value)return '';
   if((tag==='b'||tag==='strong')&&node.dataset.memoEen==='true')return `[[een|${value}]]`;
-  if(tag==='b'||tag==='strong')return `**${value}**`;
-  if(tag==='i'||tag==='em')return `*${value}*`;
-  if(tag==='u')return `__${value}__`;
+  if(tag==='b'||tag==='strong')return `[[bold|${value}]]`;
+  if(tag==='i'||tag==='em')return `[[italic|${value}]]`;
+  if(tag==='u')return `[[underline|${value}]]`;
   if(tag==='a'){
    const url=validSourceLink(node.getAttribute('href')||'');
-   return url?`[${value}](${url})`:value;
+   return url?`[[link:${encodeURIComponent(url)}|${value}]]`:value;
   }
   if(tag==='span'&&node.dataset.glossId)return `[[gloss:${node.dataset.glossId}|${value}]]`;
   if(tag==='span'||tag==='font'){
@@ -6204,7 +6218,7 @@ function wireTextFormatting(){
    const sel=window.getSelection();sel.removeAllRanges();sel.addRange(range);
   });
   editor.addEventListener('input',sync);
-  editor.addEventListener('blur',sync);
+  editor.addEventListener('blur',()=>{if(!document.hidden)sync()});
   editor.addEventListener('paste',event=>{
    const td=event.target.closest?.('.memo-inline-table td');
    if(td&&activeTable&&activeTable.contains(td)){
@@ -8441,7 +8455,11 @@ document.addEventListener("visibilitychange",()=>{
   saveLocalDraft();
  }else if(editorFocusReturnPending){
   editorFocusReturnPending=false;
-  restoreEditorFocus();
+  // Le retour de visibilité ne doit pas manipuler la sélection dans un
+  // contenteditable : le navigateur la restaure déjà et les formats en cours
+  // pourraient être insérés comme texte par les commandes de mise en forme.
+  const active=document.activeElement;
+  if(!active?.closest?.('.memo-rich-editor'))restoreEditorFocus();
  }
 });
 window.addEventListener("pagehide",saveLocalDraft);
