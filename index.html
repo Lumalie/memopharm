@@ -2256,6 +2256,13 @@ header #headerAdminActions .header-json-menu[open] .memo-backup-chevron{transfor
 </style>
 <style id="memo-v142-search-rubric">
 .memo-search-target-rubric{scroll-margin-top:12px}
+</style><style id="memo-login-password-eye-v147">
+.memo-login-password-wrap{position:relative;width:100%}
+.memo-login-password-wrap>input{width:100%;box-sizing:border-box;padding-right:48px}
+.memo-login-password-toggle{position:absolute;right:7px;top:50%;transform:translateY(-50%);width:34px;height:34px;display:flex;align-items:center;justify-content:center;padding:5px;border:0;background:transparent;color:#929b99;cursor:pointer;border-radius:8px}
+.memo-login-password-toggle:hover,.memo-login-password-toggle:focus-visible{background:#edf3ef;color:#4c7061}
+.memo-login-password-toggle.is-visible{color:#426c59}
+.memo-login-password-toggle svg{width:19px;height:19px}
 </style></head>
 <body>
 <header><div class="wrap">
@@ -6612,7 +6619,16 @@ function renderSection(s,targetSectionId=null){
 }
 function setAdmin(value){admin=!!value;dashSetUser();document.body.classList.toggle("admin-header-mode",admin);$("headerAdminActions").classList.toggle("hidden",!admin);$("loginBtn").classList.toggle("hidden",admin);renderResults();if(selectedId&&!editorId&&!$("detail").classList.contains("hidden"))renderDetail()}
 function showLogin(){
- $("modalRoot").innerHTML=`<div class="modalback"><div class="modal"><h2>Connexion administrateur</h2><label class="label" for="loginEmail">Adresse e-mail</label><input id="loginEmail" type="email" autocomplete="username" placeholder="Ton adresse e-mail"><label class="label" for="loginPassword" style="margin-top:10px">Mot de passe</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Mot de passe"><div class="actions"><button id="cancelLogin">Annuler</button><button class="primary" id="confirmLogin">Se connecter</button></div></div></div>`;
+ $("modalRoot").innerHTML=`<div class="modalback"><div class="modal"><h2>Connexion administrateur</h2><label class="label" for="loginEmail">Adresse e-mail</label><input id="loginEmail" type="email" autocomplete="username" placeholder="Ton adresse e-mail"><label class="label" for="loginPassword" style="margin-top:10px">Mot de passe</label><div class="memo-login-password-wrap"><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Mot de passe"><button id="toggleLoginPassword" type="button" class="memo-login-password-toggle" aria-label="Afficher le mot de passe" aria-pressed="false" title="Afficher le mot de passe"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="memo-login-eye-icon" aria-hidden="true" focusable="false"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg></button></div><div class="actions"><button id="cancelLogin">Annuler</button><button class="primary" id="confirmLogin">Se connecter</button></div></div></div>`;
+ const passwordToggle=$("toggleLoginPassword"),passwordInput=$("loginPassword");
+ passwordToggle.onclick=()=>{
+  const show=passwordInput.type==="password";
+  passwordInput.type=show?"text":"password";
+  passwordToggle.setAttribute("aria-pressed",String(show));
+  passwordToggle.setAttribute("aria-label",show?"Masquer le mot de passe":"Afficher le mot de passe");
+  passwordToggle.title=show?"Masquer le mot de passe":"Afficher le mot de passe";
+  passwordToggle.classList.toggle("is-visible",show);
+ };
  $("cancelLogin").onclick=()=>$("modalRoot").innerHTML="";
  $("confirmLogin").onclick=async()=>{const email=$("loginEmail").value.trim(),password=$("loginPassword").value;if(!email||!password){toast("Renseigne ton adresse e-mail et ton mot de passe");return}
  const {error}=await supabaseClient.auth.signInWithPassword({email,password});if(error){toast("Connexion impossible : vérifie l'adresse et le mot de passe");console.error(error);return}$("modalRoot").innerHTML="";};
