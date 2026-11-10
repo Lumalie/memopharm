@@ -9113,6 +9113,7 @@ const MEMOPHARM_CONTACT_ENDPOINT = `${SUPABASE_URL}/functions/v1/memopharm-conta
   const openMed=target.closest('[data-open-med]');
   const result=target.closest('.result[data-id]');
   const group=target.closest('[data-group-open]');
+  const crumbDestination=target.closest('[data-crumb-destination]');
   const equiv=target.closest('[data-equiv-open]');
   const selected=target.closest('[data-open-selected-dosage]');
   const previewTitle=target.closest('[data-preview-open-title]');
@@ -9124,6 +9125,7 @@ const MEMOPHARM_CONTACT_ENDPOINT = `${SUPABASE_URL}/functions/v1/memopharm-conta
    const pres=result.dataset.presentation;
    url=toFiche(result.dataset.id,pres==null||pres===''?null:Number(pres),result.dataset.section||null);
   }else if(group)url=toFiche(group.dataset.groupOpen);
+  else if(crumbDestination)url=toFiche(crumbDestination.dataset.crumbDestination);
   else if(equiv)url=toFiche(equiv.dataset.equivOpen);
   else if(selected)url=toFiche(selected.dataset.openSelectedDosage);
   else if(previewTitle){
