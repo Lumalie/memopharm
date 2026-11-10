@@ -9086,6 +9086,59 @@ const MEMOPHARM_CONTACT_ENDPOINT = `${SUPABASE_URL}/functions/v1/memopharm-conta
  document.addEventListener('keydown',e=>{const o=getOverlay();if(!o||o.hidden)return;if(e.key==='Escape')close();else if(e.key==='+'||e.key==='=')zoom(scale*1.3);else if(e.key==='-')zoom(scale/1.3);else if(e.key==='0')reset()});
 })();
 
+
+// V148 — Ctrl/Cmd+clic sur les liens de navigation internes : nouvel onglet.
+// Les vrais liens <a href> conservent le comportement natif du navigateur.
+(function memoCtrlOpenNavigation(){
+ const navIds={exploreNav:'explorer',homeExploreShortcut:'explorer',sourcesNav:'sources',homeSourcesShortcut:'sources',memoGlossNav:'glossaire',memoDocsNav:'documents',equivNav:'equivalences',excNav:'excipients'};
+ const toFiche=(id,pres=null,rubrique=null)=>{
+  if(!id)return null;
+  const target=meds.find(m=>String(m.id)===String(id));
+  const variant=target&&isVariantFiche(target)?target:null;
+  const parent=variant?meds.find(m=>String(m.id)===String(moleculeParentId(variant))&&isMolecule(m)):null;
+  const url=new URL(location.href);
+  url.hash='';url.search='';url.searchParams.set('fiche',parent?.id||id);
+  if(variant)url.searchParams.set('dosage',variant.id);
+  if(pres!==null&&Number.isFinite(Number(pres)))url.searchParams.set('presentation',String(pres));
+  if(rubrique)url.searchParams.set('rubrique',rubrique);
+  return url.href;
+ };
+ document.addEventListener('click',event=>{
+  if(!(event.ctrlKey||event.metaKey)||event.button!==0)return;
+  const target=event.target.closest?.('a,button,[data-open-med],.result');
+  if(!target||target.closest('[contenteditable="true"],.text-format-bubble'))return;
+  // Le navigateur gère déjà Ctrl/Cmd+clic sur les vrais liens.
+  if(target.closest('a[href]'))return;
+  let url=null;
+  const openMed=target.closest('[data-open-med]');
+  const result=target.closest('.result[data-id]');
+  const group=target.closest('[data-group-open]');
+  const equiv=target.closest('[data-equiv-open]');
+  const selected=target.closest('[data-open-selected-dosage]');
+  const previewTitle=target.closest('[data-preview-open-title]');
+  const specialty=target.closest('[data-memo-exc-open]');
+  if(openMed){
+   const pres=openMed.hasAttribute('data-open-pres')?openMed.dataset.openPres:openMed.dataset.hitPres;
+   url=toFiche(openMed.dataset.openMed,pres==null||pres===''?null:Number(pres),openMed.dataset.hitSection||null);
+  }else if(result){
+   const pres=result.dataset.presentation;
+   url=toFiche(result.dataset.id,pres==null||pres===''?null:Number(pres),result.dataset.section||null);
+  }else if(group)url=toFiche(group.dataset.groupOpen);
+  else if(equiv)url=toFiche(equiv.dataset.equivOpen);
+  else if(selected)url=toFiche(selected.dataset.openSelectedDosage);
+  else if(previewTitle){
+   const result=document.querySelector('#results .result.selected');
+   if(result)url=toFiche(result.dataset.id,result.dataset.presentation===''?null:Number(result.dataset.presentation),result.dataset.section||null);
+  }else if(target.id&&navIds[target.id]){
+   const next=new URL(location.href);next.search='';next.hash=navIds[target.id];url=next.href;
+  }else if(target.id==='homeNav'){
+   const next=new URL(location.href);next.search='';next.hash='';url=next.href;
+  }
+  if(!url)return;
+  event.preventDefault();event.stopImmediatePropagation();
+  window.open(url,'_blank','noopener');
+ },true);
+})();
 </script>
 
 <script>document.documentElement.setAttribute("data-memo-theme","light");</script>
