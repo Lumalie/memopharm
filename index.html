@@ -4939,39 +4939,67 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDo
 }
 // Copie enrichie d'un passage sélectionné dans une fiche, sans bouton supplémentaire.
 // Les styles utiles sont intégrés au HTML du presse-papiers pour les éditeurs compatibles.
+// Copier le texte sélectionné avec ses styles visibles, y compris depuis
+// les éditeurs contenteditable. Ne pas interférer avec les champs classiques,
+// ni avec la copie d'une grille de cellules gérée par l'éditeur de tableau.
 document.addEventListener("copy",event=>{
+ if(event.defaultPrevented||!event.clipboardData)return;
+ const target=event.target;
+ if(target?.closest?.('input,textarea'))return;
  const selection=window.getSelection();
  if(!selection||selection.isCollapsed||!selection.rangeCount)return;
- const range=selection.getRangeAt(0),detail=$("detail");
- if(!detail||detail.classList.contains("hidden")||!detail.contains(range.commonAncestorContainer))return;
- if(!event.clipboardData)return; // conserver la copie native si l'API est indisponible
+ const range=selection.getRangeAt(0);
+ const detail=$("detail");
+ const inPublished=detail&&!detail.classList.contains("hidden")&&detail.contains(range.commonAncestorContainer);
+ const inEditor=!!(range.commonAncestorContainer.nodeType===1
+  ?range.commonAncestorContainer:range.commonAncestorContainer.parentElement)?.closest?.('#editor [contenteditable="true"]');
+ if(!inPublished&&!inEditor)return;
+ // Les copies rectangulaires de cellules restent gérées par le tableau.
+ const selectedTableCells=document.querySelectorAll('#editor .memo-inline-table-cell.memo-cell-selected, #editor .memo-inline-table td.memo-cell-selected');
+ if(inEditor&&selectedTableCells.length>1)return;
  const fragment=range.cloneContents();
- const wrapper=document.createElement("div");wrapper.appendChild(fragment);
- const originalRoot=range.commonAncestorContainer.nodeType===1?range.commonAncestorContainer:range.commonAncestorContainer.parentElement;
- const originalElements=[];
- if(originalRoot&&originalRoot.nodeType===1){
-  if(range.intersectsNode(originalRoot))originalElements.push(originalRoot);
-  const walker=document.createTreeWalker(originalRoot,NodeFilter.SHOW_ELEMENT);
-  while(walker.nextNode())if(range.intersectsNode(walker.currentNode))originalElements.push(walker.currentNode);
- }
- const clonedElements=[...wrapper.querySelectorAll("*")];
- let cursor=0;
- for(const clone of clonedElements){
+ const wrapper=document.createElement("div");
+ wrapper.append(fragment);
+ const root=range.commonAncestorContainer.nodeType===1
+  ?range.commonAncestorContainer:range.commonAncestorContainer.parentElement;
+ // Associer les descendants clonés aux éléments source dans l'ordre DOM.
+ const originals=[];
+ const walker=document.createTreeWalker(root,NodeFilter.SHOW_ELEMENT);
+ if(root.nodeType===1)originals.push(root);
+ while(walker.nextNode())originals.push(walker.currentNode);
+ const copies=[...wrapper.querySelectorAll('*')];
+ let at=0;
+ for(const copy of copies){
   let match=-1;
-  for(let i=cursor;i<originalElements.length;i++)if(originalElements[i].tagName===clone.tagName){match=i;break}
-  if(match<0)continue;
-  const computed=getComputedStyle(originalElements[match]);
-  for(const property of ["color","background-color","font-weight","font-style","text-decoration","text-align","font-size","border-collapse","border","padding"]){
-   const value=computed.getPropertyValue(property);
-   if(value)clone.style.setProperty(property,value);
+  for(let i=at;i<originals.length;i++){
+   if(originals[i].tagName===copy.tagName&&range.intersectsNode(originals[i])){match=i;break}
   }
-  cursor=match+1;
+  if(match<0)continue;
+  const computed=getComputedStyle(originals[match]);
+  for(const property of ['color','background-color','font-weight','font-style',
+   'text-decoration-line','text-decoration-color','text-align','font-size',
+   'font-family','line-height','white-space','vertical-align',
+   'border','border-collapse','padding']){
+   const value=computed.getPropertyValue(property);
+   if(value)copy.style.setProperty(property,value);
+  }
+  at=match+1;
  }
- // Conserver les tableaux et leur structure HTML ; texte brut en solution de repli.
- event.clipboardData.setData("text/html",wrapper.innerHTML);
- event.clipboardData.setData("text/plain",selection.toString());
+ // Une sélection partielle d'un nœud texte n'a pas d'élément cloné :
+ // préserver le style hérité du parent dans le conteneur exporté.
+ if(root?.nodeType===1){
+  const style=getComputedStyle(root);
+  for(const property of ['color','font-weight','font-style','font-size',
+   'font-family','text-decoration-line','text-decoration-color','line-height']){
+   const value=style.getPropertyValue(property);
+   if(value)wrapper.style.setProperty(property,value);
+  }
+ }
+ event.clipboardData.setData('text/html',wrapper.outerHTML);
+ event.clipboardData.setData('text/plain',selection.toString());
  event.preventDefault();
 });
+
 function formatDateFR(raw){const m=String(raw||"").match(/^(\d{4})-(\d{2})-(\d{2})/);return m?`${m[3]}/${m[2]}/${m[1]}`:String(raw||"")}
 function safeHttp(url){try{const u=new URL(url);return ["https:","http:"].includes(u.protocol)?u.href:""}catch{return ""}}
 function practicalFlags(m){return m?.sections?.[0]?.practicalFlags||{}}
@@ -5654,6 +5682,22 @@ function memoWirePresentationExcipientRich(root){
     sync();requestAnimationFrame(positionToolbar);
    });
   });
+  // Lien hypertexte dans les excipients des variantes et spécialités.
+  const excLink=wrap.querySelector('[data-exc-link]');
+  excLink?.addEventListener('mousedown',e=>e.preventDefault());
+  excLink?.addEventListener('click',()=>{
+   const selection=window.getSelection();
+   if(wrap._range&&selection){selection.removeAllRanges();selection.addRange(wrap._range)}
+   if(!selection||selection.isCollapsed||!area.contains(selection.anchorNode)||!area.contains(selection.focusNode))return;
+   const url=prompt('Adresse du lien (https://) :','https://');
+   if(url===null)return;
+   const safe=validSourceLink(url.trim());
+   if(!safe){toast('Lien invalide : utilisez une adresse https:// ou http://');return}
+   area.focus();
+   document.execCommand('createLink',false,safe);
+   sync();
+   requestAnimationFrame(positionToolbar);
+  });
   // EEN est un marqueur sémantique, distinct du gras de présentation.
   // Le token [[een|...]] est stocké dans le champ existant, sans migration Supabase.
   const eenButton=wrap.querySelector('[data-exc-een]');
@@ -5714,7 +5758,7 @@ function presentationEditor(p,i){
  <div class="full presentation-edit-row">${check("showOpen","Ouverture de la gélule")}<div class="presentation-status-row"><label class="presentation-verified"><input type="checkbox" data-can-open ${p.canOpen===true&&!p.cannotOpen?"checked":""}>Possible</label><label class="presentation-verified"><input type="checkbox" data-cannot-open ${p.cannotOpen===true?"checked":""}>Impossible</label><input type="text" data-pfield="openReason" value="${esc(p.openReason||"")}" placeholder="Pourquoi ? (facultatif)" data-reason-for="open"></div></div>
 </div></div>
  <div class="memo-presentation-divider" aria-hidden="true"></div>
- <div class="memo-presentation-group"> <div class="full presentation-edit-row memo-excipients-editor">${check("showExcipients","Excipients de la formule")}<div class="memo-exc-rich" data-memo-exc-rich><div class="memo-exc-rich-toolbar" role="toolbar" aria-label="Mise en forme des excipients"><button type="button" data-exc-format="bold" title="Gras"><strong>G</strong></button><button type="button" data-exc-een title="Mettre l’excipient sélectionné en gras (EEN)" aria-label="Marquer la sélection comme excipient à effet notoire"><strong>⚠ EEN</strong></button><button type="button" data-exc-format="italic" title="Italique"><em>I</em></button><button type="button" data-exc-format="underline" title="Souligné"><u>S</u></button><button type="button" data-exc-format="removeFormat" title="Effacer la mise en forme">T̸</button><label>Couleur <select data-exc-color aria-label="Couleur du texte"><option value="default">Par défaut</option><option value="#b24a38">Rouge</option><option value="#b57520">Orange</option><option value="#25714c">Vert</option><option value="#285f9a">Bleu</option></select></label></div><div class="memo-exc-rich-area" data-exc-edit contenteditable="true" role="textbox" aria-label="Excipients de la formule" aria-multiline="true"></div><textarea data-pfield="excipients" rows="3" hidden>${esc(p.excipients||"")}</textarea></div></div>
+ <div class="memo-presentation-group"> <div class="full presentation-edit-row memo-excipients-editor">${check("showExcipients","Excipients de la formule")}<div class="memo-exc-rich" data-memo-exc-rich><div class="memo-exc-rich-toolbar" role="toolbar" aria-label="Mise en forme des excipients"><button type="button" data-exc-format="bold" title="Gras"><strong>G</strong></button><button type="button" data-exc-een title="Mettre l’excipient sélectionné en gras (EEN)" aria-label="Marquer la sélection comme excipient à effet notoire"><strong>⚠ EEN</strong></button><button type="button" data-exc-format="italic" title="Italique"><em>I</em></button><button type="button" data-exc-format="underline" title="Souligné"><u>S</u></button><button type="button" data-exc-link title="Associer un lien au texte sélectionné" aria-label="Insérer un lien hypertexte">🔗</button><button type="button" data-exc-format="removeFormat" title="Effacer la mise en forme">T̸</button><label>Couleur <select data-exc-color aria-label="Couleur du texte"><option value="default">Par défaut</option><option value="#b24a38">Rouge</option><option value="#b57520">Orange</option><option value="#25714c">Vert</option><option value="#285f9a">Bleu</option></select></label></div><div class="memo-exc-rich-area" data-exc-edit contenteditable="true" role="textbox" aria-label="Excipients de la formule" aria-multiline="true"></div><textarea data-pfield="excipients" rows="3" hidden>${esc(p.excipients||"")}</textarea></div></div>
 </div>
  <div class="memo-presentation-divider" aria-hidden="true"></div>
  <div class="memo-presentation-group memo-presentation-photos"> <div class="full presentation-edit-row">${check("showPhoto","Photo de la boîte")}<input type="file" accept="image/jpeg,image/png,image/webp" data-photo-file="${i}"><div class="hint" data-photo-hint="${i}">${pending?"Photo sélectionnée : "+esc(pending.name):currentPhoto?"Photo enregistrée : visible ci-dessous":"JPG, PNG ou WebP · maximum 2 Mo. Envoyée lors de l’enregistrement de la fiche."}</div>${currentPhoto?`<img class="image-preview" src="${esc(currentPhoto)}" alt="Photo enregistrée de la présentation">`:""}</div>
