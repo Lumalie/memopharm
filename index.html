@@ -2263,6 +2263,14 @@ header #headerAdminActions .header-json-menu[open] .memo-backup-chevron{transfor
 .memo-login-password-toggle:hover,.memo-login-password-toggle:focus-visible{background:#edf3ef;color:#4c7061}
 .memo-login-password-toggle.is-visible{color:#426c59}
 .memo-login-password-toggle svg{width:19px;height:19px}
+</style><style id="memo-v151">
+.fiche-breadcrumb .breadcrumb-current-med.memo-crumb-specialty{color:var(--group-fg)!important}
+#editor #memo-specialty-dose-choice{display:flex;align-items:center;gap:7px;margin:8px 0 12px}
+#editor #memo-specialty-dose-choice.hidden{display:none!important}
+#editor #memo-specialty-dose-choice input{width:auto;margin:0}
+.memo-v67-practical:has(.memo-v69-vigilance){display:grid!important;grid-template-columns:repeat(4,auto);justify-content:end}
+.memo-v67-practical .memo-v69-vigilance{grid-column:1/-1;justify-self:end;color:#9a4d19;border-color:#e1a477;background:#fff3e6}
+.memo-v67-practical .memo-v69-vigilance:hover,.memo-v67-practical .memo-v69-vigilance:focus-visible{background:#ffe2c7}
 </style></head>
 <body>
 <header><div class="wrap">
@@ -2905,6 +2913,7 @@ function ficheParent(m,visible=publicMeds()){
 // Navigation arborescente récursive : niveaux illimités, données Supabase visibles.
 function memoTreeChildren(parentId,visible=publicMeds()){
  return visible.filter(x=>{
+  if(isSpecialiteFiche(x))return String(moleculeParentId(x)||parentGroupId(x)||"")===String(parentId||"");
   if(isGroup(x)||isMolecule(x))return String(parentGroupId(x)||"")===String(parentId||"");
   if(isVariantFiche(x))return String(moleculeParentId(x)||"")===String(parentId||"");
   return false;
@@ -2936,7 +2945,7 @@ function ficheBreadcrumb(m){
  const path=[...chain,m];
  return `<nav class="fiche-breadcrumb memo-tree-breadcrumb" aria-label="Chemin de la fiche">${path.map((node,i)=>{
   const last=i===path.length-1;
-  const label=last?`<span class="breadcrumb-current ${isGroup(node)||isMolecule(node)?"breadcrumb-current-group-level":"breadcrumb-current-med"}" style="${entityTreeStyle(node)}" aria-current="page">${esc(displayMedName(node))}</span>`:`<button type="button" class="breadcrumb-link breadcrumb-group-level${i===path.length-2?' breadcrumb-nearest-parent':' breadcrumb-ancestor'}" style="${entityTreeStyle(node)}" data-group-open="${esc(node.id)}">${esc(displayMedName(node))}</button>`;
+  const label=last?`<span class="breadcrumb-current ${isSpecialiteFiche(node)?"memo-crumb-specialty ":""}${isGroup(node)||isMolecule(node)?"breadcrumb-current-group-level":"breadcrumb-current-med"}" style="${entityTreeStyle(node)}" aria-current="page">${esc(displayMedName(node))}</span>`:`<button type="button" class="breadcrumb-link breadcrumb-group-level${i===path.length-2?' breadcrumb-nearest-parent':' breadcrumb-ancestor'}" style="${entityTreeStyle(node)}" data-group-open="${esc(node.id)}">${esc(displayMedName(node))}</button>`;
   // Même le dernier niveau propose ses propres descendants.\n  // Un menu vide garde un chevron discret pour signaler la fin de branche.
   // Le chevron propose les enfants du niveau affiché et leurs descendants.
   const menu=memoBreadcrumbBranch(node.id,visible,new Set([String(node.id)]));
@@ -4594,7 +4603,7 @@ function memoReproBadges(m){
  }).join('')+'</div>';
 }
 // Liens de référence personnalisables par fiche (aucun lien imposé).
-const MEMO_BADGE_LINK_TYPES=[['mte','MTE'],['photo','Photosensibilisant'],['exception','EXC'],['stup','STUP']];
+const MEMO_BADGE_LINK_TYPES=[['mte','MTE'],['photo','Photosensibilisant'],['exception','EXC'],['stup','STUP'],['vigilance','Vigilance']];
 function memoBadgeLinks(m){return m?.sections?.[0]?.badgeSourceLinks||{};}
 function memoBadgeSourceEditor(m){
  const saved=memoBadgeLinks(m);
@@ -4603,20 +4612,21 @@ function memoBadgeSourceEditor(m){
   ['mte','MTE — Marge thérapeutique étroite','f-mte',flags.mte===true],
   ['photo','Photosensibilisant','f-photosensitizing',flags.photosensitizing===true],
   ['exception','EXC — Médicament d’exception','f-exception',flags.exception===true],
-  ['stup','STUP — Stupéfiant','f-stup',flags.stup===true]
+  ['stup','STUP — Stupéfiant','f-stup',flags.stup===true],
+  ['vigilance','Risque de somnolence / vigilance altérée','f-vigilance',flags.vigilance===true]
  ];
  return `<div class="full explorer-class-custom" id="memo-badge-links-editor"><label class="explorer-section-heading">Sources des badges de vigilance</label><div class="memo-badge-source-grid">${choices.map(([key,label,id,checked])=>`<div class="memo-badge-source-item"><label class="memo-badge-source-choice" for="${id}"><input type="checkbox" id="${id}" ${checked?'checked':''}> <span>${label}</span></label><input type="url" id="memo-badge-url-${key}" data-memo-badge-url="${key}" aria-label="Lien de référence pour ${esc(label)}" value="${esc(saved[key]||'')}" placeholder="https://…" inputmode="url" autocomplete="url"></div>`).join('')}</div></div>`;
 }
 function memoV67Alerts(m,p=null){
  const root=(isMolecule(m)||isSpecialiteFiche(m))?m:moleculeForDosage(m);
  const sourceLinks=memoBadgeLinks(root);
- const specs=[['mte',practicalMTE(m,p),'MTE','Médicament à marge thérapeutique étroite'],['photo',practicalPhotosensitive(m,p),'Photosensibilisant','Photosensibilisation'],['exception',practicalFlags(root).exception===true,'EXC','Médicament d’exception'],['stup',practicalFlags(root).stup===true,'STUP','Stupéfiant']];
+ const specs=[['mte',practicalMTE(m,p),'MTE','Médicament à marge thérapeutique étroite'],['photo',practicalPhotosensitive(m,p),'Photosensibilisant','Photosensibilisation'],['exception',practicalFlags(root).exception===true,'EXC','Médicament d’exception'],['stup',practicalFlags(root).stup===true,'STUP','Stupéfiant'],['vigilance',practicalFlags(root).vigilance===true,'Vigilance','Risque de somnolence ou de vigilance altérée : vérifier les précautions de conduite dans le RCP']];
  return specs.filter(x=>x[1]).map(([kind,_,label,title])=>{
   const url=memoSafeSource(sourceLinks[kind]);
   const tag=url?'a':'span';
   const attrs=url?` href="${esc(url)}" target="_blank" rel="noopener noreferrer"`:' tabindex="0"';
   const tip=url?'Ouvrir la source renseignée ↗':'Aucun lien renseigné : modifier la fiche pour ajouter une source';
-  return `<${tag} class="memo-v67-alert memo-v69-${kind}"${attrs} aria-label="${esc(title)}${url?' — ouvrir la source (nouvel onglet)':' — source non renseignée'}" title="${esc(title)}${url?' — consulter la source':''}">${kind==='photo'?'<span class="memo-v67-sun" aria-hidden="true"></span>':`<span class="memo-v67-mte">${label}</span>`}<span class="memo-repro-tooltip" role="tooltip"><span class="memo-repro-tip-title">${esc(title)}</span><span class="memo-repro-tip-note">${url?'Lien personnalisé enregistré dans cette fiche.':'Aucune source définie pour ce badge.'}</span><span class="memo-repro-tip-action">${tip}</span></span></${tag}>`;
+  return `<${tag} class="memo-v67-alert memo-v69-${kind}"${attrs} aria-label="${esc(title)}${url?' — ouvrir la source (nouvel onglet)':' — source non renseignée'}" title="${esc(title)}${url?' — consulter la source':''}">${kind==='vigilance'?'<svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="14" cy="16" r="11"/><circle cx="14" cy="16" r="3"/><path d="M3 13l8 2m6 0 8-2M14 19v8"/><path d="M28 3v9m0 3v2" stroke-width="3" stroke-linecap="round"/></svg>':kind==='photo'?'<span class="memo-v67-sun" aria-hidden="true"></span>':`<span class="memo-v67-mte">${label}</span>`}<span class="memo-repro-tooltip" role="tooltip"><span class="memo-repro-tip-title">${esc(title)}</span><span class="memo-repro-tip-note">${url?'Lien personnalisé enregistré dans cette fiche.':'Aucune source définie pour ce badge.'}</span><span class="memo-repro-tip-action">${tip}</span></span></${tag}>`;
  }).join('');
 }
 function memoV103DurationLabel(value){
@@ -6810,7 +6820,7 @@ function renderEditor(id){
   <div class="full"><label for="f-entry-type">Type de fiche</label><select id="f-entry-type"><option value="groupe" ${isGroup(m)?"selected":""}>Fiche groupe</option><option value="molecule" ${isMolecule(m)?"selected":""}>Fiche molécule</option><option value="specialite" ${isSpecialiteFiche(m)?"selected":""}>Fiche spécialité</option></select></div>
 
   <div class="full" id="parent-group-wrap"><label for="f-parent-group">Groupe parent (facultatif)</label><select id="f-parent-group"><option value="">Aucun groupe</option>${groupOptions(m).map(g=>`<option value="${esc(g.id)}" ${parentGroupId(m)===g.id?"selected":""}>${esc(g.name)} — ${esc(g.category)}</option>`).join("")}</select><div class="muted" id="group-parent-help">Choisis librement un groupe parent, quelle que soit sa classe thérapeutique.</div></div>
-  <div><label id="f-name-label" for="f-name">Nom de la spécialité</label><input id="f-name" value="${esc(m.name)}" placeholder="Ex. : Tardyferon"></div><div id="f-dci-form-wrap"><label class="field-label-inline" for="f-dci-form">Forme pharmaceutique <span class="field-inline-choice"><input type="checkbox" data-explorer-visibility="forms" ${explorerBadgeVisible(m,"forms")?"checked":""} aria-label="Afficher la forme pharmaceutique dans Explorer"> <span>Afficher dans Explorer</span></span></label><input id="f-dci-form" data-memo-kind="form" list="memo-forms" value="${esc(m.sections?.[0]?.dciForm||m.form||"")}" placeholder="Ex. : Comprimé, gélule, solution buvable"></div><div id="f-dose-title-wrap" class="full hidden"></div><div id="f-dosage-wrap"><label class="field-label-inline" for="f-dosage">Dosage <span class="field-inline-choice"><input type="checkbox" id="f-dose-in-title"> <span>Afficher dans le titre</span></span></label><div class="dosage-fields"><input id="f-dosage" value="${esc((ingredientInfo(m)?.entries||[]).map(e=>String(e.dose||" ").trim()).filter(Boolean).join("/")||m.dosage||"")}" readonly aria-label="Dosage calculé depuis les DCI" title="Calculé automatiquement depuis les champs Dosage actif"></div><p class="muted">Calculé depuis les champs « Dosage actif » ci-dessous. Plusieurs dosages sont séparés par /.</p></div><div id="f-specialty-form-wrap"><label class="field-label-inline" for="f-specialty-form">Forme <span class="field-inline-choice"><input type="checkbox" id="f-specialty-form-in-title" ${m.sections?.[0]?.specialtyFormTitle?.showInTitle?"checked":""}> <span>Afficher dans le titre</span></span></label><input id="f-specialty-form" list="memo-forms" value="${esc(m.sections?.[0]?.specialtyFormTitle?.value||m.form||"")}" placeholder="Ex. : comprimé, gélule"></div><div id="f-dci-wrap" class="full"><label>DCI / substances actives et dosages</label><div id="dciEntries"></div><button type="button" id="addDciEntry" class="soft" style="margin-top:8px">+ Ajouter une DCI</button><p class="muted">Une ligne par substance active. Le sel et sa quantité sont facultatifs et apparaîtront en gris conseil. Ne pas confondre la quantité de sel et celle de substance active.</p></div>
+  <div><label id="f-name-label" for="f-name">Nom de la spécialité</label><input id="f-name" value="${esc(m.name)}" placeholder="Ex. : Tardyferon"></div><div id="f-dci-form-wrap"><label class="field-label-inline" for="f-dci-form">Forme pharmaceutique <span class="field-inline-choice"><input type="checkbox" data-explorer-visibility="forms" ${explorerBadgeVisible(m,"forms")?"checked":""} aria-label="Afficher la forme pharmaceutique dans Explorer"> <span>Afficher dans Explorer</span></span></label><input id="f-dci-form" data-memo-kind="form" list="memo-forms" value="${esc(m.sections?.[0]?.dciForm||m.form||"")}" placeholder="Ex. : Comprimé, gélule, solution buvable"></div><div id="f-dose-title-wrap" class="full hidden"></div><div id="f-dosage-wrap"><label class="field-label-inline" for="f-dosage">Dosage <span class="field-inline-choice"><span>Calcul automatique</span></span></label><div class="dosage-fields"><input id="f-dosage" value="${esc((ingredientInfo(m)?.entries||[]).map(e=>String(e.dose||" ").trim()).filter(Boolean).join("/")||m.dosage||"")}" readonly aria-label="Dosage calculé depuis les DCI" title="Calculé automatiquement depuis les champs Dosage actif"></div><p class="muted">Calculé depuis les champs « Dosage actif » ci-dessous. Plusieurs dosages sont séparés par /.</p></div><div id="f-specialty-form-wrap"><label class="field-label-inline" for="f-specialty-form">Forme <span class="field-inline-choice"><input type="checkbox" id="f-specialty-form-in-title" ${m.sections?.[0]?.specialtyFormTitle?.showInTitle?"checked":""}> <span>Afficher dans le titre</span></span></label><input id="f-specialty-form" list="memo-forms" value="${esc(m.sections?.[0]?.specialtyFormTitle?.value||m.form||"")}" placeholder="Ex. : comprimé, gélule"></div><div id="f-dci-wrap" class="full"><label>DCI / substances actives et dosages</label><label id="memo-specialty-dose-choice" class="field-inline-choice"><input type="checkbox" id="f-dose-in-title"> <span>Afficher le dosage dans le titre</span></label><div id="dciEntries"></div><button type="button" id="addDciEntry" class="soft" style="margin-top:8px">+ Ajouter une DCI</button><p class="muted">Une ligne par substance active. Le sel et sa quantité sont facultatifs et apparaîtront en gris conseil. Ne pas confondre la quantité de sel et celle de substance active.</p></div>
  <div class="full explorer-class-custom" id="princeps-editor-wrap"><label for="f-princeps">Princeps</label><input id="f-princeps" list="princeps-suggestions" value="${esc((m.sections?.[0]?.princepsNames||[]).join(', '))}" placeholder="Ex. : Nom de spécialité 1, Nom de spécialité 2" autocomplete="off"><datalist id="princeps-suggestions">${[...new Set(meds.flatMap(x=>x.sections?.[0]?.princepsNames||[]))].sort((a,b)=>a.localeCompare(b,'fr')).map(x=>`<option value="${esc(x)}"></option>`).join('')}</datalist><div id="memo-princeps-choices" class="memo-princeps-choices"></div><div id="memo-princeps-panel" class="memo-princeps-dialog" hidden></div></div>
  <div class="full explorer-class-custom"><label class="explorer-section-heading" for="f-extra-classes">Classe·s thérapeutique·s</label><input id="f-extra-classes" list="class-suggestions" value="${esc(explorerClasses(m).filter(t=>t!=="Autres"||explorerClasses(m).length===1).join(", "))}" placeholder="Ex. : Antibiotiques, Pénicillines" autocomplete="off"><datalist id="class-suggestions">${[...new Set(meds.flatMap(explorerClasses))].sort((a,b)=>a.localeCompare(b,"fr")).map(t=>`<option value="${esc(t)}"></option>`).join("")}</datalist><div id="explorer-class-choices" class="explorer-class-choices"></div></div>
  <div class="full explorer-class-custom"><label class="explorer-section-heading" for="f-indications">Indication·s thérapeutique·s</label><input id="f-indications" list="indication-suggestions" value="${esc(indicationTags(m).join(", "))}" placeholder="Ex. : Infection bactérienne, Carence en fer" autocomplete="off"><datalist id="indication-suggestions">${[...new Set(meds.flatMap(indicationTags))].sort((a,b)=>a.localeCompare(b,"fr")).map(t=>`<option value="${esc(t)}"></option>`).join("")}</datalist><div id="explorer-indication-choices" class="explorer-class-choices"></div></div>
@@ -6966,7 +6976,8 @@ function renderEditor(id){
   $("parent-group-wrap").classList.remove("hidden");
   $("princeps-editor-wrap").classList.toggle("hidden",$("f-entry-type").value!=="dci" && !isMoleculeType);
   $("f-dci-form-wrap").classList.toggle("hidden",$("f-entry-type").value!=="dci");
-  $("f-dosage-wrap").classList.toggle("hidden",isGroupType || isMoleculeType);
+  $("f-dosage-wrap").classList.toggle("hidden",isGroupType || isMoleculeType || $("f-entry-type").value==="specialite");
+  $("memo-specialty-dose-choice").classList.toggle("hidden",$("f-entry-type").value!=="specialite");
   $("f-specialty-form-wrap").classList.toggle("hidden",$("f-entry-type").value!=="specialite");
   $("f-dose-title-wrap").classList.toggle("hidden",isGroupType);
 
@@ -7900,7 +7911,7 @@ function captureEditorFields(m){
   m.sections[0].specialtyFormTitle={value:(get("f-specialty-form")||"").trim(),showInTitle:!!$("f-specialty-form-in-title")?.checked};
   m.form=m.sections[0].specialtyFormTitle.value;
  }
- if(kind==="molecule"||kind==="specialite")m.sections[0].practicalFlags={...practicalFlags(m),photosensitizing:!!$("f-photosensitizing")?.checked,mte:!!$("f-mte")?.checked,exception:!!$("f-exception")?.checked,stup:!!$("f-stup")?.checked};
+ if(kind==="molecule"||kind==="specialite")m.sections[0].practicalFlags={...practicalFlags(m),photosensitizing:!!$("f-photosensitizing")?.checked,mte:!!$("f-mte")?.checked,exception:!!$("f-exception")?.checked,stup:!!$("f-stup")?.checked,vigilance:!!$("f-vigilance")?.checked};
  if(kind==="molecule"||kind==="specialite"){
   const sourceLinks={};
   for(const [key] of MEMO_BADGE_LINK_TYPES){
