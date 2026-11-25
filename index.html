@@ -2271,7 +2271,7 @@ header #headerAdminActions .header-json-menu[open] .memo-backup-chevron{transfor
 .memo-v67-practical:has(.memo-v69-vigilance){display:grid!important;grid-template-columns:repeat(4,auto);justify-content:end}
 .memo-v67-practical .memo-v69-vigilance{grid-column:1/-1;justify-self:end;color:#9a4d19;border-color:#e1a477;background:#fff3e6}
 .memo-v67-practical .memo-v69-vigilance:hover,.memo-v67-practical .memo-v69-vigilance:focus-visible{background:#ffe2c7}
-</style><style>#editor #memo-specialty-dose-choice:not(.hidden){display:flex!important;visibility:visible!important} #editor #memo-specialty-dose-choice label{display:flex!important} .memo-v69-vigilance.memo-driving-1{background:#fff8cc!important;border-color:#d4a900!important}.memo-v69-vigilance.memo-driving-2{background:#fff0df!important;border-color:#e77d20!important}.memo-v69-vigilance.memo-driving-3{background:#fce7e7!important;border-color:#d62932!important}</style></head>
+</style><style>#editor #memo-specialty-dose-choice:not(.hidden){display:flex!important;visibility:visible!important} #editor #memo-specialty-dose-choice label{display:flex!important} .memo-v69-vigilance.memo-driving-1{background:#fff8cc!important;border-color:#d4a900!important}.memo-v69-vigilance.memo-driving-2{background:#fff0df!important;border-color:#e77d20!important}.memo-v69-vigilance.memo-driving-3{background:#fce7e7!important;border-color:#d62932!important}</style><style id="memo-v153-driving">#editor #memo-badge-links-editor .memo-driving-editor .memo-badge-source-choice{display:flex;flex-direction:column;align-items:stretch;gap:6px}#editor #memo-badge-links-editor .memo-driving-editor select{width:100%;margin:0}#detail #detailPublicActions .memo-v67-practical .memo-v69-vigilance,#searchPreview .memo-preview-vigilance .memo-v67-practical .memo-v69-vigilance,.memo-v67-practical .memo-v69-vigilance{border:0!important;box-shadow:none!important;background:transparent!important;outline-offset:3px}</style></head>
 <body>
 <header><div class="wrap">
   <div class="topline">
@@ -4615,10 +4615,10 @@ function memoBadgeSourceEditor(m){
   ['stup','STUP — Stupéfiant','f-stup',flags.stup===true],
   ['vigilance','Vigilance / conduite','f-vigilance',false]
  ];
- return `<div class="full explorer-class-custom" id="memo-badge-links-editor"><label class="explorer-section-heading">Sources des badges de vigilance</label><div class="memo-badge-source-grid">${choices.map(([key,label,id,checked])=>`<div class="memo-badge-source-item"><label class="memo-badge-source-choice" for="${id}">${key==='vigilance'?`<select id="f-vigilance" aria-label="Niveau de vigilance">${[[0,"Aucun"],[1,"Niveau 1 — jaune"],[2,"Niveau 2 — orange"],[3,"Niveau 3 — rouge"]].map(([n,t])=>`<option value="${n}" ${Number(flags.vigilanceLevel||0)===n?"selected":""}>${t}</option>`).join("")}</select>`:`<input type="checkbox" id="${id}" ${checked?'checked':''}>`} <span>${label}</span></label><input type="url" id="memo-badge-url-${key}" data-memo-badge-url="${key}" aria-label="Lien de référence pour ${esc(label)}" value="${esc(saved[key]||'')}" placeholder="https://…" inputmode="url" autocomplete="url"></div>`).join('')}</div></div>`;
+ return `<div class="full explorer-class-custom" id="memo-badge-links-editor"><label class="explorer-section-heading">Sources des badges de vigilance</label><div class="memo-badge-source-grid">${choices.map(([key,label,id,checked])=>`<div class="memo-badge-source-item ${key==='vigilance'?'memo-driving-editor':''}"><label class="memo-badge-source-choice" for="${id}">${key==='vigilance'?`<span>${label}</span><select id="f-vigilance" aria-label="Niveau de vigilance">${[[0,"Aucun"],[1,"Niveau 1 — jaune"],[2,"Niveau 2 — orange"],[3,"Niveau 3 — rouge"]].map(([n,t])=>`<option value="${n}" ${Number(flags.vigilanceLevel||0)===n?"selected":""}>${t}</option>`).join("")}</select>`:`<input type="checkbox" id="${id}" ${checked?'checked':''}>`} ${key==='vigilance'?'':`<span>${label}</span>`}</label><input type="url" id="memo-badge-url-${key}" data-memo-badge-url="${key}" aria-label="Lien de référence pour ${esc(label)}" value="${esc(saved[key]||'')}" placeholder="https://…" inputmode="url" autocomplete="url"></div>`).join('')}</div></div>`;
 }
-function memoV67Alerts(m,p=null){
- const root=(isMolecule(m)||isSpecialiteFiche(m))?m:moleculeForDosage(m);
+function memoV67Alerts(m,p=null,rootOverride=null){
+ const root=rootOverride||((isMolecule(m)||isSpecialiteFiche(m))?m:moleculeForDosage(m));
  const sourceLinks=memoBadgeLinks(root);
  const level=Number(practicalFlags(root).vigilanceLevel||0);
  const legacy=practicalFlags(root).vigilance===true&&!level;
@@ -4641,7 +4641,7 @@ function memoV93StorageBadges(m){
  if(!isSpecialiteFiche(m))return '';
  return `<div class="memo-v93-storage-row" aria-label="Conservation de la spécialité">${memoStorageBadgeItems(m?.sections?.[0]?.specialtyStorage||{})}</div>`;
 }
-function memoV67Refresh(m,p=null){const slot=document.getElementById('memo-v67-practical');if(!slot)return;slot.innerHTML=memoV67Alerts(m,p);memoWireBadgeClicks(slot)}
+function memoV67Refresh(m,p=null,rootOverride=null){const slot=document.getElementById('memo-v67-practical');if(!slot)return;slot.innerHTML=memoV67Alerts(m,p,rootOverride);memoWireBadgeClicks(slot)}
 function memoReproEditor(m){
  if(!isMolecule(m)&&!isSpecialiteFiche(m))return '';
  const info=memoReproInfo(m);
@@ -4817,7 +4817,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDo
     memoSetViewChoice(previousDose,{presentation:previousSelect.value});
    }
    panel.dataset.memoActiveCommercialDose=String(child.id);
-   memoV67Refresh(child,memoV116CommercialChosen(child)?.p||null);
+   memoV67Refresh(child,memoV116CommercialChosen(child)?.p||null,m);
    const childSections=(child.sections||[]).filter(x=>x.enabled!==false&&!isDocumentationSection(x)&&String(x.content||" ").trim()).map(x=>resolveSharedSection(child,x));
    // Toutes les rubriques actives propres à la présentation sont visibles,
    // y compris les trois encarts prioritaires lorsque l'éditeur les active.
@@ -4861,7 +4861,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null,targetDo
     memoV48Sync(panel.querySelector('#presentations-details'),rememberedChoice.p);
     memoV102SyncStorage(panel.querySelector('#presentations-details'),rememberedChoice.p);
    }
-   panel.querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=panel.querySelector("#presentation-info");memoSetViewChoice(child.id,{presentation:sel.value});const choice=memoV116CommercialChosen(child);if(target)target.innerHTML=choice?presentationInfo(choice.p,child):"";memoV48Sync(sel.closest("#presentations-details"),choice?.p);memoV102SyncStorage(sel.closest("#presentations-details"),choice?.p);memoWireBadgeClicks(target);memoV44Banner(panel,child,selectedTitle);memoV67Refresh(child,choice?.p||null)});
+   panel.querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=panel.querySelector("#presentation-info");memoSetViewChoice(child.id,{presentation:sel.value});const choice=memoV116CommercialChosen(child);if(target)target.innerHTML=choice?presentationInfo(choice.p,child):"";memoV48Sync(sel.closest("#presentations-details"),choice?.p);memoV102SyncStorage(sel.closest("#presentations-details"),choice?.p);memoWireBadgeClicks(target);memoV44Banner(panel,child,selectedTitle);memoV67Refresh(child,choice?.p||null,m)});
   };
   // Le boîtage n'est plus un niveau d'onglet : chaque conditionnement
   // reste consultable dans la présentation commerciale via son CIP.
