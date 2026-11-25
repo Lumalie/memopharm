@@ -2271,7 +2271,7 @@ header #headerAdminActions .header-json-menu[open] .memo-backup-chevron{transfor
 .memo-v67-practical:has(.memo-v69-vigilance){display:grid!important;grid-template-columns:repeat(4,auto);justify-content:end}
 .memo-v67-practical .memo-v69-vigilance{grid-column:1/-1;justify-self:end;color:#9a4d19;border-color:#e1a477;background:#fff3e6}
 .memo-v67-practical .memo-v69-vigilance:hover,.memo-v67-practical .memo-v69-vigilance:focus-visible{background:#ffe2c7}
-</style><style>#editor #memo-specialty-dose-choice:not(.hidden){display:flex!important;visibility:visible!important} #editor #memo-specialty-dose-choice label{display:flex!important} .memo-v69-vigilance.memo-driving-1{background:#fff8cc!important;border-color:#d4a900!important}.memo-v69-vigilance.memo-driving-2{background:#fff0df!important;border-color:#e77d20!important}.memo-v69-vigilance.memo-driving-3{background:#fce7e7!important;border-color:#d62932!important}</style><style id="memo-v154-driving">#editor #memo-badge-links-editor .memo-driving-editor .memo-badge-source-choice{display:flex;flex-direction:column;align-items:stretch;gap:6px}#editor #memo-badge-links-editor .memo-driving-editor select{width:100%;margin:0}#detail #detailPublicActions .memo-v67-practical .memo-v69-vigilance,#searchPreview .memo-preview-vigilance .memo-v67-practical .memo-v69-vigilance,.memo-v67-practical .memo-v69-vigilance{border:0!important;box-shadow:0 2px 9px #0002!important;outline-offset:3px}#searchPreview .memo-preview-vigilance .memo-v67-practical .memo-v69-vigilance>svg{width:40px;height:40px;flex:none}</style></head>
+</style><style>#editor #memo-specialty-dose-choice:not(.hidden){display:flex!important;visibility:visible!important} #editor #memo-specialty-dose-choice label{display:flex!important} .memo-v69-vigilance.memo-driving-1{background:#fff8cc!important;border-color:#d4a900!important}.memo-v69-vigilance.memo-driving-2{background:#fff0df!important;border-color:#e77d20!important}.memo-v69-vigilance.memo-driving-3{background:#fce7e7!important;border-color:#d62932!important}</style><style id="memo-v154-driving">#editor #memo-badge-links-editor .memo-driving-editor .memo-badge-source-choice{display:flex;flex-direction:column;align-items:stretch;gap:6px}#editor #memo-badge-links-editor .memo-driving-editor select{width:100%;margin:0}#detail #detailPublicActions .memo-v67-practical .memo-v69-vigilance,#searchPreview .memo-preview-vigilance .memo-v67-practical .memo-v69-vigilance,.memo-v67-practical .memo-v69-vigilance{border:0!important;box-shadow:0 2px 9px #0002!important;outline-offset:3px}#searchPreview .memo-preview-vigilance .memo-v67-practical .memo-v69-vigilance>svg{width:46px;height:46px;flex:none}</style></head>
 <body>
 <header><div class="wrap">
   <div class="topline">
@@ -4604,7 +4604,9 @@ function memoReproBadges(m){
 }
 // Liens de référence personnalisables par fiche (aucun lien imposé).
 const MEMO_BADGE_LINK_TYPES=[['mte','MTE'],['photo','Photosensibilisant'],['exception','EXC'],['stup','STUP'],['vigilance','Vigilance']];
-function memoBadgeLinks(m){return m?.sections?.[0]?.badgeSourceLinks||{};}
+function memoBadgeLinks(m){return Object.assign({},...(m?.sections||[]).slice().reverse().map(sec=>sec?.badgeSourceLinks||{}));}
+function memoDrivingLevel(m){const flags=practicalFlags(m);return Number(flags.vigilanceLevel||0);}
+function memoDrivingSource(m){return memoSafeSource(String(memoBadgeLinks(m).vigilance||'').trim());}
 function memoBadgeSourceEditor(m){
  const saved=memoBadgeLinks(m);
  const flags=practicalFlags(m);
@@ -4618,15 +4620,15 @@ function memoBadgeSourceEditor(m){
  return `<div class="full explorer-class-custom" id="memo-badge-links-editor"><label class="explorer-section-heading">Sources des badges de vigilance</label><div class="memo-badge-source-grid">${choices.map(([key,label,id,checked])=>`<div class="memo-badge-source-item ${key==='vigilance'?'memo-driving-editor':''}"><label class="memo-badge-source-choice" for="${id}">${key==='vigilance'?`<span>${label}</span><select id="f-vigilance" aria-label="Niveau de vigilance">${[[0,"Aucun"],[1,"Niveau 1 — jaune"],[2,"Niveau 2 — orange"],[3,"Niveau 3 — rouge"]].map(([n,t])=>`<option value="${n}" ${Number(flags.vigilanceLevel||0)===n?"selected":""}>${t}</option>`).join("")}</select>`:`<input type="checkbox" id="${id}" ${checked?'checked':''}>`} ${key==='vigilance'?'':`<span>${label}</span>`}</label><input type="url" id="memo-badge-url-${key}" data-memo-badge-url="${key}" aria-label="Lien de référence pour ${esc(label)}" value="${esc(saved[key]||'')}" placeholder="https://…" inputmode="url" autocomplete="url"></div>`).join('')}</div></div>`;
 }
 function memoV67Alerts(m,p=null,rootOverride=null){
- const root=rootOverride||((isMolecule(m)||isSpecialiteFiche(m))?m:moleculeForDosage(m));
+ const root=(isMolecule(m)||isSpecialiteFiche(m))?m:(rootOverride||moleculeForDosage(m));
  const sourceLinks=memoBadgeLinks(root);
- const level=Number(practicalFlags(root).vigilanceLevel||0);
+ const level=memoDrivingLevel(root);
  const legacy=practicalFlags(root).vigilance===true&&!level;
  const drivingTips={1:["Soyez prudent. Ne pas conduire sans avoir lu la notice.","Vigilance requise.","Le risque est faible mais individuel. Lire la notice pour vérifier les effets secondaires possibles avant de conduire."],2:["Soyez très prudent. Ne pas conduire sans l’avis d’un professionnel de santé.","Avis médical requis.",""],3:["Attention, danger : ne pas conduire. Pour la reprise de la conduite, demandez l’avis d’un médecin.","Interdiction de conduire.",""]};
  const drivingTip=drivingTips[level]||["Niveau non renseigné.","À vérifier dans le RCP.",""];
- const specs=[['mte',practicalMTE(m,p),'MTE','Médicament à marge thérapeutique étroite'],['photo',practicalPhotosensitive(m,p),'Photosensibilisant','Photosensibilisation'],['exception',practicalFlags(root).exception===true,'EXC','Médicament d’exception'],['stup',practicalFlags(root).stup===true,'STUP','Stupéfiant'],['vigilance',level>=1&&level<=3&&!!memoSafeSource(sourceLinks.vigilance),'Vigilance',level?`Vigilance — niveau ${level}`:'Vigilance — niveau à préciser']];
+ const specs=[['mte',practicalMTE(m,p),'MTE','Médicament à marge thérapeutique étroite'],['photo',practicalPhotosensitive(m,p),'Photosensibilisant','Photosensibilisation'],['exception',practicalFlags(root).exception===true,'EXC','Médicament d’exception'],['stup',practicalFlags(root).stup===true,'STUP','Stupéfiant'],['vigilance',level>=1&&level<=3&&!!memoDrivingSource(root),'Vigilance',level?`Vigilance — niveau ${level}`:'Vigilance — niveau à préciser']];
  return specs.filter(x=>x[1]).map(([kind,_,label,title])=>{
-  const url=memoSafeSource(sourceLinks[kind]);
+  const url=kind==='vigilance'?memoDrivingSource(root):memoSafeSource(sourceLinks[kind]);
   const tag=url?'a':'span';
   const attrs=url?` href="${esc(url)}" target="_blank" rel="noopener noreferrer"`:' tabindex="0"';
   const tip=url?'Ouvrir la source renseignée ↗':'Aucun lien renseigné : modifier la fiche pour ajouter une source';
@@ -5016,7 +5018,7 @@ document.addEventListener("copy",event=>{
 
 function formatDateFR(raw){const m=String(raw||"").match(/^(\d{4})-(\d{2})-(\d{2})/);return m?`${m[3]}/${m[2]}/${m[1]}`:String(raw||"")}
 function safeHttp(url){try{const u=new URL(url);return ["https:","http:"].includes(u.protocol)?u.href:""}catch{return ""}}
-function practicalFlags(m){return m?.sections?.[0]?.practicalFlags||{}}
+function practicalFlags(m){return Object.assign({},...(m?.sections||[]).slice().reverse().map(sec=>sec?.practicalFlags||{}))}
 function moleculeForDosage(m){return meds.find(x=>String(x.id)===String(moleculeParentId(m)))||null}
 function practicalPhotosensitive(m,p=null){
  const root=(isMolecule(m)||isSpecialiteFiche(m))?m:moleculeForDosage(m);
@@ -7928,6 +7930,11 @@ function captureEditorFields(m){
    }
   }
   m.sections[0].badgeSourceLinks=sourceLinks;
+  // Prevent stale metadata on reordered rubrics from reviving old values.
+  for(const sec of m.sections.slice(1)){
+   if(sec.badgeSourceLinks)delete sec.badgeSourceLinks.vigilance;
+   if(sec.practicalFlags){delete sec.practicalFlags.vigilance;delete sec.practicalFlags.vigilanceLevel;}
+  }
  }
  if(kind==="dci"||kind==="molecule"){
   m.sections[0].princepsNames=[...new Set((get("f-princeps")||"").split(",").map(x=>x.trim()).filter(Boolean))];
