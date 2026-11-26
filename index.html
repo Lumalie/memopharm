@@ -3293,7 +3293,7 @@ function explorerSearchMatches(query){
  if(!tokens.length)return [];
  const entries=publicMeds(),byId=new Map(entries.map(m=>[String(m.id),m]));
  const output=[];
- const sectionFields=m=>(m.sections||[]).filter(x=>x.enabled!==false);
+ const sectionFields=m=>(m.sections||[]).filter(x=>x.enabled!==false&&!isDocumentationSection(x)).map(x=>resolveSharedSection(m,x));
  const sectionMatch=(section,t)=>memoSearchTokenMatch([section.id,section.title,section.content].join(' '),t)||
   (['poso','posologie'].includes(t)&&norm(section.id+' '+section.title).includes('posologie'));
  for(const m of entries){
@@ -3313,7 +3313,12 @@ function explorerSearchMatches(query){
   const selfMatches=tokens.every(self);
   if(!selfMatches&&!matchingPres.length)continue;
   // Préférer la rubrique correspondant à la requête, sans masquer la fiche.
-  const section=sections.find(sec=>tokens.some(t=>sectionMatch(sec,t)&&!memoSearchTokenMatch(own,t)))||null;
+  // V161 : une demande explicite de rubrique prime sur une mention dans le texte.
+  const wantsPosology=tokens.some(t=>['poso','posologie'].includes(t));
+  const isPosology=sec=>norm(sec.id+' '+sec.title).includes('posologie');
+  const hasContent=sec=>!sec.sharedError&&String(sec.content||'').trim().length>0;
+  const candidates=sections.filter(sec=>tokens.some(t=>sectionMatch(sec,t)&&!memoSearchTokenMatch(own,t)));
+  const section=wantsPosology?(sections.find(sec=>isPosology(sec)&&hasContent(sec))||sections.find(isPosology)||null):(candidates.find(hasContent)||candidates[0]||null);
   if(selfMatches)output.push({med:m,section,presentation:null});
   for(const x of matchingPres)output.push({med:m,section,presentation:x.i});
  }
@@ -3400,7 +3405,7 @@ function explorerBindFilterBadges(container,classSel,indSel,formSel=null){
 // Une unique structure pour la prévisualisation des rubriques dans Explorer.
 function explorerSectionResultPreview(m,sec){
  if(!sec||!isContentFicheType(m)||isGroup(m))return "";
- return `<div class="explore-preview-direct"><div class="explore-preview-card"><button type="button" class="explore-preview-link" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec.id)}" aria-label="Ouvrir ${esc(sec.title)} dans la fiche ${esc(m.name)}"><span class="explore-preview-title">↳ ${esc(sec.title)}</span> <span class="explore-preview-arrow" aria-hidden="true">↗</span></button>${searchSectionPreview(resolveSharedSection(m,sec))}</div></div>`;
+ return `<div class="explore-preview-direct"><div class="explore-preview-card"><button type="button" class="explore-preview-link" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec.id)}" aria-label="Ouvrir ${esc(sec.title)} dans la fiche ${esc(m.name)}"><span class="explore-preview-title">↳ ${esc(sec.title)}</span> <span class="explore-preview-arrow" aria-hidden="true">↗</span></button>${searchSectionPreview(resolveSharedSection(m,sec))||'<div class="muted">Aucun contenu renseigné dans cette rubrique pour cette fiche.</div>'}</div></div>`;
 }
 
 function explorerSearchChildSort(a,b){
