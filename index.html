@@ -4027,6 +4027,13 @@ function memoSearchTokenMatch(text,token){
  }
  return false;
 }
+// V159 : privilégier les identités pharmaceutiques sur les mentions dans le contenu.
+function memoHomeIdentityScore(m,q){
+ if(!q)return 0;
+ const root=isVariantFiche(m)?moleculeForDosage(m):m;
+ const names=[m.name,m.dci,root?.name,root?.dci,...(root?.sections||[]).flatMap(sec=>sec.princepsNames||[]),...specialtyItems(m).map(x=>x.name),...((root&&isMolecule(root))?moleculeChildren(root).flatMap(c=>specialtyItems(c).map(x=>x.name)):[])];
+ return Math.max(0,...names.filter(Boolean).map(value=>{const n=norm(value).trim();return n===q?300:n.startsWith(q)?200:n.includes(q)?100:0}));
+}
 function getSearchMatches(queryOverride=null){
  const q=norm(queryOverride===null?$("search").value.trim():queryOverride);
  const tokens=q.split(/\s+/).filter(Boolean);
@@ -4037,7 +4044,7 @@ function getSearchMatches(queryOverride=null){
  // Ne pas produire de résultat autonome de variante : le moteur V112 utilise
  // childText et moleculeChildren() pour sélectionner la bonne présentation/rubrique.
  publicMeds().filter(m=>!isVariantFiche(m)).forEach(m=>{
-  const base=norm([m.name,m.dosage,m.dci,m.parent_dci,m.category,m.aliases,...(isMolecule(m)?(m.sections?.[0]?.princepsNames||[]):[]),...indicationTags(m),...explorerClasses(m),...medicationForms(m),...(isGroup(m)?["fiche groupe","groupe therapeutique","famille de medicaments"]:[])].join(" "));
+  const base=norm([m.name,m.dosage,m.dci,m.parent_dci,m.category,m.aliases,...(isMolecule(m)?(m.sections||[]).flatMap(sec=>sec.princepsNames||[]):[]),...indicationTags(m),...explorerClasses(m),...medicationForms(m),...(isGroup(m)?["fiche groupe","groupe therapeutique","famille de medicaments"]:[])].join(" "));
   const presentations=specialtyItems(m);
   const presText=x=>norm([x.name,x.p.dosage,x.p.lab,x.p.lab?"laboratoire":"",x.p.form,x.p.cip,...cipConditionnements(x.p).flatMap(c=>[c.cip,c.pack]),cipConditionnements(x.p).length?"cip":"",x.p.cis,x.p.cis?"cis":"",x.p.description,x.p.marking].join(" "));
   const sections=(m.sections||[]).filter(x=>x.enabled!==false);
@@ -4045,7 +4052,7 @@ function getSearchMatches(queryOverride=null){
   // V110 : les dosages et rubriques des fiches enfants doivent aussi être indexés
   // sur la fiche molécule mère, même si la recherche comporte une abréviation.
   const childEntries=isMolecule(m)?moleculeChildren(m):[];
-  const childText=norm(childEntries.map(c=>[c.name,c.dosage,c.form,ingredientTitleDose(c),...medicationForms(c),...(c.sections||[]).map(sec=>sec.id+" "+sec.title+" "+sec.content)].join(" ")).join(" "));
+  const childText=norm(childEntries.map(c=>[c.name,c.dosage,c.form,...specialtyItems(c).map(x=>x.name),ingredientTitleDose(c),...medicationForms(c),...(c.sections||[]).map(sec=>sec.id+" "+sec.title+" "+sec.content)].join(" ")).join(" "));
   const combined=norm([base,...presentations.map(presText),secText,childText].join(" "));
   if(!tokens.length){found.push({med:m,section:null,presentation:null});return}
   if(!tokens.every(t=>memoSearchTokenMatch(combined,t)||sections.some(sec=>fieldMatch(t,sec))||
@@ -4132,6 +4139,8 @@ function getSearchMatches(queryOverride=null){
  }).sort((a,b)=>{
   // Regrouper les résultats par type pour garder les couleurs côte à côte.
   const typeRank=item=>item.presentation!==null?3:isGroup(item.med)?0:isMolecule(item.med)?1:2;
+  const identityDiff=memoHomeIdentityScore(b.med,q)-memoHomeIdentityScore(a.med,q);
+  if(identityDiff)return identityDiff;
   const rankDiff=typeRank(a)-typeRank(b);
   if(rankDiff)return rankDiff;
   const score=item=>{const name=norm(item.med.name);return (name===q?100:0)+(name.startsWith(q)?40:0)+tokens.filter(t=>name.includes(t)).length*15};
@@ -4360,13 +4369,16 @@ function previewSearchResult(item){
  $('searchPreview').querySelectorAll('[data-preview-presentation]').forEach(b=>b.onclick=()=>{navigatePreview({med:m,section:null,presentation:Number(b.dataset.previewPresentation)});});
  $('results').querySelectorAll('.result').forEach(el=>el.classList.toggle('preview-selected',el.dataset.id===String(m.id)&&el.dataset.section===(sec?.id||'')&&el.dataset.presentation===(pres===null?'':String(pres))));
 }
+let memoHomeLastQuery="";
 function syncSearchWorkspace(query,found){
+ const queryChanged=norm(query)!==memoHomeLastQuery;
+ memoHomeLastQuery=norm(query);
  const active=currentView==='home'&&!admin&&!openedSearchFiche&&!editorId&&!!query;
  $('homeView').classList.toggle('search-work-active',active);
  $('searchWorkspace').classList.toggle('hidden',!active);
  const dropdown=$('searchSuggestions');const target=active?$('searchResultsSlot'):$('mainSearchCard');
  if(dropdown.parentElement!==target){if(active)target.appendChild(dropdown);else $('mainSearchCard').insertBefore(dropdown,$('filters'))}
- if(active){dropdown.classList.remove('hidden');const match=found.find(x=>searchPreviewKey(x)===previewSearchKey)||found[0];if(match){const variant=match.presentation===null?memoSearchResultVariant(match.med,query):null;previewSearchResult(variant?{med:variant,section:null,presentation:null}:match);}else $('searchPreview').innerHTML='<div class="empty">Aucun résultat pour cette recherche.</div>'}
+ if(active){dropdown.classList.remove('hidden');const match=(!queryChanged&&found.find(x=>searchPreviewKey(x)===previewSearchKey))||found[0];if(match){const variant=match.presentation===null?memoSearchResultVariant(match.med,query):null;previewSearchResult(variant?{med:variant,section:null,presentation:null}:match);}else $('searchPreview').innerHTML='<div class="empty">Aucun résultat pour cette recherche.</div>'}
  else {previewSearchKey='';previewHistoryReady=false;}
 }
 let highlightedSearchIndex=-1;
