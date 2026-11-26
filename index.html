@@ -2279,7 +2279,27 @@ header #headerAdminActions .header-json-menu[open] .memo-backup-chevron{transfor
 </style><style id="memo-v158-driving">
 #detail #detailPublicActions .memo-v67-practical .memo-v69-vigilance{width:56px!important;min-width:56px!important;height:52px!important;min-height:52px!important;padding:0!important;box-sizing:border-box!important;border-radius:var(--m-radius-13)!important;flex:none!important;align-self:center}
 #searchPreview .memo-preview-vigilance .memo-v67-practical .memo-v69-vigilance{width:46px!important;min-width:46px!important;height:46px!important;min-height:46px!important;padding:0!important;box-sizing:border-box!important;border-radius:var(--m-radius-11)!important;flex:none!important;align-self:center}
-</style></head>
+</style><style id="memo-v162-explorer">
+main:has(> #exploreView:not(.hidden).memo-explore-query){width:100%;max-width:1580px;box-sizing:border-box}
+#exploreView.memo-explore-query>.explore-heading{padding:10px 0 4px}
+#exploreView.memo-explore-query>.explore-heading p{margin:5px 0 8px}
+#exploreView.memo-explore-query>.explore-search{margin:4px auto 12px}
+#exploreView.memo-explore-query>.explore-controls{margin:8px 0 12px}
+#exploreView .memo-explorer-sidebar .explore-tree{gap:8px}
+#exploreView .memo-explorer-sidebar .explore-tree .explore-tree-children{margin:7px 0 5px 7px!important;padding-left:7px!important;gap:8px}
+#exploreView .memo-explorer-sidebar .explore-tree .explore-tree-node>.explore-tree-line{min-height:40px!important;padding:8px!important;flex-wrap:nowrap!important}
+#exploreView .memo-explorer-sidebar .explore-tree .explore-tree-node>.explore-tree-line .explore-tree-name{font-size:.92rem!important;line-height:1.4!important}
+#exploreView .memo-explorer-sidebar .explore-tree-variant{--group-bg:#f3ece6!important;--group-fg:#805d4b!important}
+#exploreView #exploreCards .explore-result-dose{--explore-ink:#805d4b;--explore-line:#c59c86;--explore-rgb:245,241,237;--memo-dose-ink:#805d4b;--memo-dose-border:#c59c86}
+#exploreView #exploreCards .explore-section-variants .explore-result-section-title{color:#805d4b;border-color:#d7c2b5}
+#exploreView mark.memo-explore-highlight{background:#f7e8ac;color:inherit;border-radius:2px;padding:0;font:inherit}
+html[data-memo-theme="dark"] #exploreView #exploreCards .explore-result-dose{--explore-ink:#e2c3b1;--explore-line:#987d6e;--explore-rgb:55,49,45;--memo-dose-ink:#e2c3b1;--memo-dose-border:#987d6e}
+html[data-memo-theme="dark"] #exploreView .memo-explorer-sidebar .explore-tree-variant{--group-bg:#39312d!important;--group-fg:#e2c3b1!important}
+html[data-memo-theme="dark"] #exploreView #exploreCards .explore-section-variants .explore-result-section-title{color:#e2c3b1;border-color:#987d6e}
+html[data-memo-theme="dark"] #exploreView mark.memo-explore-highlight{background:#655523;color:inherit}
+@media(min-width:900px){#exploreView .memo-explorer-split{grid-template-columns:minmax(280px,29%) minmax(0,1fr);gap:28px}#exploreView.memo-explore-query .memo-explorer-split{grid-template-columns:minmax(300px,30%) minmax(0,1fr)}}
+</style>
+</head>
 <body>
 <header><div class="wrap">
   <div class="topline">
@@ -3651,10 +3671,20 @@ function explorerBuildViewModel(){
 }
 // V116.38 — Plus de récursion ni de variable globale pour construire la barre latérale.
 // Les deux rendus reçoivent exactement le même ensemble de fiches filtrées.
+function memoV162Highlight(root,query){
+ if(!root||!query)return;
+ const terms=[...new Set(norm(query).match(/[a-z0-9]+/g)||[])].filter(t=>t.length>=3).sort((a,b)=>b.length-a.length);
+ if(!terms.length)return;
+ const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode(n){return n.parentElement?.closest('script,style,svg,textarea,input,select,mark,[hidden],[aria-hidden="true"],.memo-explore-highlight')?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT}});
+ const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
+ for(const n of nodes){const raw=n.nodeValue;let folded='',map=[];for(let i=0;i<raw.length;i++){const part=norm(raw[i]);folded+=part;for(let j=0;j<part.length;j++)map.push(i)}
+ const re=new RegExp(terms.join('|'),'g');let match,last=0,frag=document.createDocumentFragment();while((match=re.exec(folded))){const start=map[match.index],end=map[match.index+match[0].length-1]+1;if(start<last)continue;frag.append(document.createTextNode(raw.slice(last,start)));const mark=document.createElement('mark');mark.className='memo-explore-highlight';mark.textContent=raw.slice(start,end);frag.append(mark);last=end}if(last){frag.append(document.createTextNode(raw.slice(last)));n.replaceWith(frag)}}
+}
 function renderExplorer(){
  const model=explorerBuildViewModel();
  const {entries,filtered,query,searchMatches,classSel,indSel,formSel}=model;
  const sidebar=$("exploreSidebarTree"),cards=$("exploreCards");
+ $("exploreView").classList.toggle("memo-explore-query",!!query);
  if(sidebar&&cards){
   // Le renderer historique écrit dans exploreCards ; déplacer ses nœuds conserve
   // les gestionnaires de clic, les états des chevrons et les badges interactifs.
@@ -3672,6 +3702,7 @@ function renderExplorer(){
  if(!query&&$("exploreBadge").value&&memoRenderThemeList(filtered,$("exploreBadge").value))return;
  if(query){
   renderExplorerSearchResults(entries,filtered,searchMatches,query,classSel,indSel);
+  memoV162Highlight(cards,query);memoV162Highlight(sidebar,query);
   return;
  }
  renderExplorerTree(entries,filtered,query,classSel,indSel,formSel);
