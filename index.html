@@ -3049,7 +3049,11 @@ function specialtyItems(m){
 }
 function openMedication(id,presentationIndex=null,sectionId=null){
  const requested=meds.find(x=>String(x.id)===String(id));
- const variantTarget=requested&&isVariantFiche(requested)?requested:null;
+ const searchRoot=requested&&isVariantFiche(requested)?meds.find(x=>String(x.id)===String(moleculeParentId(requested))):requested;
+ const commercial=currentView==='home'&&!openedSearchFiche&&!editorId&&$('search').value.trim()?memoHomeCommercialMatch(searchRoot||{},$('search').value,requested&&isVariantFiche(requested)?requested:null):null;
+ if(commercial){memoSetViewChoice(commercial.child.id,{presentation:commercial.option.key});id=commercial.child.id;}
+ const actualRequested=meds.find(x=>String(x.id)===String(id));
+ const variantTarget=actualRequested&&isVariantFiche(actualRequested)?actualRequested:null;
  const parentTarget=variantTarget?meds.find(x=>String(x.id)===String(moleculeParentId(variantTarget))&&isMolecule(x)):null;
  if(parentTarget){
   id=parentTarget.id;presentationIndex=null;/* conserver la rubrique de la variante */
@@ -4273,7 +4277,9 @@ function previewSearchResult(item){
  // Les résultats de variante explicites et les recherches avec dosage gardent
  // leur présentation commerciale habituelle.
  const moleculeOnlyPreview=isMolecule(m)&&!forcedChild&&!dosageTokens.length&&!rubricTokens.length&&!sec;
- const selectedChild=moleculeOnlyPreview?null:(forcedChild||(matchingChildren[0]?.child||defaultChild||null));
+ const commercialMatch=memoHomeCommercialMatch(m,queryNorm,forcedChild);
+ const selectedChild=commercialMatch?.child||(moleculeOnlyPreview?null:(forcedChild||(matchingChildren[0]?.child||defaultChild||null)));
+ if(commercialMatch)memoSetViewChoice(selectedChild.id,{presentation:commercialMatch.option.key});
  const childSections=selectedChild?(selectedChild.sections||[]).filter(x=>x.enabled!==false&&!isDocumentationSection(x)).map(x=>resolveSharedSection(selectedChild,x)).filter(x=>String(x.content||'').trim()):[];
  const childMatch=rubricTokens.length?childSections.find(x=>rubricTokens.every(t=>{const label=norm(x.id+' '+x.title);return label.includes(t)||Object.entries(sectionAliases).some(([key,arr])=>arr.includes(t)&&label.includes(key))})):null;
  const targeted=!!rubricTokens.length;
@@ -4399,6 +4405,27 @@ function updateSearchHighlight(){
 }
 // Le résultat de la molécule adopte l'identité de la variante lorsque
 // la recherche cible un dosage, tout en conservant les badges de la molécule.
+function memoHomeCommercialMatch(m,query,forcedChild=null){
+ if(!isMolecule(m))return null;
+ const tokens=norm(query).split(/\s+/).filter(Boolean);
+ const identity=norm([m.name,m.dci,m.parent_dci].join(' ')).split(/\s+/);
+ const brandTokens=tokens.filter(t=>t.length>=3&&!/\d/.test(t)&&!identity.some(n=>n===t||n.startsWith(t)));
+ if(!brandTokens.length)return null;
+ const doses=tokens.filter(t=>/^\d/.test(t));
+ const candidates=[];
+ for(const child of forcedChild?[forcedChild]:moleculeChildren(m)){
+  for(const option of memoV116CommercialOptions(child)){
+   const name=norm(option.p.name||'');
+   const words=name.split(/\s+/);
+   const matched=brandTokens.filter(t=>words.some(w=>w.startsWith(t)));
+   if(!matched.length)continue;
+   const desc=norm([child.dosage,ingredientTitleDose(child),option.p.dosage,child.form,option.p.form].join(' '));
+   if(!doses.every(t=>memoSearchTokenMatch(desc,t)))continue;
+   candidates.push({child,option,score:matched.length*100+(name===norm(query)?50:0)+(name.startsWith(brandTokens[0])?20:0)});
+  }
+ }
+ return candidates.sort((a,b)=>b.score-a.score)[0]||null;
+}
 function memoSearchResultVariant(m,query){
  if(!isMolecule(m))return null;
  const tokens=norm(query).split(/\s+/).filter(Boolean);
