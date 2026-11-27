@@ -2296,7 +2296,22 @@ html[data-memo-theme="dark"] #exploreView mark.memo-explore-highlight{background
 #exploreView .explore-preview-title{display:inline!important}
 #exploreView :is(.explore-hit-name,.explore-tree-name,.explore-preview-title) mark.memo-explore-highlight{display:inline!important;margin:0!important;padding:0!important;letter-spacing:inherit;white-space:inherit}
 </style>
-</head>
+<style id="memo-v164-explorer-tiers">
+.memo-explore-tier-title{font-size:1rem;color:inherit;margin:0 0 12px;font-weight:700}
+.memo-explore-secondary{margin-top:22px;border:1px solid #c9d8ce;border-radius:10px;padding:12px;background:transparent}
+.memo-explore-secondary>summary{cursor:pointer;font-weight:700;padding:4px;color:inherit}
+.memo-explore-secondary-body{padding-top:12px}
+</style><style id="memo-v165-explorer-idle">
+#exploreView.memo-explore-idle .memo-explorer-split{display:block!important;width:100%;max-width:860px;margin:24px auto 0}
+#exploreView.memo-explore-idle .memo-explorer-results{display:none!important}
+#exploreView.memo-explore-idle .memo-explorer-sidebar{width:100%;max-width:none;position:static}
+#exploreView.memo-explore-idle .memo-explorer-sidebar>h3{font-size:1.12rem;margin:0 0 16px}
+#exploreView.memo-explore-idle .explore-tree{gap:12px}
+#exploreView.memo-explore-idle .explore-tree .explore-tree-node>.explore-tree-line{min-height:48px!important;padding:10px 14px!important}
+#exploreView.memo-explore-idle .explore-tree .explore-tree-node>.explore-tree-line .explore-tree-name{font-size:1rem!important}
+#exploreView.memo-explore-idle .explore-tree .explore-tree-children{margin:8px 0 6px 12px!important;padding-left:12px!important;gap:10px}
+@media(max-width:600px){#exploreView.memo-explore-idle .explore-tree .explore-tree-children{margin-left:5px!important;padding-left:7px!important}#exploreView.memo-explore-idle .explore-tree .explore-tree-node>.explore-tree-line{padding:8px!important}}
+</style></head>
 <body>
 <header><div class="wrap">
   <div class="topline">
@@ -3328,6 +3343,9 @@ function explorerSearchMatches(query){
   const self=t=>shared(t)||memoSearchTokenMatch(own,t)||memoSearchTokenMatch(sectionHay,t);
   const matchingPres=presentations.filter(x=>tokens.every(t=>shared(t)||memoSearchTokenMatch(presHay(x),t)));
   const selfMatches=tokens.every(self);
+  const identity=[...family.flatMap(x=>[x.name,x.dci,x.parent_dci,x.aliases,...(x.sections||[]).flatMap(sec=>sec.princepsNames||[])]),m.dosage,m.form,ingredientTitleDose(m)].filter(Boolean).join(' ');
+  const identityTokens=tokens.filter(t=>!['poso','posologie'].includes(t));
+  const directFor=(x=null)=>identityTokens.length>0&&identityTokens.every(t=>memoSearchTokenMatch(identity+(x?' '+[x.name,x.p.dosage,x.p.form,x.p.lab,x.p.cip,x.p.cis].join(' '):''),t));
   if(!selfMatches&&!matchingPres.length)continue;
   // Préférer la rubrique correspondant à la requête, sans masquer la fiche.
   // V161 : une demande explicite de rubrique prime sur une mention dans le texte.
@@ -3337,8 +3355,8 @@ function explorerSearchMatches(query){
   const candidates=sections.filter(sec=>tokens.some(t=>sectionMatch(sec,t)&&!memoSearchTokenMatch(own,t)));
   const section=wantsPosology?(sections.find(sec=>isPosology(sec)&&hasContent(sec))||null):(candidates.find(hasContent)||candidates[0]||null);
   if(wantsPosology&&!section)continue;
-  if(selfMatches)output.push({med:m,section,presentation:null});
-  for(const x of matchingPres)output.push({med:m,section,presentation:x.i});
+  if(selfMatches)output.push({med:m,section,presentation:null,direct:directFor()});
+  for(const x of matchingPres)output.push({med:m,section,presentation:x.i,direct:directFor(x)});
  }
  return output;
 }
@@ -3473,7 +3491,12 @@ function renderExplorerSearchResults(entries,filtered,searchMatches,query,classS
   const allowed=new Set(filtered.map(m=>m.id));
   const hits=searchMatches.filter(hit=>allowed.has(hit.med.id));
   // Préparation des résultats : aucune dépendance au DOM ni au rendu HTML.
-  const {hitGroups,visibleHits,groupedVisible}=explorerPrepareResults(hits,query,explorerVisibleLimit);
+  const directIds=new Set(hits.filter(h=>h.direct).map(h=>String(h.med.id)));
+  const primary=hits.filter(h=>directIds.has(String(h.med.id))), secondary=hits.filter(h=>!directIds.has(String(h.med.id)));
+  const a=explorerPrepareResults(primary,query,explorerVisibleLimit);
+  const b=explorerPrepareResults(secondary,query,Math.max(0,explorerVisibleLimit-a.visibleHits.length));
+  const hitGroups=[...a.hitGroups,...b.hitGroups],visibleHits=[...a.visibleHits,...b.visibleHits];
+  const groupedVisible=[...a.groupedVisible.map(g=>({...g,secondary:false})),...b.groupedVisible.map(g=>({...g,secondary:true}))];
   const categoryLabels={groups:"Fiches groupes",dci:"Fiches molécule",variants:"Variantes de présentation",specialties:"Spécialités",medications:"Fiches médicaments"};
   const byIdForPath=new Map(entries.map(m=>[m.id,m]));
 
@@ -3485,7 +3508,7 @@ function renderExplorerSearchResults(entries,filtered,searchMatches,query,classS
    childrenByParent.get(parent).push(entry);
   }
   $("exploreSearchCount").textContent=`${hitGroups.length} fiche${hitGroups.length===1?"":"s"} trouvée${hitGroups.length===1?"":"s"} · ${visibleHits.length} affichée${visibleHits.length===1?"":"s"} · ${hits.length} correspondance${hits.length===1?"":"s"} au total`;
-  $("exploreCards").innerHTML=hits.length?`<div class="explore-sections">${groupedVisible.map(({category,items})=>`<section class="explore-result-section explore-section-${category}"><h3 class="explore-result-section-title">${categoryLabels[category]} <span>${items.length}${hitGroups.filter(g=>explorerResultCategory(g)===category).length>items.length?" / "+hitGroups.filter(g=>explorerResultCategory(g)===category).length:""}</span></h3><div class="explore-hits">${items.map((hitGroup)=>{
+  $("exploreCards").innerHTML=hits.length?`<div class="explore-sections">${primary.length?'<h3 class="memo-explore-tier-title">Médicaments correspondants</h3>':''}${groupedVisible.map(({category,items,secondary},groupIndex)=>`${secondary&&(groupIndex===0||!groupedVisible[groupIndex-1].secondary)?`<details class="memo-explore-secondary" ${primary.length?"":"open"}><summary>Autres correspondances dans le contenu (${b.hitGroups.length})</summary><div class="memo-explore-secondary-body">`:""}<section class="explore-result-section explore-section-${category}"><h3 class="explore-result-section-title">${categoryLabels[category]} <span>${items.length}${(secondary?b:a).hitGroups.filter(g=>explorerResultCategory(g)===category).length>items.length?" / "+(secondary?b:a).hitGroups.filter(g=>explorerResultCategory(g)===category).length:""}</span></h3><div class="explore-hits">${items.map((hitGroup)=>{
    const hit=hitGroup.parent||hitGroup.hits[0];
    const m=hit.med,sec=hitGroup.parent?.section||hitGroup.hits.find(h=>h.section)?.section||null;
    const parents=explorerGroupPath(m,byIdForPath);
@@ -3532,7 +3555,7 @@ function renderExplorerSearchResults(entries,filtered,searchMatches,query,classS
     ${preview}
     ${presentationToggle}
    </article>`;
-  }).join("")}</div></section>`).join("")}</div>${hitGroups.length>visibleHits.length?`<div class="explore-more-wrap"><button type="button" id="exploreShowMore" class="explore-show-more">Afficher 20 fiches supplémentaires <span>(${hitGroups.length-visibleHits.length} restantes)</span></button></div>`:""}`:'<div class="empty">Aucun résultat. Essaie un autre terme ou modifie les filtres.</div>';
+  }).join("")}</div></section>${secondary&&groupIndex===groupedVisible.length-1?"</div></details>":""}`).join("")}${b.hitGroups.length&&!b.visibleHits.length?`<details class="memo-explore-secondary"><summary>Autres correspondances dans le contenu (${b.hitGroups.length})</summary><p>Utilisez « Afficher 20 fiches supplémentaires » pour consulter ces résultats.</p></details>`:""}</div>${hitGroups.length>visibleHits.length?`<div class="explore-more-wrap"><button type="button" id="exploreShowMore" class="explore-show-more">Afficher 20 fiches supplémentaires <span>(${hitGroups.length-visibleHits.length} restantes)</span></button></div>`:""}`:'<div class="empty">Aucun résultat. Essaie un autre terme ou modifie les filtres.</div>';
   $("exploreCards").querySelectorAll("[data-presentation-toggle]").forEach(button=>button.onclick=()=>{
    const children=button.nextElementSibling;
    if(!children)return;
@@ -3690,7 +3713,9 @@ function renderExplorer(){
   sidebar.replaceChildren(...Array.from(cards.childNodes));
  }
  const hasFilters=["exploreClass","exploreIndication","exploreForm","exploreBadge"].some(id=>$(id)?.value);
+ $("exploreView").classList.toggle("memo-explore-idle",!query&&!hasFilters);
  if(!query&&!hasFilters){
+  $("memoThemeIntro").classList.add("hidden");
   cards.innerHTML='<div class="memo-explorer-empty-results">Saisissez un terme dans la recherche pour afficher ici les fiches correspondantes, classées par type.</div>';
   $("exploreSearchCount").textContent="";
   return;
