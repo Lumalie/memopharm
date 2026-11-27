@@ -3337,12 +3337,27 @@ function memoRenderThemeList(entries,kind){
 }
 // V116.28 — Index dédié à Explorer : inclut les variantes autonomes et
 // vérifie les critères sur une même présentation (forme, dosage, CIP, etc.).
+function explorerSectionHasContent(sec){
+ if(!sec||sec.sharedError||sec.enabled===false)return false;
+ const meaningful=v=>String(v||'').replace(/\[\[newline\]\]/g,'').replace(/<[^>]*>/g,'').replace(/&nbsp;/gi,'').replace(/[\s\u200b\ufeff|*_#]+/g,'').length>0;
+ if(sec.type==='table')return memoTableModel(sec.content||'').cells.some(c=>meaningful(c.text));
+ return meaningful(sec.content);
+}
 function explorerSearchMatches(query){
  const tokens=norm(query).trim().split(/\s+/).filter(Boolean);
  if(!tokens.length)return [];
  const entries=publicMeds(),byId=new Map(entries.map(m=>[String(m.id),m]));
  const output=[];
- const sectionFields=m=>(m.sections||[]).filter(x=>x.enabled!==false&&!isDocumentationSection(x)).map(x=>resolveSharedSection(m,x));
+ const genericWords=new Set(['dans','avec','pour','sans','selon','prise','fiche','communes','communs','points','medicamenteuses','therapeutiques']);
+ const vocabulary=[...DEFAULT_SECTIONS,...GROUP_SECTIONS,...entries.flatMap(m=>m.sections||[])].filter(s=>!isDocumentationSection(s));
+ const sectionLabelMatch=(sec,t)=>{
+  if(['poso','posologie'].includes(t))return norm(sec.id+' '+sec.title).includes('posologie');
+  if(t==='prise')return sec.id==='prise';
+  if(t.length<4||genericWords.has(t))return false;
+  return norm(sec.id+' '+sec.title).split(/[^a-z0-9]+/).some(w=>w.startsWith(t));
+ };
+ const sectionTokens=tokens.filter(t=>vocabulary.some(sec=>sectionLabelMatch(sec,t))).filter(t=>t!=='prise'||!tokens.some(other=>other!==t&&vocabulary.some(sec=>sec.id==='oubli'&&sectionLabelMatch(sec,other))));
+ const sectionFields=m=>(m.sections||[]).filter(x=>x.enabled!==false&&!isDocumentationSection(x)).map(x=>resolveSharedSection(m,x)).filter(explorerSectionHasContent);
  const sectionMatch=(section,t)=>memoSearchTokenMatch([section.id,section.title,section.content].join(' '),t)||
   (['poso','posologie'].includes(t)&&norm(section.id+' '+section.title).includes('posologie'));
  for(const m of entries){
@@ -3361,25 +3376,24 @@ function explorerSearchMatches(query){
   const matchingPres=presentations.filter(x=>tokens.every(t=>shared(t)||memoSearchTokenMatch(presHay(x),t)));
   const selfMatches=tokens.every(self);
   const identity=[...family.flatMap(x=>[x.name,x.dci,x.parent_dci,x.aliases,...(x.sections||[]).flatMap(sec=>sec.princepsNames||[])]),m.dosage,m.form,ingredientTitleDose(m)].filter(Boolean).join(' ');
-  const identityTokens=tokens.filter(t=>!['poso','posologie'].includes(t));
+  const identityTokens=tokens.filter(t=>!sectionTokens.includes(t)&&!(t==='prise'&&sectionTokens.some(other=>sectionLabelMatch({id:'oubli',title:'En cas d’oubli de prise'},other))));
   const directFor=(x=null)=>identityTokens.length>0&&identityTokens.every(t=>memoSearchTokenMatch(identity+(x?' '+[x.name,x.p.dosage,x.p.form,x.p.lab,x.p.cip,x.p.cis].join(' '):''),t));
   if(!selfMatches&&!matchingPres.length)continue;
   // Préférer la rubrique correspondant à la requête, sans masquer la fiche.
   // V161 : une demande explicite de rubrique prime sur une mention dans le texte.
-  const wantsPosology=tokens.some(t=>['poso','posologie'].includes(t));
-  const isPosology=sec=>norm(sec.id+' '+sec.title).includes('posologie');
-  const hasContent=sec=>!sec.sharedError&&(sec.type==="table"?memoTableModel(sec.content||"").cells.some(c=>String(c.text||"").trim()):String(sec.content||'').trim().length>0);
-  const candidates=sections.filter(sec=>tokens.some(t=>sectionMatch(sec,t)&&!memoSearchTokenMatch(own,t)));
-  let section=wantsPosology?(sections.find(sec=>isPosology(sec)&&hasContent(sec))||null):(candidates.find(hasContent)||candidates[0]||null);
-  if(wantsPosology&&!section)continue;
+  const hasContent=explorerSectionHasContent;
+  const wantsSection=sectionTokens.length>0;
+  const candidates=sections.filter(sec=>hasContent(sec)&&tokens.some(t=>sectionMatch(sec,t)&&!memoSearchTokenMatch(own,t)));
+  let section=wantsSection?sections.find(sec=>hasContent(sec)&&sectionTokens.every(t=>sectionLabelMatch(sec,t)))||null:candidates[0]||null;
+  if(wantsSection&&!section)continue;
   const identityNames=x=>[x.name,x.dci,x.parent_dci,x.aliases,...(x.sections||[]).flatMap(sec=>sec.princepsNames||[])].filter(Boolean).join(' ');
   const parentIdentity=parent?identityNames(parent):'';
-  const requested=tokens.filter(t=>!['poso','posologie'].includes(t));
+  const requested=identityTokens;
   const generalFamily=parent&&requested.length&&requested.every(t=>memoSearchTokenMatch(parentIdentity,t));
-  const ownSpecific=parent&&section&&hasContent(section)&&!section.sharedError&&!(parent.sections||[]).some(ps=>norm(ps.id)===norm(section.id)&&String(resolveSharedSection(parent,ps).content||'').trim()===String(section.content||'').trim())&&(wantsPosology||requested.some(t=>!memoSearchTokenMatch(parentIdentity,t)&&sectionMatch(section,t)));
+  const ownSpecific=parent&&section&&hasContent(section)&&!section.sharedError&&!(parent.sections||[]).some(ps=>norm(ps.id)===norm(section.id)&&String(resolveSharedSection(parent,ps).content||'').trim()===String(section.content||'').trim())&&(wantsSection||requested.some(t=>!memoSearchTokenMatch(parentIdentity,t)&&sectionMatch(section,t)));
   if(generalFamily&&!ownSpecific)continue;
   const directIdentity=directFor()||matchingPres.some(x=>directFor(x));
-  if(directIdentity&&!wantsPosology&&!isGroup(m)){
+  if(directIdentity&&!wantsSection&&!isGroup(m)){
    const explicit=sections.find(sec=>hasContent(sec)&&tokens.some(t=>t.length>=3&&!memoSearchTokenMatch(identity,t)&&norm(sec.title).includes(t)));
    section=explicit||sections.find(sec=>hasContent(sec)&&(sec.id==='coup-oeil'||/en un coup d[’' ]oeil/.test(norm(sec.title))))||null;
   }
@@ -3468,8 +3482,8 @@ function explorerBindFilterBadges(container,classSel,indSel,formSel=null){
 // V116.40 — Les sous-arbres de résultats utilisent un rendu indépendant de la page.
 // Une unique structure pour la prévisualisation des rubriques dans Explorer.
 function explorerSectionResultPreview(m,sec){
- if(!sec||!isContentFicheType(m)||isGroup(m))return "";
- return `<div class="explore-preview-direct"><div class="explore-preview-card"><button type="button" class="explore-preview-link" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec.id)}" aria-label="Ouvrir ${esc(sec.title)} dans la fiche ${esc(m.name)}"><span class="explore-preview-title">↳ ${esc(sec.title)}</span> <span class="explore-preview-arrow" aria-hidden="true">↗</span></button>${searchSectionPreview(resolveSharedSection(m,sec))||'<div class="muted">Aucun contenu renseigné dans cette rubrique pour cette fiche.</div>'}</div></div>`;
+ if(!sec||!isContentFicheType(m)||isGroup(m)||!explorerSectionHasContent(resolveSharedSection(m,sec)))return "";
+ return `<div class="explore-preview-direct"><div class="explore-preview-card"><button type="button" class="explore-preview-link" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec.id)}" aria-label="Ouvrir ${esc(sec.title)} dans la fiche ${esc(m.name)}"><span class="explore-preview-title">↳ ${esc(sec.title)}</span> <span class="explore-preview-arrow" aria-hidden="true">↗</span></button>${searchSectionPreview(resolveSharedSection(m,sec))}</div></div>`;
 }
 
 function explorerSearchChildSort(a,b){
@@ -3640,7 +3654,7 @@ function renderExplorerTree(entries,filtered,query,classSel,indSel,formSel){
    parentId=parentGroupId(parent);
   }
  }
- const visible=entries.filter(m=>included.has(m.id));
+ const visible=entries.filter(m=>included.has(m.id)&&!isVariantFiche(m));
  const visibleById=new Map(visible.map(m=>[m.id,m]));
  const sortNames=(a,b)=>displayMedName(a).localeCompare(displayMedName(b),"fr",{sensitivity:"base"});
  // Ordre Explorer : groupes, fiches molécules, fiches dosage + forme, autres fiches.
