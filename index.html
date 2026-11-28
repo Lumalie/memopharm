@@ -2383,6 +2383,24 @@ html[data-memo-theme="dark"] #exploreView #exploreCards .memo-v169-commercial-li
 #exploreView #exploreCards .memo-v171-section-body{margin-top:9px}
 @keyframes memoV171Reveal{from{opacity:.65;transform:translateY(-3px)}to{opacity:1;transform:translateY(0)}}
 @media(prefers-reduced-motion:no-preference){#exploreView #exploreCards .memo-v169-disclosure[open]>.memo-v169-commercial-list,#exploreView #exploreCards .memo-v171-section[open]>.memo-v171-section-body{animation:memoV171Reveal .16s ease-out}}
+</style><style id="memo-v172-directory">
+#exploreView .explore-tree-toggle svg{width:18px;height:18px;display:block}
+#exploreView .memo-v172-toggle-line{cursor:pointer}
+#exploreView .explore-tree-line .explore-tree-name{flex:0 1 auto!important;width:auto!important;max-width:calc(100% - 32px);display:inline!important}
+#exploreView .explore-tree-name:hover{text-decoration:underline!important}
+#exploreView.memo-explore-idle .memo-explorer-split,#exploreView.memo-explore-idle .memo-explorer-sidebar{width:100%!important;max-width:none!important}
+#exploreView.memo-explore-idle .memo-explorer-sidebar>h3{display:none}
+.memo-v172-directory{display:grid;grid-template-columns:minmax(190px,245px) minmax(0,1fr);gap:24px;align-items:start}
+.memo-v172-directory nav{display:grid;gap:7px;min-width:0}.memo-v172-directory h4{margin:0 0 6px;color:#34684e;font-size:.95rem}
+.memo-v172-directory nav button{display:flex;align-items:center;text-align:left;gap:8px;padding:11px 12px;border:0;border-radius:9px;background:#e5eee7;color:#34684e;font-weight:650;box-shadow:none}.memo-v172-directory nav button[aria-pressed=true]{background:#cce2d3}.memo-v172-directory nav button span{flex:1}.memo-v172-directory nav svg{width:16px;height:16px;flex:none}.memo-v172-directory small,.memo-v172-count{font-size:.75rem;opacity:.8}.memo-v172-count{margin-left:auto}
+.memo-v172-panel{min-width:0}.memo-v172-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}.memo-v172-heading button{width:auto;background:transparent;color:#34684e;box-shadow:none;border:0;padding:5px}.memo-v172-heading .memo-v172-root-link{font-size:1.2rem;font-weight:700;text-align:left}.memo-v172-root-link:hover{text-decoration:underline}
+#exploreView.memo-explore-idle .memo-v172-grid{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));align-items:start;gap:14px!important}
+#exploreView.memo-explore-idle .memo-v172-grid>.explore-tree-node{border:1px solid #d2e1d6!important;border-radius:12px!important;background:#fafcfb!important;padding:9px!important;min-width:0}
+#exploreView.memo-explore-idle .memo-v172-grid .explore-tree-node>.explore-tree-line{min-height:34px!important;padding:7px 9px!important;gap:5px!important}
+#exploreView.memo-explore-idle .memo-v172-grid .explore-tree-node>.explore-tree-line .explore-tree-name{font-size:.88rem!important}
+#exploreView.memo-explore-idle .memo-v172-grid .explore-tree-children{margin:6px 0 4px 5px!important;padding-left:8px!important;gap:5px!important}
+@media(min-width:1500px){#exploreView.memo-explore-idle .memo-v172-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))}}
+@media(max-width:720px){.memo-v172-directory{grid-template-columns:1fr;gap:16px}}
 </style></head>
 <body>
 <header><div class="wrap">
@@ -3222,6 +3240,12 @@ function medicationForms(m){
  return [...new Set([...presentationForms,...(dciForm?[dciForm]:[])])];
 }
 const exploreExpandedGroups=new Set();
+let memoV172Selected=null;
+const memoV172Open=new Set();
+try{const state=JSON.parse(sessionStorage.getItem('memo-v172-tree')||'{}');memoV172Selected=state.selected??null;for(const id of state.open||[])memoV172Open.add(String(id));}catch(e){}
+function memoV172Save(){try{sessionStorage.setItem('memo-v172-tree',JSON.stringify({selected:memoV172Selected,open:[...memoV172Open]}))}catch(e){}}
+function memoV172Chevron(open){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${open?'m6 9 6 6 6-6':'m9 18 6-6-6-6'}"/></svg>`;}
+
 function explorerBadgeVisible(m,kind){
  const setting=(m.sections||[])[0]?.explorerVisibility;
  return setting?.[kind]!==false;
@@ -3694,7 +3718,8 @@ function renderExplorerSearchResults(entries,filtered,searchMatches,query,classS
     toast("CIP copié : "+value);
    }catch(err){toast("Copie impossible : sélectionne le CIP manuellement.");}
   });
-  $("exploreCards").querySelectorAll("[data-open-med]").forEach(b=>{b.onclick=e=>openExplorerResult(e,b,b.dataset.hitPres===""?null:Number(b.dataset.hitPres),b.dataset.hitSection||null);b.onauxclick=e=>{if(e.button===1)openExplorerResult({...e,ctrlKey:true},b,b.dataset.hitPres===""?null:Number(b.dataset.hitPres),b.dataset.hitSection||null)}});
+  host.querySelectorAll('.explore-tree-line').forEach(line=>{const toggle=line.querySelector('[data-tree-toggle]');if(toggle){line.classList.add('memo-v172-toggle-line');line.addEventListener('click',e=>{if(!e.target.closest('button,a'))toggle.click()});}});
+ $("exploreCards").querySelectorAll("[data-open-med]").forEach(b=>{b.onclick=e=>openExplorerResult(e,b,b.dataset.hitPres===""?null:Number(b.dataset.hitPres),b.dataset.hitSection||null);b.onauxclick=e=>{if(e.button===1)openExplorerResult({...e,ctrlKey:true},b,b.dataset.hitPres===""?null:Number(b.dataset.hitPres),b.dataset.hitSection||null)}});
   $("exploreCards").querySelectorAll(".explore-preview-link").forEach(b=>b.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openExplorerResult(e,b,null,b.dataset.hitSection||null)}});
   return;
 }
@@ -3730,6 +3755,9 @@ function renderExplorerTree(entries,filtered,query,classSel,indSel,formSel){
  // Toujours conserver le tri par type de fiche dans la recherche.
  const explorerTypeOrder=m=>isGroup(m)?0:isMolecule(m)?1:isVariantFiche(m)?2:isSpecialiteFiche(m)?3:4;
  rootEntries.sort((a,b)=>explorerTypeOrder(a)-explorerTypeOrder(b)||sortExplorer(a,b));
+ const idle=!query&&!classSel.value&&!indSel.value&&!formSel.value&&!$("exploreBadge").value;
+ const expanded=m=>idle?memoV172Open.has(String(m.id)):exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value);
+ const count=(m,seen=new Set())=>{if(seen.has(m.id))return 0;seen.add(m.id);return (isGroup(m)?0:1)+childrenOf(m.id).reduce((n,c)=>n+count(c,seen),0)};
  const renderNode=(m,depth=0,ancestors=new Set())=>{
   if(ancestors.has(m.id))return "";
   const next=new Set(ancestors);next.add(m.id);
@@ -3746,17 +3774,24 @@ function renderExplorerTree(entries,filtered,query,classSel,indSel,formSel){
   const presentationTitle=p=>explorerPresentationTitle(m,p);
   return `<div class="explore-tree-node ${isVariantFiche(m)?"explore-tree-variant":isSpecialiteFiche(m)?"explore-tree-specialite":""} ${isGroup(m)||isMolecule(m)?"explore-tree-group":"explore-tree-med"} ${isGroup(m)||isMolecule(m)?(depth===0?"explore-tree-root-group":"explore-tree-subgroup"):""} ${!isMatch?"explore-tree-context":""}" style="--tree-depth:${Math.min(depth,8)};${entityTreeStyle(m)}">
    <div class="explore-tree-line">
-    ${kids.length?`<button type="button" class="explore-tree-toggle" data-tree-toggle="${esc(m.id)}" aria-label="${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)?"Replier":"Déplier"} ${esc(displayMedName(m))}" aria-expanded="${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)}" aria-controls="tree-children-${esc(m.id)}"><span aria-hidden="true">${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)?"▾":"▸"}</span></button>`:`<span class="explore-tree-leaf-space" aria-hidden="true"></span>`}
+    ${kids.length?`<button type="button" class="explore-tree-toggle" data-tree-toggle="${esc(m.id)}" aria-label="${expanded(m)?"Replier":"Déplier"} ${esc(displayMedName(m))}" aria-expanded="${expanded(m)}" aria-controls="tree-children-${esc(m.id)}"><span aria-hidden="true">${memoV172Chevron(expanded(m))}</span></button>`:`<span class="explore-tree-leaf-space" aria-hidden="true"></span>`}
     ${isGroup(m)||isMolecule(m)?"":`<span class="explore-tree-icon" aria-hidden="true">●</span>`}
     <button type="button" class="explore-tree-name" data-open-med="${esc(m.id)}" ${specialtyPresentations.length===1?`data-open-pres="${specialtyPresentations[0].i}"`:""}>${esc(specialtyPresentations.length===1?presentationTitle(specialtyPresentations[0].p):displayMedName(m))}</button>
-    
+    ${idle&&kids.length?`<span class="memo-v172-count">${count(m)}</span>`:""}
    </div>
    ${specialtyPresentations.length>1?`<div class="explore-tree-presentations">${specialtyPresentations.map(({p,i})=>`<button type="button" class="explore-tree-presentation" data-open-med="${esc(m.id)}" data-open-pres="${i}"><span aria-hidden="true">↳</span> ${esc(presentationTitle(p))}${p.presentationKind==="princeps"?'<span class="explore-pres-princeps-inline">Princeps</span>':""}</button>`).join("")}</div>`:""}
-   ${isMatch?`<div class="explore-tree-tags">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)&&!inheritedClasses.has(norm(t))).map(t=>explorerFilterBadge("class",t)).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)&&!inheritedIndications.has(norm(t))).map(t=>explorerFilterBadge("indication",t)).join("")}${(((isDciFamilyType(m))?explorerBadgeVisible(m,"forms"):true)?forms:[]).filter(t=>!inheritedForms.has(norm(t))).map(t=>explorerFilterBadge("form",t)).join("")}</div>`:""}
-   ${kids.length?`<div class="explore-tree-children" id="tree-children-${esc(m.id)}" ${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)?"":"hidden"}>${kids.map(child=>renderNode(child,depth+1,next)).join("")}</div>`:""}
+   ${isMatch?`<div class="explore-tree-tags">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)&&!inheritedClasses.has(norm(t))&&norm(t)!=="autres").map(t=>explorerFilterBadge("class",t)).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)&&!inheritedIndications.has(norm(t))).map(t=>explorerFilterBadge("indication",t)).join("")}${(((isDciFamilyType(m))?explorerBadgeVisible(m,"forms"):true)?forms:[]).filter(t=>!inheritedForms.has(norm(t))).map(t=>explorerFilterBadge("form",t)).join("")}</div>`:""}
+   ${kids.length?`<div class="explore-tree-children" id="tree-children-${esc(m.id)}" ${expanded(m)?"":"hidden"}>${kids.map(child=>renderNode(child,depth+1,next)).join("")}</div>`:""}
   </div>`;
  };
- $("exploreCards").innerHTML=filtered.length?`<div class="explore-tree">${rootEntries.map(m=>renderNode(m)).join("")}</div>`:'<div class="empty">Aucune fiche trouvée. Essaie un autre terme ou modifie les filtres.</div>';
+ const host=$("exploreCards");
+ if(idle&&rootEntries.length){
+  const selected=rootEntries.find(m=>String(m.id)===memoV172Selected)||rootEntries[0];memoV172Selected=String(selected.id);
+  const kids=childrenOf(selected.id);const branches=kids.length?kids:[selected];
+  host.innerHTML=`<div class="memo-v172-directory"><nav aria-label="Classes thérapeutiques"><h4>Classes thérapeutiques</h4>${rootEntries.map(m=>`<button type="button" data-v172-select="${esc(m.id)}" aria-pressed="${m===selected}"><span>${esc(displayMedName(m))}</span><small>${count(m)}</small>${memoV172Chevron(false)}</button>`).join("")}</nav><section class="memo-v172-panel"><div class="memo-v172-heading"><button type="button" class="memo-v172-root-link" data-open-med="${esc(selected.id)}">${esc(displayMedName(selected))} ↗</button><button type="button" data-v172-collapse>Tout replier</button></div><div class="explore-tree memo-v172-grid">${branches.map(m=>renderNode(m,0,kids.length?new Set([selected.id]):new Set())).join("")}</div></section></div>`;
+  host.querySelectorAll('[data-v172-select]').forEach(b=>b.onclick=()=>{memoV172Selected=b.dataset.v172Select;memoV172Save();renderExplorer()});
+  host.querySelector('[data-v172-collapse]').onclick=()=>{memoV172Open.clear();memoV172Save();renderExplorer()};
+ }else host.innerHTML=filtered.length?`<div class="explore-tree">${rootEntries.map(m=>renderNode(m)).join("")}</div>`:'<div class="empty">Aucune fiche trouvée. Essaie un autre terme ou modifie les filtres.</div>';
  $("exploreCards").querySelectorAll("[data-tree-toggle]").forEach(button=>button.addEventListener("click",()=>{
   const id=button.dataset.treeToggle;
   const children=document.getElementById("tree-children-"+id);
@@ -3765,8 +3800,8 @@ function renderExplorerTree(entries,filtered,query,classSel,indSel,formSel){
   children.hidden=!opening;
   button.setAttribute("aria-expanded",String(opening));
   button.setAttribute("aria-label",(opening?"Replier ":"Déplier ")+button.parentElement.querySelector(".explore-tree-name")?.textContent);
-  button.querySelector("span").textContent=opening?"▾":"▸";
-  if(opening)exploreExpandedGroups.add(id);else exploreExpandedGroups.delete(id);
+  button.querySelector("span").innerHTML=memoV172Chevron(opening);
+  if(idle){if(opening)memoV172Open.add(id);else memoV172Open.delete(id);memoV172Save();}else{if(opening)exploreExpandedGroups.add(id);else exploreExpandedGroups.delete(id);}
  }));
  $("exploreCards").querySelectorAll("[data-open-med]").forEach(b=>{b.onclick=e=>openExplorerResult(e,b,b.hasAttribute("data-open-pres")?Number(b.dataset.openPres):null);b.onauxclick=e=>{if(e.button===1)openExplorerResult({...e,ctrlKey:true},b,b.hasAttribute("data-open-pres")?Number(b.dataset.openPres):null)}});
  explorerBindFilterBadges($("exploreCards"),classSel,indSel,formSel);
