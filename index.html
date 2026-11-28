@@ -2403,7 +2403,7 @@ html[data-memo-theme="dark"] #exploreView #exploreCards .memo-v169-commercial-li
 @media(max-width:720px){.memo-v172-directory{grid-template-columns:1fr;gap:16px}}
 </style><style id="memo-v173-directory">
 #exploreView.memo-explore-idle .memo-v172-grid{display:block!important}
-.memo-v173-columns{display:grid;grid-template-columns:repeat(var(--memo-cols),minmax(0,1fr));gap:14px;align-items:start}.memo-v173-stack{display:flex;flex-direction:column;gap:12px;min-width:0}
+.memo-v173-columns{display:grid;grid-template-columns:repeat(var(--memo-cols),minmax(0,1fr));gap:16px;align-items:start}.memo-v173-stack{display:flex;flex-direction:column;gap:16px;min-width:0}
 #exploreView.memo-explore-idle .memo-v173-stack>.memo-v173-group{border:1px solid #d2e1d6!important;border-radius:12px;background:#fafcfb!important;padding:8px!important;min-width:0}
 #exploreView .explore-tree-line.memo-v172-toggle-line>.explore-tree-name{flex:0 1 auto!important;min-width:0!important;width:auto!important;padding:0!important;align-self:center!important;text-align:left!important}
 #exploreView.memo-explore-idle .memo-v173-leaves{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:0 12px;margin-top:3px}
@@ -2411,12 +2411,16 @@ html[data-memo-theme="dark"] #exploreView #exploreCards .memo-v169-commercial-li
 #exploreView.memo-explore-idle .memo-explorer-sidebar .memo-v172-grid .memo-v173-leaf>.explore-tree-line{background:transparent!important;min-height:28px!important;padding:4px 7px!important;gap:5px!important;border:0!important;border-bottom:1px solid #e2e9e3!important;border-radius:4px!important;cursor:pointer}
 #exploreView.memo-explore-idle .memo-explorer-sidebar .memo-v172-grid .memo-v173-leaf>.explore-tree-line:hover{background:var(--group-bg,#e5eee7)!important}
 #exploreView.memo-explore-idle .memo-v173-leaf .explore-tree-leaf-space,#exploreView.memo-explore-idle .memo-v173-leaf .explore-tree-icon{display:none!important}
-#exploreView.memo-explore-idle .memo-v173-leaf>.explore-tree-line:before{content:'•';color:var(--group-ink,#803e99);font-size:.85rem}
+#exploreView.memo-explore-idle .memo-v173-leaf>.explore-tree-line:before{content:'•';color:var(--group-fg,#803e99);font-size:.85rem}
 #exploreView.memo-explore-idle .memo-v173-leaf .explore-tree-name{padding:0!important;font-size:.88rem!important;min-height:0!important}
 #exploreView.memo-explore-idle .memo-v172-grid .explore-tree-children{gap:3px!important;margin:4px 0 2px 3px!important;padding-left:5px!important}
 #exploreView.memo-explore-idle .memo-v172-grid .explore-tree-children[hidden]{display:none!important}
-.memo-v172-directory nav button[aria-pressed=true]{box-shadow:inset 3px 0 #34684e!important}.memo-v172-directory nav small,.memo-v172-count{font-size:.75rem;font-weight:600;opacity:.85}
+.memo-v172-directory nav button[aria-pressed=true]{box-shadow:none!important}.memo-v172-directory nav small,.memo-v172-count{font-size:.75rem;font-weight:600;opacity:.85}
 @media(min-width:721px) and (min-height:650px){.memo-v172-directory nav{position:sticky;top:16px}}
+</style><style id="memo-v174-directory">
+#exploreView.memo-explore-idle .memo-explorer-sidebar .explore-tree .memo-v173-stack>.memo-v173-group{border-radius:12px!important;padding:10px!important}
+#exploreView.memo-explore-idle .memo-explorer-sidebar .explore-tree .memo-v172-grid .explore-tree-children{border-left:0!important;margin-left:3px!important;padding-left:8px!important}
+#exploreView.memo-explore-idle .memo-v172-directory nav button[aria-pressed=true]{box-shadow:none!important;background:#cce2d3!important}
 </style></head>
 <body>
 <header><div class="wrap">
@@ -3745,7 +3749,7 @@ let memoV173Observer=null;
 function memoV173Columns(grid){
  memoV173Observer?.disconnect();if(!grid)return;
  const nodes=[...grid.children];const groups=nodes.filter(n=>n.classList.contains('memo-v173-group'));const leaves=nodes.filter(n=>!groups.includes(n));let last=0;
- const layout=()=>{if(!grid.isConnected)return;const n=Math.max(1,Math.min(4,groups.length||1,Math.floor((grid.clientWidth+14)/274)));if(n===last)return;last=n;grid.replaceChildren();const cols=document.createElement('div');cols.className='memo-v173-columns';cols.style.setProperty('--memo-cols',n);const stacks=Array.from({length:n},()=>{const c=document.createElement('div');c.className='memo-v173-stack';cols.append(c);return c;});groups.forEach((g,i)=>stacks[i%n].append(g));if(groups.length)grid.append(cols);leaves.forEach(l=>grid.append(l));};layout();if(typeof ResizeObserver!=='undefined'){memoV173Observer=new ResizeObserver(layout);memoV173Observer.observe(grid);}
+ const layout=()=>{if(!grid.isConnected)return;const n=Math.max(1,Math.min(4,groups.length||1,Math.floor((grid.clientWidth+16)/366)));if(n===last)return;last=n;grid.replaceChildren();const cols=document.createElement('div');cols.className='memo-v173-columns';cols.style.setProperty('--memo-cols',n);const stacks=Array.from({length:n},()=>{const c=document.createElement('div');c.className='memo-v173-stack';cols.append(c);return c;});groups.forEach((g,i)=>stacks[i%n].append(g));if(groups.length)grid.append(cols);leaves.forEach(l=>grid.append(l));};layout();if(typeof ResizeObserver!=='undefined'){memoV173Observer=new ResizeObserver(layout);memoV173Observer.observe(grid);}
 }
 function renderExplorerTree(entries,filtered,query,classSel,indSel,formSel){
  const byId=new Map(entries.map(m=>[m.id,m]));
