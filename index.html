@@ -2328,6 +2328,30 @@ html[data-memo-theme="dark"] #exploreView mark.memo-explore-highlight{background
 #exploreView .memo-explore-secondary-body{padding:14px}
 #exploreView.memo-explore-query .explore-result-section+.explore-result-section{margin-top:24px}
 #exploreView.memo-explore-query .memo-explore-tier-title{margin:0 0 12px}
+</style><style id="memo-v169-explorer-clean">
+#exploreView #exploreCards :is(article.memo-result-card,.explore-grouped-presentation,.explore-search-child){background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important}
+#exploreView #exploreCards article.memo-result-card{padding:4px 0 12px!important;margin:0 0 14px!important}
+#exploreView #exploreCards :is(.explore-hit-symbol,.search-pres-title>span:first-child[aria-hidden="true"]){display:none!important}
+#exploreView #exploreCards :is(.explore-hit-open,.explore-group-result-name,.search-pres-title){background:transparent!important;padding:4px 0!important;box-shadow:none!important}
+#exploreView #exploreCards .explore-hit-name{font-size:1.02rem!important;line-height:1.45}
+#exploreView #exploreCards .explore-result-section-title{border-bottom-color:rgba(125,145,132,.25)!important}
+#exploreView #exploreCards .explore-preview-direct{margin:8px 0 0!important;padding:12px 15px!important;border:1px solid rgba(125,145,132,.35)!important;border-radius:9px!important;background:rgba(255,255,255,.42)!important}
+#exploreView #exploreCards .explore-preview-direct .explore-hit-content{line-height:1.55!important}
+#exploreView #exploreCards .explore-preview-direct .explore-hit-content p{margin:5px 0!important}
+#exploreView #exploreCards .memo-v169-variant{position:relative;color:var(--memo-dose-ink)}
+#exploreView #exploreCards .memo-v169-disclosure{margin:0 32px 0 0;border:0;background:transparent;box-shadow:none}
+#exploreView #exploreCards .memo-v169-disclosure>summary{cursor:pointer;padding:8px 0;color:var(--memo-dose-ink);line-height:1.5;background:transparent}
+#exploreView #exploreCards .memo-v169-count{display:block;margin-left:18px;font-size:.78rem;color:var(--memo-dose-ink);font-weight:400}
+#exploreView #exploreCards .memo-v169-open{position:absolute;right:0;top:4px;padding:5px 9px;background:transparent;border:0;color:var(--memo-dose-ink);box-shadow:none}
+#exploreView #exploreCards .memo-v169-commercial-list{margin:8px -32px 0 0;padding-left:12px}
+#exploreView #exploreCards .memo-v169-commercial-list .explore-grouped-presentation{display:flex!important;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 0!important;margin:0!important;border-bottom:1px solid rgba(125,145,132,.18)!important}
+#exploreView #exploreCards .memo-v169-commercial-list .explore-grouped-presentation-link{padding:0!important;margin:0!important;background:transparent!important;color:#326782!important;flex:0 1 auto;text-align:left}
+#exploreView #exploreCards .memo-v169-commercial-list .explore-pres-info{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin:0 0 0 auto!important;padding:0!important}
+#exploreView #exploreCards .memo-molecule-cip-packs{display:inline-flex;flex-wrap:wrap;align-items:center;gap:7px 12px}
+#exploreView #exploreCards .memo-molecule-cip-pack-pair{display:inline-flex;align-items:center;flex-wrap:wrap;gap:var(--m-space-7)}
+#exploreView #exploreCards .memo-v92-pack-label{display:inline-block;background:#edf0f2;color:#62717a;font-style:italic;font-weight:400;font-size:var(--m-font-md);line-height:1.3;padding:4px 9px;border-radius:var(--m-radius-7)}
+html[data-memo-theme="dark"] #exploreView #exploreCards .explore-preview-direct{background:rgba(255,255,255,.035)!important}
+html[data-memo-theme="dark"] #exploreView #exploreCards .memo-v169-commercial-list .explore-grouped-presentation-link{color:#a8cde5!important}
 </style></head>
 <body>
 <header><div class="wrap">
@@ -3203,7 +3227,7 @@ function searchPresentationLine(m,p,i,child=false){
  const princeps=p.presentationKind==='princeps'?'<span class="explore-pres-princeps">Princeps</span>':'';
  const cip=cipBadges(p);
  const badges=explorerResultBadges(m);
- return `<div class="search-pres-direct ${child?'search-pres-child':''}"><button type="button" class="search-pres-title" data-open-med="${esc(m.id)}" data-hit-pres="${i}" aria-label="Ouvrir ${esc(title)}"><span aria-hidden="true">●</span> ${esc(title)} <span aria-hidden="true">↗</span></button><div class="search-pres-details">${princeps}${cip}${badges?`<div class="search-pres-badges">${badges}</div>`:''}</div></div>`;
+ return `<div class="search-pres-direct ${child?'search-pres-child':''}"><button type="button" class="search-pres-title" data-open-med="${esc(m.id)}" data-hit-pres="${i}" aria-label="Ouvrir ${esc(title)}">${esc(title)} <span aria-hidden="true">↗</span></button><div class="search-pres-details">${princeps}${cip}${badges?`<div class="search-pres-badges">${badges}</div>`:''}</div></div>`;
 }
 let explorerVisibleLimit=20;
 function memoBadgeMatches(m,kind){
@@ -3550,7 +3574,7 @@ function renderExplorerSearchResults(entries,filtered,searchMatches,query,classS
    childrenByParent.get(parent).push(entry);
   }
   $("exploreSearchCount").textContent=`${hitGroups.length} fiche${hitGroups.length===1?"":"s"} trouvée${hitGroups.length===1?"":"s"} · ${visibleHits.length} affichée${visibleHits.length===1?"":"s"} · ${hits.length} correspondance${hits.length===1?"":"s"} au total`;
-  $("exploreCards").innerHTML=hits.length?`<div class="explore-sections">${primary.length?'<h3 class="memo-explore-tier-title">Médicaments correspondants</h3>':''}${groupedVisible.map(({category,items,secondary},groupIndex)=>`${secondary&&(groupIndex===0||!groupedVisible[groupIndex-1].secondary)?`<details class="memo-explore-secondary" ${primary.length?"":"open"}><summary>Autres correspondances dans le contenu (${b.hitGroups.length})</summary><div class="memo-explore-secondary-body">`:""}<section class="explore-result-section explore-section-${category}"><h3 class="explore-result-section-title">${categoryLabels[category]} <span>${items.length}${(secondary?b:a).hitGroups.filter(g=>explorerResultCategory(g)===category).length>items.length?" / "+(secondary?b:a).hitGroups.filter(g=>explorerResultCategory(g)===category).length:""}</span></h3><div class="explore-hits">${items.map((hitGroup)=>{
+  $("exploreCards").innerHTML=hits.length?`<div class="explore-sections">${groupedVisible.map(({category,items,secondary},groupIndex)=>`${secondary&&(groupIndex===0||!groupedVisible[groupIndex-1].secondary)?`<details class="memo-explore-secondary" ${primary.length?"":"open"}><summary>Autres correspondances dans le contenu (${b.hitGroups.length})</summary><div class="memo-explore-secondary-body">`:""}<section class="explore-result-section explore-section-${category}"><h3 class="explore-result-section-title">${categoryLabels[category]} <span>${items.length}${(secondary?b:a).hitGroups.filter(g=>explorerResultCategory(g)===category).length>items.length?" / "+(secondary?b:a).hitGroups.filter(g=>explorerResultCategory(g)===category).length:""}</span></h3><div class="explore-hits">${items.map((hitGroup)=>{
    const hit=hitGroup.parent||hitGroup.hits[0];
    const m=hit.med,sec=hitGroup.parent?.section||hitGroup.hits.find(h=>h.section)?.section||null;
    const parents=explorerGroupPath(m,byIdForPath);
@@ -3573,9 +3597,9 @@ function renderExplorerSearchResults(entries,filtered,searchMatches,query,classS
    const presentationRows=hitGroup.presentations.map(pHit=>{
     const presentation=m.presentations?.[pHit.presentation];
     if(!presentation)return "";
-    const title=explorerPresentationTitle(m,presentation);
+    const title=presentation.presentationKind==="princeps"?(presentation.name||presentation.lab||m.name):(presentation.lab||presentation.name||m.name);
     const princeps=presentation.presentationKind==="princeps"?'<span class="explore-pres-princeps">Princeps</span>':"";
-    const cip=cipBadges(presentation);
+    const cip=presentation.showCip===true?memoMoleculeCipAndPack(presentation):"";
     return `<div class="explore-grouped-presentation"><button type="button" class="explore-grouped-presentation-link" data-open-med="${esc(m.id)}" data-hit-pres="${pHit.presentation}" data-hit-section="${esc(pHit.section?.id||"")}"><span aria-hidden="true">●</span> ${esc(title)} <span aria-hidden="true">↗</span></button><div class="explore-pres-info">${princeps}${cip}</div></div>`;
    }).join("");
    if(m.entry_type==="specialite"&&specialtyItems(m).length){
@@ -3583,6 +3607,10 @@ function renderExplorerSearchResults(entries,filtered,searchMatches,query,classS
     return `<article class="memo-result-card explore-hit explore-hit-med explore-specialty-direct explore-result-specialite">${available.map(i=>m.presentations?.[i]?searchPresentationLine(m,m.presentations[i],i):'').join('')}${preview}</article>`;
    }
    const presentationToggle=presentationRows?`<button type="button" class="explore-grouped-toggle" data-presentation-toggle aria-expanded="false"><span aria-hidden="true">▸</span> ${hitGroup.presentations.length} présentation${hitGroup.presentations.length>1?"s":""}</button><div class="explore-grouped-children" hidden>${presentationRows}</div>`:"";
+   if(isVariantFiche(m)&&presentationRows){
+    const variantTitle=[m.name,m.dosage,m.form].filter(Boolean).filter((v,i,a)=>i===0||!norm(a[0]).includes(norm(v))).join(" · ");
+    return `<article class="memo-result-card explore-hit explore-result-dose memo-v169-variant"><details class="memo-v169-disclosure"><summary><strong>${esc(variantTitle)}</strong><span class="memo-v169-count">${hitGroup.presentations.length} présentation${hitGroup.presentations.length>1?"s":""}</span></summary><div class="memo-v169-commercial-list">${presentationRows}</div></details><button type="button" class="memo-v169-open" data-open-med="${esc(m.id)}" data-hit-pres="" data-hit-section="${esc(sec?.id||"")}" aria-label="Ouvrir la fiche ${esc(variantTitle)}">↗</button>${preview}</article>`;
+   }
    const matchedPrinceps=isMolecule(m)?(m.sections?.[0]?.princepsNames||[]).filter(name=>norm(name).includes(q)):[];
    const princepsSearchLabel=matchedPrinceps.length?`<div class="memo-explore-princeps-match">${matchedPrinceps.map(name=>esc(name)).join(', ')}</div>`:'';
    return `<article class="memo-result-card explore-hit explore-hit-${kind} explore-hit-grouped ${isMolecule(m)?"explore-result-molecule":isVariantFiche(m)?"explore-result-dose":isSpecialiteFiche(m)?"explore-result-specialite":"explore-result-presentation"}">
