@@ -2421,6 +2421,9 @@ html[data-memo-theme="dark"] #exploreView #exploreCards .memo-v169-commercial-li
 #exploreView.memo-explore-idle .memo-explorer-sidebar .explore-tree .memo-v173-stack>.memo-v173-group{border-radius:12px!important;padding:10px!important}
 #exploreView.memo-explore-idle .memo-explorer-sidebar .explore-tree .memo-v172-grid .explore-tree-children{border-left:0!important;margin-left:3px!important;padding-left:8px!important}
 #exploreView.memo-explore-idle .memo-v172-directory nav button[aria-pressed=true]{box-shadow:none!important;background:#cce2d3!important}
+</style><style id="memo-v175-directory">
+#exploreView.memo-explore-idle .memo-v172-directory nav button,#exploreView.memo-explore-idle .memo-v172-directory .memo-v172-grid .explore-tree-node>.explore-tree-line .explore-tree-name{font-size:.95rem!important}
+#exploreView.memo-explore-idle .memo-v172-directory .explore-tree .explore-tree-children{border-left:0!important;border-inline-start:0!important;box-shadow:none!important}
 </style></head>
 <body>
 <header><div class="wrap">
@@ -3803,7 +3806,7 @@ function renderExplorerTree(entries,filtered,query,classSel,indSel,formSel){
     ${kids.length?`<button type="button" class="explore-tree-toggle" data-tree-toggle="${esc(m.id)}" aria-label="${expanded(m)?"Replier":"Déplier"} ${esc(displayMedName(m))}" aria-expanded="${expanded(m)}" aria-controls="tree-children-${esc(m.id)}"><span aria-hidden="true">${memoV172Chevron(expanded(m))}</span></button>`:`<span class="explore-tree-leaf-space" aria-hidden="true"></span>`}
     ${isGroup(m)||isMolecule(m)?"":`<span class="explore-tree-icon" aria-hidden="true">●</span>`}
     <button type="button" class="explore-tree-name" data-open-med="${esc(m.id)}" ${specialtyPresentations.length===1?`data-open-pres="${specialtyPresentations[0].i}"`:""}>${esc(specialtyPresentations.length===1?presentationTitle(specialtyPresentations[0].p):displayMedName(m))}</button>
-    ${idle&&kids.length?`<span class="memo-v172-count">${count(m)}</span>`:""}
+    
    </div>
    ${specialtyPresentations.length>1?`<div class="explore-tree-presentations">${specialtyPresentations.map(({p,i})=>`<button type="button" class="explore-tree-presentation" data-open-med="${esc(m.id)}" data-open-pres="${i}"><span aria-hidden="true">↳</span> ${esc(presentationTitle(p))}${p.presentationKind==="princeps"?'<span class="explore-pres-princeps-inline">Princeps</span>':""}</button>`).join("")}</div>`:""}
    ${isMatch&&!idle?`<div class="explore-tree-tags">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)&&!inheritedClasses.has(norm(t))&&norm(t)!=="autres").map(t=>explorerFilterBadge("class",t)).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)&&!inheritedIndications.has(norm(t))).map(t=>explorerFilterBadge("indication",t)).join("")}${(((isDciFamilyType(m))?explorerBadgeVisible(m,"forms"):true)?forms:[]).filter(t=>!inheritedForms.has(norm(t))).map(t=>explorerFilterBadge("form",t)).join("")}</div>`:""}
@@ -3819,7 +3822,7 @@ function renderExplorerTree(entries,filtered,query,classSel,indSel,formSel){
  if(idle&&rootEntries.length){
   const selected=rootEntries.find(m=>String(m.id)===memoV172Selected)||rootEntries[0];memoV172Selected=String(selected.id);
   const kids=childrenOf(selected.id);const branches=kids.length?kids:[selected];
-  host.innerHTML=`<div class="memo-v172-directory"><nav aria-label="Classes thérapeutiques"><h4>Classes thérapeutiques</h4>${rootEntries.map(m=>`<button type="button" data-v172-select="${esc(m.id)}" aria-pressed="${m===selected}"><span>${esc(displayMedName(m))}</span><small>${count(m)}</small>${memoV172Chevron(false)}</button>`).join("")}</nav><section class="memo-v172-panel"><div class="memo-v172-heading"><button type="button" class="memo-v172-root-link" data-open-med="${esc(selected.id)}">${esc(displayMedName(selected))} ↗</button><button type="button" data-v172-collapse>Tout replier</button></div><div class="explore-tree memo-v172-grid">${renderBranches(branches,0,kids.length?new Set([selected.id]):new Set())}</div></section></div>`;
+  host.innerHTML=`<div class="memo-v172-directory"><nav aria-label="Classes thérapeutiques"><h4>Classes thérapeutiques</h4>${rootEntries.map(m=>`<button type="button" data-v172-select="${esc(m.id)}" aria-pressed="${m===selected}"><span>${esc(displayMedName(m))}</span>${memoV172Chevron(false)}</button>`).join("")}</nav><section class="memo-v172-panel"><div class="memo-v172-heading"><button type="button" class="memo-v172-root-link" data-open-med="${esc(selected.id)}">${esc(displayMedName(selected))} ↗</button><button type="button" data-v172-collapse>Tout replier</button></div><div class="explore-tree memo-v172-grid">${renderBranches(branches,0,kids.length?new Set([selected.id]):new Set())}</div></section></div>`;
   host.querySelectorAll('[data-v172-select]').forEach(b=>b.onclick=()=>{memoV172Selected=b.dataset.v172Select;memoV172Save();renderExplorer()});
   const branchIds=[];const visit=(m,seen=new Set())=>{if(seen.has(m.id))return;seen.add(m.id);const children=childrenOf(m.id);if(children.length){branchIds.push(String(m.id));children.forEach(c=>visit(c,seen));}};branches.forEach(m=>visit(m));
   const collapse=host.querySelector('[data-v172-collapse]');
